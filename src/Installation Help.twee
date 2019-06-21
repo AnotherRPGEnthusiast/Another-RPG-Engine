@@ -1,0 +1,26 @@
+:: Installation[text]
+<b>IMPORTANT NOTE: Another RPG Engine uses ES6 components and may not function on all browswers. Google Chrome and Firefox should work, but other browsers may not. If you encounter errors, make sure you are using the most current version of your browser.</b>
+
+Another RPG Engine contains a lot of components. To use them all together, you will need a special compiler.
+
+I use <a href="http://www.motoslave.net/tweego/" target="_blank">Tweego</a>, which has installation instructions <a href="https://github.com/ChapelR/tweego-setup/blob/master/docs/installing-tweego.md" target="_blank">here</a>.
+
+Once you have everything set, you can open your comand prompt (search "cmd" in Windows) and use the "tweego" command to compile Twine stories. If you place the engine story file ("0 rpgengine") in a folder with JavaScript, CSS, and twee files, and target that folder with the "tweego" command, they will all be bundled together. The default download package has already lumped these into a "src" folder for you.
+
+Tweego can compile multiple story files at once, so I recommend creating a separate Twine story file for your actual story, and including it in the same directory. This allows you to neatly compartmentalize your story work and your game work, and also makes it much easier to add any patches and updates to the engine, as you can just overwrite the engine's story file instead of having to manually copy-and-paste every passage into your story. In the final product, everything will become part of the same story, so feel free to reference passages from the engine in your main story -- they won't seem to go anywhere, but they'll match up when the whole thing compiles.
+
+However, there are a few rules that you must keep in mind:
+
+<b>If there is a conflict in the data between two story files</b>, such as passages with the same names, <b>the last file compiled will overwrite the first.</b> Tweego will compile files in the same order they are seen in the directory, which generally means in alphabetical order. This is the purpose of sticking the "0" on the engine's file name, as that forces it to the top of any alphabetical list and causes any conflicts to be overwritten by your other story files.
+
+Generally, this is likely what you want, but <b>be careful if you have any passages with the same names</b>. If anything in the engine gets overwritten, the whole thing could break. This probably won't be a problem for most passages, but <b>be aware that the engine uses the special passages StoryInit, PassageReady, and PassageDone.</b> You will likely want to use these passages for your own purposes in your story. To avoid a conflict, I recommend storing these passages as raw twee files in the "passages" folder. This is already done for you in the default package. You can add any unique features you want for your own story to those files, and they'll be added when the project compiles without disrupting the core code. Additionally, this means you should delete any references to the engine's passages (such as "Battle!") that occur while creating your story.
+
+The same logic applies if you wish to modify anything in the engine. To avoid losing your work by accidentally overwriting the file when downloading a new version, outsource any custom passages to twee files.
+
+Finally, note that the story's JavaScript and CSS pages are compiled along with any JS and CSS files in the directory. This means that if you compile a story, save it to the src directory, and compile it again, the supporting code will be duplicated. This will create errors. To avoid this, you will need to blank the JavaScript and CSS pages in the story; or, better yet, do all your Twine editing in the raw file and only test the compiled version.
+
+<b>Summary:</b>
+* Download Tweego <a href="http://www.motoslave.net/tweego/" target="_blank">here</a> and set it up <a href="https://github.com/ChapelR/tweego-setup/blob/master/docs/installing-tweego.md" target="_blank">here</a>.
+* You can compile multiple story and twee files at once, but later conflicts will overwrite earlier ones.
+* Outsource customized engine passages to twee files to avoid losing your work on a version update.
+* Blank the story JavaScript and stylesheet before compiling a story file.
