@@ -1,0 +1,47 @@
+body, tw-story
+{
+  background-color:#ffffff;
+  color:#000000;
+}
+
+body.dark
+{
+  background-color:#000000;
+  color:#ffffff;
+}
+
+#passages { 
+	border: 0;
+	margin: 0;
+}
+
+.passage {
+	width: auto;
+
+	margin-top: 2em;
+	margin-bottom: 2em;
+
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.passage.battle {
+  width: 1030px;
+}
+
+#content {
+	float: left;
+	width: 640px;
+  border: dotted 1px;
+  padding: 1em;
+}
+
+#status {
+	float: right;
+	width: 300px;
+    min-height: 300px;
+	padding: 1em;
+	border-left: 1px solid;
+    font-weight: bold;
+}
+

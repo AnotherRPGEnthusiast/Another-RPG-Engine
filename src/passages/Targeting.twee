@@ -1,0 +1,293 @@
+:: Widgets: Targeting[widget nobr]
+/* Widgets for enemy targeting AI. You could define these as JavaScript functions, but I prefer to define them as widgets for the functionality of printing text directly to the page. */
+
+<<widget "enemytarget">>
+<<set _continue to true>>
+
+/* Priority 1: Martyr takes all hits */
+<<find "$puppets" "martyr" "true">>
+/* Note that this assumes only one Martyr can be active at a time. If multiple are active, this will only find the first in the array. */
+<<if _pos > -1>> /* will be -1 if nothing found */
+	<<set $target = [$puppets[_pos],"$puppets["+_pos+"]"]>>
+	<<set _continue to false>>
+<</if>>
+
+<<if _continue is true>>
+
+/* Priority 2: aggro enemies bypass normal targeting */
+<<if $subject[0].aggro and def $attacker>>
+	<<set $target = [$puppets[$attacker],"$puppets["+$attacker+"]"]>> /* always targets the puppet that attacked last */
+	<<if $target[0].dead isnot true>>
+		<<set _continue to false>>
+	<</if>>
+	/* Note that this bypasses untargetable as well */
+<</if>>
+
+<<if _continue is true>>
+
+/* mercy setting */
+<<if $subject[0].mercy < 1 or $args.includes("smart")>>
+/* if enemy's mercy is below 1, they will always use smart targeting */
+	<<set _mercy = 2>>
+<<else>>
+/* 1 in (mercy) chance of random targeting, to give players a break */
+	<<set _mercy = random(1,$subject[0].mercy)>>
+<</if>>
+
+<<set _hitlist = []>>
+
+/* smart targeting */
+<<if $difficulty is "hard">>
+
+<<if _mercy > 1>>
+	<<if not $args.includes("ignore downed")>>
+/* This clause makes enemies preferentially target off-balance and downed puppets. */
+		<<for _i, _puppet range $puppets>>
+			<<if _puppet.dead isnot true and _puppet.untargetable isnot true>>
+				<<if _puppet.offbalance or _puppet.down>>
+/* if effect found, add their address to the hitlist */
+					<<run _hitlist.push(_i)>>
+					<<if _puppet.firefly is true>>
+						<<run _hitlist.push(_i)>>
+					<</if>>
+				<</if>>
+			<</if>>
+		<</for>>
+	<</if>>
+	<<if $args.includes("debuff")>>
+/* Debuffing attacks will preferentially target puppets with lowered Special, as they will be more strongly affected */
+		<<for _i, _puppet range $puppets>>
+			<<if _puppet.dead isnot true and _puppet.untargetable isnot true>>
+				<<if !_puppet.chi && !_puppet.stasis && (_puppet.get("Special") < _puppet.getBase("Special"))>>
+ /* if spc-reducing debuff found, add to hitlist */
+ 					<<run _hitlist.push(_i)>>
+					<<if _puppet.firefly is true>>
+						<<run _hitlist.push(_i)>>
+					<</if>>
+     			<</if>>
+    		<</if>>
+   		<</for>>
+	<</if>>
+	<<if _hitlist.length > 0>>
+		<<set _continue to false>>
+	<</if>>
+<</if>>
+
+/* normal targeting */
+<<if _continue is true>>
+	<<for _i, _puppet range $puppets>>
+		<<if _puppet.dead isnot true and _puppet.untargetable isnot true>>
+			<<run _hitlist.push(_i)>>
+			<<if _puppet.firefly is true>>
+				<<run _hitlist.push(_i)>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</if>>
+
+<<elseif $difficulty is "medium">>
+
+<<for _i, _puppet range $puppets>>
+	<<if _puppet.dead isnot true and _puppet.untargetable isnot true>>
+		<<run _hitlist.push(_i)>>
+		<<if _puppet.firefly is true>>
+			<<run _hitlist.push(_i)>>
+		<</if>>
+			
+		/* smart targeting */
+		<<if _mercy > 1>>
+			<<if not $args.includes("ignore downed")>>
+/* This clause makes enemies preferentially target off-balance and downed puppets. */
+				<<if _puppet.offbalance or _puppet.down>>
+/* if effect found, add their address to the hitlist */
+					<<run _hitlist.push(_i)>>
+				<</if>>
+			<</if>>
+			<<if $args.includes("debuff")>>
+/* Debuffing attacks will preferentially target puppets with lowered Special, as they will be more strongly affected */
+				<<if !_puppet.chi && && !_puppet.stasis && (_puppet.get("Special") < _puppet.getBase("Special"))>>
+ /* if spc-reducing debuff found, add to hitlist */
+ 					<<run _hitlist.push(_i)>>
+     			<</if>>
+    		<</if>>
+		<</if>>
+	<</if>> /* end mercy if */
+<</for>>
+
+<<elseif $difficulty is "easy">>
+
+<<for _i, _puppet range $puppets>>
+	<<if _puppet.dead isnot true and _puppet.untargetable isnot true>>
+		<<run _hitlist.push(_i)>>
+		<<if _puppet.firefly is true>>
+			<<run _hitlist.push(_i)>>
+		<</if>>
+	<</if>>
+<</for>>
+
+<</if>> /* end difficulty if */
+
+<<if def _hitlist and _hitlist.length > 0>>
+	<<set _n = random(0,_hitlist.length-1)>>
+ 	<<set _t = _hitlist[_n]>>
+	<<set $target = [$puppets[_t],"$puppets["+_t+"]"]>>
+<<else>>
+/* If a target wasn't found, only possibilities are that everyone's dead or untargetable. */
+	<<set _k = 0>>
+	<<for _puppet range $puppets>>
+		<<if _puppet.dead>>
+			<<set _k++>>
+		<</if>>
+	<</for>>
+	<<if _k eq $puppets.length>>
+	/* everyone's dead, just stop and the game over message will display next passage */
+	<<else>>
+	/* everyone's untargetable, run the check again without untargetable protection */
+		<<set _hitlist = []>> /* reset hitlist */
+		<<for _i, _puppet range $puppets>>
+			<<if _puppet.dead isnot true>>
+				<<run _hitlist.push(_i)>>
+				<<if _puppet.firefly is true>>
+					<<run _hitlist.push(_i)>>
+				<</if>>
+			<</if>>
+		<</for>>
+		<<if def _hitlist and _hitlist.length > 0>>
+			<<set _n = random(0,_hitlist.length-1)>>
+ 			<<set _t = _hitlist[_n]>>
+			<<set $target = [$puppets[_t],"$puppets["+_t+"]"]>>
+		<<else>>
+			/* no target found, flag this to avoid errors elsewhere */
+			<<set _targetfail = true>>
+		<</if>>
+	<</if>>
+<</if>>
+
+/* protection check */
+<<if $target[0] isnot null and $target[0].protected>>
+	<<find "$puppets" "name" $target[0].protectedBy>>
+	<<if _pos eq -1>>
+		<<set _targetingMsg = "ERROR: Protected character with no protector\n">>
+		<<print "ERROR: Protected character with no protector\n">>
+	<<else>>
+		<<set _targetingMsg = $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+		<<print $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+		<<set $target to [$puppets[_pos],"$puppets["+_pos+"]"]>>
+	<</if>>
+<</if>>
+
+<</if>>
+<</if>>
+<<unset _hitlist>>
+<</widget>>
+
+<<widget "allytarget">>
+<<set _hitlist = []>>
+<<for _i, _enemy range $enemies>>
+	<<if !($args.includes("noself") && _enemy == subject())>>
+		<<if !_enemy.dead>>
+			<<if $args.includes("buff")>>
+				<<if !_enemy.stasis>>
+					<<run _hitlist.push(_i)>>
+				<</if>>
+		  	<<else>>
+				<<run _hitlist.push(_i)>>
+		  	<</if>>
+	  	<</if>>
+	 <</if>>
+<</for>>
+<<if _hitlist.length > 0>>
+	<<set _n = random(0,_hitlist.length-1)>>
+	<<set _t = _hitlist[_n]>>
+	<<set $target to [$enemies[_t],"$enemies["+_t+"]"]>>
+	<<unset _hitlist>>
+<</if>>
+<</widget>>
+
+<<widget "dispeltarget">>
+<<set _threshold to $args[0]>>
+<<set _go to false>>
+<<set _continue to true>>
+<<set _temp to 0>>
+
+<<if !$args.includes("mass")>>
+/* Martyr check */
+	<<find "$puppets" "martyr" "true">>
+	<<if _pos >= 0>> /* will be -1 if nothing found */
+		<<for _effect range _puppet.effects>> /* Search for buffs */
+			<<if _effect.buff is true and _effect.sticky isnot true>>
+				<<if _effect.name is "Blessing">>
+					<<set _temp += 3>> /* Blessings are higher priority to dispel */
+				<<else>>
+					<<set _temp += 1>>
+				<</if>>
+		  	<</if>>
+	  	<</for>>
+		<<if _temp < _threshold>>
+			<<set $target = [$puppets[_pos],"$puppets["+_pos+"]"]>>
+			<<set _continue to false>>
+			<<set _go to true>>
+		<<else>>			
+			<<set _continue to false>>
+		<</if>>
+	<</if>>
+<</if>>
+
+<<if _continue is true>>
+/* In order to pass, there must not have been a martyr */
+
+<<set _hitlist to []>>
+<<for _i, _puppet range $puppets>>
+	<<if !$args.includes("mass")>>
+		<<set _temp to 0>>
+	<</if>>
+	<<for _effect range _puppet.effects>> /* Search for buffs */
+		<<if _effect.buff is true and _effect.sticky isnot true>>
+   			<<if _effect.name is "Blessing">>
+   				<<set _temp += 3>> /* Blessings are higher priority to dispel */
+   			<<else>>
+   				<<set _temp += 1>>
+   			<</if>>
+ 		<</if>>
+	<</for>>
+	<<if $args[1] isnot "mass">>
+		<<if _temp >= _threshold>>
+			<<run _hitlist.push(_i)>> /* If someone has a buff, make them a possible target */
+		<</if>>
+	<</if>>
+<</for>>
+<<if (!$args.includes("mass") and _hitlist.length == 0) or ($args.includes("mass") and _temp < _threshold)>>
+	<<set _go to false>> /* If no one has any buffs, there's no point in using this; reroll */
+<<else>>
+	<<set _go to true>>
+	<<if $args[1] isnot "mass">> /* mass dispel doesn't need to pick a target */
+		<<set _n = random(0,(_hitlist.length-1))>>
+		<<set _t = _hitlist[_n]>>
+		<<set $target = [$puppets[_t],"$puppets["+_t+"]"]>>
+
+/* Protection check. Comment this out if you do not want Protectors to protect against dispels. */
+<<if $target[0] isnot null and $target[0].protected>>
+	<<find "$puppets" "name" $target[0].protectedBy>>
+	<<if _pos eq -1>>
+		<<set _targetingMsg = "ERROR: Protected character with no protector\n">>
+		<<print "ERROR: Protected character with no protector\n">>
+	<<else>>
+		<<set _targetingMsg = $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+		<<print $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+		<<set $target to [$puppets[_pos],"$puppets["+_pos+"]"]>>
+	<</if>>
+<</if>>
+		
+ 	<</if>>
+<</if>>
+<</widget>>
+
+<<widget "multihit">>
+<<set _hits = $args[0]>>
+<<for _h = 1; _h <= _hits; _h++>>
+	<<if $args[1] is "spread">> /* careful, this means you have to call enemytarget outside this widget if this isn't a spread attack */
+		<<enemytarget "ignore downed">>
+	<</if>>
+	<<echodamage>>
+<</for>>
+<</widget>>

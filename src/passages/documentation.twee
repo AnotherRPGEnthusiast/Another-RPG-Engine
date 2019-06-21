@@ -1,0 +1,3344 @@
+:: Documentation[text]
+Use the table of contents to navigate. Headers will be clickable due to a quirk of the engine, but they won't do anything. You can come back to the top at any time by pressing the "home" key on your keyboard.
+
+The opening sections will be quite technical, and deal with external script. If you'd like to skip to how the Twine passages operate, you can head to <a href="#setup">Setting up the battle</a>.
+
+<h1>Table of Contents</h1>
+><a href="#JS">JavaScript vs. Twine</a>
+>><a href="#JS.config">Config</a>
+>><a href="#JS.actor">Actor Class</a>
+>><a href="#JS.puppets">Puppet Database</a>
+>><a href="#JS.enemies">Enemy Database</a>
+>><a href="#JS.actions">Action Database</a>
+>><a href="#JS.items">Item Database</a>
+>><a href="#JS.effects">Effect Database</a>
+>><a href="#JS.serial">Serialization and Save Files</a>
+>>><a href="#JS.updates">What if we want to update something in a new version?</a>
+><a href="#display">Display and aesthetics</a>
+>><a href="#statusdisplay">Displaying the status pane</a>
+>><a href="#nobr">The nobr tag</a>
+>><a href="#pronouns">Personalized text</a>
+><a href="#setup">Setting up the battle</a>
+><a href="#skeleton">How the battle passages work</a>
+>><a href="#actorlist">actorlist</a>
+>><a href="#commands">Commands</a>
+>><a href="#targetingphase">Targeting Phase</a>
+>><a href="#confirmphase">Confirm Phase</a>
+>><a href="#spellphase">Spell Phase</a>
+>><a href="#endofround">End of Round</a>
+>><a href="#enemyphase">Enemy Phase</a>
+><a href="#actions">How actions are constructed</a>
+>><a href="#actions1">Special Cases</a>
+>><a href="#actions2">The Functional Link</a>
+>><a href="#crossbow">How does Rogue's crossbow work?</a>
+>><a href="#items">Items</a>
+><a href="#damage">Calculating and applying damage</a>
+>><a href="#damage.1">Calculating damage</a>
+>><a href="#damage.2">Applying damage</a>
+><a href="#effects">Status Effects</a>
+>><a href="#effects1">Applying effects</a>
+>>><a href="#effects1.1">Accounting for protective effects</a>
+>>><a href="#effects1.2">Numerical components</a>
+>>><a href="#effects1.3">Stackability</a>
+>><a href="#effects.calc">Calculating numerical effects</a>
+>>><a href="#effects.calc.mods">Stat mods</a>
+>>><a href="#effects.calc.dot">Damage-over-time effects</a>
+><a href="#targeting">Targeting and Enemy AI</a>
+>><a href="#targeting.basic">Standard Targeting</a>
+>>><a href="#targeting.basic.1">Martyr check</a>
+>>><a href="#targeting.basic.2">Reactive enemies</a>
+>>><a href="#targeting.basic.3">Mercy</a>
+>>><a href="#targeting.basic.4">Smart targeting</a>
+>>><a href="#targeting.basic.5">Normal targeting</a>
+>>><a href="#targeting.basic.6">Special cases</a>
+>>><a href="#targeting.basic.7">Protection check</a>
+>><a href="#dispel">Dispel Targeting</a>
+>>><a href="#dispel.mass">Mass dispels</a>
+>><a href="#targeting.ally">Ally Targeting</a>
+>><a href="#enemyactions">Enemy Actions</a>
+>>><a href="#enemyactions.finn">Simple Example: Finn</a>
+>>><a href="#enemyactions.bubblegum">Advanced Example: Princess Bubblegum</a>
+>>><a href="#enemyactions.transform">Transformations</a>
+><a href="#partypicker">Party Picker</a>
+><a href="#widgets">Other Widgets</a>
+>><a href="#chain">The {{{<<chain>>}}} widget</a>
+>><a href="#find">{{{<<find>>}}}</a>
+>><a href="#backbtn">{{{<<backbtn>>}}}</a>
+>><a href="#victorycheck">{{{<<victorycheck>>}}}</a>
+>><a href="#deathcheck">{{{<<deathcheck>>}}}</a>
+>><a href="#statusexp">{{{<<status>>}}}</a>
+>><a href="#endofbattle">{{{<<endofbattle>>}}}</a>
+>><a href="#stat">{{{<<stat>>}}}</a>
+
+<h2><a id="JS">JavaScript vs. Twine</a></h2>
+To begin, it's important you understand how to operate JavaScript in Twine.
+
+The code you see in Twine passages, such as {{{<<if condidtion>><<set $variable to value>>}}}, is a modified form of JavaScript designed to be easier to use with stories. However, it has some limitations. For a project as complex as an RPG engine, I chose to include pure JavaScript as well.
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/001.PNG" />
+
+This functionality is enabled through a special passage that can be accessed by clicking the story's title at the bottom of the screen. For this engine, the JavaScript is mostly used for storing information for data structures used in the game, such as characters, items, and actions. Because Twine only allows one JavaScript passage, for ease of use, I separated it into multiple independent JavaScript files which can be found in {{{src/javascript}}}. You can edit these files by opening them in a text editor such as Notepad++, and add them to the story by compiling them with Tweego. (Editing through Twine is unfortunately difficult, due to a lack of a search feature.)
+
+JavaScript is very similar to SugarCube Twine code, but has a separate store of variables from the ones defined in Twine. To access a story variable in JavaScript, you must put {{{variables().}}} in place of where you would put the {{{$}}} symbol in Twine. To access a temporary variable, you must put {{{temporary().}}} in place of the {{{_}}} symbol.
+
+<h3><a id="JS.config">Config</a></h3>
+The first JavaScript file is "0config". The 0 is added to ensure it comes first in the directory, as files are compiled in alphabetical order.
+
+This file stores configuration settings for Twine, such as how saves are formatted and what path to use for media files. Additionally, the {{{variables()}}} function used to access story variables is assigned to the shorter name {{{V()}}}, for convenience. Note that this is case sensitive. Several other shortcuts to useful variables are also defined, but be aware that <b>you cannot use a function to call a variable for assignment.</b> For example, you cannot say {{{target() = Object}}}. You must say {{{V().target[0] = Object}}}.
+
+You can add additional configuration settings as needed for your story. See the SugarCube documentation for details.
+
+<h3><a id="JS.actor">Actor Class</a></h3>
+One of the useful features of JavaScript is its ability to define a <b>class</b> of objects. Some of the objects we want to use in the game may only need to differ by a few attributes, and we want them to operate similarly otherwise. For instance, all characters in an RPG should have attributes like HP and Attack. By defining a class, we can create a general template for an object that will always be constructed through the <b>constructor</b> method defined within it. We can also add additional functions that can be used by all instances of the class.
+
+In this case, the <b>Actor</b> class defines a character who, as the name implies, acts in battle. This means it should define all the attributes we want battling characters to have.
+
+{{{constructor(name,hp,stats,gender)}}}
+
+This line defines the arguments taken when a new Actor is created. This allows us to specify a character's name, HP, stats, and gender. (The "stats" argument is an array. This makes it easier to add new stats without throwing off the argument order.)
+
+{{{
+this.name = name;
+this.hp = hp;
+this.maxhp = hp;
+this.HPregen = 0;
+this.actions = [];
+[...]
+this.isDone = false;
+this.dead = false;
+this.effects = [];
+[...]
+this.deathMessage = `${this.name} is defeated!`+"\n";
+}}}
+
+In the constructor itself, we set the {{{name}}} and {{{hp}}} attributes equal to the arguments passed, and then set the attributes we want to be universal among battlers. Most of these are status effect flags (see <a href="#effects">Status Effects</a>), but we also define arrays to hold the character's actions and effects; at this early stage, they are empty.
+
+{{{
+this.elements = new Map();
+if (V().ELEMENT_LIST !== undefined){
+	V().ELEMENT_LIST.forEach(function(x) {
+		this.elements.set(x,1);
+	}, this);
+}
+}}}
+
+There is also a section here to define elemental affinities, if that is something you want in your game. {{{ELEMENT_LIST}}} is a story variable you can define in StoryInit to list all the elements you want in your game. This code checks to make sure it exists, then sets all elemental affinities to the default 1. This will prevent the game from throwing an error when a character is attacked with an elemental ability; if the game tries to read a value and there's nothing there, it may create problems.
+
+The {{{elements}}} attribute is defined as a Map object rather than an array. Maps are very similar to arrays, but their index values can be anything, not just numbers. To extract a value from a Map, you use {{{<var>.get(<key>)}}}, similarly to how you use {{{<var>[index]}}} to extract values from arrays. This makes it much easier to call an affinity in response to an elemental attack, as you can just input the name and the program will pull up the corresponding value, instead of having to remember the order of the array.
+
+{{{this.tolerances = new Map();}}}
+
+Effect tolerances are also defined here as an empty Map. This generates a framework you can populate with entries later.
+
+{{{
+this.stats = new Map([
+	["Attack",{Base: stats[0], Bonus: 0, Temp: 0}],
+	["Defense",{Base: stats[1], Bonus: 0, Temp: 0}],
+	["Special",{Base: stats[2], Bonus: 0, Temp: 0}]
+]);
+}}}
+
+Finally, stats are defined based on the {{{stats}}} array passed. To accommodate modifications such as from status effects and equipment, stats are defined as objects with separate attributes for base and modified values. "Bonus" refers to modifications from equipment, and "Temp" refers to modifications from status effects. Logically, we should initialize these to 0 for a default character.
+
+We are then finished with the constructor, but we can continue to add other functions. These functions, called <b>object methods</b>, can be used by any instance of the Actor class.
+
+Functions defined in the first section are just convenience functions to assist with getting and setting values from the various Maps we've set up. Accessing Map values is a little unwieldy, especially when those values are themselves objects, so we define functions with shorter names that do the same thing. We have functions here for getting and setting base, temp, and modified stats, as well as for calculating and returning an effective stat value that factors in Bonus and Temp.
+
+{{{
+setHP (amt) {
+	/* Relative setter: keeps HP within bounds on damage or heal */
+	this.hp = Math.clamp(this.hp + amt,0,this.maxhp);
+}
+	
+setMaxHP (amt) {
+	/* Absolute setter: for when both HP and max HP need to be set simultaneously, e.g. form changes. */
+	this.hp = amt;
+	this.maxhp = amt;
+}
+	
+/* calculates effective stats */
+get (key) {
+	let v = this.stats.get(key);
+	let n = v.Base + v.Bonus + v.Temp;
+	if (n < 0 && !(key == "Defense" && this.forsaken)){
+			n = 0;
+		}
+	/* You are probably going to want to change the threshold to 1 for a divisive defense system. */
+	return n;
+}
+}}}
+
+Of particular note here are {{{setHP}}}, {{{setMaxHP}}}, and {{{get}}}. The HP functions just automate normal logic you would want when modifying those variables. You (presumably) don't want HP to go above maximum when healing someone or for it to drop below 0 when they take damage; {{{setHP}}} keeps HP changes within these bounds, using SugarCube's {{{Math.clamp()}}} function. Similarly, there may be cases where you want a character's HP to match a change in max HP, such as when changing a monster into a different form; {{{setMaxHP}}} applies the change to both HP attributes at once. (If you want to change max HP <i>only</i>, you can simply set it by accessing the {{{.maxhp}}} attribute.)
+
+{{{get}}} is used both to quickly access stats buried in the complex {{{stats}}} Map, and to calculate the <i>effective</i> stat value for use in the game. It factors in any modifiers from equipment or circumstances, and prevents the value from going below 0.
+
+{{{
+addEffect (effect) {
+	this.effects.push(effect);
+	effect.onApply(this);
+	return effect.addText(this.name);
+}
+
+removeEffect (id,mod) {
+	if (!this.stasis || mod == 'pierce'){
+		var effect = this.effects[id];
+		this.effects.deleteAt(id);
+		effect.onRemove(this);
+		return effect.removeText(this.name);
+	} else {
+		return `${this.name}'s Stasis held the effect in place!`;
+	}
+}
+}}}
+
+The next set of functions governs how status effects interact with the character. They effectively bundle three functionalities together for us: shifting the Effect object in the character's {{{effects}}} array, applying the effect's actual functionality, and sending a message to the player. (These components can be seen in more detail in <a href=#JS.effects>the effects database</a>.)
+
+Note that {{{removeEffect}}} requires the index of the effect in the character's {{{effects}}} array, rather than the effect itself. This is because it must delete an existing object, and we need to know the index to make sure we get the right one.
+
+If you call these functions with a {{{<<print>>}}} statement, the {{{return}}} statement will be printed to the screen. You don't need to call it again; the code of a function is executed regardless of the context in which it is called, so it'll still run in addition to printing the text. If you want to discard the output, all you need to do is call the function with a {{{<<run>>}}} statement instead; it will still perform its functionality, but you won't print the {{{return}}} statement.
+
+{{{
+unequip (type,destroy) {
+	if (this.equipment.has(item.type) && this.equipment.get(item.type) !== null){
+		var item = this.equipment.get(type);
+		if (item.default === undefined && destroy != "destroy") {
+			inv().addItem(item.name);
+		}
+		if (this.equipment.get(item.equippable.slot).onRemove !== undefined) {
+			this.equipment.get(item.equippable.slot).onRemove(this);
+		}
+		this.equipment.set(type,null);
+		/* If your system always has to read something in an equipment slot, such as if you wish to calculate equipment effects through a call function or iterator, replace the above line with the one below. Remember to define default equipment in the items database. */
+		//this.equipment.set(type,new Equipment("Default "+type));
+	}
+}
+}}}
+
+There are very similar functions for handling equipment. {{{unequip}}} is quite straightforward: it is passed the slot to unequip, and the item in that slot is removed. We require a common-sense check to ensure the given slot exists and isn't already empty. We also want to store the unequipped item and place it back in the player's inventory, as the {{{set}}} function will simply overwrite what was originally in the slot. (If we <i>do</i> want the player to permanently lose the item, we can pass the string "destroy" as an argument.)
+
+There is an optional statement here for systems that cannot function with a {{{null}}} equipment slot; for instance, most versions of <i>Dungeons & Dragons</i> must read the statistics of the equipped weapon for attacks. In this case, instead of setting the slot to {{{null}}}, you would want to replace it with another object. These default objects can be defined in the item database like any other.
+
+{{{
+equip (item) {
+	if (this.equipment.has(item.equippable.slot)){
+		if (this.equipment.get(item.equippable.slot) !== null){
+			this.unequip(item.equippable.slot);
+		}
+		this.equipment.set(item.equippable.slot,item);
+		if (item.onEquip !== undefined){
+			item.onEquip(this);
+		}
+		if (inv() !== undefined && inv().has(item.name)){
+			inv().decItem(item.name);
+		}
+	} else {
+		return "ERROR: Equipment type not recognized\n";
+	}
+}
+}}}
+
+The {{{equip}}} function is similar; however, to equip something we have to unequip what was already there! Fortunately, we've defined {{{unequip}}} already, so we can simply call it (after making common-sense checks that the slot exists and isn't empty). Then we assign the item to the slot and run any {{{onEquip}}} functionality, if it exists. We will also want to remove the item from the player's inventory; the {{{set}}} statement creates a new copy, so if we didn't remove the original we'd be duplicating the item!
+
+{{{
+setTol (k, v) {
+	if (this.tolerances.has(k)){
+		if (typeof(v) == 'boolean'){
+			this.tolerances.get(k).immune = v;
+		} else if (Number.isInteger(v)){
+			this.tolerances.get(k).max += v;
+			this.resetTol(k);
+		}
+		if (this.tolerances.immune == false && this.tolerances.get(k).max <= 0){
+			this.tolerances.delete(k);
+		}
+	} else {
+		var tol;
+		if (Number.isInteger(v)){
+			tol = {cur: v, max: v, immune: false};
+		} else if (v === true){
+			tol = {cur: 0, max: 0, immune: v};
+		} else {
+			return "ERROR in setTol: non-integer or non-Boolean value passed\n";
+		}
+		this.tolerances.set(k, tol);
+	}
+}
+}}}
+
+Finally, we have functions for ailment tolerance. We first need a method for creating a tolerance, which is what {{{setTol}}} does.
+
+{{{
+var tol;
+if (Number.isInteger(v)){
+	tol = {cur: v, max: v, immune: false};
+} else if (v === true){
+	tol = {cur: 0, max: 0, immune: v};
+} else {
+	return "ERROR in setTol: non-integer or non-Boolean value passed\n";
+}
+this.tolerances.set(k, tol);
+}}}
+
+If the character doesn't have the given tolerance already, a new one is set. The function takes the name of the tolerance and its tolerance value as arguments, and creates a tolerance object with these values. Tolerance functionality is designed assuming it has values of integers, so to avoid potential mishaps we must check to filter out non-integer values. If the passed value is a decimal, string, or other value, {{{Number.isInteger(v)}}} will return {{{false}}} and the program will skip to the next {{{if}}} clause.
+
+It is also possible to have a tolerance convey complete immunity to an effect; this scenario is handled by passing the value {{{true}}} in place of a number value. The second if clause checks if that's what is passed, by checking if the value is a Boolean and that it's {{{true}}}. This generates a tolerance object with no number values, but an {{{immune}}} flag that's flipped to {{{true}}}.
+
+(Note that it is critical to use a triple equality, {{{===}}}, and not a regular equality. JavaScript considers most variables to be "true" for the purposes conditional logic if they exist at all. If we were to just check if {{{v}}} <i>evaluates</i> to {{{true}}}, almost anything would pass. The {{{===}}} operator checks if {{{v}}} is the same <i>type</i> as the value being compared, therefore excluding non-Boolean values.)
+
+If the passed value fails all these arguments, we immediately {{{return}}} to terminate the function. This prevents the final line, which creates the tolerance, from executing, and therefore avoids the creation of improper tolerances.
+
+{{{
+if (this.tolerances.has(k)){
+	if (typeof(v) == 'boolean'){
+		this.tolerances.get(k).immune = v;
+	} else if (Number.isInteger(v)){
+		this.tolerances.get(k).max += v;
+		this.resetTol(k);
+	}
+	if (this.tolerances.immune == false && this.tolerances.get(k).max <= 0){
+		this.tolerances.delete(k);
+	}
+}
+}}}
+
+Now, this is all well and good if we want tolerances to be static. But what if we want to modify existing tolerances, such as with equipment or leveling up? That is the purpose of this section. If a tolerance for the given effect already exists, this is the section that is executed, rather than the previous one.
+
+We have similar checks to see if the passed argument was a Boolean or integer, and the tolerance's values are set appropriately. In the case of an integer, the tolerance value is modified <i>relative</i> to its original value; so, for example, passing a value of 1 to a tolerance already at 2 would raise it to 3.
+
+If a tolerance's {{{immune}}} flag is false and its tolerance value is at 0, it is useless, and would only clutter the status screen. We have a handler to delete the tolerance if the modification would result in this scenario.
+
+{{{
+getTol (key) {
+	if (this.tolerances.get(key) === undefined){
+		return undefined;
+	} else if (this.tolerances.get(key).immune == true) {
+		return 'immune';
+	} else {
+		return this.tolerances.get(key).cur;
+	}
+}
+}}}
+
+We also have a function for extracting the tolerance value. However, this is not a normal "getter" function, as it does not actually access the character's raw tolerance value. Its purpose is for use in status effect checks, so it only returns relevant data: the {{{immune}}} flag if it's true, and the <i>current</i> tolerance value if it isn't. You should not use this function to access the tolerance object itself. Use {{{.tolerances.get(key)}}} instead.
+
+{{{
+decTol (k) {
+	this.tolerances.get(k).cur--;
+}
+	
+resetTol (key) {
+	this.tolerances.get(key).cur = this.tolerances.get(key).max;
+}
+}}}
+
+We also have functions that simply shorten common tasks.
+
+(See <a href="#effects1">Applying Effects</a> for more explanation on tolerances.)
+
+<h3><a id="JS.puppets">Puppet Database</a></h3>
+This file defines the statistics of the player characters. They're called "puppets" as a holdover from <i>Cartoon Battle</i>, but you can change the name if you like.
+
+{{{class Puppet extends Actor}}}
+
+To begin with, we say that the {{{Puppet}}} class <i>extends</i> {{{Actor}}}. This makes {{{Puppet}}} a <i>subclass</i> of the {{{Actor}}} class. It will inherit all of {{{Actor}}}'s object methods, and will count as an instance of {{{Actor}}} for data check purposes. We can still use {{{.get}}} with it, for instance. This is handy because it allows us to define unique attributes of puppets we don't want with enemies, while still maintaining access to all the useful attributes and methods defined in {{{Actor}}}.
+
+Subclasses are constructed a little differently: they still have a {{{constructor}}} function, but it must use the parent class's constructor before it can make its own unique modifications. This is done through the keyword {{{super}}}. This can be thought of as us constructing an instance of the parent class and then modifying it with unique subclass features.
+
+In this case, we are going to use this ability to construct a database of every character in the game. Presumably, we want every character to have a unique arrangement of stats or other features; but having to input all those manually when we create an instance of them in the game is cumbersome. Instead, we can define them here and key them to a unique ID.
+
+Thus, this constructor only requires the {{{name}}} argument. We make a {{{switch}}} based on it, and create a {{{case}}} to match the name of the character we want. We can then define the character's stats and unique attributes under that case. Now, when we create an instance of the character in the game, we just need to pass their name and the code will handle the rest for us! All the details are neatly bundled here, and easily edited if we want to change anything.
+
+{{{
+this.en = 5;
+this.inspired = false;
+if (this.firefly === undefined) {
+	this.firefly = false;
+}
+}}}
+
+After the {{{switch}}}, we set attributes that are unique to puppets. In <i>Cartoon Battle</i>, these are Energy values, the "inspired" flag, and the "firefly" flag. (Some characters, such as Fighter, get "firefly" set as part of their case, so we have to check that it's undefined before setting it; otherwise, since this is after the {{{switch}}}, we'd end up overwriting the previous definition.)
+
+{{{
+this.elements = new Map([
+	["black", 1],
+	["white", 1],
+	["red", 0.5],
+	["blue", 2],
+	["yellow", -2]
+]);
+this.setTol("Ailment",true);
+this.setTol("Effect",1);
+}}}
+
+This is jumping ahead a little, but this code, shown in Mabel's definition in the enemy database, shows how you can set unique elemental affinities and tolerances as well. You can overwrite the default Map with a new one or just modify specific values.
+
+You can also define unique method functions here if you need them.
+
+<h3><a id="JS.enemies">Enemy Database</a></h3>
+Enemies are constructed similarly to puppets, but have a major addition: their {{{actions}}} attribute is replaced by a function that is used to determine their behavior during their turn.
+
+The function typically takes this form:
+
+{{{
+this.actions = function () {
+	while (V().action === null){
+		var act = random(1,100);
+		
+	if (act == some value){
+		V().action = new Action();
+		// Action attributes are filled
+	}
+	
+	}
+}
+}}}
+
+This means that we create a random percentile value from 1 to 100 and determine the enemy's action based on that random value. More complicated logic is possible, and is discussed in <a href="#enemyactions">Enemy Actions</a>.
+
+In the default examples, action values are all set manually within these conditionals. I like this method because it allows me to see both the action statistics and the logic used to trigger them at the same time, which is helpful for balance tweaking. However, you can also define enemy actions in the <a href="#JS.actions">action database</a>. In <i>Cartoon Battle</i> every enemy was a set piece with unique abilities, but if you want to create an RPG with enemies who share general actions, you may want to define them separately.
+
+The {{{while}}} loop here ensures that an action will be picked. You may sometimes want an action to be unavailable to the enemy due to some circumstantial condition, so they may not be able to select an action on their given random roll. For instance, the conditional for Mabel's "Glitter Bomb" attack looks like this:
+
+{{{if (this.cd.get("Glitter Bomb") < 0 && act <= 60 && act > 40)}}}
+
+That {{{act}}} range (40-60) is unique. If Mabel rolled a 55 for her {{{act}}} variable, but her Glitter Bomb is still on cooldown, this conditional will fail and so will every other. However, because she hasn't chosen an action, {{{$action}}} is still {{{null}}} and the loop will trigger again, allowing her to reroll for a different action.
+
+<b>Keep in mind this means it must ALWAYS be possible for an enemy to select at least one action.</b> If it is impossible to fulfill any conditional, the loop will continue forever and make the game hang. I recommend including a default {{{else}}} with no requirements, even if it is just to select an action that does nothing.
+
+Note that the action is always set as {{{V().action}}} -- that is, the story variable {{{$action}}}. Due to the way the action phase is coded, you must refer to this variable rather than creating your own.
+
+{{{
+this.cd = new Map([
+	["Glitter Bomb",0]
+]);
+}}}
+
+Some enemies also have a {{{cd}}} attribute, which stands for "cooldown". This is a Map keyed to various actions, and prevents enemies from using the action if any cooldown remains. This is discussed further in <a href="#enemyactions">Enemy Actions</a>.
+
+{{{
+this.surrender = function () {
+(...)
+}
+this.surrenderFail = function () {
+(...)
+}
+}}}
+
+Certain enemies also have these attributes. These determine how enemies behave in situations when they are surrendering. The mechanics of calling these functions are discussed in the action phase.
+
+We also define several method functions for enemies.
+* {{{decCD}}} is a quick way of decrementing cooldowns at the start of every turn.
+* {{{CDcheck}}} is a quick way of determining if a cooldown action is available. It returns {{{true}}} if the cooldown is less than 0 and {{{false}}} otherwise.
+* {{{changeInto}}} is a quick way of modifying enemies, such as if they transform into another form with different stats or actions. You could define these alternate forms as entirely separate enemies, but the new call would overwrite all the enemy's current attributes, such as their active effects.
+* {{{surrenderCheck}}} checks if an action triggers a surrender failure. By default, resting, struggling, and sparing don't trigger a failure, but all other actions will. Note that this includes actions that don't affect the enemy at all; they are smart enough to understand that the only reason you'd be casting a buff is if you plan to attack them. You can change this logic if you want.
+
+<h3><a id="JS.actions">Action Database</a></h3>
+The action database defines actions similarly to how we define characters: the name is passed, and then a {{{switch}}} statement fills out the details.
+
+Let's skip over the beginning section for now and start at the class definition.
+
+{{{
+constructor(name){
+	this.name = name;
+	this.phase = "targeting phase";
+	this.target = "enemy";
+	this.cost = 0;
+	this.basic = false;
+	this.instant = false;
+	this.pierce = false;
+	this.hpcost = null;
+	this.info = "Info pending.";
+	this.desc = "Description pending.";
+	this.useText = `$subject[0].name uses "${this.name}".`;
+		
+	this.actText = null;
+		
+	this.act = function () {
+		return `This action doesn't do anything!`;
+	}
+}}}
+
+We begin by defining default values. Defining actions becomes easier if we can rely on these default values. For instance, most actions are attacking actions, which means they move to the targeting phase and target the enemy. We could set those values for every single action, but that would be tedious when most of them are the same. This saves us time by making it so we only need to define values for these attributes in special cases. (This can also save us from breaking things with oversights. As discussed later, the engine assumes there <i>must</i> be a {{{phase}}}, {{{target}}}, {{{useText}}}, {{{actText}}}, and {{{act}}} attribute for all actions. If we forget to define one, the game could break when the action is selected. By ensuring the attributes are always defined, the game will continue working even if we forget something.)
+
+After that, the {{{switch}}} statement activates and we can define individual actions by setting attributes such as cost and attack weight.
+
+{{{
+case "Martyr":
+case "Martyr_Cleric":
+	this.cost =		2;
+	this.phase =	"confirm phase";
+	this.info =		`Draw all direct attacks for this round.`;
+	this.actText = null;
+	this.act = justeffect('s',"Martyr",1);
+	this.preview = Prev.stance;
+	switch (name) {
+		case "Martyr":
+			this.desc =		`The blinding intensity of Fighter's spirit can warp perception itself. Through sheer will they can become so overpoweringly <b>real</b> that enemies become unable to see anything else, compelling them to send all attacks Fighter's way. Unfortunately, the technique requires too much concentration for Fighter to raise their shield.`;
+			break;
+		case "Martyr_Cleric":
+			this.name = "Martyr";
+			this.desc =		`The light of Cleric's spirit is blinding. Even under normal circumstances, people can't help but be drawn to them; when that spirit is focused, they will see nothing else. Cleric will gladly take all their pain and violence onto themselves.`;
+			break;
+	}
+	break;
+}}}
+
+In some cases you may want to have copies of an action that differ only in some attributes, such as flavor text. In <i>Cartoon Battle</i>, the "prestige classes" sometimes shared actions with the basic classes, but I wanted different flavor text depending on the character. This kind of mutual exclusivity is tricky to do; I clunkily solved it with another switch statement, but you may come up with a better solution. In this particular example, you could make {{{desc}}} a function that changes depending on the active subject, though you would have to modify the relevant passages to display descriptions as functions.
+
+There is also a subclass, {{{ItemAction}}}, that is used for consumable items. It functions in much the same way.
+
+At the beginning of the file, before the class definition, are several functions used to define common action code, such as adding an effect or dealing damage. This makes it easier to define actions. Corresponding preview code is stored under the {{{Prev}}} object as well. These are designed to be modular, and can be passed an {{{extension}}} argument to add additional functionality.
+
+<h3><a id="JS.items">Item Database</a></h3>
+{{{
+window.inv = function inv () {return V().inv;}
+}}}
+
+The very first thing we want to do is define our inventory. We need an inventory to put items in, right? A lot of code references the inventory, so we need a standardized way to refer to it. That's this: the {{{inv()}}} function returns whatever your actual inventory variable is. By default, it's a story variable, but you could rename it or tie it to specific characters.
+
+{{{
+class Inventory extends Map {
+	constructor(ItemArray){
+		var m = [];
+		ItemArray.forEach(function(item){
+			m.push([item.name,item]);
+		});
+		super(m);
+	}
+	
+	addItem (name,amt) {
+		if (amt === undefined){
+			amt = 1;
+		}
+		if (this.has(name)){
+			this.get(name).stock += amt;
+		} else {
+			this.set(name,new Item(name,amt));
+		}
+	}
+	
+	decItem (name,amt) {
+		if (this.has(name)){
+			if (amt === undefined){
+				amt = 1;
+			}
+			var v = this.get(name);
+			v.stock -= amt;
+			if (v.stock <= 0){
+				this.delete(name);
+			}
+			return;
+		} else {
+			return "ERROR in decItem: item name not found in inventory\n";
+		}
+	}
+}
+}}}
+
+Then, we should probably define what functionality we want our "inventory" to have. The {{{Inventory}}} class extends the {{{Map}}} object, meaning it functions the same way: if you need to reference an item, you can just call up its name. However, we've also added some method functions, and modified the constructor.
+
+{{{
+constructor(ItemArray){
+	var m = [];
+	ItemArray.forEach(function(item){
+		m.push([item.name,item]);
+	});
+	super(m);
+}
+}}}
+
+Instead of how you would normally construct a {{{Map}}} (an array of key/value pairs), you can construct an {{{Inventory}}} with just an array of items. The constructor will automatically extract the {{{name}}} attribute from the item and turn it into the key for that entry.
+
+{{{
+addItem (name,amt) {
+	if (amt === undefined){
+		amt = 1;
+	}
+	if (this.has(name)){
+		this.get(name).stock += amt;
+	} else {
+		this.set(name,new Item(name,amt));
+	}
+}
+}}}
+
+We also require special functionality for adding an item to the inventory. We run into the issue that if an item already exists in the {{{Inventory}}}, we only want to add to its {{{stock}}} value rather than creating a whole separate key. That's what this function checks for: if the {{{Inventory}}} already has the given item, it just increases the {{{stock}}} of that item, and if it doesn't, it makes a new entry with a {{{set}}} command.
+
+(Note that this assumes you want your inventory to function in this way, with items being "stackable". Some games don't allow this, and make every item appear as its own instance in the inventory. If you want this kind of behavior, you could base {{{Inventory}}} on an {{{Array}}} instead, but be warned that it will be very hard to refer to an item after it's been added.)
+
+There is a corresponding function, {{{decItem}}}, that operates similarly: it decreases {{{stock}}}, and deletes the item from the {{{Inventory}}} if there's none left. You can change this if you do want items to still appear even at 0 stock.
+
+(If you want to completely clear an item, you can use {{{Map}}}'s {{{.delete}}} function directly.)
+
+{{{
+class Item {
+	constructor(name,stock){
+		this.name = name;
+		if (stock === undefined){
+			this.stock = 0;
+		} else {
+			this.stock = stock;
+		}
+		this.info = "Info pending.";
+		this.desc = "Description pending.";
+		this.action = new ItemAction(name);
+		
+		switch (name) {
+			case "Antidote":
+				this.usable = 1;
+				this.cost = 2;
+				this.info = "Cures Poisoned.";
+				this.desc = "Isn't it convenient that everyone in the arena uses the exact same poison?";
+				break;
+		(...)
+		}
+	}
+}
+}}}
+
+Items themselves are constructed very similarly to actions: some default information is set, and then a {{{switch}}} statement is used to fill out data based on the {{{name}}} passed. In the case of usable items such as status cures, that data is quite limited; the majority of the item's functionality comes from its {{{action}}}, which is defined separately in the action database.
+
+The {{{usable}}} attribute marks an item as usable. It is an interger rather than a Boolean to allow for additional special cases; for instance, you may want an item to be usable, but only outside of battle.
+
+{{{
+case "Symbol of Destruction":
+	this.equippable = {slot: "Weapon", tags: ["symbol"], restrictedTo: false};
+	this.onEquip = function (puppet) {
+		puppet.setBonus("Attack",5);
+		puppet.onAttack = {type: "Pain", weight: 0.9, dur: 2};
+	}
+	this.onRemove = function (puppet) {
+		puppet.setBonus("Attack",-5);
+		puppet.onAttack = {};
+	}
+	break;
+}}}
+
+However, potions and bombs aren't the only types of items we want. We also define equipment, such as swords and armors, through the {{{equippable}}} attribute. Here you can see the other side of what you saw with the {{{equip}}} and {{{unequip}}} functions in <a href="#JS.actor">the Actor class</a>. As you may recall, those functions require equipment to have an {{{equippable.slot}}} attribute to work. We can also create {{{onEquip}}} and {{{onRemove}}} functions to determine what equipment does when equipped or de-equipped, respectively. In this example, the Symbol of Destruction boosts Attack by 5 and also causes the character's attacks to inflict the Pain status. (The latter doesn't have functionality in the default engine because there is no "regular attack" like there is in most RPGs, but it would be possible to implement such a thing.) You could also tell it to give attacks an elemental attribute, or some other effect. We have to undo both of these changes when unequipping it.
+
+The {{{equippable}}} attribute has additional sub-variables defined if you want them. You can key it to a specific equipment slot (such as weapon, armor, ring, etc.), restrict it to certain characters or classes, and add additional tags for any other purpose -- perhaps a certain character is proficient in using symbol weapons, while another is unable to wear heavy armor.
+
+<h3><a id="JS.effects">Effect Database</a></h3>
+Yes, status effects need a database file too! This records whether a given effect is stackable, a buff, a stat mod, etc., and also stores the text that will be displayed in the status pane and when the effect is applied or removed.
+
+{{{
+case 'Injury':
+	(...)
+	this.onApply = function (puppet) {
+		puppet.setTemp("Attack",-this.power);
+	}
+	this.onRemove = function (puppet) {
+		puppet.setTemp("Attack",this.power);
+	}
+}}}
+
+Effects have functions for application and removal, just like equipment does. You saw earlier in <a href="#JS.actor">the Actor class</a> that these functions are called as part of the {{{addEffect}}} and {{{removeEffect}}} functions.
+
+{{{
+case 'Stunned':
+	this.onApply = function (puppet) {
+		puppet.stunned = true;
+		puppet.noact = true;
+	}
+	this.onRemove = function (puppet) {
+		puppet.stunned = false;
+		puppet.noact = false;
+		var d;
+		if (puppet.boss){
+			d = 7;
+		} else {
+			d = 3;
+		}						
+		puppet.addEffect(new Effect("Alert",d,0));
+	}
+}}}
+
+Note that there is an example of an {{{onRemove}}} function that's <i>not</i> just a mirror here! Whenever the "Stunned" effect is removed, it adds an "Alert" effect in addition to undoing its respective flags.
+
+{{{
+class DoT extends Effect {
+	constructor(name,time,power,weight){
+		super(name,time,power);
+		this.weight = weight;
+		this.dot = true;
+		this.damage = function (puppet) {
+			var dmg = Math.round(this.type(puppet));
+			if (dmg < V().min_DoT){
+				dmg = V().min_DoT);
+			}
+			return dmg;
+		}
+	}
+}
+}}}
+
+Damage-over-time effects also have a subclass with additional functionality. The {{{damage()}}} function calculates how much damage the DoT effect does to the given character through reference to the {{{type}}} attribute. Types of DoT are defined at the beginning of the {{{Effect}}} constructor, but are better discussed in <a href="#effects.calc.dot">Damage-over-Time Effects</a>.
+
+<h3><a id="JS.serial">Serialization and Save Files</a></h3>
+If you look at the end JS files, you may notice that every class has a variation on these two functions at the end:
+
+{{{
+<Object>.prototype.clone = function () {
+	// Return a new instance containing our current data.
+	return new <Object>(this);
+};
+
+<Object>.prototype.toJSON = function () {
+	// Return a code string that will create a new instance
+	// containing our current data.
+	const data = {};
+    Object.keys(this).forEach(pn => data[pn] = clone(this[pn]));
+    return JSON.reviveWrapper('new <Object>($ReviveData$)', data);
+};
+}}}
+
+You may also notice that several classes have an odd addition to their constructors:
+
+{{{
+if (typeof(<1st argument>) == 'object'){
+	Object.keys(<1st argument>).forEach(prop => this[prop] = clone(<1st argument>[prop]));
+}
+}}}
+
+These features are necessary to make custom classes work with Twine's save/load feature. Essentially, every time a save is loaded, the game must generate a completely new instance of every object via its constructor. The {{{toJSON()}}} function, which in turn depends on the {{{clone()}}} function, tells the program how to do this.
+
+It would be a huge hassle to need to pass every single one of an object's properties to its constructor, so we can simplify things by instead passing it an object and assigning its properties to the new object. If this passed object is a clone of the old one, the new object will be reconstructed perfectly. However, we still want a "normal" constructor for constructing completely new objects. To accomplish both functionalities, we add {{{if (typeof(<1st argument>) == 'object')}}} to the start of the constructor, to branch its functionality. This tells the program that if we pass an object to the constructor instead of a normal variable, it should copy over that object's properties instead of going through the normal construction.
+
+This is accomplished through {{{Object.keys(<1st argument>).forEach(prop => this[prop] = clone(<1st argument>[prop]))}}}. In English, this says, "Assemble a list of every property name in the object passed as the 1st argument; then, for every one of those properties, clone the property in the passed argument and assign it to a property of the same name in this new object we're creating." Or, alternatively, "Make this object a clone of the 1st argument." The only trick is that we need to do the exact same thing in the {{{toJSON()}}} function to create an object to pass to the revival method, because just passing the existing object ({{{this}}}) to {{{reviveWrapper()}}} will create an error.
+
+(If our custom object doesn't reference any custom objects itself, we can use the shorter {{{Object.assign(this,<1st argument>)}}}. However, this method ensures all properties are cloned correctly too, so it is best to use it just to be safe.)
+
+<b>Warning:</b> Arrays return 'object' when passed to {{{typeof()}}}. If you want your normal constructor to read an array, you will need to use {{{instanceof Array}}} instead, as seen in the {{{Inventory}}} class:
+
+{{{
+constructor(ItemArray){
+	if (ItemArray instanceof Array){
+		var m = [];
+		ItemArray.forEach(function(item){
+			m.push([item.name,item]);
+		});
+		super(m);
+	}
+	else {
+		super(ItemArray);
+		Object.keys(ItemArray).forEach(prop => this[prop] = clone(ItemArray[prop]));
+	}
+	}
+}}}
+
+<h4><a id="JS.updates">What if we want to update something in a new version?</a></h4>
+Let's say one of your beta testers discovers an action or item is incredibly gamebreaking. Not a problem, you say, you'll just tweak some values in the database and all new games will use those values instead. But wait! People who are already playing the game and have the old version saved will still have the old values! How can you ensure they get updated too?
+
+Well, this serialization format actually takes care of that for you. Since a new object is created on a load, it'll incorporate any changes you made to the constructor. If you use the object-cloning method, the revived object will still be an exact copy of the old one -- but if not every property is stateful, or changed during the course of the game, you can just call it through the normal constructor.
+
+For instance, unless you're directly modifying items during gameplay, items should have fixed properties. The only thing about them that changes during normal gameplay is how much of them you have (the {{{stock}}} attribute). Conveniently, this is already a constructor argument! If we tell {{{toJSON()}}} to make a new item and pass the current item's {{{stock}}}, the {{{stock}}} will be preserved in the new item, but any changes you made to the database will be incorporated in the new version.
+
+{{{
+Item.prototype.toJSON = function () {
+	// Return a code string that will create a new instance
+	// containing our current data.
+	return JSON.reviveWrapper(String.format(
+		'new ItemAction({0},{1})',
+		JSON.stringify(this.name,this.stock)
+	));
+};
+}}}
+
+Of course, if you <i>do</i> want to make a game where items are highly modifiable and all their properties are stateful, you'll need to use the object-cloning method for {{{toJSON()}}} and update the items manually through an {{{onLoad()}}} function. But for most cases, this should be sufficient.
+
+<h2><a id="display">Display and aesthetics</a></h2>
+<img src="http://www.setschoolmw.com/twine/rpgengine/Capture.PNG" />
+
+Visual display -- the color and placement of the text, the borders around blocks, and the positioning of elements -- is determined by the <b>story stylesheet</b>, which can be accessed by clicking on the story title in the editor. This stylesheet uses a different coding language than Twine's script: CSS, or <b>Cascading Style Sheets</b>.
+
+By default, the content width is optimized for three-character parties, so you may want to extend it if you are looking for larger party sizes. With more advanced CSS elements, such as a grid, you could even incorporate features like a battle map where characters can move in two-dimensional space.
+
+If you didn't understand any of that, don't worry! You don't need to know CSS to use the engine, just if you want to make it look different.
+
+<h3><a id="statusdisplay">Displaying the status pane</a></h3>
+{{{
+<<victorycheck>>
+
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+<<include actorlist>>
+<<include commands>>
+<br/>
+</span>
+}}}
+
+This is the code for the "Battle!" passage. Notice that the status pane is in a separate {{{<span>}}} from everything else. This is necessary to get it to display in its proper spot, directly to the right of the battle content. The stylesheet code responsible for the correct display can be seen here:
+
+{{{
+.passage.battle {
+  width: 1030px;
+}
+
+#content {
+	float: left;
+	width: 640px;
+  border: dotted 1px;
+  padding: 1em;
+}
+
+#status {
+	float: right;
+	width: 300px;
+    min-height: 300px;
+	padding: 1em;
+	border-left: 1px solid;
+    font-weight: bold;
+}
+}}}
+
+The key component here is that <b>the passage itself</b> is set to be wider than the {{{#content}}} and {{{#status}}} widths together. If you don't do this, the two sections will crash into each other and display on separate lines, like so:
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/003.PNG" />
+
+Note, however, that this width is only fixed in passages tagged "battle". In all other passages, the passage width will scale to fit the resolution of the screen. This makes things easier for smaller monitors, but you'll need to make sure to tag any passage where you want to the status pane to display.
+
+You can tweak the widths in the stylesheet depending on your preferences.
+
+<h3><a id="nobr">The nobr tag</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/004.PNG" />
+
+You may notice a gray {{{nobr}}} tag at the top of several passages. <b>These are really important for preventing unwanted whitespace.</b> Twine parses all line breaks by default, even when you only use them to organize code. To make your code readable without creating tons of empty lines in the process, you'll need to use {{{nobr}}}. The downside to this is that when you <i>do</i> want a line break, you will need to add it manually with the {{{<br/>}}} tag.
+
+<h3><a id="pronouns">Personalized text</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/005.PNG" />
+
+So English has these annoying things called "gendered pronouns". As you can see in the above example from an earlier version of the engine, they make natural-sounding system text a little tricky.
+
+I tried to sidestep this issue by avoiding pronouns entirely in system messages, but eventually gave up and defaulted to the gender-neutral "they". This is great for <i>Cartoon Battle</i>'s genderless puppets, but sounds awkward when applied to other characters; not to mention you may want to have characters go up against animals or monsters, for whom "it" pronouns may be more appropriate.
+
+{{{
+switch (gender.toLowerCase()) {
+	case 'f':
+	case 'female':
+		this.pr = {obj: "her", subj: "she", pos: "her"};
+		break;
+	case 'm':
+	case 'male':
+		this.pr = {obj: "him", subj: "he", pos: "his"};
+		break;
+	case 'n':
+	case 'neuter':
+	case 'neutral':
+	case 'agender':
+		this.pr = {obj: "them", subj: "they", pos: "their"};
+		break;
+	default:
+		this.pr = {obj: "it", subj: "it", pos: "its"};
+};
+		
+this.them = this.pr.obj;
+this.they = this.pr.subj;
+this.their = this.pr.pos;
+switch (this.pr.subj) {
+	case "they":
+		this.theyare = "they are";
+		break;
+	default:
+		this.theyare = this.pr.subj + " is";
+}
+}}}
+
+To solve this, you can define pronouns as an attribute of a character's object! This attribute will itself require sub-attributes, because English is tricksier still and has different pronouns for different cases (if the person is the object or subject of the sentence, etc.). This code takes care of that minutiae for you; all you have to do is pass the gender (as a string, so in quotes) to the constructor when you create a character object. If you want to add different pronouns, you can make a new case here or set them manually when the object is created.
+
+Eventually I decided even that was too much of a nuisance, so I created redundant but more natural-sounding attributes you can use instead. As a bonus, I also created an attribute for the tricky case of conjugating "to be": it's "are" for "they", but "is" in all other cases. Until English decides to be sensible and adopt proper neutral pronouns, the {{{theyare}}} attribute will handle that for you.
+
+Twine will automatically print naked variables, so to use them you can just place them in text like this: {{{_subject.name swings _subject.their sword!}}} That will evaluate to "Ros swings their sword!" if {{{_subject}}}'s pronouns are set to neutral, or "Monster swings its sword!" if {{{_subject}}}'s pronouns are default, and so on.
+
+<h2><a id="setup">Setting up the battle</a></h2>
+{{{
+<<set $B = {turn: "player", event: false, surrender: false, kills: [], specialdeath: 0}>>
+<<restock>>
+<<call $scenario>>
+<<refreshPuppets>>
+<<set $inbattle to true>>
+<<goto "Battle!">>
+}}}
+
+The "Preparation" passage, shown here, is responsible for cleaning up variables and getting everything ready for the battle. You will want to have something like this to make sure every battle starts the way you want it to, without any loose flags or variables messing things up. Most of the things you see here are true/false flags for various states, such as whether or not we're in battle.
+
+What's particularly important here is {{{<<call>>}}}. This references a widget defined in the "Database: Encounters" passage.
+
+{{{
+<<widget "call">>
+
+<<switch $args[0]>>
+
+<<case "tutorial">>
+/* Dummy enemies for the tutorial. */
+<<set $enemies to [new Enemy(), new Enemy(), new Enemy()]>>
+<<run $enemies[0].effects.push(new Effect("Stunned",1,0))>>
+<<run $enemies[1].effects.push(new Effect("Pain",3,10))>>
+<<run $enemies[2].effects.push(new Effect("SPC Boost",3,10))>>
+}}}
+
+In "Database: Encounters" we can see how the {{{<<call>>}}} widget is used to create the enemy parties. They are created as arrays of either "Puppet" or "Enemy" objects, which is useful because it will allow us to easily iterate over them later.
+
+I recommend creating your own "Database: Encounters" passage as a separate twee file and use it to overwrite the default passage. In even a moderately-sized game, you are likely to have a lot of encounter groups, and it will be much easier to edit such a database in a word processor with a search function.
+
+{{{
+<<widget "refreshPuppets">>
+<<for _puppet range $puppets>>
+	<<set _puppet.hp = _puppet.maxhp>>
+	<<set _puppet.en = 5>>
+	<<set _puppet.isDone = false>>
+	<<set _puppet.inspired = false>>
+	<<for _k, _effect range _puppet.effects>>
+		<<run _puppet.removeEffect(_effect,"pierce")>>
+	<</for>>
+	<<find "_puppet.actions" "name" "\'Reload\'">>
+	<<if _pos > -1>>
+		<<set _puppet.actions[_pos] = new Action("Crossbow")>>
+	<</if>>
+<</for>>
+<</widget>>
+}}}
+
+{{{<<refreshPuppets>>}}} is defined in its own passage. This widget is used to standardize the states of player characters before and after battles. In the default engine, their HP, EN, and actions are reset to baseline, their effects are cleared, and Rogue's crossbow is reloaded if it's empty. You can change this if you want different behaviors, such as if you don't want to heal characters after every battle, or if you want some effects to persist after battle.
+
+<h2><a id="skeleton">How the battle passages work</a></h2>
+<img src="http://www.setschoolmw.com/twine/rpgengine/008.PNG" />
+
+The passages you see here are responsible for the structure of the battle engine: what the player sees and navigates through when they play. As you can see, though the battle screen looks like a single event when you play, it's actually comprised of many smaller passages, linked together through generous use of the {{{<<include>>}}} macro.
+
+The "Battle!" passage is the passage that ties everything together, but it doesn't contain much code, other than {{{<<include>>}}}ing the relevant passages in the right spots. However, it does contain one important piece:
+
+{{{<center><span class="battlebtn"><<button "end turn" "end of round">><<set $turn = "enemy">><</button>></span></center>}}}
+
+We need a way for the player to advance after they've finished their turn, naturally. This is the purpose of this section, which creates a link to the "end of round" passage, beginning the enemy's turn. This button will always be available even if the characters haven't acted yet, in case the player wants to skip their turn early for whatever reason.
+
+<h3><a id="actorlist">actorlist</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/009.PNG" />
+{{{
+<<set _class = "actors enemies">>
+<<if $scenario is "reverse display">>
+<<set _class += " reverse">>
+<</if>>
+
+<div @class="_class" id="enemies">
+<<for _i, _enemy range $enemies>>
+	<<if def _enemy.fullname>>
+		<<set _name = _enemy.fullname>>
+	<<else>>
+		<<set _name = _enemy.name>>
+	<</if>>
+
+	<<if _enemy.boss is true>>
+		<<set _class = "actor full">>
+	<<else>>
+		<<set _class = "actor">>
+	<</if>>
+	
+	<div class="actor">
+	<<if _enemy.dead is true>>
+		<font color="gray">_name</font><br/>
+		<br />
+	<<else>>
+		<<if ($targeting == "enemy" or $targeting == "all") and not _enemy.untargetable and not _enemy.protected>>
+			<<capture _i>>
+[[_name|confirm phase][$target = [$enemies[_i],"$enemies["+_i+"]"]; $targeting = null]]
+			<</capture>> 
+		<<else>>
+			<span class="actorname">_name</span>
+		<</if>>
+		<<capture _i>><<status `[$enemies[_i],"$enemies["+_i+"]"]`>><</capture>>
+		<br />
+		HP: _enemy.hp
+	<</if>>
+	</div>
+<</for>>
+
+</div>
+
+<br/>
+
+/* puppets */
+<div class="actors" id="puppets">
+
+<<for _i, _puppet range $puppets>>
+	<div class="actor">
+		<<if _puppet.dead is true>>
+			<font color="gray">_puppet.name</font><br/>
+			<br/>
+			<br/>
+		<<else>>
+			<<if ($targeting == "ally" or $targeting == "all") and !($subject[0].name == _puppet.name and def $selftargeting)>>
+				<<capture _i>>
+[[_puppet.name|confirm phase][$target = [$puppets[_i],"$puppets["+_i+"]"]; $targeting = null]]
+				<</capture>>
+			<<else>>
+				<span class="actorname">_puppet.name</span>
+			<</if>>
+			 <<capture _i>><<status `[$puppets[_i],"$puppets["+_i+"]"]`>><</capture>>
+			<br />
+			HP: _puppet.hp<br />
+			EN: _puppet.en / 10
+		<</if>>
+	</div>
+<</for>>
+
+</div>
+}}}
+
+The <b>actorlist</b> passage displays the battling characters.
+
+In the default formatting, each of the character "blocks" you see in-game are held in a CSS structure called a "flexbox". This is a really useful structure for placing elements in 1-dimensional space, as it gives us a lot of control over where its elements are placed and how they're formatted. The way this works is that there has to be a <i>container</i> element that controls the flexbox formatting, and <i>item</i> elements that go inside the container.
+
+The way this works in the default stylesheet is that the <i>actors</i> class is the container, and the <i>actor</i> class represents items. So before we do anything we need to make a {{{<div>}}} element with the class "actors" to create the container, then we can add elements classed "actor" inside:
+
+{{{<div @class="_class" id="enemies">}}}
+
+You can situationally modify the formatting of the flexbox using Twine's {{{@}}} operator. When placed before an HTML attribute, it will cause the attribute data to be read as TwineScript, allowing you to pass Twine variables as attributes. Here, we use it to input the class of the container element. If you want a certain battle scenario to display the characters in reverse order (such as in the Crystal Gems encounter in <i>Cartoon Battle</i>), you can define {{{_class}}} as "actors reverse" to add the additional "reverse" class to the container. In all other cases, {{{_class}}} is just defined as "actors", and the default formatting is used. <i>Note that you <b>must</b> always define something in {{{_class}}} if you use this method, as there is no way to evaluate the attribute as partially literal and partially TwineScript.</i>
+
+Once the container is established, we can start adding items. We can use a <i>for loop</i> to make this easy, since every character's block should be structured the same. The "actor" class is displayed as an <i>inline block</i> element, which means everything you put in it is displayed together -- handy for our character blocks, where we want to lump data together.
+
+Within each block, the name is printed, then a line break, then the character's HP, then the status button. (The stylesheet takes care of the placement of the status button: it doesn't matter where you put it in the code, as long as it is in the "actor" block.) In the puppet blocks, EN is printed on a new line after HP.
+
+{{{
+<<if def _enemy.fullname>>
+	<<set _name = _enemy.fullname>>
+<<else>>
+	<<set _name = _enemy.name>>
+<</if>>
+
+<<if _enemy.boss is true>>
+	<<set _class = "actor full">>
+<<else>>
+	<<set _class = "actor">>
+<</if>>
+}}}
+
+There's also a little handler here if you want to personalize the blocks further. You can make the character's name different than their "name" attribute; this can create a cool effect if you want a scary boss monster to have a big title and look intimidating. Similarly, you can add more classes to the block just like we did with the container, if you want a character's block to be bigger or a different color or what have you.
+
+{{{
+<<if _enemy.dead is true>>
+	<font color="gray">_name</font><br/>
+	<br />
+<<else>>
+	<<if ($targeting == "enemy" or $targeting == "all") and _enemy.untargetable is false>>
+		<<capture _i>>
+[[_name|confirm phase][$target = [$enemies[_i],"$enemies["+_i+"]"]; $targeting = null]]
+		<</capture>> 
+	<<else>>
+		<span class="actorname">_name</span>
+	<</if>>
+	<<capture _i>><<status `[$enemies[_i],"$enemies["+_i+"]"]`>><</capture>>
+	<br />
+	HP: _enemy.hp
+<</if>>
+}}}
+
+The if/else tree in this section determines how the character panes are displayed in different circumstances. If the character's HP is at 0, their name is grayed out, and their HP is not displayed at all. This is accomplished by the structure of the if clauses: the code to display HP is only performed in the else clause (that is, if the enemy is not dead), and not in the "if enemy dead" clause. If you wanted to display HP for defeated enemies, you could place the HP dispay code outside of the {{{<<if>>}}}.
+
+There is also a clause for target selection, which will be explained later.
+
+<h3><a id="commands">Commands</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/012.PNG" />
+{{{
+<div class="commandcontainer">
+<<for _i, _puppet range $puppets>>
+	<div class="commands">
+	<<if _puppet.dead is true>>
+	/* If puppet is defeated, display no commands. */
+	<<elseif _puppet.stunned is true>>
+		<div class="noact">
+		Stunned!
+		</div>
+	<<elseif _puppet.petrified is true>>
+		<div class="noact">
+		Petrified!
+		</div>
+	<<elseif _puppet.isDone is true>>
+		<div class="noact">
+		Done!
+		</div>
+	<<else>>
+		<<act `[$puppets[_i],"$puppets["+_i+"]"]`>><br />
+		<<rest `[$puppets[_i],"$puppets["+_i+"]"]`>><br />
+		<<items `[$puppets[_i],"$puppets["+_i+"]"]`>><br />
+		<<if $surrender is true>>
+			<<spare `[$puppets[_i],"$puppets["+_i+"]"]`>><br/>
+		<</if>>
+	<</if>>
+	</div>
+<</for>>
+</div>
+}}}
+
+The <b>commands</b> passage displays the commands used to play the game. The HTML elements place them in a container of similar dimensions to the character panes, thus aligning them in the same positions.
+
+As with <b>actorlist</b>, we start with an if/else tree for how the available commands will be affected by various circumstances. If a character is defeated, we don't want their commands to be available at all, so we don't display anything. If a character has an effect that prevents them from acting, their commands are replaced with a "Stunned!" message. And if a character has already acted, their commands are replaced with a "Done!" message to show this.
+
+It's only in the final {{{<<else>>}}} clause that we display the normal commands. The mechanics required for these are a bit more complicated than a normal Twine link, so they refer to custom widgets found in the "Widgets (General)" passage:
+
+{{{
+<<widget "act">>
+<<if _puppet.down is true>>
+	<<if $args[0][0].en >= $struggleCost>>
+		[[Struggle|confirm phase][$subject = $args[0]; $action = {name: "struggle", cost: $struggleCost}; $target = [null,null] ]]
+	<<else>>
+		<b>Exhausted!</b>
+	<</if>>
+<<else>>
+	[[Act|actions][$subject = $args[0]]]
+<</if>>
+<</widget>>
+}}}
+
+Don't worry about the if clause right now. The important part is the default {{{<<else>>}}} case, which links to the "actions" passage while assigning the current character to the {{{$subject}}} variable.
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/016.PNG" />
+{{{
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+<<include actorlist>>
+
+<<backbtn>><br/><br/>
+
+<<actionlist $subject[0]>>
+</span>
+}}}
+
+Instead of making a separate passage for every character (which would quickly get cumbersome), everything is outsourced to another widget in order to reduce clutter. This can be found in the "Widgets (General)" passage, and is discussed in <a href="#actions">How actions are constructed</a>.
+
+The "Item" command works similarly.
+
+Once you have selected an action, you are moved to the targeting phase to choose a target.
+
+<h3><a id="targetingphase">Targeting Phase</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/019.PNG" />
+{{{
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+<<include actorlist>>
+<<backbtn>>
+
+Select a target.
+</span>
+
+<<if $targeting == "enemy">>
+	<<find "$enemies" "martyr" "true">>
+	<<if _pos > -1>>
+		<<set $target = [$enemies[_pos],"$enemies["+_pos+"]"]>>
+   		<<set $targeting to null>>
+   		<<goto "confirm phase">>
+	<</if>>
+<</if>>
+}}}
+
+The <b>targeting phase</b> passage is not much to look at in and of itself. It is basically a filler passage that gives the player a stage to select their target. This will be bypassed if the enemy has a "Martyr" effect active; the Martyr will be set to the target and the player will be instantly forwarded to the confirm phase.
+
+However, to see how it behaves under normal circumstances, let us return to the <b>actorlist</b> passage:
+
+{{{
+<<if ($targeting == "enemy" or $targeting == "all") and not _enemy.untargetable and not _enemy.protected>>
+	<<capture _i>>
+[[_name|confirm phase][$target = [$enemies[_i],"$enemies["+_i+"]"]; $targeting = null]]
+	<</capture>> 
+<<else>>
+	<span class="actorname">_name</span>
+<</if>>
+}}}
+
+{{{
+<<if ($targeting == "ally" or $targeting == "all") and !($subject[0].name == _puppet.name and def $selftargeting)>>
+	<<capture _i>>
+[[_puppet.name|confirm phase][$target = [$puppets[_i],"$puppets["+_i+"]"]; $targeting = null]]
+	<</capture>>
+<<else>>
+	<span class="actorname">_puppet.name</span>
+<</if>>
+}}}
+
+Notice that there is an if clause for when {{{$targeting}}} is defined. This clause turns the character's name into a link that, when clicked, directs the player to the confirm phase and sets the character as the target of the ability.
+
+(There are also several riders for special circumstances: if an enemy is flagged untargetable they are, well, untargetable, and the same applies if they are protected by someone. On the player side, there is a rider that disables the user as a valid target if {{{$selftargeting}}} is defined. This will be explained in the action section.)
+
+<h3><a id="confirmphase">Confirm Phase</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/023.PNG" />
+{{{
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+<<include actorlist>>
+<<backbtn>>
+
+$subject[0].name will 
+
+<<if $action.name is "rest">>
+	<b>rest</b> this turn.
+<<elseif $action.name is "struggle">>
+	spend $struggleCost Energy to get back on their feet.
+<<elseif $action.item is true>>
+	use <<switch $action.name.first().toLowerCase()>><<case 'a' 'e' 'i' 'o' 'u'>>an<<default>>a<</switch>> $action.name.
+<<elseif $action.name is "spare">>
+	accept the enemy's surrender.
+<<else>>
+	use <b>$action.name</b><<if $target[0] isnot null>> on <b>$target[0].name</b><</if>>.
+<</if>>
+ [[Confirm?|action phase]]<br />
+<span class="preview">
+<<if $action.preview instanceof Function>>
+	<<print $action.preview()>>
+<<else>>
+	<<print $action.preview>>
+<</if>>
+</span>
+</span>
+}}}
+
+The confirm phase is very simple. It is designed as a courtesy to players to prevent them from accidentally confirming the wrong action by misclicking, and to allow them to review how the action will play out.
+
+The complicated-looking if clause here is just fluff to provide different messages depending on the class of action chosen. The a/an rule in English presents an issue when describing the use of items starting with vowels. I whipped up a quick {{{<<switch>>}}} statement to address this directly, but you may be able to come up with something more robust. (Or you could just accept defeat and display it as "a(n)". If you ever wondered why game developers do that, now you know!)
+
+The {{{preview}}} attribute is another courtesy to the player. It describes the expected effect of the action, such as pre-calculating damage. It's unique for every action, and can be examined in the action database JavaScript.
+
+<h3><a id="spellphase">Spell Phase</a></h3>
+In the default engine, Mage can expend additional energy points to make their spells stronger. This functionality is handled in the <b>spell phase</b> and <b>spell check</b> passages.
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/025.PNG" />
+{{{
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+<<include actorlist>>
+<<backbtn>>
+
+<<if isNaN($action.cost)>>
+You need to input a number.<br/>
+<<elseif $action.cost < $B.mincost>>
+Spell requires at least $B.mincost Energy.<br/>
+<<elseif $subject[0].en < $action.cost>>
+Not enough Energy!<br/>
+<</if>>
+
+How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
+<<textbox "$action.cost" $B.mincost "spell check" autofocus>><br/>
+(Press Enter to confirm.)<br/>
+</span>
+}}}
+
+The <b>spell phase</b> passage is shown above. A {{{<<textbox>>}}} macro is used to receive player input, because it allows the player to continue just by pressing the Enter key rather than having to fuss with another confirm link. The {{{<<textbox>>}}} modifies the {{{$action.cost}}} variable, is initialized to a default value of {{{$mincost}}} (the minimum cost for the spell), moves the player to the "spell check" passage when Enter is pressed, and autofocuses when the page is loaded.
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/027.PNG" />
+{{{
+<<run $action.cost *= 1>>
+<<if ($action.cost < $B.mincost) or ($subject[0].en < $action.cost) or isNaN($action.cost)>>
+<<goto "spell phase">>
+<<else>>
+
+<<run $action.spellMod()>>
+
+<<if $action.phase != "confirm phase">>
+	<<set $B.targeting = $action.target>>
+	<<goto "targeting phase">>
+<<else>>
+	<<print '<<goto \"'+$action.phase+'\">>'>>
+<</if>>
+
+<</if>>
+}}}
+
+The <b>spell check</b> passage, shown above, is not something the player should ever see. It is only for running calculations and directing the player to the correct passage.
+
+{{{<<run $action.cost *= 1>>}}}
+
+This initial {{{<<run>>}}} macro is needed to convert the {{{$action.cost}}} variable to a number, as it is passed as a string (text) when obtained through a text field.
+
+From there, the if clause checks if the {{{$action.cost}}} value is within acceptable bounds. If the player inputted less energy than the minimum, more energy than Mage currently possesses, or something that wasn't a number, the player is pushed back to the spell phase and prompted to try again.
+
+If the input was correct, the spell's {{{spellMod()}}} function is called to calculate adjustments for supercharging the spell. Each spell has a unique {{{spellMod()}}} that is defined in the action database. Once this is done, the player is directed to the next phase, and the action proceeds as normal.
+
+<h3><a id="actionphase">Action Phase</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/029.PNG" />
+
+This is where actions take place. The "action phase" passage itself only executes standard behavior, such as variable cleanup. This will be discussed later. The details of specific actions take place in the "action effects" passage, which is {{{<<include>>}}}d in "action phase".
+
+The actorlist passage is not included here, simply because it is difficult to update stats in real time.
+
+Let's look at "action effects":
+
+{{{
+<<switch $action.name>>
+	<<case "rest" "struggle" "Reload" "Procure">>
+/* These actions display no action text and take the player immediately back to the battle hub. */
+		<<switch $action.name>>
+			<<case "rest">>
+				<<if $subject[0].winded is true>>
+					<<for _effect range $subject[0].effects>>
+						<<if _effect.name is "Winded">>
+							<<print subject().removeEffect(_effect)>>
+						<</if>>
+					<</for>>
+				<</if>>
+			<<case "struggle">>
+				<<for _effect range $subject[0].effects>>
+					<<if _effect.name is "Knocked Down">>
+						<<print subject().removeEffect(_effect)>>
+					<</if>>
+				<</for>>
+			<<case "Reload">>
+				<<find "$subject[0].actions" "name" "\'Reload\'">>
+				<<set $subject[0].actions[_pos] = new Action("Crossbow")>>
+			<<case "Procure">>
+				<<run $inventory.get($item_to_procure).stock += 1>>
+  		<</switch>>
+		<<goto "Battle!">>
+}}}
+
+The first section handles actions that don't do anything significant enough to require a message. In the default engine, these actions are resting, struggling, and Rogue's Reload action. Their functionality is handled in this first section, and then the player is immediately directed back to the "Battle!" passage.
+
+The "default" case here handles everything else -- that is to say, actions that <i>do</i> display a message and create text during the action phase.
+
+How you code this section will depend on exactly how you want your actions to look. By default, this passage neatly partitions the display into use text, flavor text, and the mechanical effect of the action. Every section is given a unique ID that can be modified in the story stylesheet.
+
+{{{
+<div id="actFlavor">
+
+<<if $action.useText !== null>>
+<div id="useText">
+<<if $action.useText instanceof Function>>
+	<<print $action.useText()>>
+<<else>>
+	<<print $action.useText>>
+<</if>>
+</div>
+<</if>>
+
+<<include "battle interruptions">>
+
+<<if $action.actText !== null>>
+<div id="actText">
+<<if $action.actText instanceof Function>>
+	<<print $action.actText()>>
+<<else>>
+	<<print $action.actText>>
+<</if>>
+</div>
+<</if>>
+
+</div>
+}}}
+
+First, we're going to open the "#actFlavor" {{{div}}}. This is the black-bordered text box that contains the descriptive text of the action. There are two portions to this {{{div}}}, the use text and the action text, and both get their own {{{div}}}s that you can format independently. The contents are defined as attributes of the action, and can be either normal strings, or functions (if, for instance, you want text to vary depending on certain variables). If you wish to bypass either element, you can set the corresponding attribute to {{{null}}} and the {{{div}}} will not generate.
+
+There is also a call to {{{<<include>>}}} the "battle interruptions" passage, which can add special circumstances and additional scenes, such as one enemy protecting another from your attack.
+
+{{{
+<<if $action.act !== null>>
+<div id="actEffect">
+
+<<if def _msg>>
+<<print _msg>>
+<</if>>
+
+<<if $action.act instanceof Function>>
+<<print $action.act()>>
+<<else>>
+<<print $action.act>>
+<</if>>
+
+</div>
+<</if>>
+}}}
+
+Then, there is a similar section for mechanical effects. Like use and act text, this is defined as an attribute of the action, usually a string of SugarCube code (which will execute as normal when {{{<<print>>}}}ed), and the element will not appear at all if the attribute is set to {{{null}}}. There is also a handler for the {{{_msg}}} variable, which handles a complicated problem discussed in <a href="#targeting.basic">Standard Targeting</a>.
+
+This format creates a very nice, standardized, and customizable appearance for actions, but it does require actions to adhere to its rigid structure. All non-invisible actions <i>must</i> have a {{{useText}}}, {{{actText}}}, and {{{act}}} attribute, even if it's only {{{null}}}. Otherwise, you're going to be drowning in error messages when this passage displays.
+
+{{{
+<span id="content">
+
+<<if $action.name == "spare">>
+	<<run $target[0].surrender()>>
+<</if>>
+
+<<include "action effects">>
+
+/* Variable cleanup. Due to the way goto works, this will work even for invisible actions. */
+
+/* If target was an enemy (i.e. an attacking skill was used), subject is marked as attacker. (This is for enemies that target the last puppet to attack them.) */
+<<if $target[0] instanceof Enemy>>
+	<<set $attacker = $puppets.indexOf($subject[0])>>
+<</if>>
+
+/* If action was an item, decrement item stock and reset item flag */
+<<if $B.turn == "player" && $action instanceof ItemAction>>
+	<<print $inv.decItem($action.name)>>
+<</if>>
+
+/* isDone logic; checks for confounding factors */
+<<if $B.instant is true>>
+	<<set $B.instant to false>>
+<<elseif $subject[0].inspired is true>>
+	<<set $subject[0].inspired to false>>
+<<else>>
+	<<set $subject[0].isDone to true>>
+<</if>>
+
+/* Subtract action cost */
+<<if $action.name isnot "Focus">>
+	<<set $subject[0].en -= $action.cost>>
+<</if>>
+
+/* Archer's mark attacks */
+<<markAttack>>
+
+<<if $B.surrender && def $action.name>>
+	<<run $enemy_to_spare.surrenderCheck()>>
+<</if>>
+
+<br/>
+<center><span class="btn">[[Continue...|Battle!]]</span></center>
+
+</span>
+}}}
+
+Now you can see how it all comes together in the action phase. The bits of code at the end are for tidying up. Cost and items are deducted, the subject is flagged as done for the turn, and aggro enemies record the subject if the action was directed at an enemy. This code is simple in its basic structure, but a few special cases require some {{{<<if>>}}} statements, such as instant skills or the additional turn from Mage's "Inspiration" ability.
+
+{{{
+<<if $B.surrender && def $action.name>>
+	<<run $enemy_to_spare.surrenderCheck()>>
+<</if>>
+}}}
+
+There is also functionality here for calling the {{{surrenderCheck}}} function, described in the <a href="#JS.enemies">Enemy Database</a>. If the player uses an action that doesn't pass the check, the surrendering enemy will be aggro'd and cease their surrender.
+
+In the default engine, the check for Energy cost deduction is only used for Mage's "Focus" ability. I wanted Focus to follow the logic of "Mage expends the cost, <i>then</i> gets Energy", but the default structure of making all actions take place before Energy deduction would make it work the other way around, potentially costing Mage if they were at or close to max EN. If you want all actions to work like that, it may be better to place cost deduction at the beginning of the passage rather than the end.
+
+{{{markAttack}}} is discussed elsewhere.
+
+<h3><a id="endofround">End of Round</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/037.PNG" />
+{{{
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+<<include actorlist>>
+
+<<if $B.turn eq "player">>
+/* If the turn reads "player", it's because the enemy round just finished. Run end of turn for enemies. */
+	<<endofround $enemies>>
+	<<newturn>>
+	<<if _message>>
+		[[(Continue...)|Battle!]]
+	<<else>>
+		<<goto "Battle!">>
+	<</if>>
+	
+<<elseif $B.turn eq "enemy">>
+/* If the turn reads "enemy", the player turn just finished. Run end of turn for player. */
+	<<endofround $puppets>>
+	<<if _message>>
+		[[(Continue...)|enemy phase]]
+	<<else>>
+		<<goto "enemy phase">>
+	<</if>>
+<</if>>
+</span>
+}}}
+
+As you can see, the functionality of the <b>end of round</b> passage is mostly outsourced to a widget, which can be found in the "Widgets (General)" file.
+
+{{{
+<<widget "endofround">>
+<<for _actor range $args[0]>>
+        <<for _k, _effect range _actor.effects>>
+                /* DoT check */
+                <<if _effect.dot is true>>
+                        <<set _message to true>>
+                        <<set $dmg = _effect.damage(_actor)>>
+						<<print _effect.msg(_actor)>>
+                        <br/>
+                        <<run _actor.setHP(-$dmg)>>
+                        <<set $target[0] = _actor>>
+                        <<deathcheck>>
+                <</if>>
+                
+                /* decrementor */
+                <<if !_effect.topDec>>
+					<<if _effect.duration >= 1 and !(_actor.stasis is true and _effect.name != "Stasis")>>
+                    	<<set _effect.duration -= 1>>
+					<</if>>
+                	<<if _effect.duration == 0>>
+                    	<<set _m = _actor.removeEffect(_effect,'pierce')>>
+						<<if _m.length > 0>>
+							<<print _m>>
+							<<set _message to true>>
+						<</if>>
+                	<</if>>
+				<</if>>
+        <</for>>
+<</for>>
+<</widget>>
+}}}
+
+The main purpose of the end-of-round widget is to handle status effects. Status effect durations are decremented, except for certain special effects that are decremented at the start of the round instead, and damage-over-time effects inflict their damage.
+
+This is accomplished through two for loops: one across the party (which party is specified in the argument given to the widget), and one across the effects of the current character.
+
+Each effect's duration is decremented by 1. If a damage-over-time effect is found, its damage is calculated its damage message is printed. If an effect reaches 0 duration, it is removed.
+
+(A special clause is included to implement the functionality of the "Stasis" effect: effects will only decay if "stasis is true and this effect is not Stasis" is <i>not</i> true. This means that if the character's "stasis" flag isn't true, the if clause will evaluate to true and run normally. If it is true, that clause will be flipped to false and the if clause will fail, skipping the decrementor. This accomplishes the functionality of Stasis freezing effects in place. However, if we just ended it there, Stasis would last forever, because it wouldn't be affected by the decrementor either! That's why we need the second caveat: if the effect <i>is</i> Stasis, the whole clause will evaluate to false and then be flipped to true, allowing the contents of the if to execute. Thus, only Stasis decays while Stasis is active.)
+
+The {{{_message}}} flag is used to ensure the player only lingers on the "end of round" passage if necessary. If no messages were generated, {{{_message}}} will remain false, and the player will be pushed to the next passage automatically. This is done to create a smoother player experience.
+
+If the player's turn is about to begin, the {{{<<newturn>>}}} widget, found nearby in the "Widgets (General)" file, is called:
+
+{{{
+<<widget "newturn">>
+<<set $SacrificeUsed to false>>
+<<for _puppet range $puppets>>
+	<<set _puppet.isDone to false>>
+	<<for _k, _effect range _puppet.effects>>
+		<<if _effect.topDec>>
+			<<print _puppet.removeEffect(_effect,"pierce")>>
+		<</if>>
+	<</for>>
+	<<if _puppet.winded is false>>
+		<<set _puppet.en += $ENregen>>
+	<</if>>
+<</for>>
+<</widget>>
+}}}
+
+This decrements top-of-round status effects and regenerates each character's EN, unless they are hindered by a Winded effect.
+
+<h3><a id="enemyphase">Enemy Phase</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/042.PNG" />
+
+The enemy turn. This passage is complicated, because it must essentially incorporate all the events of the previous passages at once.
+
+{{{<<for _k, _enemy range $enemies>>}}}
+
+First, a <i>for loop</i> is started, and runs across the enemy party. This for loop also contains an <i>iterator value</i>, {{{_k}}}, that allows us to pass the enemy's address in the array to the {{{$subject}}} variable.
+
+{{{<<if !_enemy.dead>>}}}
+
+Then, obviously, we don't want anything to happen if the enemy's defeated. Nothing happens outside of this {{{<<if>>}}}.
+
+{{{
+<<for _k, _effect range _enemy.effects>>
+	<<if _effect.topDec>>
+		<<run _enemy.removeEffect(_effect,'pierce')>>
+  	<</if>>
+<</for>>
+}}}
+
+The passage then performs the enemy's equivalent of {{{<<newturn>>}}}, decrementing top-of-round effects.
+
+{{{
+<<if _enemy.stunned>>
+	<<set $action = {useText = null,
+		actText = "_enemy.name is stunned!",
+		act = null}>>
+	<<run _enemy.decCD()>>
+<<elseif _enemy.down>>
+	<<set $action = {useText = null,
+		actText = "_enemy.name struggles back to _enemy.their feet.",
+		act = null}>>
+<<for _k, _effect range _enemy.effects>>
+	<<if _effect.name is "Knocked Down">>
+		<<run _enemy.removeEffect(_effect,'pierce')>>
+	<</if>>
+<</for>>
+}}}
+
+The enemy is then checked against hold effects. If the enemy is stunned or knocked down, their turn is skipped and a message to this effect is displayed. Recall from <a href="#actionphase">the Action Phase</a> that actions need defined text attributes, so we have to set those even for these "filler" actions.
+
+{{{
+<<else>>
+	<<run _enemy.decCD()>>
+	<<set $action = null>>
+	<<run _enemy.actions()>>
+<</if>>
+}}}
+
+Only in the default {{{<<else>>}}} clause, if the enemy passes all these checks, does enemy action occur. The details of the {{{actions}}} function can be found in the database-enemies JavaScript file, which is discussed <a href="#JS.enemies">here</a>. Setting {{{$action}}} to {{{null}}} is necessary to ensure the function works correctly; otherwise the enemy will think they've already selected an action.
+
+{{{<<include "action effects">><br/>}}}
+
+After the enemy's action has been determined, we must {{{<<include>>}}} the "action effects" passage for it to all play out. A line break is added afterwards to let the enemies' boxes look neatly spaced apart.
+
+<h2><a id="actions">Actions</a></h2>
+{{{
+/* Widget for display of player actions. */
+/* Sacrifice's HP cost is set in StoryInit. Currently it is 50. */
+
+//actions
+/* Individual action widgets take cost, damage multiplier, and other relevant variables as arguments so they can be displayed in the description. Values are given in "Database: Actions". */
+/* Self-targetting and AoE abilities must set target to null to make certain other things line up. */
+
+<<widget "actionlist">>
+<<set _char = $args[0]>>
+<<for _action range _char.actions>>
+<b><<if $args[0].en < _action.cost or $tutorial is true or (_action.name is "Sacrifice" and $SacrificeUsed is true)>>
+/* If insufficient energy, just display the action name (no link). */
+_action.name
+<<elseif $args[0].dizzy is true and _action.basic isnot true>>
+/* If dizzy and action not basic, display the name as crossed out followed by a gray "Dizzy!" message. */
+<del>_action.name</del> <span class="dizzy">Dizzy!</span>
+<<elseif $args[0].hp <= _action.hpcost>>
+/* If puppet has insufficient HP for an HP-consuming skill, the name is crossed out. */
+<del>_action.name</del> Not enough HP!
+<<else>>
+	<<capture _action>>
+	<<link "_action.name">>
+		<<set $action = clone(_action)>>
+		<<set $targeting = _action.target>>
+		<<set $selftargeting = _action.self>>
+		<<set $instant = _action.instant>>
+		<<if _action.phase is "confirm phase">>
+			<<set $target = [null,null]>>
+			<<set $targeting = null>>
+		<<elseif _action.phase is "spell phase">>
+			<<set $mincost = _action.cost>>
+			<<set $targeting = null>>
+		<</if>>
+		<<print '<<goto "'+_action.phase+'">>'>>
+	<</link>>
+	<</capture>>
+<</if>>
+</b> <<if _action.name isnot "Procure">>(<<print _action.cost>><<if _action.phase is "spell phase">>+<</if>>)<</if>><<if _action.instant>><span class="right">[Instant] </span><</if>> <<if _action.basic>><span class="right">[Basic] </span><</if>><br />
+<<print _action.info>><br/>
+<span class="actdesc"><<print _action.desc>></span><br/>
+<br/>
+<</for>>
+<</widget>>
+}}}
+
+The construction of actions is previously discussed in <a href="#JS.actions">the action database</a>. They are displayed in-game through this widget, found in the "Widgets (General)" file. This widget iterates across the "actions" array of a character with a <i>for loop</i> to create the links you use to select actions in the game.
+
+<h3><a id="actions1">Special Cases</a></h3>
+The default {{{<<else>>}}} case, which determines how things normally look, is listed last, so special cases come first in the code.
+
+{{{
+<<if $args[0].en < _action.cost or $tutorial is true or (_action.name is "Sacrifice" and $SacrificeUsed is true)>>
+_action.name
+}}}
+
+The most obvious case is when the character has insufficient energy to perform an action; obviously the player shouldn't be able to choose the action in this case. The {{{<<if $args[0].en < _action.cost>>}}} clause takes care of this. If the character can't pay the cost, the action's name is displayed as plain text with no special properties. (If you want it to display some other way, you can add your own HTML and CSS to give it a different appearance.) This also happens to be how I wanted the action to look in the special case that the "Sacrifice" skill was already used during the turn, so that is included in this clause as well.
+
+{{{
+<<elseif $args[0].dizzy is true and _action.basic isnot true>>
+<del>_action.name</del> <span class="dizzy">Dizzy!</span>
+}}}
+
+The next clause handles the "Dizzy" effect. Most RPGs have a "skill lock" effect that prevents characters from using anything but basic attacks; the example you are probably most familiar with is the "Silence" effect from the <i>Final Fantasy</i> series of games. Since <i>Cartoon Battle</i> had a lot of physical skills, I chose to use the name "Dizzy" instead, implying that the characters could not perform complex actions while disoriented.
+
+What this clause says is that if the character's "dizzy" flag is marked true, the action name is crossed out next to a "Dizzy!" message, again with no clickable link -- unless the action is flagged "basic", in which case the {{{and _action.basic isnot true}}} conditional will fail and this section will be bypassed.
+
+Despite being functionally identical to the first clause, I chose to make this a separate clause to convey more information to the player. If the action looks the same regardless of whether the character is dizzy or out of energy, the player might be confused about why they're deactivated. Making a different display for each helps the player understand what's going on.
+
+{{{
+<<elseif $args[0].hp <= _action.hpcost>>
+<del>_action.name</del> Not enough HP!
+}}}
+
+The final case deactivates the link for HP-consuming skills if the character does not have the requisite HP, with a unique message again for clarity for the player. Some games will let characters kill themselves with HP-consuming skills, but I chose to be nice and prevent this possibility in <i>Cartoon Battle</i>. (If the {{{hpcost}}} attribute is undefined this conditional will simply be skipped, so you don't have to worry about defining it for every action.)
+
+<h3><a id="actions2">The Functional Link</a></h3>
+{{{
+<<else>>
+	<<capture _action>>
+	<<link "_action.name">>
+		<<set $action = clone(_action)>>
+		<<set $targeting = _action.target>>
+		<<set $selftargeting = _action.self>>
+		<<set $instant = _action.instant>>
+		<<if _action.phase is "confirm phase">>
+			<<set $target = [null,null]>>
+			<<set $targeting = null>>
+		<<elseif _action.phase is "spell phase">>
+			<<set $mincost = _action.cost>>
+			<<set $targeting = null>>
+		<</if>>
+		<<print '<<goto "'+_action.phase+'">>'>>
+	<</link>>
+	<</capture>>
+<</if>>
+}}}
+
+Then comes the default {{{<<else>>}}} clause for displaying the functional link.
+
+Before we do anything, we need to {{{<<capture>>}}} the current {{{_action}}} for our {{{<<link>>}}}. Links are activated by the user after the page has already rendered, and thus after the loop is finished. If we don't capture our iterator variable, every link will behave based on the data from the last action found by the loop. {{{<<capture>>}}} holds variables within its bounds, so the variable can be used correctly by the link.
+
+(Notice that {{{$selftargeting}}} is set to the "self" attribute of the action. Since it's so rare to disallow self-targeting actions, it would be tedious to need to mark this "true" for most actions just so it won't come up. This is why the if clause back in <a href="#targetingphase">the targeting phase</a> only specifies if {{{$selftargeting}}} is defined at all. If there's no "self" attribute, {{{$selftargeting}}} will become undefined and the action will proceed as normal. This type of coding is a little risky and you may want to change it if you wish to do more complex things, but it works for this purpose.)
+
+We then create a {{{<<link>>}}} macro with the text of the action's name. Within the {{{<<link>>}}} macro, we define code to be run when the link is clicked. This code assigns a <i>clone</i> of the action to the permanent {{{$action}}} variable, or in other words, a copy. As discussed in <a href="#chain">the {{{<<chain>>}}} widget</a>, what is done to one object variable is done to all variables that reference the same object. So if we were to manipulate {{{$action}}} (such as by modifying the {{{cost}}} attribute for variable-cost spells), we would run the risk of passing on that change to the permanent action in the character's array as well. The clone avoids this problem.
+
+If the action is a spell, the link also stores the minimum cost, which will be used later in the spell phase.
+
+After all the variables are assigned, the link forwards the player to the next phase, based on what the action specified.
+
+{{{
+<<if _action.name isnot "Procure">>(<<print _action.cost>><<if _action.phase is "spell phase">>+<</if>>)<</if>><<if _action.instant>><span class="right">[Instant] </span><</if>> <<if _action.basic>><span class="right">[Basic] </span><</if>><br />
+<div><<print _action.info>></div>
+<div class="actdesc"><<print _action.desc>></div>
+}}}
+
+The final section looks like a mess because it modifies the display of some fiddly pieces that can vary by single characters. What this says is that the energy cost of the action is displayed in parentheses after everything else, <i>unless</i> the action is Procure, in which case this section displays nothing; and a "+" is also printed after the cost number if the action was a variable-cost spell. After all this, the [Instant] and [Basic] tags are also printed if those flags are true for the action. After, the action's info and flavor text are printed, in {{{<div>}}}s to segregate them into neat blocks.
+
+<h3><a id="crossbow">How does Rogue's crossbow work?</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/054.PNG" />
+<img src="http://www.setschoolmw.com/twine/rpgengine/055.PNG" />
+
+When Rogue uses the Crossbow ability, it's replaced by a new ability, Reload, which must be used before Crossbow can be used again. How is this accomplished?
+
+{{{
+case "Crossbow":
+	this.cost =		0;
+	this.weight =	1;
+	this.basic =	true;
+	this.info =		`Attack with a weight of ${this.weight}. Needs reloading after use.`;
+	this.desc =		`Ah, the marvel of modern technology: while other fools tire themselves out swinging those heavy weapons, Rogue can send death flying through the air with just a twitch of the finger.`;
+	this.useText = null
+	this.actText = function () {
+		return `${State.variables.subject[0].name} fires their crossbow with a <i>twang</i>.`;
+	}
+	this.act = function () {
+		return `<<echodamage>>`+
+		`<<find "$subject[0].actions" "name" "\'Crossbow\'">>`+
+		`<<set $subject[0].actions[_pos] = new Action("Reload")>>`;
+	}
+	break;
+		
+case "Reload":
+	this.cost =		2;
+	this.phase =	"confirm phase";
+	this.basic =	true;
+	this.info =		`Reload crossbow.`;
+	this.desc =		`...Of course, crossbows also take an age and a half to reload.`;
+	this.preview = "";
+	break;
+}}}
+
+To begin with, observe that these are both defined as separate actions in the action database. This allows us to easily create either a "Crossbow" or "Reload" action as needed.
+
+{{{
+(database-actions)
+case "Crossbow":
+	(...)
+	this.act = function () {
+		return `<<echodamage>>`+
+		`<<find "$subject[0].actions" "name" "\'Crossbow\'">>`+
+		`<<set $subject[0].actions[_pos] = new Action("Reload")>>`;
+	}
+	break;
+
+(action effects)
+<<case "Reload">>
+	<<find "$subject[0].actions" "name" "\'Reload\'">>
+	<<set $subject[0].actions[_pos] = new Action("Crossbow")>>
+}}}
+
+From there, we can just swap them in and out of Rogue's "actions" array by replacing the object at that position with Reload or Crossbow. We'll use <a href="#find">the {{{<<find>>}}} widget</a> to ensure we find the right ability, whatever its position in the array.
+
+The principles behind this mechanic are useful if you want to make a game like <i>Final Fantasy VII</i> where skills can be swapped out like equipment.
+
+<h3><a id="items">Items</a></h3>
+Items are coded almost exactly the same way as actions. The only real difference is that the link reads the item's {{{action}}} attribute, which is defined exactly the same way as a regular action. This data can be found in the "Widgets (General)" file.
+
+<h2><a id="damage">Calculating and applying damage</a></h2>
+Because these widgets are complicated, they are placed in their own twee file, "Damage and Formulas".
+
+The widgets for calculating and displaying damage are separate, due to the need to pre-calculate damage for the {{{<<preview>>}}} widget.
+
+<h3><a id="damage.1">Calculating damage</a></h3>
+{{{<<damagecalc>>}}}'s control flow is as follows:
+
+{{{<<set _w = $action.weight>>}}}
+
+First, extract the active action's {{{weight}}} attribute into a shorter variable, for convenience.
+
+{{{
+<<if $action.item is true>>
+	<<set _atk to $subject[0].get("Special")>>
+<<else>>
+	<<set _atk to $subject[0].get("Attack")>>
+<</if>>
+}}}
+
+Then, check if the action is an item. This is tracked through the {{{item}}} flag. Items use Special as the attacking stat, so the subject's Special is stored in the {{{_atk}}} variable for convenience. For all other attacks, the Attack stat is used, so the subject's Attack is stored in the {{{_atk}}} variable instead.
+
+{{{
+<<if $action.pierce is true>>
+	<<set _def to 0>>
+<<else>>
+	<<set _def to $target[0].get("Defense")>>
+<</if>>
+}}}
+
+The widget then checks if the attack is a piercing attack. This is tracked through the {{{$action.pierce}}} flag, which is activated when piercing attacks are selected. If {{{$action.pierce}}} is active, the target's Defense stat will be ignored, so we set {{{_def}}} to 0. Otherwise, we set {{{_def}}} to the target's Defense, as you may expect.
+
+{{{
+<<switch $action.name>>
+<<case "Exacerbate">>
+	<<for _effect range $target[0].effects>>
+		<<if _effect.buff isnot true>>
+			<<set _w += 0.25>>
+		<</if>>
+	<</for>>
+<<case "Downfall">>
+	<<for _effect range $target[0].effects>>
+		<<if _effect.buff is true>>
+			<<set _w += 0.2>>
+		<</if>>
+	<</for>>
+<</switch>>
+}}}
+
+Then the widget checks for special actions. The "Exacerbate" and "Downfall" abilities gain more weight in certain circumstances, so those are checked here. You could reasonably give every action its own formula here if you wanted, though it might be wiser to make that an attribute of the action instead.
+
+{{{
+<<switch $formula>>
+	<<case "subtractive">>
+		<<set $dmg to (($base+$damper*_atk)*_w)-$damper*_def>>
+	<<case "bonfire">>
+		<<set $dmg to ($base+$damper*(_atk-_def))*_w>>
+	<<case "rpgmaker">>
+		<<set $dmg to (_atk*4-_def*2)*$damper*_w>>
+	<<case "divisive">>
+		<<set $dmg to ($base*(_atk/_def))*_w>>
+	<<default>>
+		/* add your own here! */
+<</switch>>
+}}}
+
+Then damage is actually calculated. I've provided functionality for 4 possible formulas, though it's set to "subtractive" by default. The construction behind these damage formulas is discussed in [[the design page|Design]]. You may want to change it for your game.
+
+{{{
+<<if def $action.element>>
+	<<set _factor = $target[0].elements.get($action.element)>>
+<</if>>
+<<if ndef _factor>>
+	<<set _factor = 1>>
+<</if>>
+<<set $dmg *= _factor>>
+}}}
+
+We then check for elemental effects. If the action has an element, we'll use it to find the target's resist value for that element, then apply it to the damage value. If there wasn't an element or the target has no associated resistance value {{{_factor}}} will be undefined and cause an error when we attempt to apply it to {{{$dmg}}}, so a quick check is done to set {{{_factor}}} to a number in that eventuality.
+
+{{{
+<<if _factor > 1>>
+	<<set _elntmsg to "Super effective! ">>
+<<elseif _factor < 1 and _factor > 0>>
+	<<set _elntmsg to "Not very effective... ">>
+<<elseif _factor == 0>>
+	<<set _elntmsg to "No effect! ">>
+<<elseif _factor < 0>>
+	<<set _elntmsg to "Absorbed! ">>
+<</if>>
+}}}
+
+There is then a check for if the elemental attack hit a weakness or a resistance. If it's a weakness ({{{_factor}}} greater than 1), we store a message of "Super effective! "; if it's a resistance ({{{_factor}}} less than 1), we store a message of "Not very effective... "; and so on. (Note the additional space at the end of each message; this is necessary for it to display correctly later.) This is a means of transparency to the player, to let them know when they've hit a weakness or resistance. You can customize these messages or even remove them entirely if you see fit; you could even expand the code to create a unique message for every element, if you want!
+
+{{{
+<<if $subject[0].berserker is true>>
+	<<set $dmg *= (1+$berserk_factor)>>
+<</if>>
+<<if $target[0].berserker is true>>
+	<<set $dmg *= (1+$berserk_factor)>>
+<</if>>
+<<if $subject[0].defender is true>>
+	<<set $dmg *= $defend_factor>>
+<</if>>
+<<if $target[0].defender is true>>
+	<<set $dmg *= $defend_factor>>
+<</if>>
+<<if $target[0].shield is true>>
+	<<set $dmg *= (1-$SHIELD_FACTOR)>>
+<</if>>
+}}}
+
+Fighter's Berserker and Defender modifiers are then checked for, and implemented if they are flagged true. Since these modifiers affect both incoming and outgoing damage, they each must be checked twice, once against the subject and once against the target.
+
+{{{<<set $dmg = Math.round($dmg)>>}}}
+
+We then use the {{{Math.round()}}} function to remove any decimal values.
+
+{{{
+<<if _factor < 0>>
+	/* do nothing */
+<<elseif $dmg < $min_dmg>>
+	<<set $dmg = $min_dmg>>
+<</if>>
+}}}
+
+Finally, the widget checks if the final damage value is lower than the minimum damage value. This should probably be a positive value; we don't want to accidentally heal people with our attacks by dealing negative damage, after all. (Unless they absorb the element, of course, so this check is bypassed if {{{_factor}}} is negative.) Some games will allow 0 damage to occur, but others have minimum damage values. For <i>Cartoon Battle</i>, I chose to be nice and have attacks always deal at least 1 damage, even if that may as well be nothing with the HP values I chose.
+
+<h3><a id="damage.2">Applying damage</a></h3>
+{{{<<echodamage>>}}} applies previously-calculated damage and alerts the player to this fact with a message.
+
+{{{
+<<if !$args.includes("nocalc")>>
+	<<damagecalc>>
+<</if>>
+}}}
+
+For simplicity, {{{<<damagecalc>>}}} is run again here, but you may notice there's a clause to prevent this call if a "nocalc" argument is passed in. This allows functionality for special damaging attacks that don't use the normal damage formula, such as mass attack items.
+
+{{{<<if $target[0].dead is false>>}}}
+
+We do a common-sense check to make sure the target isn't already defeated. There's no point in beating a dead goblin.
+
+{{{
+<<if $target[0].bubbled is true>>
+$target[0].name's bubble pops like a balloon under your attack, leaving them unharmed!<br/>
+	<<for _effect range $target[0].effects>>
+		<<if _effect.name == "Bubble">>
+			<<run target().removeEffect(_effect,"pierce")>>
+			<<break>>
+		<</if>>
+	<</for>>
+}}}
+
+Certain status effects also interact with direct damage, and they're accounted for here. The "Bubble" effect is designed to protect a character from direct damage once, so that's checked for here. If the character's "bubbled" flag is true, they are spared the damage but lose the bubble shield. The normal damage message is only displayed if this check is failed.
+
+(Savvy readers may notice the "pierce" argument is passed to the {{{removeEffect}}} here. I figured Bubble would be ludicrously overpowered if it could be fixed by Stasis, so this removal bypasses it. For more on this topic, see <a href="#effects">Status Effects</a>.)
+
+{{{
+<<if def _elntmsg>><b><<print _elntmsg>></b><</if>>
+<<if _factor < 0>>
+$target[0] feeds on the energy, and recovers <<print $dmg*-1>> HP.
+<<else>>
+$target[0].name takes $dmg damage!
+<</if>>
+}}}
+
+If {{{_elntmsg}}} exists (which is to say, the element mattered), it's displayed before the damage message. You can move it elsewhere if you prefer. I also chose to make a totally separate message for absorbing an attack, because <i>[Name] takes -10 damage!</i> would probably look very confusing to a player even if it does give you the information you need.
+
+{{{
+<<<set $target[0].setHP(-$dmg)>>
+<<deathcheck>>
+}}}
+
+And now we apply damage. Since absorbed damage is negative, {{{<<<set $target[0].setHP(-$dmg)>>}}} will work for all cases and doesn't require multiple clauses. After, we run {{{<<deathcheck>>}}} to apply the "dead" flag if the character has fallen below 0 HP.
+
+{{{
+<<if $target[0].dead is false and $target[0].offbalance is true and _factor > 0>>
+	<<addeffect $target[0] "Knocked Down" -1>>
+<</if>>
+}}}
+
+Finally, after taking damage, the character is checked for the "Off-Balance" effect. If they have it (and are still alive), they gain a new "Knocked Down" effect. (As discussed in <a href="#effects1">Applying Effects</a>, this will also remove the Off-Balance effect, but this functionality is built in to {{{<<addeffect>>}}}.) I chose to disallow this if the attack was absorbed, since logically you shouldn't be hurt by getting healed, but you could remove the clause if you think that's more logical.
+
+<h2><a id="effects">Status Effects</a></h2>
+Status effects are a common feature of RPGs, and give them greater tactical depth. They do things like temporarily changing your stats, or affecting what actions you can use.
+
+In Another RPG Engine, status effects for each character are stored in an array, defined in the story JavaScript as an attribute of the <b>Actor</b> class. Most aspects of status effects are defined in <a href="#JS.effects">the effect database</a>, but the logic for applying an effect is handled through a special widget in the "Effect Adder" file.
+
+<h3><a id="effects1">Applying effects</a></h3>
+For some effects, applying them to a character is just a matter adding the effect to the character's {{{effects}}} array, using an {{{Array.push()}}} command. But what if we want some rules for how effects are applied? Do we want players to be able to apply multiple copies of the same effect, or can only one instance be active at a time? Perhaps we want that rule applied to some effects, but not all? The effect adder handles this logic.
+
+We're going to start with a few preliminary things:
+
+{{{<<if _target.dead isnot true>>}}}
+
+Common sense check: no point in applying effects to dead people. (Unless you do want that! Some games, such as <i>Final Fantasy XII</i>, do make status effects persist when a character is defeated and revived.)
+
+{{{<<set _E = new Effect($args[1])>>}}}
+
+We are also going to want to make an Effect object using just the effect's name. This is because the object's constructor takes care of some things for us based on the name, as can be seen in database-effects.js:
+
+{{{
+case 'Injury':
+	this.stackable = true;
+	this.statmod = true;
+}}}
+
+Attributes such as {{{stackable}}} will be useful to divide effects by desired behavior.
+
+{{{<<set _a = _target.effects.length>>}}}
+
+We also want to store the starting number of effects on the target. This creates an easy method of checking if an effect was applied -- if the length is longer at the end than it was at the start, an effect was applied.
+
+{{{
+<<set _found to false>>
+<<set _continue to true>>
+<<set _msg to false>>
+}}}
+
+Our last preliminary action is to set these temporary variables. We will reference them later.
+
+<h4><a id="effects1.1">Accounting for protective effects</a></h4>
+{{{
+<<if _E.unblockable isnot true>>
+
+<<if _target.stasis is true>>
+	<<set _continue to false>>
+<</if>>
+
+<<if _continue is true and _target.chi is true and _target != _subject>>
+/* self-inflicted statuses ignore Chi Shield */
+	<<if _E.buff>>
+	/* If applied effect is a buff, all is well, skip ahead */
+		<<set _continue to true>>
+	<<else>>
+_target.name's Chi Shield protected _target.pr.obj from the ailment.
+		<<set _continue to false>>
+	<</if>>
+<</if>>
+}}}
+
+First, we need to check if we can apply the effect at all. In the default engine, there is an effect called <b>Chi Shield</b> that protects the subject from negative ailments, and an effect called <b>Stasis</b> that prevents any changes to effects at all. For this effect to work as intended, we need to check if the target has this effect active whenever an effect is applied.
+
+This is accomplished through the {{{if _target.stasis is true}}} and {{{if _target.chi is true}}} clauses. (You could also accomplish this by running a for loop over the target's effects array and checking for the name "Stasis", but this is faster. As explained in the next section, we will set a separate Boolean variable in the character when applying an effect to make checking for an effect easier.)
+
+The {{{and _target != _subject}}} clause prevents Chi Shield from protecting the target from self-inflicted ailments, such as the "Off-Balance" effect from Fighter's "Charge" ability. If you <i>do</i> want to protect characters from self-inflicted ailments, you can remove this clause.
+
+{{{
+<<if _E.buff>>
+	<<set _continue to true>>
+<<else>>
+_target.name's Chi Shield protected _target.them from the ailment.
+	<<set _continue to false>>
+<</if>>
+}}}
+
+Now, we only want Chi Shield to block negative effects, not positive ones. This is the purpose of this section. If the effect is a buff, we set the {{{_continue}}} variable to true and let the effect be applied as normal. Otherwise, {{{_continue}}} is set to false, bypassing the next section, and a message is displayed informing the player that the target was protected. If you want a negative ailment to get through Chi Shield, you can give it the "unblockable" attribute, which will bypass protective effects. (If you want an ailment to bypass Chi Shield but <i>not</i> Stasis, you'll need to modify the code a little, possibly by making another attribute.)
+
+The "Alert" status is similar, but it only protects against "Stunned".
+
+{{{
+<<if _continue is true and (_target.tolerances.has(_E.name) || (_E.name == "Forsaken" && _target.tolerances.has("Curse")))>>
+	<<if _target.getTol(_E.name) == 'immune'>>
+_target.name is immune to _E.name.
+		<<set _continue to false>>
+	<<else>>
+		<<if _target.getTol(_E.name) > 0>>
+_target.name's tolerance to _E.name was weakened.
+			<<set _continue to false>>
+			<<run _target.decTol(_E.name)>>
+		<<else>>
+			<<set _continue to true>>
+			<<run _target.resetTol(_E.name)>>
+		<</if>>
+	<</if>>
+<</if>>
+}}}
+
+If the effect makes it through protective effects, it is then checked against the target's tolerances. {{{<<if _target.tolerances.has(_E.name)>>}}} checks if the effect's name is a key for the target's tolerances Map. If it is, we check what the corresponding value is. If the enemy has an immunity, we print a message informing the player and set {{{_continue}}} to false, ending the widget. If it's a number, we go on to check if it's above 0. If it is, {{{_continue}}} is set to {{{false}}}, ending the widget, but the target's tolerance is decreased by 1 through the {{{decTol}}} function. If a tolerance has been exhausted, the program skips to the {{{<<else>>}}} clause, resets the tolerance, and applies the effect as normal.
+
+<h4><a id="effects1.2">Numerical components</a></h4>
+Some effects only operate in binary, but some have variable, numerical components. For instance, take a stat-modifying effect. How do we calculate exactly how much the stat will be changed? You could implement it as a flat rate, such as a 50% boost or penalty. Many RPGs, such as the <i>Final Fantasy</i> series, do this. But what if we wanted to do something more complex, where the numerical component depends on something like the caster's Special stat? In that case, we'll need to calculate it every time the effect is applied.
+
+{{{
+<<if _continue is true>>
+
+/* First, calculate effect power. */
+	/* debuff effects are calculated on first application (do not change if target SPC changes) */
+<<if $args[3] instanceof Number>>
+	<<set $power = $args[3]>>
+<<else>>
+	<<if _E.statmod and _E.name isnot "Knocked Down">>
+		<<if _E.buff is false>>
+			<<effectcalc "debuff">>
+		<<else>>
+			<<effectcalc "buff">>
+		<</if>>
+	/* DoT damage is calculated every time it activates, so only attacker's side is applied to effect power here. */
+ 	<<elseif _E.dot>>
+  		<<set $power = [_subject.get("Special"),$action.effweight]>>
+ 
+/* Everything else has no numerical component, but we'll set power to a number to prevent possible glitches. */
+ 	<<else>>
+  		<<set $power = 0>>
+	<</if>>
+<</if>>
+}}}
+
+This is what the next section does. Different effects have their numerical components calculated in different ways, so we need to use an {{{<<if>>}}} tree to filter effects. Buffs and debuffs use slightly different formulas, which you can find in the {{{<<effectcalc>>}}} widget. Damage-over-time effects have a more complex calculation based on both the subject's Special stat and the effect weight of the ability, so those are both stored in the {{{$power}}} variable as an array.
+
+If for some reason we want to bypass all of this and just set the effect's power as a flat number, we can also do that. As seen in the first {{{<<if>>}}} clause, passing a number as the fourth argument will just set that to the {{{$power}}} variable.
+
+<h4><a id="effects1.3">Stackability</a></h4>
+You may want some effects to be "stackable", which means multiple copies of the same effect can exist on a character.
+
+{{{
+<<if _E.stackable>>
+	<<run _target.effects.push(new Effect(_E.name,$args[2],$power))>>
+}}}
+
+We check for this with another {{{<<if>>}}} statement. If the effect is stackable, we can simply add the effect with no further complications. If not, we enter special cases.
+
+{{{
+<<elseif _E.exclusive>>
+	<<for _j, _effect range _target.effects>>
+	/* remove all stance effects */
+		<<if _effect.exclusive>>
+			<<run _target.removeEffect(_effect,'pierce')>>
+		<</if>>
+	<</for>>
+}}}
+
+Then there is a special branch for mutually exclusive effects. Only one of the effects listed here can be active at the same time. For this, we must use a for loop to search over the character's effect array. If any effects have a mutually-exclusive name, they are removed. After the check is performed, the mutually exclusive effect is added.
+
+{{{
+<<if _E.name is "Protector">>
+	<<run _target.effects.push(new Protector(_E.name,$args[2],$power,$target[1]))>>
+	<<set $target[0].protected to true>>
+	<<set _p = "\'"+_target.name+"\'">> /* necessary to work with the find widget */
+	<<set $target[0].protectedBy = _p>>
+}}}
+
+There are additional special cases here as well. The "Protector" effect requires a special clause and subclass due to its special behavior that requires the current target be set as the protected character. This clause also sets the "protected" attribute of the target to true, which is necessary for the effect to trigger during enemy targeting.
+
+{{{
+<<if _E.name is "Martyr">>
+	<<if _target instanceof Puppet>>
+		<<set _party = $puppets>>
+	<<elseif _target instanceof Enemy>>
+		<<set _party = $enemies>>
+	<</if>>
+	<<find "_party" "martyr" "true">>
+	<<if _pos > -1>>
+		<<set _act = _party[_pos]>>
+		<<find "_act.effects" "name" "\'Martyr\'">>
+		<<run _act.removeEffect(_act.effects[_pos],'pierce')>>
+	<</if>>
+<</if>>
+}}}
+
+Additionally, there can only be one "Martyr" effect active at a time, so if that's the effect being applied, we have to check if anyone else has it and if they do, remove it. We find the party we need to search by checking whether the current subject is a Puppet or an Enemy object, then use {{{<<find>>}}} to see if there is anyone with the {{{martyr}}} attribute flagged as {{{true}}}. If there is, we'll have to do another {{{<<find>>}}} to locate the Martyr effect in their {{{effects}}} array and remove it.
+
+{{{
+<<else>>
+  
+<<for _k, _effect range _target.effects>>
+	<<if _effect.name is _E.name>>
+	/* if effect is already applied, increase its duration */
+		<<if $args[2] > _effect.duration>>
+			<<set _effect.duration = $args[2]>>
+		<</if>>
+}}}
+
+Every other effect behaves the same way for the purposes of application, so they can all be handled under one "else" case. We first perform a search over the target's effect array like we did for the mutually exclusive effects. If we find the effect to be applied is already there, we don't add it to the array, but we do renew its duration (provided the applied effect's duration is longer).
+
+{{{
+<<if _E.dot>>
+	<<set _E = new DoT(_E.name,$args[2],$power[0],$power[1])>>
+	<<if _effect.damage(_target) < _E.damage(_target)>>
+		<<set _effect.power to $power[0]>>
+		<<set _effect.weight to $power[1]>>
+	<</if>>
+<<else>>
+	<<if $power > _effect.power>>
+	/* if the new application has higher power than the original effect, overwrite original power */
+		<<run _effect.onRemove(_target); _effect.power = $power; _effect.onApply(_target)>>
+	<</if>>
+<</if>>
+}}}
+
+For effects with numerical components, we also replace the effect's power if it's greater. This is simple enough for most effects, but damage-over-time effects have a more complicated form of this, as their numerical effects rely on multiple factors. To find out if the new effect is stronger, we need to create a new {{{DoT}}} object using the arguments passed to the widget, and compare its {{{damage()}}} function to the extant effect. If the extant effect would do less damage, its power is replaced.
+
+For other effects, we will need to run {{{onRemove()}}} and {{{onApply()}}} in-between adjusting the power, because we need to clear the effects of the old value before recalculating.
+
+{{{
+<<set _found to true>>
+<<break>>
+}}}
+
+Now, all that was taking place inside the loop! Since the effect wasn't stackable, there shouldn't be any other instances of the same effect, so we don't need to run through the rest of the loop. We'll set a variable showing we found the effect, then we exit with a {{{<<break>>}}} command to save processing power.
+
+{{{
+<<if _found is false>>
+  /* if the effect isn't there already, add it */
+	<<if _E.dot>>
+		<<run _target.effects.push(new DoT(_E.name,$args[2],$power[0],$power[1]))>>
+   	<<elseif _E.name is "Off-Balance">>
+	/* if already knocked down, can't be off-balance */
+     	<<if _target.down is false>>
+      		<<run _target.effects.push(new Effect(_E.name,$args[2],$power))>>
+     	<<else>>
+_target.name would have been pushed off-balance, but they're already knocked down!
+     	<</if>>
+   	<<elseif _E.name is "Knocked Down">>
+	 	<<run _target.effects.push(new Effect(_E.name,$args[2],$power))>>
+    	/* Being knocked down also removes off-balance: */
+     	<<for _k, _effect range _target.effects>>
+      		<<if _effect.name is "Off-Balance">>
+       			<<run _target.removeEffect(_effect)>>
+      		<</if>>
+     	<</for>>
+	<<else>>
+		<<run _target.effects.push(new Effect(_E.name,$args[2],$power))>>
+	<</if>>
+<</if>>
+}}}
+
+Otherwise, if {{{_found}}} is false, we will add the effect as normal. Damage-over-time effects have an additional attribute, and therefore must be added under a special clause. "Off-Balance" and "Knocked Down" also have special interactions that are accounted for.
+
+<h3><a id="effects.calc">Calculating numerical effects</a></h3>
+The "Damage and Formulas" file includes not just the formulas for regular attacks, but for status effects as well.
+
+<h4><a id="effects.calc.mods">Stat mods</a></h4>
+{{{
+<<widget "effectcalc">>
+<<switch $args[0]>>
+	<<case "debuff">>
+		<<set $power = Math.round(($effbase+$effdamper*(_subject.get("Special")-_target.get("Special")))*$action.effweight)>>
+		<<if $power < $min_debuff>>
+			<<set $power = $min_debuff>>
+		<</if>>
+	<<case "buff">>
+		<<set $power = Math.round(($effbase+$effdamper*(_subject.get("Special")))*$action.effweight)>>
+		<<if $power < $min_buff>>
+			<<set $power = $min_buff>>
+		<</if>>
+<</switch>>
+<</widget>>
+}}}
+
+Stat mods are calculated using {{{<<effectcalc>>}}}, and their formula is very similar to that of regular attacks. Different base and damper values are used, which can be set in StoryInit.
+
+After calculation, there is a check against the minimum value. By default, this is set to 5 for debuffs and 0 for buffs. It can be changed in StoryInit.
+
+Discussion on the choice of formula and other possible options can be found in [[the design page|Design]].
+
+<h4><a id="effects.calc.dot">Damage-over-time effects</a></h4>
+Damage-over-time calculation is handled through the effect database. Before the definitions for each effect, several functions are defined in the Effect class definition:
+
+{{{
+var physical = function (puppet) {
+	return this.weight*(V().base + (V().damper * (this.power - puppet.get("Defense"))));
+}
+var special = function (puppet) {
+	return this.weight*(V().base + (V().damper * (this.power - puppet.get("Special"))));
+}
+var piercing = function (puppet) {
+	return this.weight*(V().base + (V().damper * this.power));
+}
+var proportional = function (puppet) {
+	return this.weight * puppet.maxhp;
+}
+var fixed = function (puppet) {
+	return this.power;
+}
+}}}
+
+In the default engine, there are five kinds of DoT behaviors: physical, special, piercing, proportional, and fixed. Physical damage, used by the "Burning" effect, is reduced by the target's Defense; special damage, used by the "Poisoned" effect, is reduced by the target's Special; piercing damage, used by the "Peridition" effect, ignores defenses; proportional damage inflicts damage based on a proportion of the target's max HP; and fixed damage is just whatever you set as the object's power value.
+
+(Note that proportional damage <b>multiplies</b> HP by its weight. The weight of a proportional effect is equal to the proportion it takes off; a weight of 0.125 or (1/8) will take an eighth of the character's HP per turn.)
+
+The actual application of damage is performed through the {{{damage()}}} function of the DoT class, which is defined later in the database file:
+
+{{{
+window.DoT = class DoT extends Effect {
+	constructor(name,time,power,weight){
+		super(name,time,power);
+		this.weight = weight;
+		this.dot = true;
+		this.damage = function (puppet) {
+			var dmg = Math.round(this.type(puppet));
+			if (dmg < V().min_DoT){
+				dmg = V().min_DoT;
+			}
+			return dmg;
+		}
+	}
+}
+}}}
+
+This function is passed a target that is then used to calculate damage based on the formula type, followed by cleanup -- rounding to an integer, and checking against the minimum DoT damage. (This value is set to 1 by default, and can be changed in StoryInit.)
+
+<h2><a id="targeting">Targeting and Enemy AI</a></h2>
+Enemies need to be able to select attacks and targets just like players. But unlike with player choices, there's no person to make selections, so we need a program to do it instead.
+
+We could just have enemies choose actions and targets randomly, but that wouldn't make for a very engaging game; the difficulty of a battle will vary depending on whether enemies target a more vulnerable character, if they gang up on one character or if they spread damage out... etc. If that's all random, the game isn't very fair; a player might do the exact same thing and get a completely different result, just because, say, Mage never got targeted through the simple luck of the draw. So we want to make enemies a bit more intelligent, to make the player's experience more even.
+
+The widgets used to a accomplish this are stored in their own file, "Targeting".
+
+<h3><a id="targeting.basic">Standard Targeting</a></h3>
+Regular targeting is handled by the {{{<<enemytarget>>}}} widget. This program runs through the targeting criteria in highest to lowest priority, so our special cases come first.
+
+<h4><a id="targeting.basic.1">Martyr check</a></h4>
+{{{
+<<find "$puppets" "martyr" "true">>
+<<if _pos > -1>> /* will be -1 if nothing found */
+	<<set $target = [$puppets[_pos],"$puppets["+_pos+"]"]>>
+	<<set _continue to false>>
+<</if>>
+}}}
+
+In the default engine there's an effect, "Martyr", that forces all attacks to target the recipient. This ought to bypass any normal enemy behavior, so we should implement it first. All we have to do is use the {{{<<find>>}}} widget (explained <a href="#find">here</a>) to get the position of which puppet has the "martyr" attribute set to true. If none of them have it, {{{_pos}}} will be -1, so we can use the {{{<<if _pos > -1>>}}} statement to check if the search found a viable target. If our target was found, we also want to set {{{_continue}}} to false to tell the program not to continue with the targeting logic.
+
+(As the comment says, this will stop at the first position it finds even if there are multiple matches. As previously discussed in <a href="#effects1">the effect adder</a>, there is a check to ensure only one Martyr can exist at a time.)
+
+There is then a check against {{{_continue}}}. If a target was found, the program stops here. Otherwise, we continue.
+
+<h4><a id="targeting.basic.2">Reactive enemies</a></h4>
+{{{
+<<if $subject[0].aggro and def $attacker>>
+	<<set $target = [$puppets[$attacker],"$puppets["+$attacker+"]"]>>
+	<<if $target[0].dead isnot true>>
+		<<set _continue to false>>
+	<</if>>
+	/* Note that this bypasses untargetable as well */
+<</if>>
+}}}
+
+The next priority is reactive enemies. As detailed in <a href="#actionphase">the action phase</a>, a character's position is recorded in {{{$attacker}}} if the enemy's HP is lower at the end of the round than the start, i.e., if they were attacked by a damaging move. If you give an enemy the attribute "aggro", they'll bypass normal targeting and always target whoever attacked last.
+
+We also need to include {{{and def $attacker}}} in the if clause; otherwise, you'll get an error if no one attacked and {{{$attacker}}} wasn't set. There is also a check just in case the attacker dies in between attacking and the enemy's turn.
+
+(Note that there's no check for untargetable protection, as stated in the comments. You can add another if statement to check for it if you like, but it'll get tricky if you want some enemies or attacks to ignore it and some not.)
+
+If none of those conditions were triggered, {{{_continue}}} will remain {{{true}}} and the program continues to standard targeting.
+
+<h4><a id="targeting.basic.3">Mercy</a></h4>
+{{{
+<<if $subject[0].mercy < 1 or $args.includes("smart")>>
+/* if enemy's mercy is below 1, they will always use smart targeting */
+	<<set _mercy = 2>>
+<<else>>
+/* 1 in (mercy) chance of random targeting, to give players a break */
+	<<set _mercy = random(1,$subject[0].mercy)>>
+<</if>>
+}}}
+
+The first thing we do is set the {{{_mercy}}} variable. You might consider the game too hard if enemies always make the perfectly optimal choices. You can use the mercy mechanic to give players a bit of a break. If {{{_mercy}}} is 1, the enemy won't behave intelligently and will just target randomly. You can customize each enemy's intelligence level with their "mercy" attribute, defined in the story JavaScript. It's a little unintuitive: the chance of bypassing smart targeting will be the inverse of their "mercy" value, so a higher value will make an enemy more merciless. If you set "mercy" to 1, the enemy will always target randomly. Conversely, if you set "mercy" to 0, the first {{{<<if>>}}} statement will ensure they always use smart targeting. You can also accomplish this by passing the string "smart" to the {{{<<enemytarget>>}}} widget.
+
+In the default engine, all enemies have their "mercy" values set to 3, so they have a 1-in-3 chance of targeting randomly. You can give specific enemies different values by manually setting their "mercy" values in the enemy database.
+
+<h4><a id="targeting.basic.4">Smart targeting</a></h4>
+This behaves slightly differently depending on the difficulty setting, necessitating a conditional fork. Here we will cover the most complicated variant, which is hard mode.
+
+{{{<<set _hitlist = []>>}}}
+
+In all cases, the first thing we need to do is create the {{{_hitlist}}} variable as an empty array. This is going to be where we store viable targets.
+
+{{{
+<<if not $args.includes("ignore downed")>>
+/* This clause makes enemies preferentially target off-balance and downed puppets. */
+	<<for _i, _puppet range $puppets>>
+		<<if _puppet.dead isnot true and _puppet.untargetable isnot true>>
+			<<if _puppet.offbalance or _puppet.down>>
+/* if effect found, add their address to the hitlist */
+				<<run _hitlist.push(_i)>>
+				<<if _puppet.firefly is true>>
+					<<run _hitlist.push(_i)>>
+				<</if>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</if>>
+}}}
+
+First, the enemy is going to check if a character has the "Off-Balance" or "Knocked Down" effect. In the default engine, these effects make characters more vulnerable, so it's smart to focus attacks on these characters. We accomplish this by running a for loop over the {{{$puppets}}} array to check each character for the "offbalance" or "down" flags. (Here we can see why it's easier to mark these effects as attributes: we'd have to run another for loop over the character's effects to find these otherwise.) If it is, their address in the array is added to {{{_hitlist}}}. If the character has the "firefly" trait, it's added twice to increase the chance of their being targeted.
+
+We also wrap this in an {{{<<if _puppet.untargetable isnot true>>}}} statement, since untargetable characters are immune to direct attacks.
+
+Smart targeting will check for these effects by default, but in case you don't want that (such as for a nondamaging attack, perhaps), you can pass the string "ignore downed" to the widget, and the {{{<<if>>}}} statement at the beginning will bypass this section.
+
+{{{
+<<if _hitlist.length > 0>>
+	<<set _continue to false>>
+<</if>>
+}}}
+
+We end by checking if the smart targeting found anything. We check this by asking if {{{_hitlist}}} has any length. If it contains nothing, that means nothing was added, which means no viable targets were found. If the clause does trigger, we set {{{_continue}}} to false to skip the next section.
+
+{{{
+<<if $args.includes("debuff")>>
+	<<for _i, _puppet range $puppets>>
+		<<if _puppet.dead isnot true and _puppet.untargetable isnot true>>
+			<<if !_puppet.chi && !_puppet.stasis && (_puppet.get("Special") < _puppet.getBase("Special"))>>
+ /* if spc-reducing debuff found, add to hitlist */
+ 				<<run _hitlist.push(_i)>>
+				<<if _puppet.firefly is true>>
+					<<run _hitlist.push(_i)>>
+				<</if>>
+   			<</if>>
+   		<</if>>
+	<</for>>
+<</if>>
+}}}
+
+You can also make the enemies use debuffs intelligently. Debuffs are more effective if the target has lower Special, so enemies will preferentially target characters whose Special is lower than their base value (i.e., they have been afflicted by a Special-reducing debuff). Unlike downed targeting, this isn't active by default, and you activate it by passing the string "debuff" as an argument to the widget. This will activate the {{{<<if $args.includes("debuff")>>}}} clause.
+
+The code here is virtually identical to that used in the previous section.
+
+<h4><a id="targeting.basic.5">Normal targeting</a></h4>
+{{{
+<<if _continue is true>>
+	<<for _i, _puppet range $puppets>>
+		<<if _puppet.dead isnot true and _puppet.untargetable isnot true>>
+			<<run _hitlist.push(_i)>>
+			<<if _puppet.firefly is true>>
+				<<run _hitlist.push(_i)>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</if>>
+}}}
+
+If smart targeting didn't find anything, this clause will activate and execute normal targeting. This is virtually identical to smart targeting, but we don't need to make any special checks; everyone is added to the hitlist automatically.
+
+{{{
+<<elseif $difficulty is "medium">>
+
+<<for _i, _puppet range $puppets>>
+	<<if _puppet.dead isnot true and _puppet.untargetable isnot true>>
+		<<run _hitlist.push(_i)>>
+		<<if _puppet.firefly is true>>
+			<<run _hitlist.push(_i)>>
+		<</if>>
+			
+		/* smart targeting */
+		<<if _mercy > 1>>
+			<<if not $args.includes("ignore downed")>>
+/* This clause makes enemies preferentially target off-balance and downed puppets. */
+				<<if _puppet.offbalance or _puppet.down>>
+/* if effect found, add their address to the hitlist */
+					<<run _hitlist.push(_i)>>
+				<</if>>
+			<</if>>
+			<<if $args.includes("debuff")>>
+/* Debuffing attacks will preferentially target puppets with lowered Special, as they will be more strongly affected */
+				<<if !_puppet.chi && && !_puppet.stasis && (_puppet.get("Special") < _puppet.getBase("Special"))>>
+ /* if spc-reducing debuff found, add to hitlist */
+ 					<<run _hitlist.push(_i)>>
+     			<</if>>
+    		<</if>>
+		<</if>>
+	<</if>> /* end mercy if */
+<</for>>
+}}}
+
+On medium difficulty, this is blended with smart targeting: instead of enemies only picking from vulnerable targets, vulnerable targets are simply added to the array twice, making them more likely targets but still allowing for the possibility they'll be passed over.
+
+(On easy difficulty, smart targeting doesn't occur at all.)
+
+{{{
+<<if def _hitlist and _hitlist.length > 0>>
+	<<set _n = random(0,_hitlist.length-1)>>
+ 	<<set _t = _hitlist[_n]>>
+	<<set $target = [$puppets[_t],"$puppets["+_t+"]"]>>
+}}}
+
+We finish by choosing a random index in {{{_hitlist}}} and setting {{{_t}}} equal to that value. So, for instance, if smart targeting found both the character at index 0 and the character at index 1, it would choose between one of them randomly. If only one character was found, {{{_n}}} will always be 0. If a character is added to the hitlist multiple times, they are more likely to be chosen -- for instance, in the default setup, Fighter's "firefly" flag means that normal targeting would produce a hitlist of [0,1,1,2], resulting in a 50% chance of targeting Fighter and a 25% chance of targeting the others.
+
+<h4><a id="targeting.basic.6">Special cases</a></h4>
+The code up to now will work great under normal circumstances. However, it's entirely possible to get to this point with an empty {{{_hitlist}}} and no target, if everyone is dead or untargetable. This is a rare situation, but we have to account for it.
+
+You might remember we didn't close that {{{<if>>}}} in the last section. What does the rest of it look like look like?
+
+{{{
+<<else>>
+/* If a target wasn't found, only possibilities are that everyone's dead or untargetable. */
+	<<set _k = 0>>
+	<<for _puppet range $puppets>>
+		<<if _puppet.dead>>
+			<<set _k++>>
+		<</if>>
+	<</for>>
+	<<if _k eq $puppets.length>>
+	/* everyone's dead, just stop and the game over message will display next passage */
+}}}
+
+First we define a dummy variable, {{{_k}}}. Then we run a loop over {{{$puppets}}}, incrementing it if any of them are dead. If {{{_k}}} equals the length of the array, that means they're all dead. That's not a problem: we can just stop the targeting program and let {{{<<victorycheck>>}}} do its thing when the player reaches the next passage.
+
+{{{
+<<else>>
+/* everyone's untargetable, run the check again without untargetable protection */
+	<<set _hitlist = []>> /* reset hitlist */
+	<<for _i, _puppet range $puppets>>
+		<<if _puppet.dead isnot true>>
+			<<run _hitlist.push(_i)>>
+			<<if _puppet.firefly is true>>
+				<<run _hitlist.push(_i)>>
+			<</if>>
+		<</if>>
+	<</for>>
+	<<if def _hitlist and _hitlist.length > 0>>
+			<<set _n = random(0,_hitlist.length-1)>>
+ 			<<set _t = _hitlist[_n]>>
+			<<set $target = [$puppets[_t],"$puppets["+_t+"]"]>>
+}}}
+
+If {{{_k}}} <i>wasn't</i> equal to the length of the array, that means someone's still alive, but untargetable. We'll run the hitlist loop again, but without a provision for untargetable characters, and use the same code as before to get a target from the hitlist.
+
+{{{
+<<else>>
+	/* no target found, flag this to avoid errors elsewhere */
+	<<set _targetfail = true>>
+}}}
+
+Finally, it's good practice to include a default case at the end to tell you if something went wrong. I'm trusting that my reasoning is correct and I've accounted for all possibilities, but programmers must always acknowledge the possibility they could be wrong!
+
+Note that this is designed assuming you want untargetable characters to become targetable when they're the only ones left. If you want to make untargetable characters invincible, you don't need to do any of this; you can just stop the program here and the attack won't go through.
+
+<h4><a id="targeting.basic.7">Protection check</a></h4>
+{{{
+<<if $target[0] isnot null and $target[0].protected>>
+	<<find "$puppets" "name" $target[0].protectedBy>>
+	<<if _pos eq -1>>
+		<<set _msg = "ERROR: Protected character with no protector\n">>
+		<<print "ERROR: Protected character with no protector\n">>
+	<<else>>
+		<<set _msg = $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+		<<print $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+		<<set $target to [$puppets[_pos],"$puppets["+_pos+"]"]>>
+	<</if>>
+<</if>>
+}}}
+
+The very last thing is the protection check. We use an {{{<<if>>}}} statement to check if the target's "protected" flag is active. We also have to check that {{{$target}}} isn't null, because it's possible (if the whole party is dead) that a target wasn't found.
+
+We'll use the {{{<<find>>}}} widget to find the protected character's protector, and change the target to them. Once again, it's good practice to include an error check just in case a Protector effect was removed without also removing the "protected" flag.
+
+<h3><a id="dispel">Dispel Targeting</a></h3>
+Some enemies have abilities that can remove positive effects from player characters. It would be pretty silly if they used these abilities against characters with no buffs at all, so we need a mechanism to help them figure out which characters to target. This is the purpose of the widget {{{<<dispeltarget>>}}}.
+
+{{{
+<<widget "dispeltarget">>
+<<set _threshold to $args[0]>>
+<<set _go to false>>
+<<set _continue to true>>
+<<set _temp to 0>>
+}}}
+
+As usual, our default case will be that we do <i>not</i> find anything, so we set the {{{_go}}} flag to false. We also create an integer variable {{{_temp}}} for later use.
+
+{{{
+<<if !$args.includes("mass")>>
+/* Martyr check */
+	<<find "$puppets" "martyr" "true">>
+	<<if _pos >= 0>> /* will be -1 if nothing found */
+		<<for _effect range _puppet.effects>> /* Search for buffs */
+			<<if _effect.buff is true and _effect.sticky isnot true>>
+				<<if _effect.name is "Blessing">>
+					<<set _temp += 3>> /* Blessings are higher priority to dispel */
+				<<else>>
+					<<set _temp += 1>>
+				<</if>>
+		  	<</if>>
+	  	<</for>>
+		<<if _temp < _threshold>>
+			<<set $target = [$puppets[_pos],"$puppets["+_pos+"]"]>>
+			<<set _continue to false>>
+			<<set _go to true>>
+		<<else>>			
+			<<set _continue to false>>
+		<</if>>
+	<</if>>
+<</if>>
+}}}
+
+We then have to do a Martyr check, just like for regular targeting. If we {{{<<find>>}}} a martyr, we'll search through their effects array with a for loop. If a dispellable (not "sticky") buff is found, we increase {{{_temp}}} by 1. You can also give certain effects higher priority by checking for them with an if statement. In the default engine, the "Blessing" effect counts for 3 buffs, and everything else counts for 1.
+
+The widget then makes a check against a threshold value. If the martyr has enough buffs to pass the threshold, we set them as the target, set {{{_go}}} to {{{true}}} to signal the dispel is viable, and stop the widget by setting {{{_continue}}} to {{{false}}}. If the martyr didn't pass the threshold, we just set {{{_continue}}} to false, because the attacker isn't allowed to keep going to check other targets if Martyr is active.
+
+(Mass attacks ignore Martyr, so we also wrap this in a {{{<<if !$args.includes("mass")>>}}} conditional. This says that the Martyr check should only be run if the "mass" argument was <i>not</i> passed to the widget.)
+
+If no Martyr was found, we continue on to normal targeting.
+
+{{{<<set _hitlist to []>>}}}
+
+First, we will make a hitlist, just like for regular targeting.
+
+{{{
+<<for _i, _puppet range $puppets>>
+	<<if !$args.includes("mass")>>
+		<<set _temp to 0>>
+	<</if>>
+	<<for _effect range _puppet.effects>> /* Search for buffs */
+		<<if _effect.buff is true and _effect.sticky isnot true>>
+   			<<if _effect.name is "Blessing">>
+   				<<set _temp += 3>> /* Blessings are higher priority to dispel */
+   			<<else>>
+   				<<set _temp += 1>>
+   			<</if>>
+ 		<</if>>
+	<</for>>
+	<<if $args[1] isnot "mass">>
+		<<if _temp >= _threshold>>
+			<<run _hitlist.push(_i)>> /* If someone has a buff, make them a possible target */
+		<</if>>
+	<</if>>
+<</for>>
+}}}
+
+We then create a for loop within a for loop. For every {{{_puppet}}} in {{{$puppets}}}, we want to search through their effects array, just like we did in the Martyr check. This time, if they pass the threshold, they're added to the hitlist, making them a potential target for the dispel.
+
+In <i>Cartoon Battle</i>, most dispel attacks have a threshold of 1, but you might find this clause useful if you create some reason to not use a dispel at every possible opportunity, such as if it costs the enemy some resource.
+
+{{{
+<<if (!$args.includes("mass") and _hitlist.length == 0) or ($args.includes("mass") and _temp < _threshold)>>
+	<<set _go to false>> /* If no one has any buffs, there's no point in using this; reroll */
+<<else>>
+	<<set _go to true>>
+	<<if $args[1] isnot "mass">> /* mass dispel doesn't need to pick a target */
+		<<set _n = random(0,(_hitlist.length-1))>>
+		<<set _t = _hitlist[_n]>>
+		<<set $target = [$puppets[_t],"$puppets["+_t+"]"]>>
+}}}
+
+From here, we check if we want the dispel to be used. If it's a non-mass dispel, we check to see if there's anything in {{{_hitlist}}}. If the length is zero, that means no one passed the threshold check, so there are no viable targets, and the dispel should not be used. For a mass dispel, we just check {{{_temp}}} against the given threshold. If either of these checks fail, we set {{{_go}}} to false to signal that the action should not be executed.
+
+{{{
+<<if $target[0] isnot null and $target[0].protected>>
+	<<find "$puppets" "name" $target[0].protectedBy>>
+	<<if _pos eq -1>>
+		<<set _msg = "ERROR: Protected character with no protector\n">>
+		<<print "ERROR: Protected character with no protector\n">>
+	<<else>>
+		<<set _msg = $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+		<<print $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+		<<set $target to [$puppets[_pos],"$puppets["+_pos+"]"]>>
+	<</if>>
+<</if>>
+}}}
+
+And as with regular targeting, we need to run a protection check as well. This is identical to the code in {{{<<enemytarget>>}}}.
+
+<h4><a id="dispel.mass">Mass dispels</a></h4>
+{{{
+<<for _i, _puppet range $puppets>>
+	<<if !$args.includes("mass")>>
+		<<set _temp to 0>>
+	<</if>>
+	(...)
+	<<if $args[1] isnot "mass">>
+		<<if _temp >= _threshold>>
+			<<run _hitlist.push(_i)>> /* If someone has a buff, make them a possible target */
+		<</if>>
+	<</if>>
+}}}
+
+Notice that at both the start and the end of the loop, there's an if clause to check if the flag "mass" was sent as an argument. If the dispel is only going to affect a single target, we want to track every character separately with {{{_temp}}}, so {{{_temp}}} has to be reset before each loop over a character's effect array, and then checked at the end before the widget moves on to the next character.
+
+For a mass dispel, we care about the total number of effects across the whole party, so we don't want to do either of these things. {{{_temp}}} is preserved across loops, and only checked after the greater {{{for}}} loop is finished.
+
+<h3><a id="targeting.ally">Ally Targeting</a></h3>
+Some enemy actions target their allies instead of the player characters. We need something to handle that too.
+
+{{{
+<<widget "allytarget">>
+<<set _hitlist = []>>
+<<for _i, _enemy range $enemies>>
+	<<if !($args.includes("noself") && _enemy == subject())>>
+		<<if !_enemy.dead>>
+			<<if $args.includes("buff")>>
+				<<if !_enemy.stasis>>
+					<<run _hitlist.push(_i)>>
+				<</if>>
+		  	<<else>>
+				<<run _hitlist.push(_i)>>
+		  	<</if>>
+	  	<</if>>
+	 <</if>>
+<</for>>
+<<set _n = random(0,_hitlist.length-1)>>
+<<set _t = _hitlist[_n]>>
+<<set $target to [$enemies[_t],"$enemies["+_t+"]"]>>
+<<unset _hitlist>>
+<</widget>>
+}}}
+
+Fortunately, this functionality is much simpler. We can just reuse the basic functionality from our other targeting functions: search across the party, and if they're not dead, they're a viable target. A common-sense check is also run to exclude characters in Stasis if the ability conveys a buff.
+
+For some abilities, you may want special behavior; a healing or protective effect should probably target the most injured character, for instance. One such special case, disallowing self-targeting, is implemented here. However, these aren't as generalizable as attacking abilities. You can implement this special behavior on a case-by-case basis in the actions database.
+
+<h3><a id="enemyactions">Enemy Actions</a></h3>
+Now that we have these behavior widgets, we can use them to assemble enemy actions. We discussed this previously when going over <a href="#JS.enemies">how enemies are constructed</a>. Here, we will go into a little more detail.
+
+{{{
+this.actions = function () {
+	while (V().action === null){
+		var act = random(1,100);
+					
+	if (act <= 20){
+		$.wiki('<<enemytarget>>');
+		V().action = new Action("Cuteness Poisoning");
+		V().action.weight = 1;
+		V().action.effweight = 0.3;
+		V().action.dur = 3;
+		V().action.actText = function () {return ``+
+`Mabel conjures an image of a kitten... no, wait, <i>two</i> kittens? And they're riding on a <i>puppy</i>? Omigosh, it's so cute you could just <i>DIE!</i>`;};
+		V().action.act = dmgandeffect('t',"Poisoned");
+	}
+}}}
+
+Enemy actions are defined through the {{{actions}}} attribute, as shown here. For player characters, this attribute is an array that stores a selection of actions for the player to choose from. For enemies, it is a function that is called during <a href="#enemyphase">the enemy phase</a>.
+
+{{{if (act <= 20)}}}
+
+When an enemy has multiple actions, they're chosen through an if-else tree. The program will test each conditional in order to find what action to select. Typically, there is an element of randomness to this, as enemies could become solved games if they always behaved exactly the same way.
+
+(I align these conditionals with the same indentation as the {{{while}}} loop. Formatting standards typically suggest indenting everything within a loop, but I find it easier to keep them at this level due to the amount of data inside them. You can format them either way.)
+
+{{{
+$.wiki('<<dispeltarget 2>>');
+if (State.temporary.go){
+[...]
+}
+}}}
+
+It is possible to use further conditionals to implement more complex behavior and disqualify a selected action based on other factors, such as this example from Dipper's Dispel Magick ability. If {{{<<dispeltarget>>}}} didn't find a viable target, the conditional is bypassed and no action is selected here. Thanks to the {{{while (V().action === null)}}}, a new action will be chosen afterwards.
+
+{{{$.wiki('<<enemytarget>>');}}}
+
+When an action is selected, the first thing we need to do is select a target, just as the player selects a target before executing their action. (This is necessary to do early, because some flavor text references the target, and sometimes there may not be a viable target at all, for some special actions.) We can do this through the {{{$.wiki()}}} command, which allows SugarCube code to be executed in JavaScript.
+
+(There is an issue with using {{{$.wiki()}}}, however: it can't print any text. If we want our {{{<<enemytarget>>}}} widget to display any text, such as an alert that a character was protected, it won't show up here. This is why we had to save the text to a {{{_msg}}} variable and print it later.)
+
+Then we can define the statistics of the action, either manually or through a call to the actions database.
+
+These are the basic components of enemy behavior. The default engine includes the behavior of every first-tier enemy in <i>Cartoon Battle</i> for you to examine to get a sense of how it works in practice. I won't go over all of them here, but let's look at Finn and Princess Bubblegum as simple and complicated examples, respectively.
+
+<h4><a id="enemyactions.finn">Simple Example: Finn</a></h4>
+{{{
+this.actions = function () {
+	while (V().action === null){
+		var act = random(1,2);
+					
+	if (act == 1) {
+		$.wiki('<<enemytarget>>');
+		V().action = new Action("Sword");
+		V().action.actText = "Finn swings his sword wildly!";
+		V().action.useText = null;
+	} else if (act == 2) {
+		$.wiki('<<enemytarget>>');
+		V().action = new Action("Charge");
+		V().action.actText = "Finn charges in recklessly!";
+		V().action.useText = null;
+	}
+						
+	} /* end loop */
+	return;
+}
+}}}
+
+Finn shows us the basic structure of how enemy actions are structured. We set the variable {{{act}}} based on some logic -- here, randomly -- and then create an {{{if}}} tree keyed to it, with actions in each branch.
+
+Finn has only two actions: a regular attack, and a reckless charge. Both of them begin by determining a target with <a href="#targeting.basic">{{{<<enemytarget>>}}}</a>; then the {{{$action}}} variable is set through a call to the {{{Action}}} constructor; then they set the attributes of the action. In this case, we don't need to do much to define the actions, as they are intentionally exact copies of extant actions: Fighter's Sword and Charge skills. We only need to alter the flavor text. If you plan to have multiple enemies use the same actions, it may be a good idea to define them in the action database so you don't have to set attributes here.
+
+You can see here that Finn has very simple behavior: half the time he will use a regular attack, and half the time he will use a stronger attack that leaves him open. This behavior is totally random; he won't avoid using the charge attack if he's low on health or afflicted with a Defense debuff, as the player might in his position. This is a lot easier to code, but it also aligns well with how I wanted Finn to behave. In <i>Adventure Time</i>, Finn is a reckless and foolhardy character, so this behavior is fitting for his personality.
+
+<h4><a id="enemyactions.bubblegum">Advanced Example: Princess Bubblegum</a></h4>
+{{{
+this.ready = false;
+this.cd = new Map([
+	["mass buff",0],
+	["Chi Shield",0]
+	]);
+this.actions = function () {
+	while (V().action === null){
+		var act = random(1,100);
+					
+	if (this.cd.get("mass buff") < 0) {
+		act = random(1,3)
+		switch (act) {
+			case 1:
+				V().action = new Action("Call to Arms");
+				break;
+			case 2:
+				V().action = new Action("Walled City");
+				break;
+			case 3:
+				V().action = new Action("Age of Enlightenment");
+				break;
+		}
+		this.cd.set("mass buff",2);
+	}
+	else if (this.ready) {
+		act = random(1,2)
+		if (act == 1) {
+			$.wiki('<<enemytarget>>');
+			V().action = new ItemAction("Grenade");
+			V().action.weight = 1;
+			V().action.useText = null;
+			V().action.actText = `Princess Bubblegum throws what appears to be a giant peppermint, but as soon as it hits the ground it explodes with the force of a grenade, spreading hard candy shrapnel everywhere.`;
+		}
+		else if (act == 2) {
+			$.wiki('<<enemytarget "ignore downed" "debuff">>');
+			V().action = new Action();
+			V().action.effweight = 0.8;
+			V().action.dur = 4;
+			V().action.useText = null;
+			V().action.actText = `Princess Bubblegum douses $target[0].name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
+			V().action.act = justeffect('t',"Poisoned");
+		}
+		this.ready = false;
+	}
+	else if (act <= 50) {
+		var hitlist = [];
+		if (!V().enemies[0].dead && !V().enemies[0].stasis){
+			hitlist.push(V().enemies[0]);
+		} else if (!V().enemies[2].dead && !V().enemies[2].stasis){
+			hitlist.push(V().enemies[2]);
+		}
+		if (hitlist.length > 0) {
+			var t = random(0,hitlist.length-1);
+			target() = hitlist[t];
+			act = random(1,3)
+			switch (act) {
+				case 1:
+					V().action = new Action("Adrenaline");
+					V().action.dur = 2;
+					V().action.effweight = 0.4;
+					V().act = justeffect('t',"ATK Boost");
+					break;
+				case 2:
+					V().action = new Action("Stoneskin");
+					V().action.dur = 2;
+					V().action.effweight = 0.4;
+					V().act = justeffect('t',"DEF Boost");
+					break;
+				case 3:
+					V().action = new Action("Nootropic");
+					V().action.dur = 2;
+					V().action.effweight = 0.4;
+					V().act = justeffect('t',"SPC Boost");
+					break;
+			}
+		}
+	}
+	else if (this.cd.get("Chi Shield") < 0 && act <= 75 && act > 50) {
+		$.wiki('<<allytarget "buff">>');
+		V().action = new Action();
+		V().action.dur = 2;
+		V().action.useText = null;
+		V().action.actText = function () {
+			var str;
+			if (target() == subject()){
+				str = "becomes";
+			} else {
+				str = "$target[0].name is";
+			}
+			return `$subject[0].name presses a button, the air around ${str} surrounded by a force field.`
+		}
+		V().act = justeffect('t',"Chi Shield");
+		this.cd.set("Chi Shield",1);
+	}
+	else {
+		V().action = new Action();
+		V().action.useText = null;
+		V().action.actText = `Princess Bubblegum pulls something out of her pack.`;
+		V().act = `Something has changed...`;
+		this.ready = true;
+	}
+						
+	} /* end loop */
+	return;
+}
+}}}
+
+In contrast to Finn, Princess Bubblegum has a highly intelligent and pragmatic personality, so to be true to her character I wanted to give her more sophisticated behavior.
+
+To begin with, you'll notice she has additional attributes above {{{actions}}}. Just like the player's abilities, we need some way to balance enemy abilities. Some abilities are very powerful, and would make the game way too hard if enemies could use them all the time! You could implement an energy system like the player characters use, but I found that too difficult. I used a simpler system: when the enemy uses a powerful attack, their "cooldown" variable for that attack is increased. Cooldown is reduced by 1 at the start of every turn, so enemies must wait that many turns before using a special attack again.
+
+{{{
+this.cd = new Map([
+	["mass buff",0],
+	["Chi Shield",0]
+	]);
+}}}
+
+You could set a universal cooldown variable as an attribute of the enemy itself -- if they use <i>any</i> special attack, they have to wait before using another. This can work for some systems, but I chose to key cooldown to specific actions through a Map object.
+
+{{{this.ready = false;}}}
+
+Additionally, the {{{ready}}} attribute is used to track abilities that require charge-up time. In this case it is just a single either/or flag, but you could also key this to specific actions with variable charge-up times.
+
+{{{
+if (this.cd.get("mass buff") < 0) {
+	act = random(1,3)
+	switch (act) {
+		case 1:
+			V().action = new Action("Call to Arms");
+			break;
+		case 2:
+			V().action = new Action("Walled City");
+			break;
+		case 3:
+			V().action = new Action("Age of Enlightenment");
+			break;
+	}
+	this.cd.set("mass buff",2);
+}
+}}}
+
+We can use {{{if}}} statements to make these variables influence Bubblegum's behavior. If her "mass buff" cooldown is negative, she can choose this action; otherwise, she will skip it. This is the first branch of the if tree, so it gets the highest priority: she will <i>always</i> choose this action if the conditional is fulfilled.
+
+Because there are three possible buffs for her to choose from, we have to add additional logic to select the specific action. We could make complicated logic here, such as prioritizing Defense if the party is injured or Special if she's already readied a bomb, but for simplicity's sake I just made the choice completely random. Bubblegum gets an even chance of selecting any buff ability, 1/3rd each.
+
+(Like with Finn, since these are actions shared by puppets and therefore already defined in the database, we just need a single constructor call. We don't even need to modify the flavor text, since these skills don't have any to begin with.)
+
+At the very end, we set the "mass buff" cooldown to 2. Because the check is for when the cooldown is <i>less than</i> 0, it will actually be 3 rounds before this action is available again. This is what we want, because it matches up with the duration of the buffs. The game could get pretty unfair if she could stack mass buffs, so we want to make sure she can only have one buff active at a time.
+
+{{{
+else if (this.ready) {
+	act = random(1,2)
+	if (act == 1) {
+		$.wiki('<<enemytarget>>');
+		V().action = new ItemAction("Grenade");
+		V().action.weight = 1;
+		V().action.useText = null;
+		V().action.actText = `Princess Bubblegum throws what appears to be a giant peppermint, but as soon as it hits the ground it explodes with the force of a grenade, spreading hard candy shrapnel everywhere.`;
+	}
+	else if (act == 2) {
+		$.wiki('<<enemytarget "ignore downed" "debuff">>');
+		V().action = new Action();
+		V().action.effweight = 0.8;
+		V().action.dur = 4;
+		V().action.useText = null;
+		V().action.actText = `Princess Bubblegum douses $target[0].name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
+		V().action.act = justeffect('t',"Poisoned");
+	}
+	this.ready = false;
+}
+}}}
+
+The very next branch checks against Bubblegum's {{{ready}}} attribute. If it's true, she's going to throw a bomb. Since this is the branch immediately after the last one, it takes priority over all other actions: she <i>will always</i> throw a bomb if she's ready and can't use a mass buff.
+
+Once again, there are multiple specific actions she can take here, so we do another randomized roll. Half the time she will use a grenade, and half the time she will use a poisoning attack.
+
+{{{
+V().action = new ItemAction("Grenade");
+V().action.weight = 1;
+}}}
+
+Notice that we call a pre-defined action here, but we proceed to specify a {{{weight}}} value anyway. In this case, I decided that the normal Grenade weight would be too unfair for this battle, so I lowered it to 1. Anything you specify here will overwrite anything that was defined by the constructor.
+
+{{{
+else if (act <= 50) {
+	var hitlist = [];
+	if (!V().enemies[0].dead && !V().enemies[0].stasis){
+		hitlist.push(V().enemies[0]);
+	} else if (!V().enemies[2].dead && !V().enemies[2].stasis){
+		hitlist.push(V().enemies[2]);
+	}
+	if (hitlist.length > 0) {
+		var t = random(0,hitlist.length-1);
+		target() = hitlist[t];
+		act = random(1,3)
+		switch (act) {
+			case 1:
+				V().action = new Action("Adrenaline");
+				V().action.dur = 2;
+				V().action.effweight = 0.4;
+				V().act = justeffect('t',"ATK Boost");
+				break;
+			case 2:
+				V().action = new Action("Stoneskin");
+				V().action.dur = 2;
+				V().action.effweight = 0.4;
+				V().act = justeffect('t',"DEF Boost");
+				break;
+			case 3:
+				V().action = new Action("Nootropic");
+				V().action.dur = 2;
+				V().action.effweight = 0.4;
+				V().act = justeffect('t',"SPC Boost");
+				break;
+		}
+	}
+}
+}}}
+
+In the next branch we finally get into one of her "normal" actions: giving a buff drug to one of her allies.
+
+{{{if (act <= 50)}}}
+
+We see that the conditional uses the {{{act}}} variable. Because {{{act}}} was set to a random value between 1 and 100, this action will be selected half the time.
+
+{{{
+var hitlist = [];
+if (!V().enemies[0].dead && !V().enemies[0].stasis){
+	hitlist.push(V().enemies[0]);
+} else if (!V().enemies[2].dead && !V().enemies[2].stasis){
+	hitlist.push(V().enemies[2]);
+}
+if (hitlist.length > 0) {
+	var t = random(0,hitlist.length-1);
+	target() = hitlist[t];
+}}}
+
+We then proceed to implement some unique targeting logic, though it's similar to the logic discussed previously. Bubblegum will exclude herself as a viable target, and only choose between her allies (at index 0 and index 2). She won't target them if they're already defeated, of course, and since this is a buff, she won't target them if they're in Stasis either. The action definition is inside the final {{{if}}}, so this action will only be chosen if a viable target was found.
+
+{{{
+act = random(1,3)
+switch (act) {
+	case 1:
+		V().action = new ItemAction("Adrenaline");
+		V().action.dur = 2;
+		V().action.effweight = 0.4;
+		V().act = justeffect('t',"ATK Boost");
+		break;
+	(etc.)
+}}}
+
+As with the mass buffs, Bubblegum has three to choose from, and once again the choice is made with a simple random roll. And as with the grenade, though the action mimics a database action, I have chosen to overwrite its values for game balance purposes.
+
+{{{
+else if (this.cd.get("Chi Shield") < 0 && act <= 75 && act > 50) {
+	$.wiki('<<allytarget "buff">>');
+	if (target() !== null){
+		V().action = new Action();
+		V().action.dur = 2;
+		V().action.useText = null;
+		V().action.actText = function () {
+			var str;
+			if (target() == subject()){
+				str = "her becomes";
+			} else {
+				str = "$target[0].name is";
+			}
+			return `$subject[0].name presses a button, the air around ${str} surrounded by a force field.`
+		}
+		V().act = justeffect('t',"Chi Shield");
+		this.cd.set("Chi Shield",1);
+	}
+}
+}}}
+
+Bubblegum's next action is another buff, this time providing Chi Shield.
+
+{{{if (this.cd.get("Chi Shield") < 0 && act <= 75 && act > 50)}}}
+
+This is another action with a cooldown, so we must check against it in the conditional. However, it must also pass an {{{act}}} range. Even with no cooldowns active, this action will only be selected when {{{act}}} is between 51 and 75, or 25% of the time.
+
+{{{
+$.wiki('<<allytarget "buff">>');
+if (target() !== null){
+}}}
+
+Bubblegum can target herself with this ability, so we can use the regular {{{<<allytarget>>}}} widget. However, because this is done to find a buff recipient, it's possible that no target is selected (if everyone is in Stasis). We therefore need to check to make sure that our target isn't {{{null}}} before we proceed.
+
+The action is otherwise quite straightforward. We create a blank action, define its attributes, and set the cooldown when we're done.
+
+{{{
+else {
+	V().action = new Action();
+	V().action.useText = null;
+	V().action.actText = `Princess Bubblegum pulls something out of her pack.`;
+	V().act = `Something has changed...`;
+	this.ready = true;
+}
+}}}
+
+Bubblegum's final action is covered under a default {{{else}}} clause, so it will always trigger if no other condition is met. Effectively, this means it will trigger at {{{act}}} values 76-100, or 25% of the time. This action just sets {{{ready}}} to true, enabling Bubblegum to throw a bomb on the next turn.
+
+Princess Bubblegum is my favorite character from <i>Adventure Time</i>, so I played favorites: I made her the focus of the battle and gave her two separate behaviors depending on what stage the battle was in. This has only described her normal behavior, but you can look up the "PB alone" case in {{{changeInto}}} to see how her behavior changes when the player defeats her cohorts.
+
+These examples should hopefully show you how to implement enemy behavior yourself. AI design is unfortunately not my forte, so many of these examples are relatively simplistic. If you ask around RPG design communities, they may be able to help you with more complex designs.
+
+<h4><a id="enemyactions.transform">Transformations</a></h4>
+In some cases, you may want to change an enemy's statistics in the middle of battle. You probably don't want to replace them with a whole new Enemy object, since that would reset things like HP and effects.
+
+You can instead do this through the <b>changeInto</b> function, defined at the bottom of the Enemy class definition. It's structured just like the constructor, with a {{{switch}}} statement and cases keyed to various names or IDs. You can use this to change enemy behavior or any other attribute; it's as simple as writing a new definition.
+
+<h2><a id="partypicker">Party Picker</a></h2>
+In some RPGs, you're only given a single party of characters to play with throughout the whole game. Some are a bit more ambitious, and give you additional reserve characters you can swap out with your active ones.
+
+{{{
+<span id="status"><<include "party manager reserve">></span><span id="content"><center>Active puppets:</center>
+<<nobr>>
+<div class="actors" id="puppets">
+<<include "party manager puppets">>
+</div>
+<</nobr>>
+
+A list of all available puppets is on the right. To swap out an active puppet, click on them and then on the puppet you want to add.
+
+<<return>>
+</span>
+}}}
+
+This functionality is provided through the "Party Picker" passage, which you can access from the landing. Like the "Battle!" passage, the actual passage the player visits is only a container for complex code outsourced to other passages. Here, you can notice that we use the "status" ID formatting to separate the reserve puppets from the main screen. We need to tag the passage as "battle" to make this display properly.
+
+{{{
+<<for _i, _puppet range $puppets>>
+	<div class="actor" @id="_i">
+	<center>
+	<<capture _i>>
+	<<link _puppet.name>>
+		<<if def _s>><<run $('#' + _s).removeClass("selected")>><</if>>
+		<<set _s = _i>>
+		<<run $('#' + _i).addClass("selected")>>
+		<<replace "#status">><<include "party manager reserve">><</replace>>
+	<</link>>
+	<</capture>>
+	</center><br/>
+	<<for _k, _v range _puppet.stats>>
+		<span class="statname"><<print _k>>:</span>
+		<<print _puppet.get(_k)>>
+		<br/>
+	<</for>>
+	</div>
+<</for>>
+}}}
+
+Active puppets are displayed through the "party manager puppets" passage. Here, similarly to the actorlist, we create stat blocks for every puppet with a for loop. The key here is that we're going to need a unique ID for every block. We can do this with the {{{@}}} operator and the {{{_i}}} index variable of the for loop: every "actor" block will be given the ID 0, 1, or 2 as the loop runs. (Thanks to Twinery user greyelf for helping me with this.)
+
+Within each block, we're going to {{{<<capture>>}}} the index value {{{_i}}} and create a {{{<<link>>}}} out of each puppet's name. When clicked, we're going to assign a separate value, {{{_s}}}, the value of {{{_i}}}, and then use a jQuery function to add the "selected" class to the current block. (It's theoretically possible to use SugarCube's {{{<<addclass>>}}} macro instead, but passing variables as IDs is a bit more difficult there.) The "selected" class just turns the block a bright cyan color, thus making it clear to the player that the puppet is selected.
+
+{{{<<if def _s>><<run $('#' + _s).removeClass("selected")>><</if>>}}}
+
+We also need a quick line of code to remove the "selected" class from the <i>last</i> selected puppet, in case the player has already selected one. Otherwise, the cyan coloring wouldn't disappear, and the player might be confused who they're selecting.
+
+We also need to update the "party manager reserve", for reasons that will be explained shortly.
+
+The rest of the block can be anything; in the default engine, it's stats, since that's the major distinguishing feature of the default party members. You could include more info if you like.
+
+{{{
+<center>Reserve Puppets:</center><br/>
+<<for _i, _puppet range $Reserve_Puppets>>
+	<span class="statname">
+	<<if def _s>>
+		<<capture _puppet, _i>>
+		<<link _puppet.name>>
+			<<run $Reserve_Puppets[_i] = $puppets[_s]>>
+			<<set $puppets[_s] = _puppet>>
+			<<unset _s>>
+			<<replace "#puppets">><<include "party manager puppets">><</replace>>
+			<<replace "#status">><<include "party manager reserve">><</replace>>
+		<</link>>
+		<</capture>>
+	<<else>>
+		_puppet.name
+	<</if>>
+	</span><br/><br/>
+<</for>>
+}}}
+
+Finally, we need to let the player pick a party member from the reserve. As before, we iterate over a puppet array, but this time it's the {{{$Reserve_Puppets}}} array defined in {{{<<puppetsInit>>}}}. (To prevent the player from cloning people, {{{$Reserve_Puppets}}} shouldn't have any overlap with the active {{{$puppets}}} array.) If {{{_s}}} is defined (so, someone was selected), clicking their name will swap them with the selected character. Finally, we reset {{{_s}}} and refresh both character lists so the player can do it all again.
+
+<h2><a id="widgets">Other Widgets</a></h2>
+This section will cover miscellaneous widgets and their purpose.
+
+<h3><a id="chain">The {{{<<chain>>}}} widget</a></h3>
+Twine has a difficult quirk: object addresses are not preserved through passages.
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/variable_types.PNG" />
+
+Normally, when you define a variable, the value of the variable is stored in the computer's memory at the variable's address. When you define an object, the variable you set as its name does not store the object itself, only the memory address. The object variable therefore serves as a pointer to the actual object. This means that you can pass the object's name to other variables and still have those new variables point to the same object.
+
+For instance, if we wanted to store the currently acting character in a "subject" variable, we might do this:
+
+{{{<<set $subject = $puppets[1]>>}}}
+
+If we did this in a standard coding engine, {{{$subject}}} would refer to the same object as {{{$puppets[1]}}}, and everything we did to {{{$subject}}} would also affect {{{$puppets[1]}}}.
+
+Twine, for various reasons, does not work this way. Every time the user travels to a new passage, a new copy of every object is generated, and this breaks shared object references. In our example, {{{$subject}}} would now point to a completely new object, and acting on it would not affect our {{{$puppets[1]}}} object.
+
+{{{
+<<widget "chain">>
+<<for _i, _a range $args>>
+	<<if def $args[_i] and $args[_i] isnot null and $args[_i][1] isnot null>>
+		<<set $args[_i][0] = State.getVar($args[_i][1])>>
+	<</if>>
+<</for>>
+<</widget>>
+}}}
+
+The {{{<<chain>>}}} widget (found in the "General Widgets" passage) is a workaround for this issue. It is based on the fact that shared object references still work <i>within the same passage</i>. If we were to run {{{<<set $subject = $puppets[1]>>}}} at the start of every passage, {{{$subject}}} would behave the way we want.
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/126.PNG" />
+
+As you can see in the battle passages, this is essentially what {{{<<chain>>}}} does. If we turn {{{$subject}}} into an array consisting of both the object and its literal name (as a string), {{{<<chain>>}}} can read the name in the second array item and use it to restore the link to the desired object. The object link itself is stored in the first item, at index 0. (This is why the battle code always refers to {{{$subject[0]}}} and not {{{$subject}}}, if you were wondering.)
+
+{{{
+<<if $inbattle>>
+	<<chain $subject $target $actor>>
+<</if>>
+}}}
+
+{{{<<chain>>}}} is then added to PassageReady, a special passage that runs at the beginning of every passage. This lets {{{$subject}}}, {{{$target}}}, and {{{$actor}}} retain their object links through passages, which greatly simplifies many widgets.
+
+<h3><a id="find">{{{<<find>>}}}</a></h3>
+{{{
+<<widget "find">>
+/* args0 is target array, args1 is attribute, args2 is key value */
+/* Note that if your key is a string, it must be in quotes in the final code, which means you must send it to the widget with an extra pair of literal quotes (preceeded by the escape slash) */
+<<print '<<set _pos = '+$args[0]+'.map(function(x) { return(x.'+$args[1]+') }).indexOf('+$args[2]+')>>'>>
+<</widget>>
+}}}
+
+What you see here is a JavaScript function that searches through an array of objects and returns the index of a given attribute that matches a given value. The array, the attribute, and the value are given as arguments to the widget, in that order. After it's done, it'll store the index value in {{{_pos}}} for you to use elsewhere. If it didn't find anything, {{{_pos}}} will be set to -1.
+
+Why is it wrapped in a {{{<<print>>}}} statement? This is something the Twine community calls the "Stupid Print Trick", because it looks stupid, but it actually works. If you use the {{{<<print>>}}} statement to print code, that code will be executed. Because {{{<<print>>}}} can concatenate strings, this is handy for creating code with variable parameters. The only trick is that every one of the arguments has to be a string literal (surrounded by quotes), or it won't work. The other caveat is that if you're searching for a string value, that value must <i>display in the code</i> as a string literal, which requires you to add an extra pair of quotes. You must do this by using the escape slash {{{\}}} character so they're parsed as literal.
+
+If you didn't understand that, don't worry! Just follow the directions in the comment and you should be fine.
+
+<h3><a id="backbtn">{{{<<backbtn>>}}}</a></h3>
+{{{
+<<widget "backbtn">>
+<span class="btn back right">[[Back|Battle!][$targeting = null; $action = null; $instant = false; $target = [null,null]; $removed_effects = [];]]</span>
+<</widget>>
+}}}
+
+The {{{<<backbtn>>}}} widget (an abbreviation for "back button") is the gray "BACK" button you see in battle. It's just a link back to the battle hub, plus a whole host of variable assignments to reset any flags triggered while selecting actions, such as {{{$target}}}. If this wasn't done, flags might be able to "bleed over" into other actions when they weren't supposed to -- enabling you to select characters to attack outside of the targeting phase, for instance.
+
+<h3><a id="victorycheck">{{{<<victorycheck>>}}}</a></h3>
+{{{
+<<widget "victorycheck">>
+<<set _victory to 0>>
+<<set _defeat to 0>>
+<<for _enemy range $enemies>>
+	<<if _enemy.dead>>
+		<<set _victory++>>
+	<</if>>
+<</for>>
+<<if _victory eq $enemies.length>>
+	<<goto "Victory">>
+<</if>>
+<<for _puppet range $puppets>>
+	<<if _puppet.dead>>
+		<<set _defeat++>>
+	<</if>>
+<</for>>
+<<if _defeat eq $puppets.length>>
+	<<goto "Defeat">>
+<</if>>
+<</widget>>
+}}}
+
+You need to have some handler to determine when your player wins or loses the game. This widget, called at the start of the "Battle!" passage (so, constantly throughout the battle) runs over the enemy and ally parties and uses a temporary variable to track how many have been defeated. If the dead characters equal the length of the array (that is to say, all the characters have been defeated), the player is immediately moved to a new passage: "Victory" for the enemies' defeat, and "Defeat" for the player's defeat.
+
+Note that the check and move for the "victory" handler is performed before the "defeat" check. This means that if the player and enemy are defeated simultaneously, the win will default to the player. This situation is very rare, as it requires an action that hurts both sides, but if you plan to implement actions like that, it is a good idea to think about how you want that situation to be handled.
+
+<h3><a id="deathcheck">{{{<<deathcheck>>}}}</a></h3>
+{{{
+<<widget "deathcheck">>
+<<if $target[0].hp <= 0 and $target[0].dead is false>>
+	<<set $target[0].hp = 0>>
+	<<for _k _effect range $target[0].effects>>
+		<<run target().removeEffect(_effect,'pierce')>>
+	<</for>>
+	<<if $target[0] instanceof Enemy>>
+		<<run $B.kills.push($target[0].name)>>
+	<</if>>
+	<<if $target[0].deathMessage is "special">>
+		<<goto "specialdeath">>
+	<<else>>
+		<<set $target[0].dead to true>>
+		<<print $target[0].deathMessage>>
+	<</if>>
+	<<if $target[0].protected is true>>
+		<<if target() instanceof Puppet>>
+		  <<find "$puppets" "name" $target[0].protectedBy>>
+		  <<if _pos > -1>>
+			  <<set _p = _pos>>
+			  <<set _a = "$puppets["+_pos+"].effects">>
+			  <<find _a "name" "\'Protector\'">>
+			  <<print $puppets[_p].removeEffect(_pos,'pierce')>>
+		  <</if>>
+		<<elseif target() instanceof Enemy>>
+		  <<find "$enemies" "name" $target[0].protectedBy>>
+		  <<if _pos > -1>>
+			  <<set _p = _pos>>
+			  <<set _a = "$enemies["+_pos+"].effects">>
+			  <<find _a "name" "\'Protector\'">>
+			  <<print $enemies[_p].removeEffect(_pos,'pierce')>>
+		  <</if>>
+		<</if>>
+	<</if>>
+<</if>>
+<</widget>>
+}}}
+
+This widget applies the "dead" tag to defeated characters, and adds their names to the "kills" array in case that's something you want to keep track of.
+
+{{{
+<<if $target[0].hp <= 0 and $target[0].dead is false>>
+	<<set $target[0].hp = 0>>
+	<<for _effect range $target[0].effects>>
+		<<set _mask to true>>
+		<<removeEffect $target[0] _effect>>
+	<</for>>
+	<<if $target[0] instanceof Enemy>>
+		<<run $kills.push($target[0].name)>>
+	<</if>>
+}}}
+
+If the current target has 0 HP or less and isn't flagged dead already, their HP is set to 0 (just in case it's still displaying somewhere; negative HP values look unprofessional). If the target is of the Enemy class, they're also added to the "kills" array.
+
+{{{
+<<if $target[0].deathMessage is "special">>
+	<<goto "specialdeath">>
+<<else>>
+	<<set $target[0].dead to true>>
+	<<print $target[0].deathMessage>>
+<</if>>
+}}}
+
+There's then a check for characters with special death messages. You might want certain enemies to have a full passage's worth of description when they're defeated, such as if they're a climactic villain. If you set their death message attribute to "special", the player will be directed to the "specialdeath" passage. (Note that any {{{<<goto>>}}} triggers as soon as the page loads, so players won't see the regular attack description! You'll need to do something different if you want to direct the player after the page has finished.)
+
+Otherwise, the normal death message will be displayed, and the enemy will be flagged as dead.
+
+Note that this requires the target be set correctly! Usually this won't be a problem, as the damage widgets require a target as well. However, you'll also need to update the {{{$target}}} value any time a character could be damaged, such as from damage-over-time effects.
+
+<h3><a id="statusexp">{{{<<status>>}}}</a></h3>
+{{{
+<<widget "status">>
+<span class="right">
+<<link "[*]">>
+	<<if $args[0] eq $actor>>
+		<<set $actor = [null,null]>>
+	<<else>>
+		<<set $actor to $args[0]>>
+		<<set $stScreen = 1>>
+	<</if>>
+	<<replace "#status">><<include "status">><</replace>>
+<</link>>
+</span>
+<</widget>>
+}}}
+
+This widget creates that little [*] button you use to get information on characters.
+
+You may recall from the "actorlist" passage that the widget is called like this:
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/134.PNG" />
+
+That big string right there contains the character's object address. When it's given to the widget in this way, it appears as {{{$args[0]}}} within the widget.
+
+So, when the {{{<<link>>}}} macro is activated (i.e., when the [*] is clicked), the widget first checks if the passed information matches what's already stored in {{{$actor}}}. If it does, {{{$actor}}} is set to null, which clears the information in the status pane. This is how the status button is "toggleable": if you click it once, you get that character's information; if you click it again for the same character, the pane clears.
+
+By default, {{{$actor}}} is set to the information for the new character, and the {{{$stScreen}}} value is set to 1 (defaulting to the pane displaying stats). A {{{<<replace>>}}} macro is then used to refresh the status pane to display the new character.
+
+Recall that {{{$actor}}} is one of the variables fed to {{{<<chain>>}}}, so the status pane will update to reflect changes to the character.
+
+<h3><a id="endofbattle">{{{<<endofbattle>>}}}</a></h3>
+{{{
+<<widget "endofbattle">>
+<<set $inbattle to false>>
+<<set $subject = [null,null]>>
+<<set $target = [null,null]>>
+<<unset $actor>>
+<<refreshPuppets>>
+<<restock>>
+<</widget>>
+}}}
+
+This widget is very simple: it just resets battle variables such as {{{$inbattle}}} and {{{$actor}}}, as well as resetting puppets and inventory to its resting state.
+
+<h3><a id="stat">{{{<<stat>>}}}</a></h3>
+<img src="http://www.setschoolmw.com/twine/rpgengine/137.PNG" />
+
+This widget was provided by Twinery user greyelf in response to one of my questions. It enables the conditional coloring of the stats that display in the status pane depending on if they've been raised or lowered by stat mod effects.
+
+The {{{@@}}} symbols here modify webpage elements. The first line adds the given class to the current element, and the second line (after the semicolon) populates the current element with text. In this case, it always populates the element with {{{_current}}}, but adds the {{{.stat-raised}}} class if the stat has been raised, and adds the {{{.stat-lowered}}} class if the stat has been lowered. The rules for these classes are defined in the story stylesheet; they color the text blue and red, respectively.

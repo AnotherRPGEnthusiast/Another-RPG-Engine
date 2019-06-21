@@ -1,0 +1,41 @@
+#actFlavor {
+  border: solid;
+  border-radius: 16px;
+  padding: 1em;
+}
+
+#useText {
+  text-align: center;
+  font-weight: bold;
+}
+
+#actEffect {
+  color: gray;
+  font-style: italic;
+  border: solid;
+  border-radius: 16px;
+  padding: 1em;
+}
+
+.interruption {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.actdesc {
+  color: gray;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.preview {
+  color: gray;
+  font-style: italic;
+}
+
+.dizzy {
+  color: gray;
+  font-style: italic;
+}
+

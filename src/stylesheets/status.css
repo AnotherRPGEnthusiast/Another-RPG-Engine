@@ -1,0 +1,33 @@
+.statusname {
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.statname {
+  display: inline-block;
+  min-width: 6em;
+  text-transform: uppercase;
+}
+
+.statusdesc {
+  font-weight: normal;
+}
+
+.duration {
+  color: gray;
+  font-style: italic;
+  float: right;
+}
+
+.stat-raised {
+	color: blue;
+}
+
+.stat-lowered {
+	color: red;
+}
+
+.green {
+	color: lime;
+}
+

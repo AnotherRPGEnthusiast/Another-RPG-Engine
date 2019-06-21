@@ -1,0 +1,188 @@
+:: Widgets: Damage and Formulas[widget nobr]
+<<widget "damagecalc">>
+<<set _w = $action.weight>>
+
+/* Do we use Attack or Special? */
+<<if $action.item is true>>
+	<<set _atk to $subject[0].get("Special")>>
+<<else>>
+	<<set _atk to $subject[0].get("Attack")>>
+<</if>>
+
+/* Piercing? */
+<<if $action.pierce is true>>
+	<<set _def to 0>>
+<<else>>
+	<<set _def to $target[0].get("Defense")>>
+<</if>>
+
+/* Special formulas for specific actions */
+<<switch $action.name>>
+<<case "Exacerbate">>
+	<<for _effect range $target[0].effects>>
+		<<if _effect.buff isnot true>>
+			<<set _w += 0.25>>
+		<</if>>
+	<</for>>
+<<case "Downfall">>
+	<<for _effect range $target[0].effects>>
+		<<if _effect.buff is true>>
+			<<set _w += 0.2>>
+		<</if>>
+	<</for>>
+<</switch>>
+
+/* base damage: */
+<<switch $formula>>
+	<<case "subtractive">>
+		<<set $dmg to (($base+$damper*_atk)*_w)-$damper*_def>>
+	<<case "bonfire">>
+		<<set $dmg to ($base+$damper*(_atk-_def))*_w>>
+	<<case "rpgmaker">>
+		<<set $dmg to (_atk*4-_def*2)*$damper*_w>>
+	<<case "divisive">>
+		<<set $dmg to ($base*(_atk/_def))*_w>>
+	<<default>>
+		/* add your own here! */
+/* You can also make additional cases if you want a unique formula for an attack. Just remember to reset the $formula variable after so you don't get cross-over! */
+<</switch>>
+
+/* Find element factor, and multiply it to damage */
+<<if def $action.element>>
+	<<set _factor = $target[0].elements.get($action.element)>>
+<</if>>
+<<if ndef _factor>>
+	<<set _factor = 1>>
+<</if>>
+<<set $dmg *= _factor>>
+
+/* Element message */
+<<if _factor > 1>>
+	<<set _elntmsg to "Super effective! ">>
+<<elseif _factor < 1 and _factor > 0>>
+	<<set _elntmsg to "Not very effective... ">>
+<<elseif _factor == 0>>
+	<<set _elntmsg to "No effect! ">>
+<<elseif _factor < 0>>
+	<<set _elntmsg to "Absorbed! ">>
+<</if>>
+
+/* Miscellaneous factors */
+<<if $subject[0].berserker is true>>
+	<<set $dmg *= (1+$berserk_factor)>>
+<</if>>
+<<if $target[0].berserker is true>>
+	<<set $dmg *= (1+$berserk_factor)>>
+<</if>>
+<<if $subject[0].defender is true>>
+	<<set $dmg *= $defend_factor>>
+<</if>>
+<<if $target[0].defender is true>>
+	<<set $dmg *= $defend_factor>>
+<</if>>
+<<if $target[0].shield is true>>
+	<<set $dmg *= (1-$SHIELD_FACTOR)>>
+<</if>>
+
+/* Round to integer and check against minimum */
+<<set $dmg = Math.round($dmg)>>
+<<if _factor < 0>>
+	/* do nothing */
+<<elseif $dmg < $min_dmg>>
+	<<set $dmg = $min_dmg>>
+<</if>>
+<</widget>>
+
+<<widget "echodamage">>
+<<if $args[0] instanceof Actor>>
+	<<set $target[0] = $args[0]>>
+<</if>>
+<<if !$args.includes("nocalc")>>
+	<<damagecalc>>
+<</if>>
+<<if $target[0].dead is false>>
+	<<if $target[0].bubbled is true>>
+$target[0].name's bubble pops like a balloon under your attack, leaving them unharmed!<br/>
+		<<for _k _effect range $target[0].effects>>
+			<<if _effect.name == "Bubble">>
+				<<run target().removeEffect(_effect,"pierce")>>
+				<<break>>
+			<</if>>
+		<</for>>
+	<<else>>
+<<if def _elntmsg>><b><<print _elntmsg>></b><</if>>
+<<if _factor < 0>>
+$target[0] feeds on the energy, and recovers <<print $dmg*-1>> HP.
+<<else>>
+$target[0].name takes $dmg damage!
+<</if>><br />
+		<<set $target[0].setHP(-$dmg)>>
+		<<deathcheck>>
+		<<if $target[0].dead is false and $target[0].offbalance is true and _factor > 0>>
+			<<addeffect $target[0] "Knocked Down" -1>>
+		<</if>>
+	<</if>>
+<</if>>
+<</widget>>
+
+<<widget "effectcalc">>
+<<switch $args[0]>>
+	<<case "debuff">>
+		<<set $power = Math.round(($effbase+$effdamper*(_subject.get("Special")-_target.get("Special")))*$action.effweight)>>
+		<<if $power < $min_debuff>>
+			<<set $power = $min_debuff>>
+		<</if>>
+	<<case "buff">>
+		<<set $power = Math.round(($effbase+$effdamper*(_subject.get("Special")))*$action.effweight)>>
+		<<if $power < $min_buff>>
+			<<set $power = $min_buff>>
+		<</if>>
+<</switch>>
+<</widget>>
+
+<<widget "DoT">>
+/* DEPRECIATED as of v0.91. DoT handling is now tied to effect cases in the database. */
+/* Calculates damage from damage-over-time effects. */
+/* args0 is subject; args1 effect index */
+<<if $args[1] is "test">>
+	<<set _name to $args[2]>>
+	<<set _weight to $args[3]>>
+	<<set _power to $args[4]>>
+<<else>>
+	<<set _name to $args[0].effects[$args[1]].name>>
+	<<set _weight to $args[0].effects[$args[1]].weight>>
+	<<set _power to $args[0].effects[$args[1]].power>>
+<</if>>
+<<switch _name>>
+
+	<<case "Burning" "Perdition">>
+ 	/* effect base vs. defender's DEF */
+  		<<set _dmg = _weight*($base+($damper*(_power - $args[0].get("Defense"))))>>
+		
+ 	<<case "Poisoned">>
+ 	/* effect base vs. defender's SPC */
+  		<<set _dmg = _weight*($base+($damper*(_power - $args[0].get("Special"))))>>
+		
+ 	<<case "Doom">>
+ 	/* Effect base, unblockable. There is no refuge. */
+  		<<set _dmg = _weight*($base+($damper*(_power))>>
+		
+ 	<<case "proportional">>
+ 		<<set _dmg = $args[0].maxhp*_weight>>
+
+	<<case "fixed">>
+		<<set _dmg = _power>>
+<</switch>>
+
+<<set _dmg = Math.round(_dmg)>>
+<<if _dmg < $min_DoT>>
+	<<set _dmg = $min_DoT>>
+<</if>>
+<<if $args[2] is "test">>
+	/* do nothing; _dmg will be preserved for later use */
+<<elseif $args[2] is "status">>
+	<<print _dmg>>
+<<else>>
+	<<set $dmg to _dmg>>
+<</if>>
+<</widget>>
