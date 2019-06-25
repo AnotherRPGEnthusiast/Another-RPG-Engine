@@ -250,7 +250,7 @@
    			<</if>>
  		<</if>>
 	<</for>>
-	<<if $args[1] isnot "mass">>
+	<<if !$args.includes("mass")>>
 		<<if _temp >= _threshold>>
 			<<run _hitlist.push(_i)>> /* If someone has a buff, make them a possible target */
 		<</if>>
@@ -260,25 +260,27 @@
 	<<set _go to false>> /* If no one has any buffs, there's no point in using this; reroll */
 <<else>>
 	<<set _go to true>>
-	<<if $args[1] isnot "mass">> /* mass dispel doesn't need to pick a target */
+	<<if !$args.includes("mass")>> /* mass dispel doesn't need to pick a target */
 		<<set _n = random(0,(_hitlist.length-1))>>
 		<<set _t = _hitlist[_n]>>
 		<<set $target = [$puppets[_t],"$puppets["+_t+"]"]>>
 
-/* Protection check. Comment this out if you do not want Protectors to protect against dispels. */
-<<if $target[0] isnot null and $target[0].protected>>
-	<<find "$puppets" "name" $target[0].protectedBy>>
-	<<if _pos eq -1>>
-		<<set _targetingMsg = "ERROR: Protected character with no protector\n">>
-		<<print "ERROR: Protected character with no protector\n">>
-	<<else>>
-		<<set _targetingMsg = $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
-		<<print $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
-		<<set $target to [$puppets[_pos],"$puppets["+_pos+"]"]>>
+	/* Protection check. Comment this out if you do not want Protectors to protect against dispels. */
+	<<if $target[0] isnot null and $target[0].protected>>
+		<<find "$puppets" "name" $target[0].protectedBy>>
+		<<if _pos eq -1>>
+			<<set _targetingMsg = "ERROR: Protected character with no protector\n">>
+			<<print "ERROR: Protected character with no protector\n">>
+		<<else>>
+			<<set _targetingMsg = $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+			<<print $puppets[_pos].name+" took the hit for "+$target[0].name+"!\n">>
+			<<set $target to [$puppets[_pos],"$puppets["+_pos+"]"]>>
+		<</if>>
 	<</if>>
-<</if>>
 		
  	<</if>>
+<</if>>
+
 <</if>>
 <</widget>>
 

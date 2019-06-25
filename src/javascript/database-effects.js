@@ -746,6 +746,19 @@ window.Effect = class Effect {
 				}
 		}		
 	}
+	
+	decay (actor) {
+		if (this.duration >= 1 && !(actor.stasis && this.name != "Stasis")) {
+            this.duration -= 1;
+		}
+        if (this.duration == 0) {
+            var m = actor.removeEffect(this,'pierce');
+			if (m.length > 0) {
+				State.temporary.message = true;
+				return m;
+			}
+		}
+	}
 }
 
 window.DoT = class DoT extends Effect {

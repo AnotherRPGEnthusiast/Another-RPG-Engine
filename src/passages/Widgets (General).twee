@@ -43,7 +43,7 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 <</if>>
 <</widget>>
 
-<<widget "spare">>[[Spare|confirm phase][$subject = $args[0]; $action = {name: "spare", cost: 0}]]<</widget>>
+<<widget "spare">>[[Spare|confirm phase][$subject = $args[0]; $target[0] = $enemy_to_spare; $action = {name: "spare", cost: 0}]]<</widget>>
 
 <<widget "victorycheck">>
 <<set _victory to 0>>
@@ -292,11 +292,12 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 
 <<widget "newturn">>
 <<set $SacrificeUsed to false>>
+<<set $B.turnCounter++>>
 <<for _puppet range $puppets>>
 	<<set _puppet.isDone to false>>
 	<<for _k, _effect range _puppet.effects>>
 		<<if _effect.topDec>>
-			<<print _puppet.removeEffect(_effect,"pierce")>>
+			<<print _effect.decay(_puppet)>>
 		<</if>>
 	<</for>>
 	<<if _puppet.winded is false>>
@@ -328,17 +329,7 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
                 
                 /* decrementor */
                 <<if !_effect.topDec>>
-					<<if _effect.duration >= 1 and !(_actor.stasis is true and _effect.name != "Stasis")>>
-                    	<<set _effect.duration -= 1>>
-					<</if>>
-					/* <<run console.log("Time = "+_effect.duration)>> */
-                	<<if _effect.duration == 0>>
-                    	<<set _m = _actor.removeEffect(_effect,'pierce')>>
-						<<if _m.length > 0>>
-							<<print _m>>
-							<<set _message to true>>
-						<</if>>
-                	<</if>>
+					<<print _effect.decay(_actor)>>
 				<</if>>
         <</for>>
 <</for>>
@@ -403,6 +394,7 @@ _action.name
 	new Item("Stoneskin",2),
 	new Item("Nootropic",2),
 	new Item("Throwing Knife",5),
+	new Item("Powdered Glass",3),
 	new Item("Grenade",1),
 	new Item("Flamethrower",1),
 	new Item("Gas Bomb",1),
@@ -473,7 +465,7 @@ _k
 <</if>>
 <<if _targ.hp <= 0 and _targ.dead is false>>
 	<<set _targ.hp = 0>>
-	<<for _k _effect range _targ.effects>>
+	<<for _k, _effect range _targ.effects>>
 		<<run _targ.removeEffect(_effect,'pierce')>>
 	<</for>>
 	<<if _targ instanceof Enemy>>

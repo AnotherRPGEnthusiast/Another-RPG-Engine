@@ -1,0 +1,442 @@
+:: Additional Features[text]
+This passage will discuss additional RPG features not fully implemented in the default engine and <i>Cartoon Battle</i>, but which may be of interest. This will contain rather advanced discussion of code and will build on the principles discussed in the design passage, so it is recommended you read [[Documentation]] and [[Design]] first.
+
+<h1>Table of Contents</h1>
+><a href="#flow">Battle Flow and Turn Order</a>
+>><a href="#flow.1">Method 1: Ranked Order</a>
+>>><a href="#flow.1.a">Adding Variance</a>
+>><a href="#flow.2">Method 2: Action Time</a>
+>>><a href="#flow.2.a">Action Time with Threshold</a>
+>><a href="#flow.3">Method 3: Timeline</a>
+>>><a href="#flow.3.a">Duel (One-Character) Systems</a>
+>><a href="#flow.4">Transparency</a>
+><a href="#progress">Progression and Leveling Up</a>
+>><a href="#progress.levels">Levels</a>
+>>><a href="#progress.levels.1">Calculating XP Requirements</a>
+>>><a href="#progress.levels.2">What Do Levels Do?</a>
+>>><a href="#progress.levels.code">Implementation</a>
+>><a href="#progress.pointbuy">Point-Buy</a>
+>>><a href="#progress.pointbuy.code">Implementation</a>
+
+<h2><a id="flow">Battle Flow and Turn Order</a></h2>
+In <i>Cartoon Battle</i>, everyone can take their turns in any order, and each party's turn happens all at once. This system is very simple to implement and balance: everyone gets the same number of actions and acts at the same rate. I recommend it to novice developers for this reason.
+
+This is not the only way to structure turn order, however. Many RPGs include a "speed" or "agility" stat that makes some characters act before others.
+
+<h3><a id="flow.1">Method 1: Ranked Order</a></h3>
+The simplest way to implement this is to have everyone act in order of decreasing Speed. So, for instance, if we have three characters with 10, 5, and 4 Speed and an enemy with 9 Speed, every round will go in the order of Character A - Enemy - Character B - Character C. If we boost the enemy to 11 speed, they'd now go before any player characters, which could make them quite tricky! Under this model, everyone would still get the same number of turns -- after each round, we'd just repeat the queue. This means balancing actions is still fairly simple. However, we do gain added complexity by fixing characters' positions in the turn order -- especially if there are actions that can assist or set up other characters' abilities, such as buff and debuff effects. Players will need to construct their strategy around the turn order instead of being able to change when it suits them. Assuming a gradual increase in stats over the course of the game, players are also encouraged to increase their Speed to act before enemies and gain the advantage.
+
+Below is an example of how to implement this system in SugarCube:
+
+First, we will need to place every battling character into one array. In the default system, enemies and player characters are completely separate. One method that would work would be to create an <i>array of arrays</i> that links both enemy and player arrays into one object. That would look like this:
+
+{{{<<set $actors = [$puppets,$enemies]>>}}}
+
+If you run a {{{for}}} loop over {{{$actors}}}, you can iterate over both enemy and player parties at once -- as well as potential other parties, if you want to design complex multi-front battles.
+
+Then you'd want to use the code in the "Initiative Model: Ranked Order" passage, which is copied here:
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/initiative1.PNG" />
+
+(This is far more complicated than it needs to be because Twine does not preserve object references. In a proper coding engine we could just {{{<<set $subject = _actor>>}}} within the loop and be done with it, but Twine necessitates the second section.)
+
+Note that this assumes a character's Speed stat will never go below 0.
+
+You can make this a widget, or another passage that is run after every character's turn. Presumably, you would also modify the "Battle!" passage to only display commands for the active subject, with a handler in case the enemy has the active turn (probably forwarding the player to another passage for the enemy turn).
+
+<h4><a id="flow.1.a">Adding Variance</a></h4>
+Unfortunately, the above model has a weakness: Speed has a binary, rather than variable, effect. With stats such as Attack and Defense, every point matters, because it contributes to a numerical value. But once you have more Speed than the enemy, there's no benefit to gaining more Speed. This can lead to Speed losing value compared to other stats, and making Speed-focused characters weaker overall.
+
+Some games patch this problem by making the rules less rigid: instead of being determined by the absolute Speed values every time, initiative is  instead determined through a random formula influenced by the Speed stat. Some games, such as <i>Dungeons & Dragons</i>, can use quite variable formulas, but for this example I will model a simpler one, varying characters' Speed stats by a certain percentage of their base values.
+
+In SugarCube, you could implement this feature like so:
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/initiative1a.PNG" />
+
+You can then use the same code as in the previous section, except you would compare {{{_initative}}} to {{{_actor.initiative}}} instead of {{{_actor.speed}}}.
+
+As an example, let us say we set {{{$VARIANCE_BOUND}}} to 10. This would give {{{_variance}}} a random value from anywhere between -10 and 10. We then convert it into a decimal, making it a random value between -.1 and .1. We then take {{{_actor.initiative}}}, which is initialized at the same value as {{{_actor.speed}}}, and add a fraction of {{{_actor.speed}}} to get the character's final initiative value. The size and sign of the fraction is determined by {{{_variance}}}.
+
+If the character had 100 Speed, their initiative value could be anywhere between 90 and 110. This means a character with 90 Speed could beat them in the turn order, if they rolled high and the 100 Speed character rolled low. However, the 100 Speed character would still get the first turn more often than not. Additionally, a character with 81 Speed would never beat them in turn order even if they got the maximum bonus and the 100 Speed character got the maximum penalty: {{{81 + (81*0.1) = 89.1}}} is less than {{{100 + (100*-0.1) = 90}}}.
+
+You can add more randomness by increasing the variance bound.
+
+This variance makes a Speed focus a more optimal gameplay decision: even if you're fast, more Speed increases the chance you'll get the initiative, rather than ceasing to matter once you get 1 point more than your opponent.
+
+I, personally, hate this method with a burning passion, because I feel turn order is too important of a thing to leave up to chance, and makes it nigh-impossible for the player to implement long-term strategy if they cannot predict the turn order.
+
+Some games feel this still leaves Speed a suboptimal stat, and have it influence other aspects of battle as well, such as accuracy, evasion, and critical hit rates. (These features are not in the default engine because I despise them, but I may include a tutorial on implementing them if there is demand.)
+
+<h3><a id="flow.2">Method 2: Action Time</a></h3>
+If you've played any <i>Final Fantasy</i> game after <i>Final Fantasy III</i>, or any game made in RPG Maker 2003, you will be familiar with this system. (Yes, even <i>Final Fantasy X</i>.)
+
+The most familiar form, seen in the examples I mentioned, is an odd method of merging turn-based RPGs with reaction-based action games: characters have gauges that fill up in real time, and characters can take an action when it's full. Usually this process pauses while you choose your action, but sometimes you have to choose quick while enemies are still getting turns.
+
+Such a real-time, image-based system is obviously not suited for Twine. You could theoretically do it with {{{<<timed>>}}} and {{{<<repeat>>}}} macros, maybe...? But your time would almost certainly be better spent in another environment entirely.
+
+What I've described is just an abstraction, though. If we look at the variables underneath, we can create a similar system even in our static Twine.
+
+First, we're going to increment a separate "initiative" attribute based on some formula. The formula can include anything, including random variance, but for the purposes of this example let's just make the increment equal to the Speed stat:
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/initiative2a.PNG" />
+
+We then use a modified form of our code from <a href="#flow.1">Method 1</a>:
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/initiative2b.PNG" />
+
+This assumes every character's "initiative" attribute is set to 0 at the start of battle.
+
+To keep things simple, the current subject's initiative is set to 0 when they take their turn. In this code, this automatically happens as soon as they're selected; you may want to make this happen in the action phase instead, if you want some actions to drain initiative by different amounts. Maybe there's a "wait" option that only halves it, for instance?
+
+The main difference here is that we do not ignore characters who have acted in the round already: if someone gains more initiative, they can get more turns than another character. This effectively eliminates the concept of "rounds" entirely; characters will just keep taking turns, in no fixed order.
+
+This system will be functionally similar to Method 1 when there is little difference between characters' Speed stats. For example, let's look at a battle where Character A has 11 Speed, Enemy B has 10 Speed, and Character C has 9 Speed:
+
+Initiative at turn 0:
+A = 11
+B = 10
+C = 9
+
+A gets the turn. Their initiative goes to 0.
+
+Initiative at turn 1:
+A (1 turn) = 11
+B (0 turns) = 20
+C (0 turns) = 18
+
+B gets the turn. Their initiative goes to 0.
+
+Initiative at turn 2:
+A (1 turn) = 22
+B (1 turn) = 10
+C (0 turns) = 27
+
+C gets the turn. Their initiative goes to 0.
+
+Initiative at turn 3:
+A (1 turn) = 33
+B (1 turn) = 20
+C (1 turn) = 9
+
+A gets the turn.
+
+Initiative at turn 4:
+A (2 turns) = 11
+B (1 turn) = 30
+C (1 turn) = 18
+
+B gets the turn.
+
+Initiative at turn 5:
+A (2 turns) = 22
+B (2 turns) = 10
+C (1 turn) = 27
+
+C gets the turn. Notice that the initiative values are identical to those on turn 2: we've completed a loop. The characters will continue taking turns in this pattern, which is identical to the pattern in Method 1: characters will act in order of descending Speed, and then repeat.
+
+But that was when the Speed values only differed by 1. Let's look at what happens with bigger differences: A now has 30, B now has 20, and C now has 10.
+
+Initiative at turn 0:
+A = 30
+B = 20
+C = 10
+
+A gets the turn.
+
+Initiative at turn 1:
+A (1 turn) = 30
+B (0 turns) = 40
+C (0 turns) = 20
+
+B gets the turn.
+
+Initiative at turn 2:
+A (1 turn) = 60
+B (1 turn) = 20
+C (0 turns) = 30
+
+A gets the turn. But wait! C hasn't gotten a single turn, but A has now moved twice! That's the key difference in an action time system: faster characters will get more turns total, instead of everyone getting the same number of actions. This is much, <i>much</i> harder to balance. If A gets twice as many turns as B, they've effectively doubled all their stats by only doubling one: even if all their other stats are the same as B's, they're attacking twice as often, defending twice as often, using utility skills twice as often. If Method 1 undervalued Speed, action time <i>overvalues</i> it -- Speed can come to dominate all other stats, because more turns are almost always more desirable than fewer but stronger turns. This can be mitigated in a subtractive defense system where more attacks don't necessarily correlate with more results, but is exacerbated by skills that don't depend on other stats, such as most status effects.
+
+You can still balance this through careful tweaking of the formulas -- maybe initiative gain is only half Speed, for instance -- but it's not a task I recommend for novice developers. It's much easier to include this sort of "multi-turn" functionality through specific actions you can control directly. For example, in <i>Cartoon Battle</i> Rogue's basic attack hits twice, but is weaker than the other basic attacks.
+
+<h4><a id="flow.2.a">Action Time with Threshold</a></h4>
+If you're interested in more accurately modeling the version seen in <i>Final Fantasy</i>, you can choose turns based on whose initiative crosses a "finish line" first. <i>Bonfire</i> uses this method, and its algorithm is explained <a href="http://bonfire-game.wikia.com/wiki/Turn_Order" target="_blank">here</a>. Implementation in SugarCube would look something like this:
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/initiative2c.PNG" />
+
+To show an example of what this would look like, we'll use the fastest enemy in <i>Bonfire</i>, the Bladewolf, which has 70 Speed; the fastest hero in <i>Bonfire</i>, Assassin, who starts with 40 Speed; and the slowest hero in <i>Bonfire</i>, Knight, who starts with 15 Speed.
+
+Turn 1:
+B: 34 - 68 - <b>102</b>
+A: 28 - 56 - 84
+K: 23 - 46 - 69
+
+Bladewolf gets the turn, and loses 100 initiative. Bladewolf has taken <b>1 turn.</b>
+
+Turn 2:
+B: 02 - 36
+A: 84 - <b>112</b>
+K: 69 - 92
+
+Assassin gets the turn. Turn order so far is <b>B, A</b>.
+
+Turn 3:
+B: 36 - 70
+A: 12 - 40
+K: 92 - <b>115</b>
+
+Knight gets the turn. Turn order so far is <b>B, A, K</b>.
+
+Turn 4:
+B: 70 - <b>104</b>
+A: 40 - 68
+K: 15 - 38
+
+Turn order so far is <b>B, A, K, B</b>.
+
+Turn 5:
+B: 04 - 38 - 72
+A: 68 - 96 - <b>124</b>
+K: 38 - 61 - 84
+
+Turn order so far is <b>B, A, K, B, A</b>.
+
+Turn 6:
+B: 72 - 106
+A: 24 - 52
+K: 84 - <b>107</b>
+
+Knight will get the turn, then Bladewolf. Turn order so far is <b>B, A, K, B, A, K, B</b>.
+
+Turn 8:
+B: 06 - 40 - 74 - 108
+A: 52 - 80 - 98 - <b>126</b>
+K: 07 - 30 - 53 - 76
+
+Assassin will get the turn, then Bladewolf. Turn order so far is <b>B, A, K, B, A, K, B, A, B</b>. Bladewolf lapped Knight after 9 turns.
+
+Compared to straight highest-wins initiative:
+
+Turn 1:
+B: <b>34</b>
+A: 28
+K: 23
+
+Turn order: <b>B</b>.
+
+Turn 2:
+B: 34
+A: <b>56</b>
+K: 46
+
+Turn order: <b>B, A</b>.
+
+Turn 3:
+B: 68
+A: 28
+K: <b>69</b>
+
+Turn order: <b>B, A, K</b>.
+
+Turn 4:
+B: <b>102</b>
+A: 56
+K: 23
+
+Turn order: <b>B, A, K, B</b>.
+
+Turn 5:
+B: 34
+A: <b>84</b>
+K: 46
+
+Turn order: <b>B, A, K, B, A</b>.
+
+Turn 6:
+B: 68
+A: 28
+K: <b>69</b>
+
+Turn order: <b>B, A, K, B, A, K</b>. Notice that this distribution is identical to that of turn 3, which means we have entered a stable loop. Bladewolf will never lap Knight in this scenario.
+
+The key difference here is that the simple method always resets initiative to 0 when the subject takes a turn no matter how much they accumulated, but the threshold method allows initiative to carry over if the threshold is overshot. This gives greater weight to differences in Speed stats and makes stable loops less likely. However, designing the correct threshold is itself a challenge; if we were to use a straight gain = Speed formula, anyone with 100 Speed would be able to take turns continuously! The threshold method is best suited to slow gain formulas with less dependence on stats, for this reason. You could also make the threshold flexible, such as tying it to three times the fastest or slowest character's gain rate, but this runs an even greater risk of making stat differences get out of hand.
+
+<h3><a id="flow.3">Method 3: Timeline</a></h3>
+Characters' turns are placed at certain points in a timeline. When time advances to their point, they take their turn, and are then placed at another point.
+
+This method is similar to action time, but works in reverse in terms of algorithm: we have everyone's initiative values count <i>down</i>, and characters take their turns when it hits 0.
+
+We'd first need some way of creating an initial turn order. For now, let's assume whoever has the highest Speed stat goes first, and everyone lower than them goes 1 "tick" later for every point of Speed difference. So with characters of Speed 10, 8, 5, and 4, our starting timeline would look like this:
+
+{{{[A]-[B]--[C][D]}}}
+
+where dashes are empty ticks.
+
+From here, A would take an action and be placed at a later point in the timeline. This determination could be based on Speed, but it's more commonly based on action; some actions will require the characters to wait longer before they can act again. For instance, attacking with a heavy greatsword might push a character back 6 ticks, while attacking with a knife only pushes them back 4. Maybe casting a spell only pushes them back 3 ticks, but requires 2 additional ticks of wind-up time while they chant the incantation, during which time they may be vulnerable.
+
+After their action, A would be placed ahead in the timeline, and the timeline would advance; everyone's initiative would go down by 1. There's no one in the next tick space, so we'd skip it and run another iteration until the next character appears, in this case, B. They'd take an action, then get pushed ahead to a new slot. The battle would continue like this.
+
+To implement this system, you'd do something very similar to an <a href="#flow.2.a">action time with threshold</a> system. Only the threshold value and incrementor system would need to be changed. An example model is provided in the "Initiative Model: Timeline" passage.
+
+This is a fairly intuitive system, and superb if you want a battle system based around timing and actions with variable speeds. This system meshes well with features such as charged attacks and delayed effects, as those features can be placed in tick squares as well. However, it's a lot to keep track of, and all the balance problems associated with an action time system still apply. You'll also have to come up with your own system for initial turn order, as I can't think of a good one off the top of my head. (Make a separate "initiative" stat that's either fixed for every character or can only be increased rarely, maybe?)
+
+I took this system from <i>Exalted</i>, a fantasy tabletop RPG that's very different from the popular <i>Dungeons and Dragons</i>. <i>Exalted</i>'s system is massively more complicated than the simple model I've outlined here, but could be a good jumping-off point for you to design your own system. <i>Exalted</i> players often bemoan how hard it is to keep track of all the variables at play, but that's no problem for a computer!
+
+<i>Exalted</i> fan Jye Nicolson created <a href="https://mengtzu.github.io/exalted/sakuya.html" target="_blank">a tutorial game</a> using JavaScript, if you would like to see how the system works in action. Because Twine operates in JavaScript, the game plays very similarly!
+
+<h4><a id="flow.3.a">Duel (One-Character) Systems</a></h4>
+Some RPGs, or just some parts of some RPGs, forgo a party system and only give you one player character for battles. From a narrative standpoint this can be very cool: a climactic one-on-one duel with the hero's personal nemesis! But from a gameplay perspective, it often falls flat, because a big part of RPG gameplay is the synergy between multiple characters and actions. If you and the enemy are just trading blows, your options are much more limited; you (usually) can't heal and attack at the same time, for instance.
+
+A timeline system works very well for fixing these issues. If the player can act multiple times for every action of the enemy's, you can still have tactics and synergy even with only one character. Perhaps there is a puzzle-like mechanic of matching different attacks to different enemies or guard states and you must carefully time your actions to attack and defend, almost simulating a more action-focused game? It's something worth considering if you want to use a duel system.
+
+Noteworthy examples:
+<ul>
+<li><i><a href="https://store.steampowered.com/app/418190/Helens_Mysterious_Castle/" target="_blank">Helen's Mysterious Castle</a></i> is an example of an action-adventure-like system. You can choose various weapons on your turn, and each has a different speed, attack, defense value. Strategy consists of timing your attacks so that you attack when the enemy is weak and shield yourself when the enemy is attacking.</li>
+<li><i><a href="https://rpgmaker.net/games/8032/" target="_blank">Red Syndrome</a></i> is a simpler example: all enemies must wait multiple turns between actions, creating a system where you have several turns to prepare for a coming onslaught.</li>
+</ul>
+<h3><a id="flow.4">Transparency</a></h3>
+If you use a turn ordering system, it's beneficial if you can show the turn order to the player. This will allow them to plan in advance by understanding when, say, they need to guard against an enemy's attack or when they should buff a certain character.
+
+Doing this in a ranked order system is very simple: instead of running the selector every time a new character's turn comes up, make an array of all the characters in descending initiative order every round. You can display the array somewhere in the battle screen, and run through it as the round progresses.
+
+Timeline systems are also fairly straightforward: you can display everyone's initiative as "ticks until next action" in their status pane or elsewhere. Ideally, with enough knowledge of CSS, you could create a visual representation showing everyone's placement in the timeline.
+
+Action time systems are a little trickier. You'd need to simulate another round of initiative gain and use that to determine the next actor. This is both algorithmically difficult and processor-intensive to do for more than one or two predictions, so don't worry if you can't give the player an extended prognosis. This will be even tricker if you have skills that alter speed stats or initiative values, as you'll have to redo the prediction every time that happens.
+
+Simplistic models of these preview systems are proposed in the "preview model" passages, found next to the initiative model passages. However, they are untested, and may not be suitable for all your needs. You can tweak them as necessary.
+
+<i>Final Fantasy X</i> has an extremely robust preview system, with an extended prognosis and real-time feedback whenever an ability that would affect the turn order is used. You can try mimicking it if you -- and your processor -- are feeling ambitious!
+
+<h2><a id="progress">Progression and Leveling Up</a></h2>
+A major component of RPGs is that characters become stronger over the course of the game: your stats will increase and you will gain access to new abilities. But you've probably never stopped to think about how, exactly, these features are designed. Exactly how does the game calculate how much experience points you need to get to the next level? Exactly how does the game calculate how to increase your stats on a level up?
+
+As with everything in this list, the answer is, "It depends on what experience you, the designer, want to cultivate!" However, progression mechanics are some of the hardest things to design and balance, since they have impacts throughout the entire game. You should also understand that leveling up isn't the only way to accomplish this! We'll discuss alternative progression methods as well, such as point-buy and equipment-based systems.
+
+You may notice that <i>Cartoon Battle</i> doesn't feature any progression mechanics. That's because implementing and balancing this is actually very tricky! You will need to plan very far ahead, and balance your game not only for one state but for situations where the player's capabilities will change over time.
+
+<h3><a id="progress.levels">Levels</a></h3>
+We'll start with the one you're likely most familiar with: Characters gain experience points, or XP, from succeeding at gameplay challenges (often killing monsters, but possibly also solving puzzles, navigating conversations, or completing quests). When a character's XP reaches a certain value, they level up and gain increments to various stats. They may gain new abilities as well, but <a href="#progress.skills">that is another discussion entirely</a>.
+
+This method generally requires the least engagement from the player, as most of the decisions -- when their characters will get stronger and by how much -- are made for them, with all the pros and cons that implies. This method is probably the easiest to balance, as it is easy to predict a player's capability at a given point in the game when their progression is fixed. However, it also means you'll have to plan out every character's progression yourself, which can be a big task!
+
+You should be able to identify two important design questions here: <b>How much XP do characters need to level up?</b> and <b>What are the exact benefits of a level up?</b> There is a potential third question, related to the first, which is what situations will provide XP and how much.
+
+<h4><a id="progress.levels.1">Calculating XP Requirements</a></h4>
+You could, in theory, design unique XP requirement values for every single level. However, this is not what most games do, and it is not recommended. It's much easier to design a formula that will generate XP requirements for every level automatically.
+
+The simplest scenario would be no variable formula at all: every level requires the same amount of XP. However, this doesn't make much sense as a design principle. If you're guaranteed a level up every time you, say, kill 10 of the enemies in the starting area, yet each level makes you stronger, you'll kill enemies faster and gain levels faster with each level up, all without even needing to leave the starting area. This model is sometimes viable in certain RPGs with "elastic" difficulty, where enemies have their own levels and become stronger with the player characters, maintaining the same relative difficulty no matter the player's level. However, this is rather complicated to implement, and not the playstyle most RPGs aim for.
+
+You might think the best method would be a linear scale: If going from level 1 to level 2 requires 1000 XP, then from 2 to 3 requires 2000 and from 3 to 4 requires 3000, etc. This can work, but it still tends to make leveling too rapid and players too complacent. To really force players to move on to harder challenges, you need an <b>exponential</b> scale, meaning the difference <i>of</i> the difference in XP requirements becomes greater with every level.
+
+As an example, here is the XP formula for <i>Dungeons and Dragons 3rd Edition</i>:
+
+<div class="formula">XP to next level = 500 * (level ^ 2) - 500 * level</div>
+(Technically, this function is quadratic, not exponential, but the principle still applies.)
+
+Here's what that looks like graphically:
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/levels1.PNG" />
+
+Notice that this growth curve is extremely steep; we can't even see the XP requirement for the maximum level, 20, without extending the Y-axis. After only 4 levels, the XP requirement is 10 times that of level 2.
+
+This is because, in <i>Dungeons & Dragons</i>, every level is intended as a rare and major accomplishment. You might only gain one or two levels during a "chapter" of the story, and you're unlikely to go all the way from level 1 to level 20 in anything but the longest campaigns. <i>Dungeons & Dragons</i> also provides the bulk of its XP rewards through major, one-time accomplishments, such as completing quests, rather than many repetitive actions such as killing individual monsters. A steep formula such as this encourages players to focus on big actions such as pursuing side quests, and rewards close engagement with the world to find such opportunities.
+
+You tend to see steep formulas like these in Western RPGs, which are more directly based on <i>Dungeons & Dragons</i>, than in Japanese-style RPGs such as <i>Dragon Quest</i>. Twine's structure is actually well-suited to the style of a Western RPG, so this formula may be worth considering.
+
+On the opposite end of the scale, we have the "medium fast" XP formula from <i>Pokemon</i>. Different Pokemon use different formulas, but this one is the most common:
+
+<div class="formula">XP to next level = (level ^ 3)</div>
+Or graphically:
+
+<img src="http://www.setschoolmw.com/twine/rpgengine/levels2.PNG" />
+
+This curve is <i>much</i> shallower. While the first formula exceeded our graph's bounds almost immediately, we can fit 20 levels on this scale no problem. (There's no trickery here: the exact same scaling is used for both the X- and Y-axes.)
+
+The reason for this is quite simple: In <i>Pokemon</i>, level ups are meant to be frequent. Not only is the max level (100) much higher than in D&D, but as a monster-collecting game, you are encouraged to raise a large number of "party members". Players are supposed to vary their team and swap out Pokemon over the course of the game. To incentivize this, the game has to make it easy for lower-level Pokemon to catch up if they've been off the team for a while. Thus, low XP requirements.
+
+Shallow formulas are common in Japanese-style RPGs, which tend to make levels more frequent but less individually significant. This incentivizes the player to pursue many small-scale actions that result in incremental rewards, rather than big jumps. You should pick this formula if you want a "grindy" game designed around repetitive actions with frequent payouts.
+
+You don't strictly need a formula at all: it's also possible to use a lookup table with unique values for every single level. But a formula is probably a good starting point if you're new to designing these mechanics.
+
+It should be noted that this is all a <i>gross</i> oversimplification that only scratches the surface of this topic. Things get vastly more complicated if you want more nuance, such as different leveling rates for different characters (older versions of D&D did this, making wizards require more XP per level because they got more out of levels), or elastic leveling where the difference between the hero and enemy's levels affects the payout (useful for discouraging grinding and catching up low-level characters). You'll need to ask around (and learn some math) if you want to tweak your leveling mechanics for something particular. I'd recommend starting by looking up the mechanics from your favorite games -- famous ones such as <i>Dragon Quest</i>, <i>Pokemon</i>, and the many Western RPGs that are really just <i>Dungeons & Dragons</i> fangames are usually well-documented. Break them down by thinking about what you liked and disliked about them, and work from there.
+
+<h4><a id="progress.levels.2">What Do Levels Do?</a></h4>
+So say a character has leveled up. What happens now, exactly? Generally, the character's stats are supposed to increase. But by how much?
+
+Some games make stat gains random. I hate this with the intensity of a thousand burning suns and will speak no more of it here. Go to <a href="http://howtomakeanrpg.com/a/how-to-make-an-rpg-levels.html">How to Make an RPG</a> if you wish to pursue this heathen practice.
+
+If you wish to be <i>sensible</i> and make your stat gains totally deterministic, then like XP gain, there are two ways to do this: either through a formula, or by manually setting stats for every level through a lookup table. To effectively design the latter you will need to understand the former, so that's what I will discuss.
+
+The principles for designing a stat growth formula will depend, obviously, on what those stats do and the progression you want to see over the course of the game. In some games, even a single point of a stat can be significant, while in others, stats only have a noticeable effect at high values. You're going to want to review your damage formula and anything else stats might affect, such as status effects and <a href="#flow">turn order</a>. There is also the matter of "power creep", discussed in the damage formula section: you likely want things to get bigger and flashier as the game progresses, but by how much? Do you want average attack damage to increase at a gradual, linear rate, or at an exponential one that makes the endgame feel like a totally different world than the beginning? This will also be influenced by the XP gain model you're using: if levels are infrequent, you will probably want them to provide big gains, while if levels are frequent, you will probably want smaller gains per level.
+
+If you want to preserve character specializations, you'll also want these formulas to be different for different characters. A wizard should probably gain Defense more slowly than Magic, for instance.
+
+RPG Maker has default formulas for calculating stat growth of various character archetypes, though I cannot find good documentation for this. If you would like to devise your own, I recommend starting with a small-scale game where each stat point matters, and making stat gains very small. This will be easier to test and balance, as even small changes will have highly visible effects. Learning from example is harder here, as most commercial RPGs use random stat gains. If it works for them and you don't want to bother with complex math you could consider trying it I GUESS.
+
+Some games instead leave stat gains up to the player's choice, giving them one or more points to spend on stat gains upon a level up. Most Western RPGs do this, as do many of the Mario RPGs. However, this crosses more into a point-buy system, which is discussed in <a href="#progress.pointbuy">the next section</a>.
+
+More atypical arrangements have been devised by some games. You could make stat growth dependent on one or more other variables, as seen with <i>Pokemon</i>'s IV and EV values. (That's detailed <a href="https://bulbapedia.bulbagarden.net/wiki/Statistic#Determination_of_stats" target="_blank">here</a>, for the curious.) You could also decrease the influence of stats by making level a factor in gameplay formulas that use stats, maybe only increasing stats rarely or through other means. This is particularly useful for player-determined stat growth systems, as it gives you a general power level to expect for balance testing, even if the player uses a build you hadn't thought of.
+
+<h4><a id="progress.levels.code">Implementation</a></h4>
+Implementation methods such as XP attributes and growth tables are included but commented out in the story JavaScript at the end of the "Puppet" class definition. To actually implement a level up feature, you'd create a widget or another passage that checks the character's current XP against the next level's requirement, and run it whenever a character gets XP. (To save yourself time, you could even make it part of the same code that gives a character XP.) Within this function, you'd determine the stat gains through your formulas or through a lookup table, and do the same to find the XP requirement for the next level.
+
+(A word of warning if you're using a lookup table: while the most intuitive method is to have the lookup value correspond to the <i>absolute</i> stat values you want at that level, if you have events that change base stats through means other than leveling, the lookup table will overwrite those changes! You will have to either store those changes through a separate value, or make the lookup table point to increments instead of absolute values.)
+
+Example widgets for this implementation are provided in the "Widgets: Leveling Up" passage.
+
+<h3><a id="progress.pointbuy">Point-Buy</a></h3>
+This is an alternate form of stat progression used by several RPGs, including famous franchises like <i>Shin Megami Tensei</i> and tabletop RPGs like <i>Exalted</i>. Instead of stats being automatically incremented at fixed rates, the player is given control over which attributes they want to improve. You can combine this with a regular leveling system, with every level up giving one or more stat points, or allow players to spend XP on stat upgrades directly.
+
+(If you do the former, however, it's recommended you don't make the number of points per level up divisible by the total number of stats. A lot of players will want to give the same amount of points to all stats just because that's the simplest option. You'll get more engagement if you force them to make a choice.)
+
+This system is popular for the freedom it gives to players, but it can be very difficult to balance due to the many stat arrangements possible as the game progresses. If you design challenges assuming players will add points in a specific arrangement and then a specific player creates a build you didn't expect, the player could have a very hard time. You'll need to do a lot of balance testing to ensure it isn't possible for the player to push themselves into a corner. Ideally, no build should be universally better than another; the player should be allowed to choose a build based on their preferred playstyle, not bite their nails over if they've made the objectively best option.
+
+Some games that use this system allow the player to undo their investments and reconfigure their build. This eliminates the possibility of locking the player into a non-viable build, but potentially eliminates some strategic depth as well. It can be a purposeful design decision to make certain builds more optimal in certain situations and less optimal in others; if the player can just respec to find the optimal build in every situation, the game might become too easy or too uniform. However, you may like this idea as a "puzzle" aspect, forcing the player to think about the optimal allocation of their resources for difficult challenges.
+
+One possible drawback to this system is the elimination of character specialties. Characters in RPGs typically have differing stat layouts that lead to different roles. However, if the player has total control over characters' stat layouts, these specialties can disappear; there's nothing stopping them from putting all the wizard's points into Strength or all the fighter's into Intelligence. Sometimes it can be fun to see how these non-standard builds play out, but sometimes you do want to keep a role fixed. You could enforce this through a "soft" method by giving characters or classes fixed capabilities that draw on specific stats, encouraging players to invest in certain stats over others. (If a fighter can't use magic, for instance, there's no reason to increase their Magic Attack even if you technically can.) Alternatively, you could use a "hard" method of making certain stat improvements cost more for certain characters. It might actually be a good idea to pump up the wizard's Defense, but if that costs twice as many stat points as improving Magic, you won't be able to do it as often. Alternatively, you could make stat improvements small compared to initial stats -- this makes it hard for low stats to "catch up" with high ones even if there is no cost weighting.
+
+The other thing you'll need to watch out for is whether or not it's possible to get everyone to perfect stats eventually. If everyone can be fully maxed out, that's the end goal players will shoot for -- and at that point, everyone's the same! (<i>Final Fantasy X</i> famously had this issue, where the advancement grid was shared by everyone, allowing characters to gain the exact same stats and skills as other characters if they leveled up enough.) It's easy enough to fix this if you don't want it -- as you'd define a level cap in a leveling system, you can create a cap on either stat totals or number of stat purchases -- though you'll probably want to make this clear to the player! You could also make experience points a limited resource.
+
+This system has a lot of potential variations, so it's worth looking at lots of different games that use it. You can have fun tradeoff mechanics by making "stat experience" useful for other things as well -- most commonly, the mechanic is framed as paying a trainer to improve your skills, which means you have to choose between items and stat improvement when deciding how to spend your money.
+
+<h4><a id="progress.pointbuy.code">Implementation</a></h4>
+Combining this feature with a level up system is easy: just add a "stat point" attribute to the Puppet class and increment it on level up. Then you just have to add another passage/menu where players can spend them. (Note that you will need to save the total points accumulated in a separate attribute from the character's spendable points if you want to provide a respec option.)
+
+The passage "Point-buy interface example" provides an example of how you might implement this in a menu.
+
+A "free buy" system is a little trickier, but is fundamentally similar to the code used to calculate XP requirements for levels: you would create a widget or JavaScript function to calculate the XP cost, and pass it the necessary variables. It's recommended you make XP costs increase at higher stat values, just as levels have increasing XP requirements. You could make every improvement increase the cost of all future improvements, or make it a function of the current stat only. The latter method disincentivizes overspecialization and encourages players to spread out their improvements. As with a stat-points-by-level-up system, you would need to record total XP separately if you want to enable a respec system. You might also want to make the cost growth dependent on <i>upgraded</i> rather than <i>total</i> stats, which would necessitate another variable for storage.
+
+An example of such a calculation function is provided in the story JavaScript as a method function of the Puppet class.
+
+<i>Bonfire</i> has an example of a point-buy system: though heroes level up within individual game stages, they restart at level 1 whenever they start a new stage. The only way to permanently improve their stats is to buy upgrades with gold accumulated from journeys. A chart of the upgrade costs is <a href="http://bonfire-game.wikia.com/wiki/Upgrading_Heroes" target="_blank">here</a>, though no clear function has been derived; it is likely a complex piecewise function, or a lookup table of unique values.
+
+<h3><a id="progress.equip">Equipment-Based Progression</a></h3>
+Most RPGs feature an equipment system of some kind in addition to levels. In effect, this can create two simultaneous paths of power progression; you can improve your abilities both by leveling up and by buying better equipment.
+
+I mentioned in [[the design page|Design]] that I tend not to like this model, as it feels redundant; not only does the player usually improve equipment through the exact same methods as you improve levels -- killing monsters and doing quests usually give you both XP and money -- but equipment often conveys the same benefits as level ups (stat boosts, more damage, etc.). What this means is that not only are you never forced to choose between levels and equipment, there wouldn't be much significance to the choice even if you were.
+
+To avoid this problem, I recommend giving equipment and levels categorically distinct contributions to the character. They shouldn't improve power in exactly the same way all the time. This can be seen in <i>Dungeons & Dragons</i>, where levels tend to grant qualitative changes -- additional actions to take, bonus to circumstantial situations, etc. -- while equipment is one of the only ways to obtain quantitative improvements, such as better damage and armor. This can make choosing between gold and XP a meaningful choice that forces the player to think about exactly how they want to improve their character. That kind of engagement typically makes for a more enjoyable experience, so it's something you should shoot for.
+
+Some games go even farther, and make equipment the <i>only</i> method of power progression. Under this model, there are no levels or inherent bonuses: all your growth comes from finding better equipment. Want stronger attacks? Get a better weapon, or you're out of luck.
+
+This can create an interesting effect where your characters are completely modular, especially if you make equipment govern <i>actions</i> as well. At any point, you can completely reinvent a character, swapping their capabilities with another. Such games typically give characters some unique stat or ability differences to avoid making them completely interchangeable, but the system will still be highly mutable.
+
+One potential downside of this system is that it can remove the incentives from normal gameplay, if you adopt a jRPG model of many mundane, grindy tasks. Even if you reward players with money with which to buy more equipment, players will typically hit a ceiling very quickly and find themselves with nothing to spend it on until they reach the next area with better equipment. This can shatter the Skinner-box action-to-reward mentality that many games run on, and leave players feeling bored and frustrated.
+
+Additionally, this method must be balanced more carefully than usual, due to something obvious but often overlooked: If players start with no equipment at all, they will hit what feels like a ceiling as soon as they fill all their slots. Where before everything was an absolute improvement, now they must make tradeoffs to progress further. You will have to structure your game carefully such that equipment continues to improve at a consistent rate, and that this is communicated to the player. For this reason, this system tends to be better suited to shorter games where this issue will not become as pronounced.
+
+Narratively, this is an effective way to convey a sense of realism. In real life, people don't just magically get tougher, stronger, and faster by being really good at something; the skills obtained through training and practice tend to pale in comparison to the advantages of getting better weapons and technology. Outsourcing all the player's power to something else reminds them of that fragility, especially if you do something cruel like letting enemies steal or destroy their items. This can be very good for an RPG in a modern setting, or one with a strong focus on technology.
+
+Notable examples:
+* <i><a href="https://rpgmaker.net/games/5904/" target="_blank">Czarina Must Die!</a></i> tends to run into the problems I outlined towards the end; it unfortunately uses random encounters <i>as well as</i> quickly making equipment purchased with money obsolete, giving the player little incentive to fight monsters.
+* <i><a href="https://rpgmaker.net/games/4526/" target="_blank">Wine & Roses</a></i> and some of the other games in the same "genre" by the same developer use equipment for both stat and skill advancement. Inherent bonuses sometimes feature as well, but they are rare and minor in comparison.
+* The Quest for Immortality uses a very literal approach: all equipment is just literally a stat boost, with stronger boosts dropped by monsters as you progress.
+
+<h3><a id="progress.statgrind">Stat Grinding</a></h3>
+To be discussed.
+
+<h3><a id="progress.fixed">Fixed or Story-Based Progression</a></h3>
+To be discussed.
+
+<h3><a id="progress.skills">Skill Progression</a></h3>
+To be discussed.

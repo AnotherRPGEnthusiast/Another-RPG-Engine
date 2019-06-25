@@ -364,7 +364,7 @@ window.Action = class Action {
 				this.basic = true;
 				this.dur = 4;
 				this.phase = "confirm phase";
-				this.info = `Cure $subject[0].name of all negative ailments and bestow <b>Chi Shield</b>, protecting them from future ailments for ${this.dur} turns.`;
+				this.info = `Cure user of all negative ailments and bestow <b>Chi Shield</b>, protecting them from future ailments for ${this.dur} turns.`;
 				this.actText = function () {
 					return `$subject[0].name stops, and closes their eyes. Their sudden tranquility is discordant with the chaos of the battle. They take a deep breath, and when they let it out you swear you can see a physical presence leave them. They stand up straighter, positively glowing.`;
 				}
@@ -591,7 +591,7 @@ window.Action = class Action {
 					return `<<echodamage>><<echodamage>><<echodamage>>`+
 					`<<addeffect $target[0] "Off-Balance" 1>>`;
 				}
-				this.preview = Prev.effect("Off-Balance",multihit(3));
+				this.preview = Prev.effect("Off-Balance",Prev.multihit(3));
 				break;
 	
 			case "Sneak":

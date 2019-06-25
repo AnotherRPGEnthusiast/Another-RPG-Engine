@@ -1,0 +1,16 @@
+:: specialdeath[battle]
+<<nobr>>
+<span id="status">
+<<include status>>
+</span>
+<</nobr>><span id="content">
+<<nobr>>
+<<switch $target[0].name>>
+<<case "a special enemy">>
+<</nobr>>Write a special death cutscene here!<<nobr>>
+<<case "a different enemy">>
+<</nobr>><<nobr>>
+<</switch>><</nobr>>
+
+[[(Continue...)|Battle!]]
+</span>

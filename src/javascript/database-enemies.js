@@ -147,7 +147,7 @@ window.Enemy = class Enemy extends Actor {
 									break;									
 							}
 						V().action.weight = 0.7;
-						V().action.useText = `Dipper frantically flips through his journal before yelling, "Bankorok Aretak ${god}!`;
+						V().action.useText = `Dipper frantically flips through his journal before yelling, "Bankorok Aretak ${god}!"`;
 						V().action.actText = `$target[0].name is lashed by chains of light.`;
 						V().action.act = dmgandeffect('t',"Stunned",1);
 					}
@@ -535,14 +535,14 @@ Gumball slips on a stray pebble, falls back, hits his head, and is instantly kno
 					act: null};
 					target().dead = true;
 					V().kills.push("Gumball");
-					V().surrender = false;
+					V().B.surrender = false;
 				}
 				this.surrenderFail = function () {
-					V().surrender = false;
+					V().B.surrender = false;
 					return `Gumball sighs. "Well, it was worth a shot." He raises his fists, but halfheartedly. "Hey, you never know. Maybe I'll get lucky for once. Stranger things have happened!"`;
 				}
 				this.actions = function () {
-					if (V().surrender){
+					if (V().B.surrender){
 						V().action = {useText: null, act: null, actText: `Gumball is watching you expectantly.`};
 					}
 					else {
@@ -717,14 +717,14 @@ Before you can react, Anais pulls out a comically large syringe and stabs it int
 Without fanfare, $subject[0].name falls to the ground like a puppet with its stings cut. Which, you suppose, is pretty accurate.`,
 						act: `<<set $subject[0].hp to 0>><<deathcheck $subject[0]>><<set $anais_trap = true>>`
 					}
-					V().surrender = false;
+					V().B.surrender = false;
 				}
 				this.surrenderFail = function () {
-					V().surrender = false;
+					V().B.surrender = false;
 					return `"Eh, it was worth a shot." Anais steps back. "Alrighty then. Let's finish this your way, you barbarian."`;
 				}
 				this.actions = function () {
-					if (V().surrender) {
+					if (V().B.surrender) {
 						V().action = {useText: null, act: null, actText: `Anais is waiting for your decision.`};
 					}
 					else {
@@ -1103,14 +1103,14 @@ Without fanfare, $subject[0].name falls to the ground like a puppet with its sti
 						/* pr */	'M'
 						);					
 				this.effects = [new Effect("Guarded",-1,0)];
-				this.deathMessage = `${this.name} is knocked unconscious!`;
+				this.deathMessage = `${this.name} is knocked unconscious!<<set $C.su1.steven_defeated to true>>`;
 				this.surrender = function () {
 					V().action = {
 						useText: null,
 						act: null,
 						actText: `You let Steven scuttle away with the gems in tow.`
 					}
-					V().surrender = false;
+					V().B.surrender = false;
 					V().target.dead = true;
 				}
 				this.surrenderFail = function () {
@@ -1132,7 +1132,7 @@ Without fanfare, $subject[0].name falls to the ground like a puppet with its sti
 					}
 				}
 				this.actions = function () {
-					if (V().surrender){
+					if (V().B.surrender){
 						var act = random(1,3)
 					
 					if (act == 1) {

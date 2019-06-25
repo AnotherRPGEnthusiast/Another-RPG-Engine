@@ -9,6 +9,12 @@
   text-transform: uppercase;
 }
 
+.stat {
+	display: inline-block;
+	min-width: 4em;
+	text-align: right;
+}
+
 .statusdesc {
   font-weight: normal;
 }

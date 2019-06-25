@@ -1,0 +1,365 @@
+:: Initiative Model: Ranked Order[nobr]
+<<set _initiative = -1>>
+/* The -1 is necessary if you want a Speed of 0 to be possible. */
+<<for _i, _party range $actors>>
+	<<for _j, _actor range _party>>
+		<<if not _actor.dead and not _actor.stunned>>
+		/* If you have more paralysis effects, you'll need to add each here. Consider adding a convenient "can't act" attribute flipped by all of them if this becomes prohibitive.
+			<<if not _actor.isDone and _actor.speed > _initiative>>
+			/* (not _actor.isDone) prevents us from selecting characters who have already acted this round. They'll be skipped over, and the next-fastest character will get the initiative. */
+				<<set _subj = [_i,_j]>>
+				<<set _initiative = _actor.speed>>
+				/* This sets the current character's Speed as the new bar to clear. If no one's faster, no one else will pass the if check above and this character will remain the current subject. If someone else is faster, they'll become the subject and the _initiative variable will be updated to match their Speed. This ensures that subject status will be granted to the fastest character. */
+			<<elseif not _actor.isDone and _actor.speed == _initiative>>
+			/* You'll need a handler for this case, or else the character with the higher index order will get the initiative in the case of a match. This handler can be anything, including nothing at all. If you want to be nice, you could automatically give the player the initiative in the case of a tie. Here I've provided the fairest possible option: a coin flip. */
+				<<set _r = random(1,2)>>
+				<<if _r == 1>>
+					<<set _subj = [_i,_j]>>
+				<</if>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</for>>
+
+<<if ndef _subj>>
+(You should write an error message here.)
+<<else>>
+	<<if _subj[0] == $actors.indexOf($puppets)>>
+		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
+	<<elseif _subj[0] == $actors.indexOf($enemies)>>
+		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
+		<<set $B.turn = "enemy">>
+	<<else>>
+		(You should write an error message here.)
+	<</if>>
+<</if>>
+
+:: Initiative Model: Ranked Order with Variance[nobr]
+<<for _party range $actors>>
+	<<for _actor range _party>>
+		<<if not _actor.dead and not _actor.stunned>>
+			<<set _actor.initiative = _actor.speed>>
+			<<set _variance = random(-$VARIANCE_BOUND,$VARIANCE_BOUND)>>
+			<<set _variance /= 100>>
+			/* Twine's random() function requires integer bounds, but we (presumably) plan to vary characters' Speed stats by a small proportion. We can do this by setting $VARIANCE_BOUND to an integer percentage value (probably in StoryInit) and dividing by 100 to get the decimal value. */
+			<<set _actor.initiative += _actor.speed * _variance>>
+		<</if>>
+	<</for>>
+<</for>>
+
+<<set _initiative = -1>>
+/* The -1 is necessary if you want a Speed of 0 to be possible. */
+<<for _i, _party range $actors>>
+	<<for _j, _actor range _party>>
+	<<if not _actor.dead and not _actor.stunned>>
+		<<if not _actor.isDone and _actor.initiative > _initiative>>
+		/* (not _actor.isDone) prevents us from selecting characters who have already acted this round. They'll be skipped over, and the next-fastest character will get the initiative. */
+			<<set _subj = [_i,_j]>>
+			<<set _initiative = _actor.initiative>>
+			/* This sets the current character's Speed as the new bar to clear. If no one's faster, no one else will pass the if check above and this character will remain the current subject. If someone else is faster, they'll become the subject and the _initiative variable will be updated to match their Speed. This ensures that subject status will be granted to the fastest character. */
+		<<elseif not _actor.isDone and _actor.initiative == _initiative>>
+		/* You'll need a handler for this case, or else the character with the higher index order will get the initiative in the case of a match. This handler can be anything, including nothing at all. If you want to be nice, you could automatically give the player the initiative in the case of a tie. Here I've provided the fairest possible option: a coin flip. */
+			<<set _r = random(1,2)>>
+			<<if _r == 1>>
+				<<set _subj = [_i,_j]>>
+			<</if>>
+		<</if>>
+	<</if>>
+	<</for>>
+<</for>>
+
+<<if ndef _subj>>
+(You should write an error message here.)
+<<else>>
+	<<if _subj[0] == $actors.indexOf($puppets)>>
+		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
+	<<elseif _subj[0] == $actors.indexOf($enemies)>>
+		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
+		<<set $B.turn = "enemy">>
+	<<else>>
+		(You should write an error message here.)
+	<</if>>
+<</if>>
+
+:: Initiative Model: Action Time[nobr]
+/* initiative gain */
+/* Note this model assumes everyone's "initiative" attribute is set to 0 at battle start. */
+
+<<for _party range $actors>>
+	<<for _actor range _party>>
+		<<if not _actor.dead>>
+			<<set _actor.initiative += _actor.speed>>
+		<</if>>
+	<</for>>
+<</for>>
+
+/* initiative comparison */
+
+<<set _initiative = -1>>
+<<for _i, _party range $actors>>
+	<<for _j, _actor range _party>>
+		<<if not _actor.dead>>
+			<<if _actor.initiative > _initiative>>
+				<<set _subj = [_i,_j]>>
+				<<set _initiative = _actor.initiative>>
+			<<elseif _actor.initiative == _initiative>>
+				<<set _r = random(1,2)>>
+				<<if _r == 1>>
+					<<set _subj = [_i,_j]>>
+				<</if>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</for>>
+
+<<if ndef _subj>>
+(You should write an error message here.)
+<<else>>
+	<<if _subj[0] == $actors.indexOf($puppets)>>
+		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
+	<<elseif _subj[0] == $actors.indexOf($enemies)>>
+		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
+		<<set $B.turn = "enemy">>
+	<<else>>
+		(You should write an error message here.)
+	<</if>>
+	<<set $subject[0].initiative = 0>>
+<</if>>
+
+:: Initiative Model: Action Time with Threshold[nobr]
+/* Note that this assumes everyone's "initiative" attribute is set to 0 at battle start. */
+
+<<set _threshold = $ACTION_THRESHOLD>> /* You would set $ACTION_THRESHOLD to some constant in StoryInit. */
+<<set _pastThreshold = false>>
+
+/* check for characters already at threshold */
+
+<<for _party range $actors>>
+	<<if _pastThreshold>>
+		<<break>>
+	<</if>>
+	<<for _actor range _party>>
+		<<if not _actor.dead>>
+			<<if _actor.initiative >= _threshold>>
+				<<set _pastThreshold = true>>
+				<<break>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</for>>
+
+/* initiative gain */
+
+<<for not _pastThreshold>>
+	<<for _party range $actors>>
+		<<for _actor range _party>>
+			<<if not _actor.dead>>
+				<<set _actor.initiative += 20 + 0.2 * _actor.speed>>
+				/* This is the Bonfire formula, but you can add your own */
+				<<if _actor.initiative >= _threshold>>
+					<<set _pastThreshold = true>>
+				<</if>>
+			<</if>>
+		<</for>>
+	<</for>>
+<</for>>
+
+/* initiative comparison */
+
+<<for _i, _party range $actors>>
+	<<for _j, _actor range _party>>
+		<<if not _actor.dead>>
+			<<if _actor.initiative > _threshold>>
+				<<set _subj = [_i,_j]>>
+				<<set _threshold = _actor.initiative>>
+			<<elseif _actor.initiative == _threshold>>
+				<<if def _subj>>
+					<<set _r = random(1,2)>>
+					<<if _r == 1>>
+						<<set _subj = [_i,_j]>>
+					<</if>>
+				<<else>>
+					<<set _subj = [_i,_j]>>
+				<</if>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</for>>
+
+<<if ndef _subj>>
+(You should write an error message here.)
+<<else>>
+	<<if _subj[0] == $actors.indexOf($puppets)>>
+		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
+	<<elseif _subj[0] == $actors.indexOf($enemies)>>
+		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
+		<<set $B.turn = "enemy">>
+	<<else>>
+		(You should write an error message here.)
+	<</if>>
+	<<set $subject[0].initiative -= $ACTION_THRESHOLD>>
+<</if>>
+
+:: Initiative Model: Timeline[nobr]
+/* Note that you will need to come up with a method for determining everyone's starting initiative; that is not modeled here. */
+
+<<set _threshold = 0>>
+<<set _pastThreshold = false>>
+
+/* check for characters already at threshold */
+
+<<for _party range $actors>>
+	<<if _pastThreshold>>
+		<<break>>
+	<</if>>
+	<<for _actor range _party>>
+		<<if not _actor.dead>>
+			<<if _actor.initiative <= _threshold>>
+				<<set _pastThreshold = true>>
+				<<break>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</for>>
+
+/* initiative gain */
+
+<<for not _pastThreshold>>
+	<<for _party range $actors>>
+		<<for _actor range _party>>
+			<<if not _actor.dead>>
+				<<set _actor.initiative -= 1>>
+				<<if _actor.initiative <= _threshold>>
+					<<set _pastThreshold = true>>
+				<</if>>
+			<</if>>
+		<</for>>
+	<</for>>
+<</for>>
+
+/* initiative comparison */
+
+<<for _i, _party range $actors>>
+	<<for _j, _actor range _party>>
+		<<if not _actor.dead>>
+			<<if _actor.initiative < _threshold>>
+				<<set _subj = [_i,_j]>>
+				<<set _threshold = _actor.initiative>> /* This is only necessary if it is possible to overshoot the threshold */
+			<<elseif _actor.initiative == _threshold>>
+				<<if def _subj>>
+					<<set _r = random(1,2)>>
+					<<if _r == 1>>
+						<<set _subj = [_i,_j]>>
+					<</if>>
+				<<else>>
+					<<set _subj = [_i,_j]>>
+				<</if>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</for>>
+
+<<if ndef _subj>>
+(You should write an error message here.)
+<<else>>
+	<<if _subj[0] == $actors.indexOf($puppets)>>
+		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
+	<<elseif _subj[0] == $actors.indexOf($enemies)>>
+		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
+		<<set $B.turn = "enemy">>
+	<<else>>
+		(You should write an error message here.)
+	<</if>>
+<</if>>
+
+:: Ranked Order Preview Model[nobr]
+/* Turn preview for the ranked order model. Run this at the start of each round. */
+
+<<set $turn_preview = []>>
+<<set _count = 0>>
+<<for _party range $actors>>
+	<<for _actor range _party>>
+		<<if not _actor.dead and not _actor.stunned>>
+			<<run _count++>>
+		<</if>>
+	<</for>>
+<</for>>
+
+<<for $turn_preview.length < _count>>
+	<<set _initiative = -1>>
+	<<for _i, _party range $actors>>
+		<<for _j, _actor range _party>>
+		<<if not _actor.dead and not _actor.stunned>>
+			<<if not $turn_preview.includes(_actor.name) and _actor.initiative > _initiative>>
+				<<set _next = _actor.name>>
+				<<set _initiative = _actor.initiative>>
+			<<elseif not $turn_preview.includes(_actor.name) and _actor.initiative == _initiative>>
+				<<set _r = random(1,2)>>
+				<<if _r == 1>>
+					<<set _next = _actor.name>>
+				<</if>>
+			<</if>>
+		<</if>>
+		<</for>>
+	<</for>>
+	<<run $turn_preview.push(_next)>>
+<</for>>
+
+/* You can then draw from $turn_preview to list the characters. The array is already sorted, so you can just use a for loop to display the characters in the order of their action. Exactly how this is implemented is left up to you. */
+
+/* You will still need to run the regular program to choose the active character thanks to Twine breaking object references. Otherwise, you could just add each _actor to the array and draw from there. */
+
+/* Known bug: in case of equal initiatives, the coin flip may go differently here than it does in the actual selection. */
+
+:: Action Time Preview Model[nobr]
+<<set $turn_preview = []>>
+<<set _preview = clone($actors)>>
+/* This is only a simulation, so we make a clone of the current state of $actors to work with. */
+
+<<for _i = 0; _i < $PREVIEW_PROGNOSIS; _i++>>
+/* $PREVIEW_PROGNOSIS is how many turns in advance you would like to calculate. I don't recommend making this very high. */
+
+/* initiative gain */
+
+<<for _party range _preview>>
+	<<for _actor range _party>>
+		<<if not _actor.dead>>
+			<<set _actor.initiative += _actor.speed>>
+		<</if>>
+	<</for>>
+<</for>>
+
+/* initiative comparison */
+
+<<set _initiative = -1>>
+<<for _i, _party range _preview>>
+	<<for _j, _actor range _party>>
+		<<if not _actor.dead>>
+			<<if _actor.initiative > _initiative>>
+				<<set _next = _actor>>
+				<<set _initiative = _actor.initiative>>
+			<<elseif _actor.initiative == _initiative>>
+				<<set _r = random(1,2)>>
+				<<if _r == 1>>
+					<<set _next = _actor>>
+				<</if>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</for>>
+
+<<run $turn_preview.push(_actor)>>
+<<set _next.initiative = 0>>
+
+<</for>>
+
+/* Preview code for threshold model is similar; just update the body code to match. */
+
+/* You MUST run this after every action if it is to be accurate, especially if you have actions that can modify initiative values. It is for this reason that I recommend a low prognosis value, so as to not cause your player's processor to melt. */
+
+:: Timeline Preview Model[nobr]
+/* Within the status pane, include this line: */
+
+Ticks until next turn: <<print $actor[0].initiative>>
+
+/* Creating a visual representation (such as in Becoming) will require skill in CSS and is beyond the scope of this help. */

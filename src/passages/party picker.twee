@@ -1,0 +1,56 @@
+:: Party Picker[battle]
+<span id="status"><<include "party manager reserve">></span><span id="content"><center>Active puppets:</center>
+<<nobr>>
+<div class="actors" id="puppets">
+<<include "party manager puppets">>
+</div>
+<</nobr>>
+
+A list of all available puppets is on the right. To swap out an active puppet, click on them and then on the puppet you want to add.
+/*
+Are puppets Puppets? <<if $puppets[0] instanceof Puppet>>yes<<else>>no<</if>>
+Are actions Actions? <<if $puppets[0].actions[0] instanceof Action>>yes<<else>>no<</if>>
+*/
+<<return>>
+</span>
+
+:: party manager puppets[nobr]
+<<for _i, _puppet range $puppets>>
+	<div class="actor" @id="_i">
+	<center>
+	<<capture _i>>
+	<<link _puppet.name>>
+		<<if def _s>><<run $('#' + _s).removeClass("selected")>><</if>>
+		<<set _s = _i>>
+		<<run $('#' + _i).addClass("selected")>>
+		<<replace "#status">><<include "party manager reserve">><</replace>>
+	<</link>>
+	<</capture>>
+	</center><br/>
+	<<for _k, _v range _puppet.stats>>
+		<span class="statname"><<print _k>>:</span>
+		<<print _puppet.get(_k)>>
+		<br/>
+	<</for>>
+	</div>
+<</for>>
+
+:: party manager reserve[nobr]
+<center>Reserve Puppets:</center><br/>
+<<for _i, _puppet range $Reserve_Puppets>>
+	<span class="statname">
+	<<if def _s>>
+		<<capture _puppet, _i>>
+		<<link _puppet.name>>
+			<<run $Reserve_Puppets[_i] = $puppets[_s]>>
+			<<set $puppets[_s] = _puppet>>
+			<<unset _s>>
+			<<replace "#puppets">><<include "party manager puppets">><</replace>>
+			<<replace "#status">><<include "party manager reserve">><</replace>>
+		<</link>>
+		<</capture>>
+	<<else>>
+		_puppet.name
+	<</if>>
+	</span><br/><br/>
+<</for>>

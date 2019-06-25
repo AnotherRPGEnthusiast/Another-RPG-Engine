@@ -8,10 +8,9 @@ if (window.hasOwnProperty("storyFormat")) {
 	setup.Path = "";
 	// Config.saves.autoload = true; // Automatically loads autosave on startup
 }
-/*
+
 setup.SoundPath = setup.Path + "sound/";
 setup.ImagePath = setup.Path + "images/";
-*/
 
 Config.macros.maxLoopIterations = 100;
 /* RPGs have a high chance of producing infinite loop errors, so lowering this from the default 1000 is helpful when testing. You probably will never need to exceed 100 iterations, but if you do you can increase this. */

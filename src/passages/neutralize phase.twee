@@ -1,0 +1,58 @@
+:: neutralize phase[nobr]
+/* Not currently implemented; too complex. Preserved for posterity. */
+
+<<if $effects_to_remove <= 0>>
+<<set $ready to true>>
+<<goto "confirm phase">>
+<</if>>
+
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+<<backbtn>>
+<<switch $action.name>>
+ <<case "Restoration">>
+  <<if $target[0].effects.length = 0>>
+   <<print $target[0].name+" has no effects! Go back.\n">>
+  <<else>>
+   <<set _count to 0>>
+   <<print $target[0].name+"\'s ailments:\n">>
+   <<for _i, _effect range $target[0].effects>>
+    <<if _effect.buff is false>>
+<<capture _i>>
+[[_effect.name|neutralize phase][$removed_effects.push(_i); $effects_to_remove -= 1]]
+<</capture>>
+    <<else>>
+	 <<set _count++>>
+	<</if>>
+   <</for>>
+   <<if _count eq $target[0].effects.length>>
+    <<print "...None! Go back.">>
+   <</if>>
+  <</if>>
+ <<case "Neutralize">>
+  <<if $target[0].effects.length = 0>>
+   <<print $target[0].name+" has no effects! Go back.\n">>
+  <<else>>
+   <<set _count to 0>>
+   <<print $target[0].name+"\'s buffs:\n">>
+   <<for _i, _effect range $target[0].effects>>
+    <<if _effect.buff is true>>
+<<capture _i>>
+[[_effect.name|neutralize phase][$removed_effects.push(_i); $effects_to_remove -= 1]]
+<</capture>>
+     <<if _i < $target[0].effects.length>>
+	  <<print ", ">>
+	 <</if>>
+	<<else>>
+	 <<set _count++>>
+	<</if>>
+   <</for>>
+   <<if _count eq $target[0].effects.length>>
+    <<print "...None! Go back.">>
+   <</if>>
+  <</if>>
+<</switch>>
+</span>
