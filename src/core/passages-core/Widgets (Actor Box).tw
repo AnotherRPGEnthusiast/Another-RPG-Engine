@@ -1,0 +1,229 @@
+:: Widget: Actor Box [widget nobr]
+<<widget "actorBox">>
+/* Standard display for actor information in battle. */
+/* arg 0 = actor object; arg 1 = class (defaults to "actor") */
+<<run console.assert($args.length > 0 && $args[0] instanceof Actor,"ERROR in actorBox: no Actor passed")>>
+<<set _actor = $args[0]>>
+<<run console.assert(_actor instanceof Puppet || _actor instanceof Enemy,"ERROR in actorBox: actor is neither Puppet nor Enemy")>>
+
+/* find actor's address in party array; will be used later */
+<<if _actor instanceof Puppet>>
+  <<set _idx = $puppets.findIndex(function (a) { return _actor.id == a.id; })>>
+  <<set _nameID = "pname"+_idx>>
+  <<set _healthBar = $B.playerBars[_idx]>>
+  <<if !Meter.has(_healthBar)>>
+    <<newmeter _healthBar 1>>
+      <<colors setup.PLAYER_BAR_COLOR>>
+      <<animation setup.HEALTH_BAR_TIME linear>>
+      <<sizing 100%>>
+    <</newmeter>>
+  <</if>>
+<<elseif _actor instanceof Enemy>>
+  <<set _idx = $enemies.findIndex(function (a) { return _actor.id == a.id })>>
+  <<set _nameID = "ename"+_idx>>
+  <<set _healthBar = $B.enemyBars[_idx]>>
+  <<if !Meter.has(_healthBar)>>
+    <<newmeter _healthBar 1>>
+      <<colors setup.ENEMY_BAR_COLOR>>
+      <<animation setup.HEALTH_BAR_TIME linear>>
+      <<sizing 100%>>
+    <</newmeter>>
+  <</if>>
+<</if>>
+<<set _boxID = "box"+_idx>>
+
+/* determine container class; customized by arg 1, defaults to "actor" */
+<<set _class = "actor ">>
+<<if $args.length > 1 && typeof($args[1]) == "string">>
+  <<set _class += $args[1]>>
+<</if>>
+
+/* determine if name should be capitalized */
+<<if _actor.caps>>
+  <<set _nameStyle = "text-transform:uppercase">>
+<<else>>
+  <<set _nameStyle = "">>
+<</if>>
+
+<div @class=_class @id=_boxID>
+<<if _actor.dead && (!$args.includes("dmgDisplay") || _showDead)>>
+  /*  Dead characters display their name and the † (dagger) symbol in place of the status button
+      UNLESS this box is for damage animation, in which case the dead display will only happen once all anims are finished */
+  <<set _margin = $(_boxID).height>>
+  <span class="actorname" @id=_nameID @style=_nameStyle>
+    <<set _class = "statusbutton">>
+    <<if _actor.large>>
+      <<set _class += " absolute">>
+    <</if>>
+    <span class="dead">
+      _actor.fullname
+      <span @class=_class>&dagger;</span>
+    </span>
+  </span>
+<<else>>
+  /* Element 1: name */
+  <span class="actorname" @id=_nameID @style=_nameStyle>
+  <<include "Actor Box Name">>
+  </span>
+
+  /* Element 2: status button */
+  <<include "Actor Box Status">>
+
+  /* Element 3: HP */
+  <<include "Actor Box HP">>
+
+  /* Element 4: EN (Puppets only) */
+  <<include "Actor Box EN">>
+
+  /* Element 5: Crisis points */
+  <<include "Actor Box Crisis">>
+
+  /* Element 6: Status messages */
+  <<include "Actor Box Misc">>
+<</if>>
+
+  <<if setup.ANIMATIONS === true && passage() == "Battle!" && _actor.battleMsg.length > 0>>
+    <<run console.log(_actor.name+" has a battle msg in master screen")>>
+    <<set _queue.add(_actor); _animationActive = true>>
+    <<for _x, _m range _actor.battleMsg>>
+      <div @id="'dmg'+_idx+'-'+_x" class="dmgPopup">
+        <<print _m.content>>
+      </div>
+    <</for>>
+  <</if>>
+
+</div>
+<</widget>>
+
+:: Actor Box Name [nobr]
+<<if _actor instanceof Puppet && $B.phase == "selection" && ndef _s && (!_actor.noact || _actor.down) && !_actor.isDone>>
+	/* For Puppets in the selection phase, their name becomes a link that sets them as the subject and allows the player to select their commands. */
+	<<capture _idx, _actor>>
+	<<link "_actor.name">>
+		<<set $B.subject = _actor>>
+		<<set _s = _idx>>
+		<<set $B.phase = "command">>
+		<<if setup.BATTLE_GRID === true>>
+			<<removeclass "#puppets" "grid">>
+		<</if>>
+		<<addclass "#enemies" "invisible">>
+		<<replace "#puppets">><<include "actorlist puppets">><</replace>>
+		<<replace "#phase">><<include "commands">><</replace>>
+	<</link>>
+	<</capture>>
+<<elseif $B.phase == "targeting">>
+	/* In the targeting phase, characters' names must become links to select them, but only if they are valid targets. */
+	<span class="targetnumber"><<print _idx+1>></span>
+	/* Check which party is being targeted: */
+	<<if ($B.targeting == "all" || (_actor instanceof Enemy && $B.targeting == "enemy") || (_actor instanceof Puppet && $B.targeting == "ally"))>>
+		/* Check if valid target.
+			For Puppets: Cannot target self if action has the noself property
+			For Enemies: Can only be targeted if
+				-Is a martyr OR
+				-No enemy has Martyr active
+				-The enemy is not untargetable
+				-(for battle grid) The enemy is not guarded OR the action is ranged
+		*/
+		<<if (_actor instanceof Puppet && !($B.subject.name == _actor.name && $B.noself === true)) ||
+			(_actor instanceof Enemy &&
+			((_actor.martyr || (!_martyr && !_actor.untargetable)) && ($action.ranged || guardCheck(_idx))))>>
+
+			/* If valid target, turn name into a link that assigns actor to the target variable, unsets the targeting varaible, and forwards the player to the next phase. We must also assign the ID variable determined earlier to a wrapper element to facilitate hotkey targeting. */
+			<<capture _actor>>
+			<<link "_actor.fullname">>
+				<<set $B.target = _actor; $B.targeting = null>>
+				<<replace "#phase">><<include "confirm phase">><</replace>>
+			<</link>>
+			<</capture>>
+		<<else>>
+			/* If invalid target, just display the name as normal. */
+			_actor.fullname
+		<</if>>
+	<<else>>
+		/* If not being targeted, just display the name as normal. */
+		_actor.fullname
+	<</if>>
+<<elseif _actor instanceof Puppet && $B.phase == "move" && _actor != $B.subject>>
+	/* For Puppets in the movement phase, their name becomes a link that swaps their position with the subject (except for the subject's own name) */
+	<<capture _idx, _actor>>
+	<<link "_actor.name">>
+		<<set _m = $puppets.indexOf($B.subject)>>
+		<<set $puppets[_idx] = $B.subject; $puppets[_m] = _actor>>
+		<<replace "#puppets">><<include "actorlist puppets">><</replace>>
+	<</link>>
+	<</capture>>
+<<else>>
+	/* In all other phases, just display the name as normal. */
+	_actor.fullname
+<</if>>
+
+:: Actor Box Status [nobr]
+<<if !$args.includes("dmgDisplay")>>
+	<<set _class = "statusbutton">>
+	<<if _actor.large>>
+		<<set _class += " absolute">>
+	<</if>>
+	<<capture _actor>><span @class=_class><<status _actor>></span><</capture>>
+<</if>>
+
+:: Actor Box HP [nobr]
+
+  <<if $args.includes("dmgDisplay")>>
+    <<set _hp = _actor.displayHP>>
+  <<else>>
+    <<set _hp = _actor.hp>>
+  <</if>>
+	<<capture _healthBar>>
+	<div>
+	HP: <<if _actor.maskhp>>???
+	<<else>><<print _hp>><<if _actor.showMaxHP>> / _actor.maxhp<</if>>
+	<</if>>
+	</div>
+	<<if (!_actor.maskhp && setup.SHOW_HEALTHBARS)>>
+		<<if setup.BATTLE_GRID === true && _actor.large>>
+			<div class="largehealth">
+				<<showmeter _healthBar `_hp / _actor.maxhp`>>
+			</div>
+		<<else>>
+			<<showmeter _healthBar `_hp / _actor.maxhp`>>
+		<</if>>
+	<</if>>
+	<</capture>>
+
+
+:: Actor Box EN [nobr]
+<<if _actor instanceof Puppet && !$args.includes("simplified")>>
+	<div>
+	EN: _actor.en / _actor.maxen
+	</div>
+<</if>>
+
+:: Actor Box Crisis [nobr]
+<<if def _s && _actor.crisis instanceof Array && _actor.crisis.length > 0 && !$args.includes("simplified")>>
+	/* Only display this if the character isn't currently selected (and if they have a valid Crisis in the first place) */
+	<<set _style = "font-size: 10pt; ">>
+	<<if _actor.crisisPoints >= 100>>
+		<<set _style += "color:red">>
+	<<else>>
+		<<set _style += "font-weight:normal">>
+	<</if>>
+	<div @style=_style>
+		Crisis: <<print _actor.crisisPoints>>%
+	</div>
+<</if>>
+
+:: Actor Box Misc [nobr]
+
+	<div class="noact">
+	<<if $args.includes("simplified")>>
+		<br/>
+	<<elseif _actor.isDone>>
+		Done!
+	<<elseif _actor.stunned>>
+		Stunned!
+	<<elseif _actor.down>>
+		Prone!
+	<<else>>
+		<br/>
+	<</if>>
+	</div>

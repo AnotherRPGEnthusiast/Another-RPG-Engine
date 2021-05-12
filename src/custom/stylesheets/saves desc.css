@@ -1,0 +1,55 @@
+#ui-dialog-body.saves {
+  min-width: 600px;
+}
+
+#ui-dialog-body.saves .datestamp {
+	margin-left: 0.5em;
+}
+
+.save-desc {
+	position: relative;
+	margin-bottom: 5px;
+	margin-top: 10px;
+}
+
+.save-area {
+	display: block;
+	font: 16px/1 Helmet,Freesans,sans-serif;
+	font-weight: bold;
+	font-size: 125%;
+	margin-bottom: 10px;
+}
+
+.save-left {
+	display: inline-block;
+	max-width: 50%;
+}
+
+.save-extra {
+	position: absolute;
+	top: 2em;
+}
+
+.save-money {
+}
+
+.save-level {
+	margin-right: 2em;
+}
+
+.save-party {
+	float: right;
+	position: relative;
+	right: -5px;
+}
+
+.save-puppet {
+	display: inline-block;
+	padding-left: 5px;
+	padding-right: 5px;
+	border: 1px solid;
+	text-align: center;
+	text-transform: uppercase;
+	font-weight: bold;
+	overflow: hidden;
+}

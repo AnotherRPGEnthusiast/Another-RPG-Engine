@@ -1,0 +1,5 @@
+:: PassageHeader-custom [nobr]
+/* Custom PassageHeader code, appended to the core passage. */
+<<if tags().includes("text")>>
+	<<include "navbar">>
+<</if>>

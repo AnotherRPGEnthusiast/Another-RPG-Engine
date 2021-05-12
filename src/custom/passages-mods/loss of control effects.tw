@@ -1,0 +1,25 @@
+:: loss of control effects [nobr]
+<<set _u = $puppets.find(function (p) { return (p.uncontrollable && !(p.isDone || p.noact || p.dead)); })>>
+<<if def _u>>
+	<<set $B.subject = _u>>
+	<<if subject().name == "Mage">>
+		<<set $action = new Action("Blast")>>
+	<<elseif subject().name == "Witch">>
+		<<set $action = new Action("Pox")>>
+	<<else>>
+		<<set $action = clone(subject().actions.find(function (act) { return act && act.name === subject().defaultAction })>>
+	<</if>>
+	<<if subject().en < $action.cost>>
+		<<set subject().isDone = true>>
+		<<goto "Battle!">> /* necessary to find other potential uncontrollables */
+	<<else>>
+		<<if _u.confusion>>
+			<<set $B.target = Hitlist.targetEnemy(["any"])>>
+		<<elseif _u.charmed>>
+			<<set $B.target = Hitlist.targetEnemy(["allies"])>>
+		<<elseif _u.hatred>>
+			<<set $B.target = Hitlist.targetEnemy(["enemies"])>>
+		<</if>>
+		<<goto "action phase">>
+	<</if>>
+<</if>>

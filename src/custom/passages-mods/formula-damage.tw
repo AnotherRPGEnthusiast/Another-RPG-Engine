@@ -1,0 +1,21 @@
+:: damageCalc formula[nobr]
+/* Define the damage formula or formulae you want to use here. */
+
+<<if !$action.formula>>
+/* Only use the default formula if the action does not have a custom formula (so, the formula property is falsy) */
+<<switch setup.formula>>
+	<<case "subtractive">>
+		<<set $dmg to ((setup.base+setup.damper*_atk)*_w)-setup.damper*_def>>
+	<<case "subtractive lumped">>
+		<<set $dmg to (setup.base+setup.damper*(_atk-_def))*_w>>
+	<<case "rpgmaker">>
+		<<set $dmg to (_atk*4-_def*2)*setup.damper*_w>>
+	<<case "divisive">>
+		<<set $dmg to (setup.base*(_atk/_def))*_w>>
+	<<default>>
+		/* add your own here! */
+<</switch>>
+
+<<else>>
+	<<set $dmg = $action.formula()>>
+<</if>>

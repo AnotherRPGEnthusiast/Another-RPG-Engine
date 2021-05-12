@@ -1,0 +1,46 @@
+:: Item Shop[noreturn]
+<<longreturn>>
+
+MegaCorp® is happy to provide you with their top-of-the-line items, provided you have the cash. You have a limited budget, so choose which items you want to bring into your next battle. MegaCorp® will (with uncharacteristic generosity) fully refund you for any items you wish to exchange, so don't worry about going broke.
+
+<b>Points: <<live $currency>></b>
+
+<span id="items"><<include "item shop display">></span>
+
+:: item shop display[nobr]
+<<for _k, _v range $inventory>>
+<<if _v.usable.includes("inbattle")>>
+<div>
+<b>_v.name</b> (Stock: _v.maxstock)
+<div class="shop-button">
+<<capture _v>>
+	<<if $currency >= _v.value && _v.maxstock < setup.ITEM_MAX>>
+	[<<link "BUY">>
+		<<replace "#items">>
+			<<run _v.maxstock++>>
+			<<set $currency -= _v.value>>
+			<<update>>
+			<<include "item shop display">>
+		<</replace>>
+	<</link>>]
+	<</if>>
+	<<if $currency >= _v.value && _v.maxstock > 0>> / <</if>>
+	<<if _v.maxstock > 0>>
+	[<<link "SELL">>
+		<<replace "#items">>
+			<<run _v.maxstock-->>
+			<<set $currency += _v.value>>
+			<<update>>
+			<<include "item shop display">>
+		<</replace>>
+	<</link>>]
+	<</if>>
+<</capture>>
+ <b>Cost: _v.value</b>
+</div>
+</div>
+<<print _v.info>><br/>
+<span class="actdesc"><<print _v.desc>></span><br/>
+<br/>
+<</if>>
+<</for>>

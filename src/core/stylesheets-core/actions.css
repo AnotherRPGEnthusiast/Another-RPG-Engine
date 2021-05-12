@@ -1,0 +1,70 @@
+#actFlavor {
+  border: solid;
+  border-radius: 16px;
+  padding: 1em;
+  order: 1;
+}
+
+#useText {
+  text-align: center;
+  font-weight: bold;
+}
+
+#actEffect {
+  color: gray;
+  font-style: italic;
+  border: solid;
+  border-radius: 16px;
+  padding: 1em;
+  order: 3;
+}
+
+.interruption {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.actionDisplay {
+	margin-bottom: 0.5em;
+}
+
+.actionDisplay.uncompressed {
+	margin-bottom: 1.5em;
+}
+
+.actionName {
+  font-weight: bold;
+}
+
+.actdesc {
+  color: gray;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.preview {
+  color: gray;
+  font-style: italic;
+}
+
+.dizzy {
+  color: gray;
+  font-style: italic;
+}
+
+.usedisplay {
+	font-size: 11pt;
+	margin-left: 1em;
+}
+
+.cooldowndisplay {
+  color: gray;
+  font-weight: bold;
+}
+
+.actionBoxHelp {
+  text-align: center;
+  line-height: 90px;
+  color: gray;
+}

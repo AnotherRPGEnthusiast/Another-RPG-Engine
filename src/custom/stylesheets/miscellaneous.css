@@ -1,0 +1,41 @@
+/* Styles relating to the display of the help file. You will likely wish to delete or override this for your own stories. */
+
+blockquote a.link-external::after, a.noExternal.link-external::after {
+  visibility: hidden;
+  content: "";
+}
+
+body.text {
+  background-color: tan;
+}
+
+.text .passage {
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5 {
+  margin: auto;
+}
+
+img {
+  max-width: 100%;
+}
+
+pre {
+	background-color: silver;
+	padding: 0px 3px;
+}
+pre > code {
+	padding: 0px;
+}
+
+#navbar, #navbar div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+
+#navbar span {
+  margin-left: 1em;
+  margin-right: 1em;
+}

@@ -1,0 +1,6 @@
+:: PassageReady
+<<if $inbattle>>
+	<<chain>>
+	<<set $B.actors = $enemies.concat($puppets)>>
+<</if>>
+<<include "PassageReady-custom">>

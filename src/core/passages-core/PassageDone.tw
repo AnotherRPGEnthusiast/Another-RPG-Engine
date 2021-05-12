@@ -1,0 +1,5 @@
+:: PassageDone [nobr]
+<<if _animationActive>>
+  <<include "animation activator">>
+<</if>>
+<<include "PassageDone-custom">>

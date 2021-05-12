@@ -1,0 +1,393 @@
+/* DEPRECIATED as of v3.00 and replaced by targeting.js */
+
+:: Widget: martyrCheck [widget nobr]
+<<widget "martyrCheck">>
+<<set _martyrTest = _party.find(function (p) { return p && p.martyr === true })>>
+/* Note that this assumes only one Martyr can be active at a time. If multiple are active, this will only find the first in the array. */
+<<if _martyrTest>>
+	<<set $B.target = _martyrTest>>
+	<<set _continue to false>>
+<</if>>
+<</widget>>
+
+:: Widget: protectionCheck [widget nobr]
+<<widget "protectionCheck">>
+/* Checks if target is protected by someone with the Protector effect */
+<<if $B.target !== null && $B.target.protectedBy>>
+	<<set _temp = $B.target.name>>
+	<<switch $B.target.id.charAt(0)>>
+		<<case "p">>
+			<<set _party = $puppets>>
+		<<case "e">>
+			<<set _party = $enemies>>
+		<<default>>
+			<<set _party = $puppets; console.log("ERROR in protectionCheck: invalid ID type")>>
+	<</switch>>
+	<<set $B.target = _party.find(function(t) { return t && t.id === $B.target.protectedBy; })>>
+	<<set _targetingMsg = $B.target.name+" took the hit for "+_temp+"!\n">>
+<</if>>
+<</widget>>
+
+:: Widget: guardCheck [widget nobr]
+<<widget "guardCheck">>
+/* Checks if target is blocked by another character (battle map style only) */
+<<set _index = _party.indexOf(target())>>
+<<if _index >= setup.ROW_SIZE && _party[_index-setup.ROW_SIZE] !== null && !_party[_index-setup.ROW_SIZE].dead>>
+	<<set $B.target = _party[_index-setup.ROW_SIZE]>>
+<<elseif _index >= setup.ROW_SIZE * 2>>
+	<<set $B.target = _party[_index-setup.ROW_SIZE]>>
+	<<guardCheck>> /* Run again to test if the new mid-row target is in turn guarded by a front row character */
+<</if>>
+<</widget>>
+
+:: Widget: threatTarget [widget nobr]
+<<widget "threatTarget">>
+<<if _modifiers.includes("random")>>
+	/* truly random selection, ignores threat */
+	<<set $B.target = null>>
+	<<for target() === null>>
+		<<set _rand = random(0,puppets().length-1)>>
+		<<if !puppets()[_rand].dead && (_modifiers.includes("ignore untargetable") || !puppets()[_rand].untargetable)>>
+			<<set $B.target = puppets()[_rand]>>
+		<</if>>
+	<</for>>
+	<<set _continue = false>>
+<</if>>
+
+<<if _continue>>
+
+	<<set _totalThreat = 0>>
+	<<for _puppet range puppets().filter(function (p) { return !p.dead; })>>
+		<<if _modifiers.includes("ignore untargetable") || !_puppet.untargetable>>
+			<<set _threat = subject().threat.get(_puppet.name)>>
+			<<run _hitlist.push({target: _puppet, threat: _threat})>>
+			<<set _totalThreat += _threat>>
+		<</if>>
+	<</for>>
+
+	<<if _hitlist.length > 0>>
+		<<set _rand = random(1,_totalThreat)>>
+		<<for _i, _target range _hitlist>>
+			<<if _i != 0>>
+				<<set _target.threat += _hitlist[_i-1].threat>>
+				<<if _rand <= _target.threat && _rand > _hitlist[_i-1].threat>>
+					<<set $B.target = _target.target>>
+				<</if>>
+			<<elseif _rand <= _target.threat>>
+				<<set $B.target = _target.target>>
+			<</if>>
+		<</for>>
+	<<else>> /* everyone's dead, flag targetfail */
+		<<set _targetfail = true>>
+	<</if>>
+
+<</if>> /* end random if */
+<</widget>>
+
+:: Widget: randomTarget [widget nobr]
+<<widget "randomTarget">>
+<<if deadCount() == puppets().length || enemies().filter(function (e) { return e.dead; }).length == enemies().length>>
+	<<set _targetfail = true>>
+<<else>>
+
+<<set _modifiers = []>>
+<<if $args[0] instanceof Array>>
+	<<set _modifiers = $args[0]>>
+<<else>>
+	<<for _arg range $args>>
+		<<run _modifiers.push(_arg)>>
+	<</for>>
+<</if>>
+<<set _continue = true>>
+
+/* Check if this widget is being run for a puppet under a loss-of-control effect. */
+<<if subject() instanceof Puppet>>
+	<<if _modifiers.includes("any")>> /* if can target any party (e.g. confusion), pass "any" as an argument to the widget and target party will be selected randomly */
+		<<set _selector = random(1,2)>>
+		<<switch _selector>>
+			<<case 1>>
+				<<set _party = $puppets>>
+			<<case 2>>
+				<<set _party = $enemies>>
+		<</switch>>
+	<<elseif _modifiers.includes("enemies")>>
+		<<switch subject().id.charAt(0)>>
+			<<case 'p'>>
+				<<set _party = $enemies>>
+			<<case 'e'>>
+				<<set _party = $puppets>>
+			<</switch>>
+	<<elseif _modifiers.includes("allies")>>
+	<<switch subject().id.charAt(0)>>
+		<<case 'p'>>
+			<<set _party = $puppets>>
+		<<case 'e'>>
+			<<set _party = $enemies>>
+		<</switch>>
+	<</if>>
+<<else>>
+	<<set _party = $puppets>>
+<</if>>
+
+<<set _party = _party.filter(function (a) { return a !== null; })>>
+
+/* Priority 1: Martyr takes all hits */
+<<martyrCheck>>
+
+<<if _continue>>
+
+/* Priority 2: aggro enemies bypass normal targeting */
+<<if $B.subject.aggro && def $attacker>>
+	<<set $B.target = $puppets[$attacker]>> /* always targets the puppet that attacked last */
+	<<if !$B.target.dead>>
+		<<set _continue = false>>
+	<</if>>
+	/* Note that this bypasses untargetable as well */
+<</if>>
+
+<<if _continue>>
+
+/* check if only untargetables remain */
+<<if !_modifiers.includes("ignore untargetable")>>
+	<<set _untargetTest = _party.filter(function (p) { return (p.dead || p.untargetable) })>>
+	<<if _untargetTest.length == _party.length>>
+		<<run _modifiers.push("ignore untargetable")>>
+	<</if>>
+<</if>>
+
+<<set _hitlist = []>>
+
+/* If subject is a Puppet, target will be selected completely randomly. By default, it is possible for a charmed or confused puppet to attack themselves. */
+<<if subject() instanceof Puppet>>
+	<<set $B.target = null>>
+	<<for target() === null>>
+		<<set _rand = random(0,_party.length-1)>>
+		<<if !_party[_rand].dead && (_modifiers.includes("ignore untargetable") || !_party[_rand].untargetable)>>
+			<<set $B.target = _party[_rand]>>
+		<</if>>
+	<</for>>
+
+<<else>>
+
+<<if setup.THREAT_TARGETING === true>>
+
+<<threatTarget>>
+
+<<else>>
+
+/* mercy setting */
+<<if $B.subject.mercy < 1 or _modifiers.includes("smart")>>
+/* if enemy's mercy is below 1, they will always use smart targeting */
+	<<set _mercy = 2>>
+<<else>>
+/* 1 in (mercy) chance of random targeting, to give players a break */
+	<<set _mercy = random(1,$B.subject.mercy)>>
+<</if>>
+
+/* smart targeting */
+<<if $difficulty is "hard">>
+
+<<if _mercy > 1>>
+	<<if !_modifiers.includes("ignore downed")>>
+/* This clause makes enemies preferentially target off-balance and downed puppets. */
+		<<for _puppet range _party.filter(function (p) { return !p.dead && (p.offbalance || p.down); })>>
+			<<if _modifiers.includes("ignore untargetable") || !_puppet.untargetable>>
+				<<run _hitlist.push(_puppet)>>
+			<</if>>
+		<</for>>
+	<</if>>
+	<<if _modifiers.includes("debuff")>>
+/* Debuffing attacks will preferentially target puppets with lowered Special, as they will be more strongly affected */
+		<<for _puppet range _party.filter(function (p) { return !(p.dead || p.chi || p.stasis) && p.get("Special") < p.getBase("Special"); })>>
+			<<if _modifiers.includes("ignore untargetable") || !_puppet.untargetable>>
+				<<run _hitlist.push(_puppet)>>
+			<</if>>
+   		<</for>>
+	<</if>>
+
+	<<if _hitlist.length > 0>>
+		<<set _continue = false>>
+	<</if>>
+<</if>>
+
+/* normal targeting */
+<<if _continue>>
+	<<for _puppet range _party.filter(function (p) { return !p.dead; })>>
+		<<if _modifiers.includes("ignore untargetable") || !_puppet.untargetable>>
+			<<run _hitlist.push(_puppet)>>
+		<</if>>
+	<</for>>
+<</if>>
+
+<<elseif $difficulty is "medium">>
+
+<<for _puppet range _party.filter(function (p) { return !p.dead; })>>
+	<<if _modifiers.includes("ignore untargetable") || !_puppet.untargetable>>
+		<<run _hitlist.push(_puppet)>>
+
+		/* smart targeting */
+		<<if _mercy > 1>>
+			<<if !_modifiers.includes("ignore downed")>>
+			/* This clause makes enemies preferentially target off-balance and downed puppets. */
+				<<if _puppet.offbalance || _puppet.down>>
+					<<run _hitlist.push(_puppet)>>
+				<</if>>
+			<</if>>
+			<<if _modifiers.includes("debuff")>>
+			/* Debuffing attacks will preferentially target puppets with lowered Special, as they will be more strongly affected */
+				<<if !_puppet.chi && && !_puppet.stasis && (_puppet.get("Special") < _puppet.getBase("Special"))>>
+					<<run _hitlist.push(_puppet)>>
+				<</if>>
+			<</if>>
+		<</if>> /* end mercy if */
+	<</if>>
+<</for>>
+
+<<elseif $difficulty is "easy">>
+
+<<for _puppet range _party.filter(function (p) { return !p.dead; })>>
+	<<if _modifiers.includes("ignore untargetable") || !_puppet.untargetable>>
+		<<run _hitlist.push(_puppet)>>
+	<</if>>
+<</for>>
+
+<</if>> /* end difficulty if */
+
+<<if def _hitlist && _hitlist.length > 0>>
+	<<set _origHitlist = clone(_hitlist)>>
+	<<for _t range _origHitlist.filter(function (p) { return p.firefly === true; })>>
+		<<run _hitlist.push(_t)>>
+	<</for>>
+	<<set _n = random(0,_hitlist.length-1)>>
+ 	<<set $B.target = _hitlist[_n]>>
+<<else>>
+	/* no target found, flag this to avoid errors elsewhere */
+	<<set _targetfail = true>>
+<</if>>
+
+<</if>> /* end threat vs. normal targeting if */
+
+<</if>> /* end Puppet vs. Enemy if */
+<</if>> /* end aggro if */
+
+	/* guard check (if using battle grid) */
+	<<if setup.BATTLE_GRID === true && !$action.ranged && !((subject() instanceof Puppet && target() instanceof Puppet) || (subject() instanceof Enemy && target() instanceof Enemy))>>
+		/* friendly fire bypasses this check */
+		<<guardCheck>>
+	<</if>>
+
+	/* protection check */
+	<<if !_modifiers.includes("ignore protection")>>
+		<<protectionCheck>>
+	<</if>>
+	<<unset _hitlist>>
+
+<</if>> /* end martyr if */
+<</if>> /* end initial targetfail check if */
+<</widget>>
+
+:: Widget: allytarget [widget nobr]
+<<widget "allytarget">>
+<<set _hitlist = []>>
+<<for _actor range enemies().filter(function (e) { return !e.dead; })>>
+	<<if !($args.includes("noself") && _actor == subject())>>
+		<<if $args.includes("buff")>>
+			<<if !_actor.stasis>>
+				<<run _hitlist.push(_actor)>>
+			<</if>>
+		<<else>>
+			<<run _hitlist.push(_actor)>>
+		<</if>>
+	 <</if>>
+<</for>>
+<<if _hitlist.length > 0>>
+	<<set _n = random(0,_hitlist.length-1)>>
+	<<set $B.target = _hitlist[_n]>>
+	<<unset _hitlist>>
+<</if>>
+<</widget>>
+
+:: Widget: dispelTarget [widget nobr]
+<<widget "dispelTarget">>
+<<set _threshold = $args[0]>>
+<<set _go = false>>
+<<set _continue = true>>
+<<set _temp = 0>>
+
+<<if !$args.includes("mass")>>
+/* Martyr check */
+	<<set _martyrTest = $puppets.find(function (p) { return p && p.martyr === true })>>
+	<<if _martyrTest>> /* will be false if no martyr found */
+		<<for _effect range _martyrTest.effects.filter(function (eff) { return (eff.buff && !eff.sticky) })>> /* Search for buffs */
+			<<if _effect.name == "Blessing">>
+				<<set _temp += 3>> /* Blessings are higher priority to dispel */
+			<<elseif _effect.name == "Martyr" || _effect.name == "Defender" || _effect.name == "Berserker">>
+				/* do nothing; these expire on the next round anyway, so not worth it */
+			<<else>>
+				<<set _temp += 1>>
+			<</if>>
+	  	<</for>>
+		<<if _temp >= _threshold>>
+			<<set $B.target = _martyrTest>>
+			<<set _continue = false>>
+			<<set _go = true>>
+		<<else>>
+			<<set _continue = false>>
+		<</if>>
+	<</if>>
+<</if>>
+
+<<if _continue>>
+/* In order to pass, there must not have been a martyr */
+
+<<set _hitlist = []>>
+<<for _puppet range puppets().filter(function (p) { return !p.dead; })>>
+	<<if !$args.includes("mass")>>
+		<<set _temp = 0>>
+	<</if>>
+	<<if $args.includes("ignore untargetable") || !_puppet.untargetable>>
+		<<for _effect range _puppet.effects.filter(function (eff) { return (eff.buff && !eff.sticky) })>> /* Search for buffs */
+			<<if _effect.name == "Blessing">>
+				<<set _temp += 3>> /* Blessings are higher priority to dispel */
+			<<elseif _effect.name == "Martyr" || _effect.name == "Defender" || _effect.name == "Berserker">>
+				/* do nothing; these expire on the next round anyway, so not worth it */
+			<<else>>
+				<<set _temp += 1>>
+			<</if>>
+		<</for>>
+	<</if>>
+	<<if !$args.includes("mass")>>
+		<<if _temp >= _threshold>>
+			<<run _hitlist.push(_puppet)>> /* If someone has a buff, make them a possible target */
+		<</if>>
+	<</if>>
+<</for>>
+<<if (!$args.includes("mass") && _hitlist.length == 0) || ($args.includes("mass") && _temp < _threshold)>>
+	<<set _go = false>> /* If no one has any buffs, there's no point in using this; reroll */
+<<else>>
+	<<set _go = true>>
+	<<if !$args.includes("mass")>> /* mass dispel doesn't need to pick a target */
+		<<set _n = random(0,(_hitlist.length-1))>>
+		<<set $B.target = _hitlist[_n]>>
+
+	/* Protection check. Comment this out if you do not want Protectors to protect against dispels. */
+	<<if !$args.includes("ignore protection")>>
+		<<protectionCheck>>
+	<</if>>
+
+ 	<</if>>
+<</if>>
+
+<</if>>
+<</widget>>
+
+:: Widget: multihit [widget nobr]
+<<widget "multihit">>
+<<set _hits = $args[0]>>
+<<for _h = 1; _h <= _hits; _h++>>
+	<<if $args[1] is "spread">> /* careful, this means you have to call randomTarget outside this widget if this isn't a spread attack */
+		<<randomTarget "ignore downed" "ignore untargetable">>
+	<</if>>
+	<<echoDamage>>
+<</for>>
+<</widget>>

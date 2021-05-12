@@ -1,0 +1,38 @@
+:: StoryAuthor
+Made in <a href="https://anotherrpgenthusiast.itch.io/another-rpg-engine">Another RPG Engine</a>
+/* Please keep this link if you make games in the engine! */
+
+:: StoryCaption
+<<nobr>>
+<<if $debug>>
+  <<if $inbattle>>
+    <<for _i, _puppet range $puppets>>
+      <<set _linkText = "Puppet "+_i+" Crisis">>
+      <<capture _puppet>>
+      <<link _linkText>>
+        <<set _puppet.crisisPoints = 100>>
+        <<goto "Battle!">>
+      <</link>>
+      <</capture>><br/>
+      <<set _linkText = "Kill Puppet "+_i>>
+      <<capture _puppet>>
+      <<link _linkText>>
+        <<set _puppet.dead = true>>
+        <<goto "Battle!">>
+      <</link>>
+      <</capture>><br/>
+    <</for>>
+    <<for _i, _enemy range $enemies>>
+      <<set _linkText = "Kill Enemy "+_i>>
+      <<capture _enemy>>
+      <<link _linkText>>
+        <<set _enemy.dead = true>>
+        <<goto "Battle!">>
+      <</link>>
+      <</capture>><br/>
+    <</for>>
+  <</if>>
+<</if>>
+<</nobr>>
+<<include "hotkey info">>
+<<include "music info">>

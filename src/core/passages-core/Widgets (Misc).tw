@@ -1,0 +1,149 @@
+:: Widget: effectinfo [widget nobr]
+<<widget "effectinfo">>
+<<for _k, _effect range $B.actor.effects>>
+<<if _effect.invisible isnot true>>
+	<div class="effectinfo">
+	_effect.name
+	<<if _effect.duration >= 0>>
+		<span class="duration">_effect.duration turn<<if _effect.duration > 1>>s<</if>></span>
+	<</if>><br/>
+	<span class="effectdesc">
+	<<print _effect.info(_effect)>>
+	</span>
+	</div><br/>
+<</if>>
+<</for>>
+<</widget>>
+
+:: Widget: stat display [widget nobr]
+<<widget "stat">>
+/* Designed by greyelf */
+	/* Check that a Stat Name was passed to the widget. */
+	<<if $args.length is 0>>
+		ERROR
+	<<else>>
+		<<set _current to $B.actor.get($args[0]) >>
+		<<set _base to $B.actor.getBase($args[0]) + $B.actor.getEquipBonus($args[0]) >>
+
+		/* Check if the Stat has been raised. */
+		<<if _current > _base >>
+			@@.stat-raised;_current@@
+
+		/* Check if the Stat has been lowered. */
+		<<elseif _current < _base >>
+			@@.stat-lowered;_current@@
+
+		/* The Stat has not changed. */
+		<<else>>
+			_current
+		<</if>>
+
+	<</if>>
+<</widget>>
+
+:: Widget: res display [widget nobr]
+<<widget "res">>
+/* Check that an argument was passed to the widget. */
+	<<if $args.length is 0>>
+		ERROR
+	<<else>>
+		<<set _r = $args[0].percent.current>>
+		<<set _r = Math.round((_r - 1) * -100)>>
+
+		/* Weakpoint? */
+		<<if _r < 0 >>
+			@@.stat-lowered;<<print _r>>%@@
+
+		/* Absorbance? */
+		<<elseif _r > 100 >>
+			<<run _r -= 100>>
+			@@.green;+<<print _r>>%@@
+
+		/* Resistance? */
+		<<elseif _r > 0 >>
+			@@.stat-raised;<<print _r>>%@@
+
+		<<else>>
+			<<print _r>>%
+		<</if>>
+
+	<</if>>
+<</widget>>
+
+:: Widget: soak display [widget nobr]
+<<widget "soak">>
+	<<if $args.length is 0>>
+		ERROR
+	<<else>>
+		<<set _r = $args[0].flat.current>>
+
+		/* Weakpoint? */
+		<<if _r < 0 >>
+			@@.stat-lowered;<<print _r>>@@
+
+		/* Resistance? */
+		<<elseif _r > 0 >>
+			@@.stat-raised;<<print _r>>@@
+
+		<<else>>
+			<<print _r>>
+		<</if>>
+
+	<</if>>
+<</widget>>
+
+:: Widget: tol display [widget nobr]
+<<widget "tol">>
+	<<if $args.length is 0>>
+		ERROR
+	<<else>>
+		<<run console.log("Rendering tolerance. Max value = "+_v.current)>>
+		<<run console.log("Rendering tolerance. Current value = "+_v.currentVal)>>
+		/* Unlike other status widgets, this is passed the value, not the key. */
+		<<set _v = $args[0]>>
+		<span class="tolerance">
+
+		/* Immunity? */
+		<<if _v.current < 0>>
+			X
+
+		/* Tolerance? */
+		<<elseif _v.currentVal > 0>>
+			<<print _v.currentVal>>
+
+		/* Tolerance exhausted? */
+		<<elseif _v.currentVal == 0>>
+			!
+		<</if>>
+		</span>
+
+	<</if>>
+<</widget>>
+
+:: Widget: statOOB [widget nobr]
+<<widget "statOOB">>
+/* For displaying stats outside of battle. Base and equipment mods are displayed separately here. If you wish for effect mods to persist outside of battle, you could include them as well. */
+
+	<<if $args.length is 0>>
+		ERROR
+	<<else>>
+		<<set _p = $args[1]>>
+		<<set _mod to _p.getBonus($args[0]) >>
+		<<set _base to _p.getBase($args[0])>>
+
+		<<print _base>>
+
+		/* Check if equipment mod is positive. */
+		<<if _mod > 0 >>
+			@@.green;<<print "\+"+_mod>>@@
+
+		/* Check if equipment mod is negative. */
+		<<elseif _mod < 0 >>
+			@@.stat-lowered;<<print "-"+_mod>>@@
+
+		<<elseif _mod == 0>>
+			/* display nothing */
+		<</if>>
+
+	<</if>>
+<</widget>>

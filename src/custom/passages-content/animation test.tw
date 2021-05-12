@@ -1,0 +1,40 @@
+:: Anim Test [nobr]
+<<set $scenario = "gf1">>
+<<include "Preparation">>
+<<set $B.subject = $puppets[0]>>
+<<set $B.subject.en = 10>>
+<<set $B.target = $enemies[1]>>
+<<if $subtest.includes("dark")>>
+	<<set $B.style = "dark">>
+	<<addclass "html" "dark">>
+<</if>>
+<<if $subtest == "Antidote" || $subtest == "Grenade">>
+	<<set _action = new ItemAction($subtest)>>
+	<<run $puppets[0].addEffect("Poisoned",{power: 1, weight: 1, noPopup: true})>>
+	<<set $B.target = $puppets[0]>>
+<<elseif $subtest == "block">>
+	<<set $enemies[1].addEffect("Bubble",{power: 1, noPopup: true})>>
+	<<set _action = new Action("Flurry")>>
+<<elseif $subtest == "Thorns">>
+	<<run $enemies[1].addEffect("Thorns",{power: 1, noPopup: true})>>
+	<<set _action = new Action("Sword")>>
+<<elseif $subtest == "death">>
+	<<run target().hp = 50; target().displayHP = 50>>
+	<<set _action = new Action("Knife")>>
+<<elseif $subtest.includes("regen")>>
+	<<set subject().HPregenFlat = 5; target().HPregenFlat = -5>>
+	<<set _action = new Action("Knife")>>
+<<else>>
+	<<set _action = new Action($subtest)>>
+<</if>>
+<<actionLink _action>>
+<<goto "Anim Test Live">>
+
+:: Anim Test Live [nobr]
+<<if $subtest.includes("regen")>>
+	<<endOfRound $enemies>>
+	<<newTurn $puppets>>
+	<<goto "Battle!">>
+<<else>>
+	<<include "action phase">>
+<</if>>

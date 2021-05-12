@@ -1,0 +1,6 @@
+:: PassageFooter-custom[nobr]
+/* Custom PassageFooter code, appended to the core passage. */
+<<if tags().includes("info")>>
+<hr/>
+<center><a href="#navbar">BACK TO TOP</a></center>
+<</if>>

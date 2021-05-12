@@ -1,0 +1,83 @@
+:: Decurse Station[noreturn]
+<<longreturn>><<set _decurseCost = 1; _appraiseCost = _decurseCost>>
+
+Run afoul of some nasty curses? Not to worry, a cleric of MegaCorp® is on staff and happy to help... for the right price, of course.
+
+That price is <<print _decurseCost>> <<print setup.CURRENCY_NAME>>.
+
+<b>Points: <<live $currency>></b>
+
+<<nobr>>
+<div id="business-area">
+<<include "decurse options">>
+</div>
+<</nobr>>
+
+:: decurse options[nobr]
+<<if $currency < _decurseCost>>
+  Oh, dear. It seems you can't afford the cleric's services. Better luck next time! If there is a next time.
+<<else>>
+  <<link "Appraise suspicious item">>
+    <<replace "#business-area" t8n>><<include "decurse-appraise">><</replace>>
+  <</link>>
+  <br/>
+  <br/>
+  <<link "Remove cursed item">>
+    <<replace "#business-area" t8n>><<include "decurse-remove">><</replace>>
+  <</link>>
+<</if>>
+
+:: decurse-appraise[nobr]
+<<set _x = Array.from($inventory.values()).filter(function (item) { return item && (item.sticky === true && !item.known); })>>
+<<if _x.length > 0>>
+<<link "Try a different service...">>
+  <<replace "#business-area" t8n>><<include "decurse options">><</replace>>
+<</link>>
+<br/>
+<br/>
+  <<for _index, _item range _x>>
+    <div @id="_index">
+      <b>_item.name</b>
+      <div class="shop-button">
+      <<if $currency >= _appraiseCost>>
+        <<capture _item, _index>>
+          [<<link "APPRAISE">>
+            <<set $currency -= 1>>
+            <<update>>
+            <<set _item.known = true>>
+            <<set _id = "#"+_index>>
+            <<replace _id>>
+              <div class="itembox">
+              <b>_item.name</b><br/>
+              <<print _item.info>><br/>
+              <span class="actdesc"><<print _item.desc>></span>
+              </div>
+            <</replace>>
+          <</link>>]
+        <</capture>>
+      <</if>>
+      </div>
+    </div>
+  <</for>>
+<<else>>
+  It seems you don't have any unknown items. <<link "Try a different service...">>
+    <<replace "#business-area" t8n>><<include "decurse options">><</replace>>
+  <</link>>
+<</if>>
+
+:: decurse-remove[nobr]
+<<set _x = $puppets.filter(function (puppet) { return puppet && puppet.hasCursedItem() === true; })>>
+<<if _x.length > 0>>
+<<link "Try a different service...">>
+  <<replace "#business-area" t8n>><<include "decurse options">><</replace>>
+<</link>>
+<br/>
+<br/>
+  <<for _i, _p range _x>>
+    <<actorDisplay _p "decurse">>
+  <</for>>
+<<else>>
+  It seems no one is currently saddled with any cursed items. <<link "Try a different service...">>
+    <<replace "#business-area" t8n>><<include "decurse options">><</replace>>
+  <</link>>
+<</if>>

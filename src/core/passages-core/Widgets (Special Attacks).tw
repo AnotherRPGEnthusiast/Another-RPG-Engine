@@ -1,0 +1,60 @@
+:: Action Queue [nobr]
+/* Special actions are added to the action queue. If the action queue contains any actions, this passage will activate instead of the normal destination when the player clicks "continue". */
+/* Assumes that elements of the action queue are two-element arrays with the subject's ID in the 0th element and the action as the 1st element. */
+<<if $B.actionQueue.length > 0>>
+	<<set _data = $B.actionQueue.shift()>>
+	<<set _OG = {target: $B.target, subject: $B.subject, action: $action}>>
+	<<set $B.subject = getActorById(_data[0]); $action = _data[1]>>
+	<<if !(subject().dead || subject().noact)>>
+		<<if $action.counter>>
+			<<set $B.target = _OG.subject>>
+			<<set _counterActive = true>>
+		<</if>>
+		<<include "action effects">><br/>
+		<<set _counterActive = false>>
+	<<else>>
+		<<timed 0s>><<trigger 'click' "#continue button">><</timed>>
+	<</if>>
+<</if>>
+<<include "Battle Continue Button">>
+
+:: Widget: hunterCheck [widget nobr]
+<<widget "hunterCheck">>
+/* Called in the enemy phase, after every enemy's action. */
+
+	<<unset _party>>
+
+	<<if $B.target instanceof Puppet && $B.subject instanceof Enemy>>
+		<<set _party = $puppets>>
+	<<elseif $B.target instanceof Enemy && $B.subject instanceof Puppet>>
+		<<set _party = $enemies>>
+	<</if>>
+
+	<<if def _party>>
+		<<for _actor range _party>>
+			<<if _actor.hunter && !(_actor.dead || _actor.noact || _actor.uncontrollable)>>
+				<<set $B.actionQueue.push([_actor.id,new Action("Hunter Counter")])>>
+			<</if>>
+		<</for>>
+	<</if>>
+
+<</widget>>
+
+:: Widget: markAttack [widget nobr]
+<<widget "markAttack">>
+/* Called in the action phase, after action is finished. */
+<<set _archer = $puppets.
+	find(function (p) { return p && p.name == "Archer" && !(p.dead || p.noact || p.uncontrollable) })>>
+
+<<if def _archer
+	&& $B.subject instanceof Puppet
+	&& subject().name != "Archer"
+	&& $B.target instanceof Enemy
+	&& _archer.en > 0
+	&& enemies().filter(function (e) { return e.marked && !e.dead }).length > 0>>
+
+	<<set _markActive = true>>
+	<<run $B.actionQueue.push([_archer.id,new Action("Mark Shot")])>>
+
+<</if>>
+<</widget>>

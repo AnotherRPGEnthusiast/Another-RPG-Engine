@@ -1,0 +1,31 @@
+.stat-raised, .blue {
+	color: blue;
+}
+
+.stat-lowered, .red {
+	color: red;
+}
+
+.green {
+	color: lime;
+}
+
+.truegreen {
+	color: green;
+}
+
+.gray {
+  color: gray;
+}
+
+.maroon {
+  color: maroon;
+}
+
+.gold {
+  color: gold;
+}
+
+.orange {
+  color: orange;
+}

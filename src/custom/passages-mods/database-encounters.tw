@@ -1,0 +1,57 @@
+:: Database: Encounters[nobr widget]
+/* This passage allows you to define encounters -- that is, unique parties of enemies. To define individual enemies and characters, see the database JS files. */
+
+<<widget "callEncounter">>
+/* The order characters are added to the array matters: they are displayed in that order from left to right when the stat blocks instantiate. */
+
+<<switch $args[0]>>
+
+<<case "at1">>
+/* Currently Bubblegum's name is too long and makes her box wider than normal. That's fitting though, maybe I should let it stay. */
+<<populateEnemies `["Jake","Princess Bubblegum","Finn"]`>>
+
+<<case "gf1">>
+<<populateEnemies `["Dipper","Mabel"]`>>
+
+<<case "gum1">>
+<<populateEnemies `["Gumball","Anais","Darwin"]`>>
+
+<<case "su1">>
+<<populateEnemies `["Pearl","Garnet","Amethyst","Steven"]`>>
+
+<<case "gum2">>
+<<populateEnemies `["Nicole"]`>>
+
+<</switch>>
+
+<<if ndef $enemies || $enemies.length == 0>>
+	/* Dummy enemy so the display doesn't break. */
+	<<set $enemies to [new Enemy()]>>
+<</if>>
+
+<<if def $bestiary>>
+	<<for _enemy range $enemies>>
+		<<if def $bestiary.fetch(_enemy.name)>>
+			<<set $bestiary.fetch(_enemy.name).encountered = true>>
+		<</if>>
+	<</for>>
+<</if>>
+<</widget>>
+
+<<widget "populateEnemies">>
+/* Quick way of populating enemy array. Pass array of names in order corresponding to enemy array order, including nulls for empty spaces. */
+/* The passed array must be quoted with backticks. */
+<<set $enemies = []>>
+<<if $args[0] instanceof Array && (setup.BATTLE_GRID !== true || $args[0].length == setup.PARTY_SIZE)>>
+	<<set _array = $args[0]>>
+	<<for _n, _name range _array>>
+		<<if typeof(_name) == 'string'>>
+			<<set $enemies.push(new Enemy(_name))>>
+		<<else>>
+			<<set $enemies.push(_name)>>
+		<</if>>
+	<</for>>
+<<else>>
+	<<run console.log("ERROR in populateEnemies: invalid argument")>>
+<</if>>
+<</widget>>

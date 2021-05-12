@@ -1,0 +1,24 @@
+:: procure[nobr battle]
+/* Old passage for the "Procure" skill, which allowed Rogue and Witch to expend Energy to buy items in battle. It was dummied out before the JavaScript overhaul, so it is unlikely to work in the current version without tweaking.
+
+/* Procure costs use the "cost" attribute of Item objects, defined in the database JS. */
+
+<<set $target = [null,null]>>
+
+<span id="content">
+<<backbtn>>
+
+<<for _key, _item range $inventory>>
+<b>
+<<if $subject[0].en >= _item.value>>
+<<capture _key, _item>>
+<<set _linktext = "Procure "+_key>>
+[[_linktext|confirm phase][$item_to_procure = _key; $action.cost = _item.value]]
+<</capture>>
+<<else>>
+<del>_key</del>
+<</if>>
+</b>
+ (Cost: <<print _item.value>>)<br/>
+<</for>>
+</span>

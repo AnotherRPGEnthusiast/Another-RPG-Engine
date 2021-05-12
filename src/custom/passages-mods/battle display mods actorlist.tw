@@ -1,0 +1,9 @@
+:: battle display mods actorlist[nobr]
+/* Called at the start of actorlist. Use this for any modifications you want to make to the default display, such as reversing the order of a party.
+  The container class for enemies is _enemiesClass, and the container class for puppets is _puppetsClass.
+  Add your class to the variable with a leading space, as the variable is one string that will contain all the classes.
+*/
+
+<<if $scenario is "reverse display">>
+  <<set _enemiesClass += " reverse">>
+<</if>>

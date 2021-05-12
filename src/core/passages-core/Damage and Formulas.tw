@@ -1,0 +1,276 @@
+:: Widget: damageCalc [widget nobr]
+<<widget "damageCalc">>
+<<set _w = $action.weight>>
+<<if $args[0] instanceof Actor>>
+	<<set _target = $args[0]>>
+<<else>>
+	<<set _target = $B.target>>
+<</if>>
+
+<<set _atk = ($B.subject.get("Attack") * (1 - $action.useSpecial)) + ($B.subject.get("Special") * $action.useSpecial)>>
+
+/* Piercing? */
+<<if $action.pierce>>
+	<<set _def = Math.min(_target.get("Defense"),setup.MIN_STAT)>>
+<<else>>
+	<<set _def = _target.get("Defense")>>
+<</if>>
+
+/* base damage */
+<<include "damageCalc formula">>
+
+/* Find element factor, and multiply it to damage */
+<<set _factor = 1; _flatFactor = 0>>
+<<if typeof($action.element) == "string">>
+	<<set _factor = _target.getElement($action.element,"percent")>>
+	<<set _flatFactor = _target.getElement($action.element,"flat")>>
+<<elseif $action.element instanceof Array>>
+	<<set _factor = 0>>
+	<<if setup.AVERAGE_ELEMENTS === true>>
+		<<for _v range $action.element>>
+			<<set _factor += _target.getElement(_v,"percent")>>
+			<<set _flatFactor += _target.getElement(_v,"flat")>>
+		<</for>>
+		<<set _factor = _factor*1.0/$action.element.length>>
+		<<set _flatFactor = _flatFactor*1.0/$action.element.length>>
+	<<else>>
+		<<for _v range $action.element>>
+			<<set _factor = Math.max(_target.getElement(_v,"percent"),_factor)>>
+			<<set _flatFactor = Math.min(_target.getElement(_v,"flat"),_flatFactor)>>
+		<</for>>
+	<</if>>
+<</if>>
+<<set _baseDmg = $dmg>>
+<<set $dmg *= _factor; $dmg -= _flatFactor>>
+
+/* Element message */
+<<if def setup.elementMessages>>
+	<<if _baseDmg < $dmg>>
+		<<set _elntmsg = setup.elementMessages.weakpoint>>
+	<<elseif _baseDmg > $dmg && $dmg > 0>>
+		<<set _elntmsg = setup.elementMessages.resist>>
+	<<elseif $dmg < _baseDmg && $dmg == 0>>
+		<<set _elntmsg = setup.elementMessages.immune>>
+	<<elseif $dmg < _baseDmg && $dmg < 0>>
+		<<set _elntmsg = setup.elementMessages.absorb>>
+	<</if>>
+<</if>>
+
+<<include "damageCalc custom factors">>
+
+<<if !$B.phase && $dmg > 0>>
+	/*	Only check for critical hits if:
+			-no battle phase is specified (we are not selecting actions)
+			-damage was not absorbed
+	*/
+	<<critCheck>>
+<</if>>
+
+/* Check against minimum */
+<<if ($dmg < _baseDmg && $dmg <= 0)>>
+	/* If elemental factors pushed damage to 0 or below, we shouldn't bump it up to the minimum; do nothing */
+<<elseif _noDmgFloor && $dmg < 0>>
+	<<set $dmg = 0>>
+	<<set _noDmgFloor = false>> /* preventing data bleed */
+<<elseif $dmg < setup.MIN_DMG>>
+	<<set $dmg = setup.MIN_DMG>>
+<</if>>
+
+/* Round to integer */
+<<set $dmg = Math.round($dmg)>>
+<</widget>>
+
+:: Widget: echoDamage [widget nobr]
+<<widget "echoDamage">>
+<<if $args.length > 0 && $args[0] instanceof Actor>>
+	<<set $B.target = $args[0]>>
+<</if>>
+<<run console.assert($B.target instanceof Actor,"ERROR in echoDamage: invalid target")>>
+<<set _dmgMods = $args>>
+<<set _hit = true>>
+
+/* Protection check */
+<<if !(_dmgMods.includes("indirect") || target().dead) && subject() instanceof Puppet && target() instanceof Enemy && target().protectedBy>>
+	<<set _temp = $B.target.name>>
+	<<set $B.target = $enemies.find(function(t) { return t && t.id === $B.target.protectedBy; })>>
+	<<print $B.target.name+" took the hit for "+_temp+"!\n">>
+<</if>>
+
+<<if _queue instanceof Set>>
+	<<set _queue.add($B.target)>>
+<</if>>
+
+<<if _dmgMods.includes("indirect")>>
+	<<set _hit = true>>
+<<else>>
+	<<accuracyCheck>>
+<</if>>
+<<if _hit === false>>
+	<<print setup.MISS_MESSAGE>>
+	<<set target().battleMsg.push({shake: false, content:"MISS"})>>
+<<elseif _hit === true>>
+
+<<if def $bestiary && target() instanceof Enemy && $action.element>>
+	<<set $bestiary.fetch(target().name).statsKnown[$action.element] = true>>
+<</if>>
+
+<<if !(_dmgMods.includes("nocalc") || _dmgMods.includes("indirect"))>>
+	<<damageCalc>>
+<</if>>
+
+<<if !target().dead>>
+	<<set _continue = true>>
+	<<if !(_dmgMods.includes("unblockable") || _dmgMods.includes("indirect"))>>
+		<<shieldCheck>>
+	<</if>>
+	<<if _continue>>
+		<<if def _elntmsg>><b><<print _elntmsg+" ">></b><</if>>
+		<<if $dmg < 0>>
+			$B.target.name feeds on the energy, and recovers <<print $dmg*-1>> HP.
+			<<set target().battleMsg.push({shake: false, type: "healing", content:$dmg*-1})>>
+		<<else>>
+			$B.target.name takes $dmg damage!
+			<<if !(_dmgMods.includes("indirect") || !(_queue instanceof Set) || setup.ANIMATIONS === false)>>
+				<<set target().battleMsg.push({shake: true, type: "damage", content:$dmg})>>
+				<<if _elntmsg == setup.elementMessages.weakpoint && typeof(setup.popupMod.weakpoint) == "string">>
+					<<set target().battleMsg.last().mod = setup.popupMod.weakpoint>>
+				<<elseif _crit && typeof(setup.popupMod.crit) == "string">>
+					<<set target().battleMsg.last().mod = setup.popupMod.crit+" big">>
+					<<set _crit = false>>
+				<<elseif _elntmsg == setup.elementMessages.resist && typeof(setup.popupMod.resist) == "string">>
+					<<set target().battleMsg.last().mod = setup.popupMod.resist>>
+				<<elseif _elntmsg == setup.elementMessages.immune>>
+					<<set target().battleMsg.last().content = "IMMUNE";
+						target().battleMsg.last().type = "block">>
+				<</if>>
+			<</if>>
+			<<if !_dmgMods.includes("indirect")>>
+				<<include "crisis formula">>
+			<</if>>
+		<</if>><br />
+		<<set $B.target.hp -= $dmg>>
+		<<if subject() instanceof Actor>>
+			<<set subject().lastDmg += $dmg>>
+		<</if>>
+		<<if !_dmgMods.includes("indirect")>>
+			<<if setup.THREAT_TARGETING === true && subject() instanceof Puppet && target() instanceof Enemy>>
+				<<include "echoDamage threat gain">>
+			<</if>>
+			<<if target().dmgreflection && !_dmgreflecting && target() !== subject() && $dmg > 0>>
+			/* If target has defined damage reflection, they reflect the attack's damage times their damage reflection value onto their attacker. Note that this code is executed before deathcheck, meaning damage will be reflected even if the attack defeats the enemy. You can change this by moving deathcheck above this section and including a check that disallows damage reflection if the target is dead. */
+				<<set $dmg = Math.round($dmg * target().dmgreflection)>>
+				<<set _OG = {target: $B.target, subject: $B.subject}>>
+				<<set $B.target = _OG.subject; $B.subject = _OG.target>>
+				<<set _dmgreflecting = true>> /* this prevents infinite recursion if a damage reflector attacks a damage reflector; can only reflect damage once per attack */
+				<<echoDamage "nocalc">>
+				<<set $B.target = _OG.target; $B.subject = _OG.subject>>
+				<<unset _OG; _dmgreflecting>>
+			<</if>> /* end dmgreflection block */
+			<<if target().onHit instanceof Array && target().onHit.length > 0 && !_dmgreflecting && target().id !== subject().id>>
+			/* If target has onHit functions, they are executed here. Note that the target and subject are not reversed here, so if you want the effect to target the attacker, use "subject" as the selector, and vice versa. */
+				<<for _action range target().onHit>>
+					<<if _action instanceof Function>>
+						<<print _action()>>
+					<<else>>
+						<<run console.log("ERROR in onHit: onHit elements must be functions")>>
+					<</if>>
+				<</for>>
+			<</if>> /* end onHit block */
+		<</if>> /* end indirect block */
+		<<deathcheck>>
+		<<if !target().dead && !_dmgMods.includes("indirect")>>
+			<<if !$action.noShock>>
+				<<for _effect range target().effects.filter(function (eff) { return eff && Number.isInteger(eff.shock)})>>
+					<<set _shock = random(1,100)>>
+					<<if _shock <= _effect.shock>>
+						<<print target().removeEffect(_effect)>>
+					<</if>>
+				<</for>>
+			<</if>> /* end shock block */
+			<<if target().offbalance && $dmg >= 0>>
+				<<print target().addEffect("Knocked Down",{time: -1})>>
+			<</if>> /* end off-balance block */
+		<</if>> /* end post-deathcheck block */
+	<</if>> /* end shield check block */
+<</if>> /* end target dead check block */
+
+<</if>> /* end accuracy check block */
+
+<<include "Counter Logic">>
+<</widget>>
+
+:: Counter Logic [nobr]
+<<if !(_dmgMods.includes("indirect") || _dmgMods.includes("nocounter") || _counterActive || target().dead || target().noact || target().retaliations === 0 || target() === subject())
+	&& _counters instanceof Array
+	&& !_counters.includes(target().id)
+	&& target().counter instanceof Action>>
+/* Branch for adding target character to counterattack protocol. Counterattacks are only considered if you have enabled counters by setting the _counters variable before the action; this is done at the start of the action and enemy phases in the default engine, enabling counters for both puppets and enemies. */
+/* By default, counters can trigger even on missed attacks. */
+/* Target must hold a valid Action in its counter attribute to counterattack, and cannot be under a hold effect or have exhausted its allowed number of retaliations for this turn. */
+	<<if target().counter.trigger>>
+	/* This check is for if you want counters to be triggered only on special circumstances, such as only if the attack is ranged, or only if the attack makes contact. Define the trigger as a function in the counter action that returns true if the counter is triggered and false otherwise. By default, an unset trigger will return true, meaning the counter will always activate. */
+		<<run _counters.push(target().id)>> /* Adds target to counter list, which will be read at the end of this action to perform the counter */
+		<<run $B.actionQueue.push([target().id,target().counter])>>
+		<<if target().retaliations > 0>>
+		/* Set retaliations to -1 for infinite counters. */
+			<<set target().retaliations -= 1>>
+		<</if>>
+	<</if>>
+<</if>>
+
+:: Widget: shieldCheck [widget nobr]
+<<widget "shieldCheck">>
+<<if $args[0] instanceof Actor>>
+	<<set _targ = $args[0]>>
+<<else>>
+	<<set _targ = target()>>
+<</if>>
+<<set _shield = _targ.effects.find(function (eff) { return eff && eff.shield; })>>
+<<if ndef _shield>>
+	<<set _continue = true>>
+<<elseif _shield.onHit instanceof Function>>
+	<<run console.log(`echoDamage for ${target().name}: shield found`)>>
+	<<run _shield.uses -= 1>>
+	<<set _targ.battleMsg.push({shake: false, type: "block", content:"BLOCKED"})>>
+	<<print _shield.onHit(_targ)>>
+	<<set _continue = false>>
+	<<set _hit = false>>
+<<else>>
+	<<run console.log("ERROR in echoDamage: shield effect has no onHit function")>>
+<</if>>
+<</widget>>
+
+:: Widget: accuracyCheck [widget nobr]
+<<widget "accuracyCheck">>
+<<if $args[0] instanceof Actor>>
+	<<set _target = $args[0]>>
+<<else>>
+	<<set _target = $B.target>>
+<</if>>
+
+<<include "accuracy formula">>
+<</widget>>
+
+:: Widget: critCheck [widget nobr]
+<<widget "critCheck">>
+<<include "crit formula">>
+<</widget>>
+
+
+
+:: Widget: effectcalc [widget nobr]
+/* DEPRECIATED as of v1.28. Use the Effect.calculatePower method instead. */
+<<widget "effectcalc">>
+<<switch $args[0]>>
+	<<case "debuff">>
+		<<set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get("Special")-_target.get("Special")))*$action.effweight)>>
+		<<if _power < setup.min_debuff>>
+			<<set _power = setup.min_debuff>>
+		<</if>>
+	<<case "buff">>
+		<<set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get("Special")))*$action.effweight)>>
+		<<if _power < setup.min_buff>>
+			<<set _power = setup.min_buff>>
+		<</if>>
+<</switch>>
+<</widget>>

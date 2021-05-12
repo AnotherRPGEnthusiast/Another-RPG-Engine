@@ -1,0 +1,5 @@
+html.dark body, body.dark
+{
+  background-color:#111;
+  color:#fff;
+}

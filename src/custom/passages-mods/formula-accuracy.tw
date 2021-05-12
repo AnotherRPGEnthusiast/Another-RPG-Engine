@@ -1,0 +1,18 @@
+:: accuracy formula[nobr]
+<<if $action.accuracy === true>>
+	<<set _hit = true>>
+<<else>>
+	<<set _acc = $action.accuracy>>
+	<<if subject().stats.hasOwnProperty("Accuracy")>>
+		<<set _acc = Math.max(_acc + (subject().get("Accuracy")-100),setup.MIN_ACCURACY)>>
+	<</if>>
+	<<if _target.stats.hasOwnProperty("Evasion")>>
+		<<set _acc = Math.max(_acc - _target.get("Evasion"),setup.MIN_ACCURACY)>>
+	<</if>>
+	<<set _toHit = random(1,100)>>
+	<<if _toHit <= _acc>>
+		<<set _hit = true>>
+	<<else>>
+		<<set _hit = false>>
+	<</if>>
+<</if>>

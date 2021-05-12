@@ -1,0 +1,4 @@
+:: custom battle preparation
+/* Additional code to perform during battle setup. */
+
+<<restock>>

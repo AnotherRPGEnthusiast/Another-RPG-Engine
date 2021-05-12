@@ -1,0 +1,11 @@
+:: hotkey info
+<div class="hotkey monospace" style="text-align:left">[Q] = confirm/advance
+[R] = cancel/back
+[W] = <<nobr>><<link "menu">>
+		<<if !$inbattle && !tags().includes("nomenu") && !tags().includes("noreturn") && !_nomenu>>
+			<<set $menu_screen = 0>>
+			<<goto "Menu: Status">>
+		<</if>>
+	<</link>><</nobr>>
+[A] = cycle menu left
+[D] = cycle menu right</div>

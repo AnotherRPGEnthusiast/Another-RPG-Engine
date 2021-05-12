@@ -1,0 +1,44 @@
+.actors.animationContainer {
+  margin-top:20px;
+  margin-bottom:20px;
+  row-gap:20px;
+  justify-content: space-evenly;
+  order:2;
+}
+
+.dmgPopup {
+	visibility:hidden;
+	display:inline-block;
+	font-size:28pt;
+	font-weight:bold;
+	color: black;
+	position:absolute;
+	right:10px;
+	top:20px;
+	padding: 5px;
+	text-align: center;
+	line-height: 1.1;
+	border-radius: 25%;
+	border: 1px solid black;
+	background-color: white;
+	max-width: 180px;
+	overflow: hidden;
+}
+
+.dmgPopup.small {
+	font-size:18pt;
+}
+
+.dmgPopup.big {
+	font-size:32pt;
+}
+
+.dmgPopup.regen {
+/*  text-shadow: 0 0 10px white;
+  -webkit-text-stroke: 0.5px white;
+  background: unset;
+  padding: 0;
+  border: unset;
+*/  right: 20px;
+  top: 15px;
+}

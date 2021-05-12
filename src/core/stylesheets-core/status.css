@@ -1,0 +1,26 @@
+.statusname {
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.statname {
+  display: inline-block;
+  min-width: 6em;
+  text-transform: uppercase;
+}
+
+.stat {
+	display: inline-block;
+	min-width: 4em;
+	text-align: right;
+}
+
+.effectdesc {
+  font-weight: normal;
+}
+
+.duration, .tolerance {
+  color: gray;
+  font-style: italic;
+  float: right;
+}

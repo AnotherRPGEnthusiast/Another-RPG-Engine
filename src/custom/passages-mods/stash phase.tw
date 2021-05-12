@@ -1,0 +1,56 @@
+:: Stash Phase [battle nobr]
+<<replace "#actorlist">><</replace>>
+Select an item to use from stash. <<backbtn>>
+<br/><br/>
+<<if $COMPRESSED_ACTIONS === true>>
+	<<set _actionClass = "compressed">>
+<<else>>
+	<<set _actionClass = "">>
+<</if>>
+<div id="actionlist" @class="_actionClass">
+<<stashlist $B.subject>>
+</div>
+<<if $COMPRESSED_ACTIONS === true>>
+<br/>
+<div id="actionInfo">
+	<<include "action box default">>
+</div>
+<</if>>
+
+:: Widget: stashlist [widget nobr]
+<<widget "stashlist">>
+<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in stashlist: no Puppet")>>
+<<run console.assert($args[0].stash !== undefined,"ERROR in stashlist: stash is undefined")>>
+<<set _char = $args[0]>>
+<<for _action range _char.stash>>
+	<div class="actionDisplay">
+	<<capture _action>>
+	<<mouseover>>
+	<span class="actionName">
+	<b>
+		<<link _action.name>>
+			<<actionLink _action>>
+		<</link>>
+	</b>
+	</span>
+	<<onmouseover>>
+		<<if $COMPRESSED_ACTIONS === true>>
+			<<replace '#actionInfo'>>
+				<<actionInfo _action "full">>
+			<</replace>>
+		<</if>>
+	<<onmouseout>>
+		<<if $COMPRESSED_ACTIONS === true>>
+			<<replace '#actionInfo'>><<include "action box default">><</replace>>
+		<</if>>
+	<</mouseover>>
+	<</capture>>
+	<<if $COMPRESSED_ACTIONS === true && $inbattle>>
+		<<actionInfo _action "no name">>
+	<<else>>
+		<<actionInfo _action "no name" "full">>
+		<br/>
+	<</if>>
+	</div>
+<</for>>
+<</widget>>

@@ -1,0 +1,6 @@
+:: PassageHeader[nobr]
+<<if tags().includes("menu")>>
+	<<include "menubar">>
+<</if>>
+
+<<include "PassageHeader-custom">>

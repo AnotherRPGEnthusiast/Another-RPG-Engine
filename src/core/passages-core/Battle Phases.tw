@@ -1,0 +1,1314 @@
+:: Widget: backbtn[widget nobr]
+<<widget "backbtn">>
+<span class="btn back right" id="battlebackbtn">[[Back [R]|Battle!][$B.phase = "selection"; $B.targeting = null; $action = null; $B.target = null; $B.subject = null; $removed_effects = [];]]</span>
+<</widget>>
+
+:: Widget: endturn[widget nobr]
+<<widget "endturn">>
+<<set $B.turn = "enemy"; $B.phase = null>>
+<<goto "end of round">>
+<</widget>>
+
+:: Widget: status[widget nobr]
+<<widget "status">>
+<<link setup.STATUS_BUTTON>>
+	<<if $args[0] eq $B.actor>>
+		<<set $B.actor = null>>
+	<<else>>
+		<<set $B.actor to $args[0]>>
+		<<if ndef $stScreen>>
+			<<set $stScreen = 1>>
+		<</if>>
+	<</if>>
+	<<replace "#status">><<include "status">><</replace>>
+<</link>>
+<</widget>>
+
+:: Widget: act command[widget nobr]
+<<widget "act">>
+/*	arg 0 = puppet to command */
+<<if $args[0].down is true>>
+	<<if $args[0].en >= setup.STRUGGLE_COST>>
+		<<link "Struggle">>
+			<<set $B.subject = $args[0]; $action = new Action("struggle"); $B.target = null>>
+			<<replace "#phase">><<include "confirm phase">><</replace>>
+		<</link>>
+	<<else>>
+		<b>Exhausted!</b>
+	<</if>>
+<<else>>
+	<<link "Act">>
+		<<set $B.subject = $args[0]>>
+		<<replace "#phase">><<include "actions">><</replace>>
+	<</link>>
+<</if>>
+<span class="hotkey monospace right">[Q]</span>
+<</widget>>
+
+:: Widget: rest command[widget nobr]
+<<widget "rest">>
+<<link "Rest">>
+	<<set $B.subject = $args[0]; $action = new Action("rest"); $B.target = null>>
+	<<replace "#phase">><<include "confirm phase">><</replace>>
+<</link>>
+<span class="hotkey monospace right">[W]</span>
+<</widget>>
+
+:: Widget: items command[widget nobr]
+<<widget "items">>
+<<if $B.embargo > 0>>
+	<span class="embargo">
+	Nope! [<<print $B.embargo>>]
+	</span>
+<<else>>
+	<<if ($args[0].en >= setup.ITEM_COST) || ($args[0].crafty && $args[0].en >= Math.round(setup.ITEM_COST/2))>>
+		<<link "Item">>
+			<<set $B.subject = $args[0]>>
+			<<replace "#phase">><<include "items">><</replace>>
+		<</link>>
+	<<else>>
+		<b>Item</b>
+	<</if>>
+<</if>>
+<span class="hotkey monospace right">[E]</span>
+<</widget>>
+
+:: Widget: move command[widget nobr]
+<<widget "move">>
+<<set $B.phase = "move"; _s = undefined>>
+<<replace "#puppets">><<include "actorlist puppets">><</replace>>
+<<replace "#phase">><<include "movement phase">><</replace>>
+<</widget>>
+
+:: Widget: spare command[widget nobr]
+<<widget "spare">>
+<<link "Spare">>
+	<<set $B.subject = $args[0]; $B.target = $enemy_to_spare; $action = {name: "spare", cost: 0}>>
+	<<replace "#phase">><<include "confirm phase">><</replace>>
+<</link>>
+<</widget>>
+
+:: Widget: actionlist [widget nobr]
+<<widget "actionlist">>
+/* Widget for display of player actions. */
+/* Individual action widgets take cost, damage multiplier, and other relevant variables as arguments so they can be displayed in the description. Values are given in "Database: Actions". */
+
+<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionlist: no Puppet")>>
+<<set _char = $args[0]>>
+<<if $args.includes("crisis")>>
+	<<set _actions = _char.crisis>>
+<<else>>
+	<<set _actions = _char.actions>>
+<</if>>
+<<for _action range _actions>>
+<<if $inbattle && !_action.passive>> /* do not display anything if a passive action and not inbattle */
+	<<if setup.COMPRESSED_ACTIONS === true>>
+		<<set _actionClass = "actionDisplay">>
+	<<else>>
+		<<set _actionClass = "actionDisplay uncompressed">>
+	<</if>>
+	<div @class="_actionClass">
+	<<capture _action>>
+	<<mouseover>>
+	<span class="actionName">
+	<<if actionStandardCheck(_action)>>
+	/* If insufficient energy, uses, or cooldown, just display the action name (no link). */
+	_action.name<<if (def _action.cd && _action.cd !== 0)>>&nbsp;<span class="cooldowndisplay">[CD <<print _action.cd>>]</span><</if>>
+	<<elseif actionLockCheck(_action)>>
+	/* If dizzy and action not basic, display the name as crossed out followed by a gray "Dizzy!" message. */
+	<del>_action.name</del> <span class="dizzy">Dizzy!</span>
+	<<elseif actionHPCheck(_action)>>
+	/* If puppet has insufficient HP for an HP-consuming skill, the name is crossed out. */
+	<del>_action.name</del> <span class="dizzy">Not enough HP!</span>
+	<<elseif actionElementCheck(_action)>>
+	<del>_action.name</del> <span class="dizzy">No element.</span>
+	<<else>>
+		<<link "_action.name">>
+			<<actionLink>>
+		<</link>>
+	<</if>>
+	</span>
+	<<onmouseover>>
+		<<if setup.COMPRESSED_ACTIONS === true>>
+			<<run $("#actionInfo").css("visibility","visible")>>
+			<<replace '#actionInfo'>>
+				<<actionInfo _action _char "full">>
+			<</replace>>
+		<</if>>
+	<<onmouseout>>
+		<<if setup.COMPRESSED_ACTIONS === true>>
+			<<run $("#actionInfo").css("visibility","hidden")>>
+			<<replace '#actionInfo'>>
+				<<include "action box default">>
+			<</replace>>
+		<</if>>
+	<</mouseover>>
+	<</capture>>
+	<<if setup.COMPRESSED_ACTIONS === true && $inbattle>>
+		<<actionInfo _action _char "no name">>
+	<<else>>
+		<<actionInfo _action _char "no name" "full">>
+	<</if>>
+	</div>
+
+<<elseif !$inbattle>> /* If outside of battle (e.g. in menu), display full action info with no interactivity. */
+	<div class="actionDisplay uncompressed">
+		<<actionInfo _action _char "full">>
+	</div>
+<</if>>
+<</for>>
+<</widget>>
+
+:: Widget: actionInfo [widget nobr]
+<<widget "actionInfo">>
+<<run console.assert($args.length > 0 && ($args[0] instanceof Action),"ERROR in actionInfo: no arguments passed")>>
+<<if $args[1] instanceof Puppet>>
+	<<set _char = $args[1]>>
+<</if>>
+<<set _act = $args[0]>>
+<<if !$args.includes("no name")>><b><<print _act.name>></b><</if>>
+<<if def _act.uses>>&nbsp;<span class="usedisplay">(Uses: <<print _act.uses>>/<<print _act.maxUses>>)</span><</if>>
+<span style="float:right; margin-left:0.5em;">
+<<if $args.includes("full")>>
+	<<if !$inbattle && _char.defaultAction === _act.name>>
+		<b>[Default]</b>&nbsp;
+	<</if>>
+	<<if _act.crisis>>
+		<b>[Crisis]</b>&nbsp;
+	<</if>>
+	<<if _act.basic>>
+		[Basic]&nbsp;
+	<</if>>
+	<<if _act.instant>>
+		[Instant]&nbsp;
+	<</if>>
+	<<if _act.passive>>
+		[Passive]
+	<</if>>
+<</if>>
+<<if _act instanceof ItemAction && !_act.crisis>>
+	x<<print inv().get(_act.name).stock>>
+<<else>>
+	<<if !_act.passive && Number.isInteger(_act.cost) && ((!_act.crisis && _act.cost >= 0) || (_act.crisis && _act > 0))>>
+		<<print _act.cost>><<if _act.phase === "spell phase">>+<</if>> EN
+	<</if>>
+<</if>>
+</span>
+<<if !$inbattle && !_act.noDefault && _char.defaultAction !== _act.name>>
+	<div style="font-size:9pt">
+	<<capture _act>>
+	<<link "[Set as default]">>
+		<<set _char.defaultAction = _act.name>>
+		<<replace "#menuActionList">><<actionlist _display>><</replace>>
+	<</link>>
+	<</capture>>
+	</div>
+<</if>>
+<<if $args.includes("full")>>
+	<<if _act instanceof ItemAction>>
+		<<set _act = new Item(_act.name)>>
+	<</if>>
+	<div><<print _act.info>></div>
+	<<if _act.desc !== null>><div class="actdesc"><<print _act.desc>></div><</if>>
+<</if>>
+<</widget>>
+
+:: Widget: actionLink [widget nobr]
+<<widget "actionLink">>
+<<if $args.length > 0>>
+	<<set _action = $args[0]>>
+<</if>>
+
+<<if !(actionCheck(_action))>>
+
+	<<unset _s>>
+	<<if _action.passagejump>>
+		<<goto _action.passagejump>>
+	<<else>>
+		<<set $action = clone(_action)>>
+		<<if !$action.nosave>>
+			<<set $B.subject.lastAction = $action.name>>
+		<</if>>
+		<<set $B.targeting = _action.target>>
+		<<set $B.noself = _action.noself>>
+		<<if _action.phase is "confirm phase">>
+			<<set $B.target = null>>
+			<<set $B.targeting = null>>
+		<<elseif _action.phase is "spell phase">>
+			<<set $B.mincost = _action.cost>>
+			<<set $B.targeting = null>>
+		<</if>>
+		<<replace "#actorlist">><<include "actorlist">><</replace>>
+		<<replace "#phase">><<include _action.phase>><</replace>>
+	<</if>>
+
+<</if>>
+<</widget>>
+
+:: Widget: crisisLink [widget nobr]
+<<widget "crisisLink">>
+<<if typeof($args[0]) == "string">>
+	<<set _text = $args[0]>>
+<<else>>
+	<<set _text = "Crisis">>
+<</if>>
+<span id="crisisLink">
+<<link _text>>
+	<<replace "#phase">><<include "crisis actions">><</replace>>
+<</link>>
+</span>
+<</widget>>
+
+:: Widget: itemlist [widget nobr]
+<<widget "itemlist">>
+<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionlist: no Puppet")>>
+<<set _char = $args[0]>>
+<<for _k, _v range inv()>>
+<<if _v.usable.includes("inbattle")>>
+	<div class="actionDisplay">
+	<<capture _v>>
+	<<mouseover>>
+	<span class="actionName">
+	<b>
+	<<if _v.stock > 0 && $inbattle>>
+		<<link _k>>
+			<<actionLink _v.action>>
+		<</link>>
+	<<else>>
+		<<print _k>>
+	<</if>>
+	</b>
+	</span>
+	<<onmouseover>>
+		<<if setup.COMPRESSED_ACTIONS === true>>
+			<<run $("#actionInfo").css("visibility","visible")>>
+			<<replace '#actionInfo'>>
+				<<actionInfo _v.action "full">>
+			<</replace>>
+		<</if>>
+	<<onmouseout>>
+		<<if setup.COMPRESSED_ACTIONS === true>>
+			<<run $("#actionInfo").css("visibility","hidden")>>
+			<<replace '#actionInfo'>><</replace>>
+		<</if>>
+	<</mouseover>>
+	<</capture>>
+	<<if setup.COMPRESSED_ACTIONS === true && $inbattle>>
+		<<actionInfo _v.action "no name">>
+	<<else>>
+		<<actionInfo _v.action "no name" "full">>
+		<br/>
+	<</if>>
+	</div>
+<</if>>
+<</for>>
+<</widget>>
+
+:: Widget: newTurn [widget nobr]
+<<widget "newTurn">>
+/* arg 0 = party array. MUST be an array; use an array with 1 element if you wish to call this for a single actor */
+<<run console.assert($args[0] instanceof Array,"ERROR in newTurn: invalid argument")>>
+
+<<for _actor range $args[0].filter(function (a) { return a !== null; })>>
+	<<run console.assert(_actor instanceof Actor,"ERROR in newTurn: non-Actor element")>>
+	<<set _actor.isDone to false>>
+	<<set _actor.lastDmg = 0>>
+
+	/* Refill retaliations if actor still alive */
+	<<if !_actor.dead>>
+		<<run _actor._retaliations.refill()>>
+  <</if>>
+
+	<<if _actor instanceof Puppet>>
+		/* Puppet-exclusive tasks:
+			decrement counter for delayed actions (enemies do this at end of round)
+			decrement respawn (enemy respawn only decremented at end of round)
+			regen HP (enemies regen at end of round)
+			refresh used actions & decrement cooldown */
+		<<if _actor.delayCounter > 0>>
+			<<set _actor.delayCounter -= 1>>
+		<</if>>
+    <<if _actor.dead && _actor.respawn > 0>>
+  		<<set _actor.respawn -= 1>>
+  		<<if _actor.respawn <= 0>>
+  			<<set _actor.dead = false; _actor.hp = Math.round(_actor.maxhp * _actor.respawnHP); _actor.resetRespawn()>>
+  			<<set _message to true>>
+  			<div id="actFlavor">
+  				<<print _actor.respawnMessage>>
+  			</div>
+  			<br/>
+  		<</if>>
+    <</if>>
+		<<if !_actor.dead>>
+			<<run _actor.regenHP()>>
+		<</if>>
+    <<for _action range _actor.actions>>
+			<<if _action.used === true>>
+				<<run _action.used = false>>
+			<</if>>
+			<<if _action.cd>>
+				<<run _action.cd -= 1>>
+			<</if>>
+    <</for>>
+	<</if>>
+
+  <<decayMessage _actor.effects true>>
+<</for>>
+<<include "custom newTurn">>
+<</widget>>
+
+:: Widget: endOfRound [widget nobr]
+<<widget "endOfRound">>
+<<run console.assert($args[0] instanceof Array,"ERROR in endOfRound: invalid argument")>>
+
+<<for _actor range $args[0].filter(function (a) { return a !== null; })>>
+	<<run console.assert(_actor instanceof Actor,"ERROR in endOfRound: non-Actor element")>>
+	<<set _actor.isDone = false>>
+	<<for _effect range _actor.effects>>
+		/* DoT check */
+		<<if _effect.dot && !_actor.dead>>
+				<<set _message to true>>
+				<<set $dmg = _effect.damage(_actor)>>
+				<div id="actFlavor">
+					<<print _effect.msg(_actor)>>
+				</div>
+				<div id="actEffect">
+					<<echoDamage _actor "indirect" "nocalc">>
+				</div>
+				<br/>
+		<</if>>
+	<</for>>
+
+	/* decrementor */
+	<<decayMessage _actor.effects false>>
+
+	<<if _actor instanceof Enemy>>
+		<<if _actor.delayCounter > 0>>
+			<<set _actor.delayCounter -= 1>>
+		<</if>>
+		<<if !_actor.dead>>
+			<<run _actor.regenHP()>>
+		<</if>>
+		<<run _actor._noAttacks.refill()>>
+		<<if _actor.respawn > 0 && _actor.dead>>
+			<<set _actor.respawn -= 1>>
+			<<if _actor.respawn <= 0>>
+				<<set _actor.dead = false; _actor.hp = (_actor.maxhp * _actor.respawnHP); _actor.resetRespawn()>>
+				<<set _message = true>>
+					<div id="actFlavor">
+						<<print _actor.respawnMessage>>
+					</div>
+					<br/>
+			<</if>>
+		<</if>>
+	<</if>>
+<</for>>
+<</widget>>
+
+:: Widget: decayMessage [widget nobr]
+<<widget "decayMessage">>
+/* arg 0 = effects array, arg 1 = Boolean, top decrement (optional, defaults to false) */
+<<run console.assert($args[0] instanceof Array,"ERROR in decayMessage: invalid argument")>>
+<<run console.assert(_actor !== undefined,"ERROR in decayMessage: undefined _actor")>>
+
+<<set _topDec = Boolean($args[1])>>
+<<set _decayMsg = "">>
+<<for _effect range $args[0].filter(function (eff) { return eff.topDec == temporary().topDec })>>
+	<<run console.assert(_effect instanceof Effect,"ERROR in decayMessage: non-Effect element")>>
+  <<set _m = _effect.decay(_actor)>>
+  <<if _m.length > 1>>
+    <<set _decayMsg += _m>>
+  <</if>>
+<</for>>
+<<if _decayMsg.length > 0>>
+  <div id="actEffect">
+    <<print _decayMsg>>
+  </div>
+  <br/>
+<</if>>
+<</widget>>
+
+:: Widget: endofbattle [widget nobr]
+<<widget "endofbattle">>
+<<set $inbattle = false>>
+
+<<for _id range $B.playerBars>>
+	<<run Meter.del(_id)>>
+<</for>>
+<<for _id range $B.enemyBars>>
+	<<run Meter.del(_id)>>
+<</for>>
+
+<<if deadCount() == puppets().length>>
+	<<set $B.defeated = true>>
+<<elseif deadCount() == puppets().length-1>>
+	<<set $B.SoleSurvivor = true>>
+<<elseif deadCount() == 0>>
+	<<set $B.Perfect = true>>
+<</if>>
+
+<<if !$B.defeated>>
+	<<set $encounters[$scenario] = true>>
+<</if>>
+
+<<if $B.style>>
+	<<addclass "body" $B.style>>
+	<<removeclass "html" $B.style>>
+<</if>>
+
+<<refreshPuppets>>
+
+<<include "custom end of battle">>
+
+<<unset $B; $enemies>>
+<</widget>>
+
+:: Preparation
+<<set $inbattle to true>>
+<<set $B = {target: null, subject: null, actor: null, turn: "player", turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: "selection", embargo: 0, event: false, surrender: false, kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}>>
+<<callEncounter $scenario>>
+<<for _enemy range enemies()>>
+	<<set $B.actionsThisTurn[_enemy.id] = []>>
+<</for>>
+<<refreshPuppets>>
+<<if typeof($B.style) == 'string'>>
+	<<addclass "html" $B.style>>
+<</if>>
+<<set $B.playerBars = []>>
+<<for _i, _p range $puppets>>
+	<<set _id = 'p'+_i>>
+	<<run $B.playerBars.push(_id)>>
+	<<newmeter _id 1>>
+		<<colors setup.PLAYER_BAR_COLOR>>
+		<<animation setup.HEALTH_BAR_TIME linear>>
+		<<sizing 100%>>
+	<</newmeter>>
+<</for>>
+<<set $B.enemyBars = []>>
+<<for _i, _e range $enemies>>
+	<<set _id = 'e'+_i>>
+	<<run $B.enemyBars.push(_id)>>
+	<<newmeter _id 1>>
+		<<colors setup.ENEMY_BAR_COLOR>>
+		<<animation setup.HEALTH_BAR_TIME linear>>
+		<<sizing 100%>>
+	<</newmeter>>
+<</for>>
+<<include "custom battle preparation">>
+<<set $stScreen = 1>>
+<<if $B.ambush>>
+	<<set $B.turn = "enemy">>
+	<<goto "enemy phase">>
+<<else>>
+	<<goto "Battle!">>
+<</if>>
+
+:: Battle![nobr battle]
+<<specialcheck>>
+<<victorycheck>>
+<<if $B.specialdeath.length > 0>>
+	<<set _specialmsg = true>>
+	<<goto `$B.specialdeath[0]`>>
+	<<run $B.specialdeath.shift()>>
+<</if>>
+
+<<set $B.phase = "selection">>
+
+<<set _doneCount = 0>>
+<<for _puppet range puppets()>>
+	<<if (_puppet.isDone || _puppet.dead || _puppet.noact) && !_puppet.down>>
+		<<set _doneCount++>>
+	<</if>>
+<</for>>
+<<if !($B.victory || $B.defeat || _specialmsg)>>
+	<<if setup.AUTO_ENDTURN === true && _doneCount == puppets().length>>
+		<<endturn>>
+	<<elseif setup.TURN_EXCHANGE === true && $B.enemyTurns > 0>>
+		<<set $B.phase = null>>
+		<<goto "enemy phase">>
+	<</if>>
+<</if>>
+
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+<span id="actorlist">
+<<include "actorlist">>
+</span>
+<div id="phase">
+
+</div>
+</span>
+
+:: actorlist[nobr]
+/* setup */
+<<set _queue = new Set()>>
+<<set _enemiesClass = "actors enemies">>
+<<set _puppetsClass = "actors">>
+<<include "battle display mods actorlist">>
+
+<<if setup.BATTLE_GRID === true>>
+	<<set _enemiesClass += " grid"; _puppetsClass += " grid">>
+<</if>>
+
+<div @class="_enemiesClass" id="enemies">
+<<include "actorlist enemies">>
+</div>
+
+<div id="battlelines">
+<<include "special battle lines">>
+</div>
+
+<div id="puppets">
+<<include "actorlist puppets">>
+</div>
+
+:: actorlist enemies[nobr]
+<<set _martyr = enemies().find(function (e) { return e.martyr})>> /* check if an enemy martyr exists; used in targeting */
+<<for _i, _enemy range $enemies>>
+	<<set _enemyClass = "enemy">>
+	<<if setup.BATTLE_GRID === true>>
+		<<set _enemyClass += " grid">>
+		<<if _enemy !== null && _enemy.large>>
+			<<set _enemyClass += " large">>
+		<</if>>
+	<<elseif _enemy.large>>
+		<<set _enemyClass += " full">>
+	<</if>>
+
+	<<if _enemy !== null && !_enemy.hidden>>
+		<<actorBox _enemy _enemyClass>>
+	<<elseif _enemy === null>>
+		<div @class="'actor '+_enemyClass">
+			/* no content; empty box */
+		</div>
+	<<else>>
+		/* display nothing */
+	<</if>> /* end null if */
+<</for>>
+
+<<if setup.BATTLE_GRID === true>>
+<<timed 0s>>
+	<<script>>
+	$("#enemies.actors.grid").css({
+	  "grid-template-columns": `repeat(${setup.ROW_SIZE},1fr)`
+	});
+	<</script>>
+	<<run reverseChildren(document.getElementById("enemies"))>>
+<</timed>>
+<</if>>
+
+:: actorlist puppets[nobr]
+<div @class="_puppetsClass">
+<<if setup.BATTLE_GRID === true && $B.phase == "move">>
+<div style="position:absolute; top:0; right:0"><<backbtn>></div>
+<</if>>
+<<if def _s>>
+	<div style="position:absolute; top:0; right:0"><<backbtn>></div>
+	<<actorBox $B.subject>>
+<<else>>
+	<<if setup.BATTLE_GRID === true>>
+		<<if $B.phase == "selection">>
+			<div id="endturn" style="position:absolute; top:0; right:0">
+			<<include "End Turn Button">>
+			</div>
+		<</if>>
+	<</if>>
+	<<for _i, _puppet range $puppets>>
+		<<set _puppetClass = "">>
+		<<if setup.BATTLE_GRID === true>>
+			<<set _puppetClass += " grid">>
+		<</if>>
+		<<if _puppet === null>>
+			<div @class="'actor '+_puppetClass">
+			<<if $B.phase == "move">>
+			<div style="display: flex;  justify-content: center;  align-items: center; height: -webkit-fill-available">
+			<<link "[MOVE]">>
+				<<set _m = $puppets.indexOf($B.subject)>>
+				<<set $puppets[_i] = $B.subject; $puppets[_m] = _puppet>>
+				<<replace "#puppets">><<include "actorlist puppets">><</replace>>
+			<</link>>
+			</div>
+			<<else>>
+				/* no content; empty box */
+			<</if>>
+		<<else>>
+			<<actorBox _puppet _puppetClass>>
+		<</if>>
+	<</for>>
+	<br/>
+<</if>>
+</div>
+<<if setup.BATTLE_GRID != true && $B.phase == "selection">>
+	<br/>
+	<div id="endturn">
+	<center>
+	<<include "End Turn Button">>
+	</center>
+	</div>
+	<br/>
+	<br/>
+	<span id="quit"><<include "Quit Button">></span>
+	<div id="roundCounter">ROUND <<print $B.turnCounter>></div>
+<</if>>
+
+<<if setup.BATTLE_GRID === true>>
+<<timed 0s>>
+	<<script>>
+	$("#puppets.actors.grid").css({
+	  "grid-template-columns": `repeat(${setup.ROW_SIZE},1fr)`
+	});
+	<</script>>
+<</timed>>
+<</if>>
+
+:: End Turn Button[nobr]
+<<if $B.enemyTurns == 0 || _doneCount == puppets().length>>
+	<<button "END TURN">>
+		<<endturn>>
+	<</button>>
+<<else>>
+	<<button "ADVANCE TURN">>
+		<<set $B.phase = null>>
+		<<goto "enemy phase">>
+	<</button>>
+<</if>>
+
+:: Quit Button[nobr]
+<<link "Surrender and return to the Hub">><<replace "#quit">>Really quit? [[Yes|Defeat]] | <<link "No">><<replace "#quit">><<include "Quit Button">><</replace>><</link>><</replace>><</link>>
+
+:: commands[nobr]
+<div class="commandcontainer">
+<div class="commands">
+	<span id="actbtn"><<act $puppets[_s]>></span><br />
+	<span id="restbtn"><<rest $puppets[_s]>></span><br />
+	<span id="itembtn"><<items $puppets[_s]>></span><br />
+	<<if setup.BATTLE_GRID === true>><<move $puppets[_s]>></span><br /><</if>>
+	<<if $B.surrender is true>>
+		<<spare $puppets[_s]>><br/>
+	<</if>>
+</div>
+</div>
+
+:: status[nobr]
+<<if def $B.actor && $B.actor !== null>>
+
+<div class="statusname">$B.actor.name</div>
+<div style="float: right;">
+<<if def setup.STATUS_SCREENS.battle && setup.STATUS_SCREENS.battle.length > 0>>
+<span id="statusback">
+<<link "<">>
+	<<set $stScreen-->>
+	<<if $stScreen < 1>>
+		<<set $stScreen = setup.STATUS_SCREENS.battle.length+1>>
+	<</if>>
+	<<if setup.STATUS_SCREENS.battle[$stScreen-2] == "aggression" && $B.actor instanceof Puppet>>
+		<<set $stScreen-->>
+	<</if>>
+	<<replace "#status">><<include "status">><</replace>>
+<</link>>
+</span>
+<span id="statusforward">
+<<link ">">>
+	<<set $stScreen++>>
+	<<if setup.STATUS_SCREENS.battle[$stScreen-2] == "aggression" && $B.actor instanceof Puppet>>
+		<<set $stScreen++>>
+	<</if>>
+	<<if $stScreen > setup.STATUS_SCREENS.battle.length+1>>
+		<<set $stScreen = 1>>
+	<</if>>
+	<<replace "#status">><<include "status">><</replace>>
+<</link>>
+</span>
+<</if>>
+</div>
+<br/>
+<<if $stScreen == 1>>
+/* 1 = stat screen, default, unlinked to STATUS_SCREENS and always available */
+	<<for _k, _v range $B.actor.stats>>
+		<<if !setup.hiddenStats.includes(_k)>>
+			<span class="statname"><<print _k>>:</span>
+			<span class="stat">
+				<<if $B.actor.maskstats || ($B.actor instanceof Enemy && def $bestiary && !$bestiary.fetch($B.actor.name).statsKnown[_k])>>
+					<b>??</b>
+				<<else>>
+					<<stat _k>>
+				<</if>>
+			</span>
+			<br/>
+		<</if>>
+	<</for>>
+<<elseif setup.STATUS_SCREENS.battle[$stScreen-2] == "elements">>
+	<div style="font-size: 12px;">ELEMENTAL RESISTANCE</div><br/>
+	<<for _k, _v range $B.actor.elements>>
+	<span class="statname"><<print _k>></span>
+	<span style="float:right">
+		<<if def $bestiary && $B.actor instanceof Enemy && !$bestiary.fetch($B.actor.name).statsKnown[_k]>>
+			<<if setup.SOAK>>?? /<</if>><div style="display: inline-block; min-width:55px; text-align:right">???%</div>
+		<<else>>
+			<<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:55px; text-align:right"><<res _v>></div>
+		<</if>>
+	</span>
+	<br/>
+	<</for>>
+<<elseif setup.STATUS_SCREENS.battle[$stScreen-2] == "ailments">>
+	<div style="font-size: 12px;">AILMENT TOLERANCE</div><br/>
+	<<for _k, _v range $B.actor.tolerances>>
+		<<if _v.current != 0>>
+			<<if def $bestiary && $B.actor instanceof Enemy && !$bestiary.fetch($B.actor.name).tolerancesKnown[_k]>>
+				<span class="tolerance">????</span>
+			<<else>>
+				<<print _k>>
+				<<tol _v>>
+			<</if>>
+			<br/>
+		<</if>>
+	<</for>>
+<<elseif setup.STATUS_SCREENS.battle[$stScreen-2] == "aggression">>
+	<div style="font-size: 12px;">AGGRESSION</div><br/>
+	<<set _totalThreat = 0>>
+	<<for _k, _v range $B.actor.threat>>
+		<<set _totalThreat += _v>>
+	<</for>>
+	<<if _totalThreat == 0>>
+		<<set _totalThreat = 1>>
+	<</if>>
+	<<for _k, _v range $B.actor.threat>>
+		<span class="statname"><<print _k>></span>
+		<<set _value = (_v / _totalThreat)*100; _value = _value.toFixed(0)>>
+		<span class="right"><<print _value+"%">></span>
+		<br/>
+	<</for>>
+<</if>>
+<br/>
+<<effectinfo>>
+
+<</if>>
+
+:: actions[nobr battle]
+<<set $B.phase = "actions">>
+<span class="hotkey monospace">
+[Q] = basic action
+<<if subject().lastAction instanceof Action>> |
+	<<if actionCheck(subject().lastAction)>>
+		<<set _style = "color:gray">>
+	<<else>>
+		<<set _style = "">>
+	<</if>>
+	<span @style=_style> [W] = last action (<<print subject().lastAction>>)</span>
+<</if>>
+<<if subject().crisis instanceof Array && subject().crisis.length > 0>> |
+	<<if subject().crisisPoints >= 100>>
+		<<set _style = "font-weight:bold">>
+	<<else>>
+		<<set _style = "color:gray">>
+	<</if>>
+<span @style=_style> [E] = <<crisisLink>></span>
+<</if>>
+</span><br/><br/>
+
+<<if setup.COMPRESSED_ACTIONS === true>>
+	<<set _actionClass = "compressed">>
+	<div id="actionInfo">
+	</div>
+<<else>>
+	<<set _actionClass = "">>
+<</if>>
+<div id="actionlist" @class="_actionClass">
+<<actionlist $B.subject>>
+</div>
+
+:: crisis actions[nobr]
+<<set $B.phase = "crisis">>
+<span class="hotkey monospace">
+[E] = <span id="regularActions">
+<<link "Regular Actions">>
+	<<replace "#phase">><<include "actions">><</replace>>
+<</link>></span>
+</span><br/><br/>
+
+<<if setup.COMPRESSED_ACTIONS === true>>
+	<<set _actionClass = "compressed">>
+	<div id="actionInfo">
+	</div>
+<<else>>
+	<<set _actionClass = "">>
+<</if>>
+<div id="actionlist" @class="_actionClass">
+<<actionlist $B.subject "crisis">>
+</div>
+
+:: items[nobr battle]
+<<set $B.phase = "items">>
+
+<<if setup.COMPRESSED_ACTIONS === true>>
+	<<set _actionClass = "compressed">>
+	<div id="actionInfo">
+	</div>
+<<else>>
+	<<set _actionClass = "">>
+<</if>>
+<div id="actionlist" @class="_actionClass">
+<<itemlist>>
+</div>
+
+:: action box default[nobr]
+<div class="actionBoxHelp">Hover over an action to see info</div>
+
+:: targeting phase[nobr battle]
+<<set $B.phase = "targeting">>
+<<replace "#actorlist">><<include "actorlist">><</replace>>
+<<if $B.targeting == "enemy">>
+	<<addclass "#puppets" "invisible">>
+<<elseif $B.targeting == "ally">>
+	<<addclass "#enemies" "invisible">>
+<</if>>
+<<backbtn>>
+
+Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_display>>[enemies are displayed in reverse order]<</if>></span><br/>
+<br/>
+<<if $B.targeting == "all">>
+<<set _targetingEnemy = true>>
+<span class="hotkey monospace" id="target_help">
+[Hotkeys targeting <<if _targetingEnemy === true>>enemies<<else>>allies<</if>>. Press Shift to switch targets.]
+</span>
+<</if>>
+
+:: confirm phase[nobr battle]
+<<replace "#actorlist">><</replace>>
+<<if setup.SHOW_CONFIRM>>
+<<set $B.phase = "confirm">>
+<<backbtn>>
+
+$B.subject.name will
+
+<<if $action.name is "rest">>
+	<b>rest</b> this turn.
+<<elseif $action.name is "struggle">>
+	spend <<print setup.STRUGGLE_COST>> Energy to get back on <<print subject().their>> feet.
+<<elseif $action.item is true>>
+	use <<switch $action.name.first().toLowerCase()>><<case 'a' 'e' 'i' 'o' 'u'>>an<<default>>a<</switch>> $action.name.
+<<elseif $action.name is "spare">>
+	accept the enemy's surrender.
+<<else>>
+	use <b>$action.name</b><<if $B.target isnot null>> on <b>$B.target.name</b><</if>>.
+<</if>>
+ <span id="confirmLink">[[Confirm?|action phase]]</span><br />
+<span class="preview">
+<<if $action.preview instanceof Function>>
+	<<print $action.preview()>>
+<<elseif $action.preview === null>>
+	/* blank */
+<<else>>
+	<<print $action.preview>>
+<</if>>
+</span>
+<<else>>
+<<goto "action phase">>
+<</if>>
+
+:: Battle Continue Button [nobr]
+<center id="continue">
+<<if passage() == "Anim Test Live">>
+	<<button "Return to Landing" "Start">><</button>>
+<<else>>
+	<<button "Continue...">>
+		<<if $B.actionQueue.length > 0>>
+			<<replace "#content" "t8n">>
+				<<include "Action Queue">>
+				<<timed 0s>><<include "animation activator">><</timed>>
+			<</replace>>
+		<<elseif passage() == "enemy phase" && ($B.enemyTurns > 0 || $B.turn == "enemy")>>
+		/* As long as there are enemy turns remaining (or the enemy's turn is active), continue refreshing the enemy phase until the enemies are all done. */
+			<<goto "enemy phase">>
+		<<else>>
+			<<goto "Battle!">>
+		<</if>>
+	<</button>>
+<</if>>
+</center>
+
+:: action phase[nobr battle]
+<<set $B.phase = null>>
+<span id="status">
+<<include "status">>
+</span>
+<span id="content">
+
+/* Some abilities (such as AoE attacks) don't always end with the same target as the one they started with. This saves the initial target if you want to use it for something, e.g. a reaction scene. */
+<<set _initialTarget = $B.target>>
+
+/* Saves the number of kills from before the action. By comparing this to the kills array afterwards, you can identify whether or not a kill happened during the action. */
+<<set _initialKills = $B.kills.length>>
+
+/* Tracks characters who have counterattacked this action. Required to enable counters. */
+<<set _counters = []>>
+
+<<if $action.name == "spare">>
+	<<run $enemy_to_spare.surrender()>>
+<</if>>
+
+/* Add any bonus threat from the action. */
+<<if setup.THREAT_TARGETING === true && target() instanceof Enemy && subject() instanceof Puppet>>
+	<<run target().threat.inc(subject().name,$action.threat)>>
+<</if>>
+
+<<include "action effects">>
+
+/* Variable cleanup. Due to the way goto works, this will work even for silent actions. */
+
+/* Remember this action for the last action shortcut: */
+<<if !$action.nosave && !$action.passagejump && !($action.name == "struggle" || $action.name == "spare")>>
+	<<set $B.subject.lastAction = $B.subject.actions.find(function (a) { return a && a.name == $action.saveMod }).name>>
+<</if>>
+
+/* If action has limited uses, decrement that */
+<<if def $action.uses>>
+	<<run subject().actions.find(function(a) { return a && a.name == $action.name }).uses -= 1>>
+	/* Have to perform a search because $action is a clone of the original, reducing its uses will not reduce the uses of the action in the subject's actions list */
+<</if>>
+
+/* If action has a cooldown, reset it */
+<<if def $action.cd>>
+	<<run subject().actions.find(function(a) { return a && a.name == $action.name }).resetCD()>>
+	/* Have to perform a search because $action is a clone of the original */
+<</if>>
+
+/* If target was an enemy (i.e. an attacking skill was used), subject is marked as attacker. (This is for enemies that target the last puppet to attack them.) */
+<<if $B.target instanceof Enemy>>
+	<<set $B.attacker = $puppets.indexOf($B.subject)>>
+<</if>>
+
+/* isDone logic; checks for confounding factors */
+<<if $action.instant>>
+	/* do nothing */
+<<elseif $B.subject.inspired>>
+	<<set $B.subject.inspired = false>>
+<<else>>
+	<<set $B.subject.isDone = true>>
+	<<set $B.enemyTurns++>>
+<</if>>
+
+<<if $action.oncePerTurn>>
+	<<run subject().actions.find(function(a) { return a && a.name == $action.name }).used = true>>
+<</if>>
+
+<<if $B.surrender && def $action.name>>
+	<<print $enemy_to_spare.surrenderCheck()>>
+<</if>>
+
+<br/>
+<<include "Battle Continue Button">>
+
+</span>
+
+:: action effects[nobr]
+/* Where the action actually happens. Kept separate from action phase for modularity purposes. */
+
+/* Subtract action cost */
+<<if typeof(subject().en) == "number">>
+	<<if $action instanceof ItemAction>>
+		<<set $B.item_used = true>>
+		<<if $B.subject.crafty>>
+			<<set $action._cost = Math.round(setup.ITEM_COST/2)>>
+		<<else>>
+			<<set $action._cost = setup.ITEM_COST>>
+		<</if>>
+	<</if>>
+	<<set $B.subject.en -= $action.cost>>
+<</if>>
+
+<<if $action.hpcost > 0>>
+	<<set subject().hp -= $action.hpcost>>
+<</if>>
+
+<<if typeof($action.setupAction) == "string">>
+	<<set subject().delayedAction = $action.setupAction; subject().delayCounter = $action.setupDelay>>
+<</if>>
+
+<<if subject() instanceof Enemy && Number.isInteger($action.enemyCD)>>
+	<<run subject().cd.set($action.nameCD,$action.enemyCD)>>
+<</if>>
+
+<<if $action.silent === true>>
+	<<if $action.act instanceof Function>>
+		<<print $action.act()>>
+	<<else>>
+		<<print $action.act>>
+	<</if>>
+		<<goto "Battle!">>
+
+<<else>>
+
+<<set _queue = new Set()>> /* Queue for damage popups. */
+
+<div style="display:flex; flex-direction:column"> /* container for action display components */
+
+/* Flavor text relating to the action. It is a div element, making it a separate block from the gameplay effects. By default, it has a bottom margin of 1em to create a separator between flavor text and gameplay text. */
+
+<div id="actFlavor">
+
+/* First is action use text. A regular action takes the form "Actor uses..." Items take the form "Actor uses a/n..." This is a div element, which means it creates an automatic line break. */
+
+<<if !($action.useText === null || ($action.useText instanceof Function && $action.useText() === null))>>
+/* Set useText to null to bypass this element. This is useful if you only want one of the two areas to display. */
+<div id="useText">
+<<if $action.useText instanceof Function>>
+	<<print $action.useText()>>
+<<else>>
+	<<print $action.useText>>
+<</if>>
+</div>
+<</if>>
+
+<<include "battle interruptions">>
+
+/* Then descriptive text. This is a div element, so it creates an automatic line break. */
+
+<<if $action.actText != null>>
+/* Set actText to null to bypass this element. This is useful if you only want one of the two areas to display. */
+<div id="actText">
+<<if $action.actText instanceof Function>>
+	<<print $action.actText()>>
+<<else>>
+	<<print $action.actText>>
+<</if>>
+</div>
+<</if>>
+
+</div> /* close flavor text div */
+
+/* Then effects. */
+<<if $action.act !== null>>
+<div id="actEffect">
+
+<<if def _targetingMsg>>
+/* This section covers text that has to be generated elsewhere for various reasons, such as the alert for a Protector covering another character. */
+<<print _targetingMsg>>
+<<unset _targetingMsg>>
+<</if>>
+
+<<if $action.act instanceof Function>>
+<<print $action.act()>>
+<<else>>
+<<print $action.act>>
+<</if>>
+
+</div> /* close action effects div */
+<</if>>
+
+<<if setup.ANIMATIONS === true && _queue.size > 0>>
+<div class="actors animationContainer">
+<<set _animationActive = true>>
+
+<<for _i, _p range _queue>>
+  <div style="position:relative">
+    <div @id="'dmgBox'+_i" style="display:inline-block">
+		<<capture _p>>
+		<<liveblock>>
+    	<<actorBox _p "" "simplified" "dmgDisplay">>
+		<</liveblock>>
+		<</capture>>
+    </div>
+		<<for _x, _m range _p.battleMsg>>
+	    <div @id="'dmg'+_i+'-'+_x" class="dmgPopup">
+				<<print _m.content>>
+	    </div>
+		<</for>>
+  </div>
+<</for>>
+
+</div>
+<</if>>
+
+</div> /* close container */
+
+<</if>> /* end silent check */
+
+/* If action was a Crisis, reset crisis points */
+<<if $action.crisis && def subject().crisisPoints>>
+	<<set subject().crisisPoints = 0>>
+<</if>>
+
+/* If action was an item, decrement item stock and reset item flag */
+<<if subject() instanceof Puppet && $action instanceof ItemAction && !$action.free>>
+	<<run $inventory.decItem($action.name)>>
+<</if>>
+
+/* Set last element for e.g. Artist's attacks */
+<<if typeof($action.element) == 'string'>>
+	<<set subject().lastUsed = $action.element>>
+<</if>>
+
+<<include "custom end of action effects">>
+
+<<if def _OG>>
+	<<set $B.subject = _OG.subject; $B.target = _OG.target; $action = _OG.action>>
+	<<unset _OG>>
+<</if>>
+
+:: spell phase[nobr battle]
+<<set $B.phase = "spell">>
+<<backbtn>>
+
+<<if isNaN($action.cost)>>
+You need to input a number.<br/>
+<<elseif $action.cost < $B.mincost>>
+Spell requires at least $B.mincost Energy.<br/>
+<<elseif $B.subject.en < $action.cost>>
+Not enough Energy!<br/>
+<</if>>
+
+How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
+<<numberboxplus "$action._cost" $B.mincost autofocus>>
+<<include "spell check">>
+<</numberboxplus>><br/>
+(Press Enter to confirm.)<br/>
+
+:: spell check[nobr]
+<<run $action._cost *= 1>>
+<<if ($action.cost < $B.mincost) or ($B.subject.en < $action.cost) or isNaN($action.cost)>>
+<<replace "#phase">><<include "spell phase">><</replace>>
+<<else>>
+
+<<run $action.spellMod()>>
+
+<<if $action.phase != "confirm phase">>
+	<<set $B.targeting = $action.target>>
+	<<replace "#phase">><<include "targeting phase">><</replace>>
+<<else>>
+	<<replace "#phase">><<include $action.phase>><</replace>>
+<</if>>
+
+<</if>>
+
+:: end of round[nobr battle]
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+
+<<if $B.turn == "player">>
+/* If the turn reads "player", it's because the enemy round just finished. Run end of turn for enemies. */
+	/* If it's a new player turn, it's a "true" new round, so need to update and reset controller variables. */
+	<<set $B.turnCounter++; $B.embargo--; $B.enemyTurns = 0>>
+	<<endOfRound $enemies>>
+	<<newTurn $puppets>>
+	<<if _message>>
+		<<button "Continue..." "Battle!">><</button>>
+	<<else>>
+		<<goto "Battle!">>
+	<</if>>
+
+<<elseif $B.turn eq "enemy">>
+/* If the turn reads "enemy", the player turn just finished. Run end of turn for player. */
+	<<endOfRound $puppets>>
+	<<if _message>>
+		<br/><<button "Continue..." "enemy phase">><</button>>
+	<<else>>
+		<<goto "enemy phase">>
+	<</if>>
+<</if>>
+</span>
+
+:: enemy phase[nobr battle]
+<<victorycheck>>
+
+<span id="status">
+<<include status>>
+</span>
+
+<span id="content">
+<<if (deadCount() == puppets().length)>>
+/* If all puppets are dead, it's game over -- no point in finishing this passage, just let victorycheck do its thing. */
+<<else>>
+
+	<<if $B.ambush>>
+		<<set $B.ambush = false; $B.turn = "enemy">>
+		<center style="font-weight:bold">AMBUSHED!</center><br/>
+	<</if>>
+
+	<<set _start = $B.enemyTurns>>
+
+	<<set _enemy = enemies().sort(function(a,b) { return a.priority - b.priority; })
+		.find(function (e) { return e && !e.isDone && (!e.dead || e.actionReady) })>>
+	/* Returns the first active enemy that is not dead */
+	/* Exception is made for enemies that are dead but have a persistent delayed action */
+	<<if _enemy instanceof Enemy>>
+	/* If first check fails, could not find a valid enemy -- all enemies have acted */
+		<<set $B.subject = _enemy>>
+		<<set $B.target = null>>
+		<<set $action = null>>
+		<<if _enemy.isFirstAction>>
+			<<newTurn `[_enemy]`>>
+		<</if>>
+		<<set _enemy.isDone = true>>
+
+		<<if !_enemy.fakedeath || _enemy.actionReady>>
+
+			<<if _enemy.noact && !_enemy.actionReady>>
+				<<set _effect = _enemy.effects.sort(function(a,b) { return a.priority - b.priority; })
+					.find(function (e) { return e && e.holdAction instanceof Function })>>
+				/* Sorts effects by priority and returns the first hold effect (one with a holdAction) */
+				<<run console.assert(_effect !== undefined,`ERROR in enemy phase: ${_enemy.name} has noact but no hold effect`)>>
+				<<set $action = _effect.holdAction()>>
+				<<include "action effects">><br/>
+
+			<<else>>
+				<<if _enemy.isFirstAction>>
+					<<run _enemy.decCD()>>
+				<</if>>
+				<<set _counters = []>>
+				<<if _enemy.actionReady>>
+					<<set $action = new Action(_enemy.delayedAction)>>
+					<<set _enemy.delayedAction = null>>
+				<<else>>
+					<<run _enemy.actions()>>
+				<</if>>
+				<<run $B.actionsThisTurn[_enemy.id].push($action.name)>>
+				<<if $B.target === null && $action.targetMethod instanceof Function>>
+					/* If a target hasn't already been selected, use the action's targetMethod (defaults to Hitlist methods) */
+					<<set $B.target = $action.targetMethod()>>
+				<</if>>
+				<<run console.assert($B.target instanceof Actor,"ERROR in enemy phase: no target found for "+$action.name+". Check the action's targeting logic for errors, e.g. all targets in Stasis when trying to apply an effect.")>>
+				<<if !_targetfail>>
+					<<include "action effects">><br/>
+				<</if>>
+				<<if $action.fullround === true>>
+					/* Full-round actions use up all remaining attacks. */
+					<<run _enemy.noAttacks = 0>>
+				<<elseif !$action.instant>>
+					/* Otherwise, noAttacks is reduced by 1, unless the action was instant. */
+					<<run _enemy.noAttacks-->>
+				<</if>>
+				<<if _enemy.noAttacks > 0>>
+					/* If the enemy still has attacks remaining, their turn isn't done; set isDone to false so they will act again when this passage is re-called. */
+					<<set _enemy.isDone = false>>
+				<<else>>
+					/* Otherwise, the enemy is done; decrement their turn from the pool. */
+					<<run $B.actionsThisTurn[_enemy.id] = []>>
+					<<run $B.enemyTurns -= 1>>
+				<</if>>
+			<</if>>
+
+		<<else>>
+		/* If faking death, enemies should do nothing, so just go to the next enemy.
+			All code outside this if such as newTurn and threat decay will still execute. */
+			<<goto "enemy phase">>
+		<</if>> /* end fakedeath if */
+
+		<<run _enemy.decayThreat()>>
+
+	<<else>>
+	/* If this check failed, the enemy turn is done. Switch to player turn and run end of round. */
+		<<set $B.turn = "player">>
+		<<goto "end of round">>
+	<</if>>
+
+	<<include "Battle Continue Button">>
+
+<</if>>
+</span>

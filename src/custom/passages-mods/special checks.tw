@@ -1,0 +1,8 @@
+:: Widget: Special Checks[widget nobr]
+<<widget "specialcheck">>
+/* Called on the "Battle!" passage. Use this to direct a player to any special scenes or scenarios you want to occur upon specific triggers, such as a character reacting to another character's defeat or changing into a different form. */
+
+<<include "loss of control effects">>
+<<include "delayed actions">>
+
+<</widget>>

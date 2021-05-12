@@ -1,0 +1,10 @@
+.macro-ctp-entry-t8n {
+  opacity: 1;
+  animation: macro-ctp-fade-in 0.25s ease;
+}
+
+@keyframes macro-ctp-fade-in {
+  0% {
+    opacity: 0;
+  }
+}

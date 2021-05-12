@@ -1,0 +1,87 @@
+:: Victory [nobr battle]
+<<set _XPBars = []; _animationTime = "1s">>
+
+<center><div style="font-size:20pt; font-weight:bold; margin-top:1em; margin-bottom:1em">+<<print $B.XPreward>> XP</div></center>
+
+<div class="actors">
+<<for _i, _puppet range puppets()>>
+	<<set _id = 'p'+_i>>
+	<<run _XPBars.push(_id)>>
+	<<set _value = Math.clamp((_puppet.xp - _puppet.XPtoNext(_puppet.level - 1)) / (_puppet.XPtoNext() - _puppet.XPtoNext(_puppet.level - 1)),0,1)>>
+	<<newmeter _id _value>>
+		<<colors cyan cyan black>>
+		<<animation _animationTime linear>>
+		<<sizing 100%>>
+	<</newmeter>>
+
+	<div class="actor victory">
+	<center style="text-transform:uppercase; font-weight:bold">_puppet.name</center>
+	LEVEL <span @id="'lv'+_i">_puppet.level</span>
+	<<showmeter _XPBars[_i] _value>>
+	<center @id="'lvlupmsg'+_i">&nbsp;</center>
+	</div>
+
+	<<set _multiplier = 1>>
+	<<set _puppet.xp += Math.round($B.XPreward * _multiplier)>>
+	<<set _value = Math.clamp((_puppet.xp - _puppet.XPtoNext(_puppet.level - 1)) / (_puppet.XPtoNext() - _puppet.XPtoNext(_puppet.level - 1)),0,1)>>
+	<<updatemeter _XPBars[_i] _value>>
+<</for>>
+</div>
+
+<<set $currency += $B.moneyReward>>
+<center style="margin-top:1em;"><div style="display:inline-block; width:50%; font-size:20pt; text-align:left"><<print setup.CURRENCY_NAME>> <span style="float:right">$B.moneyReward</span></div></center>
+
+<<set _itemDrops = []>>
+<<for _enemy range $B.kills>>
+	<<for _item, _chance range _enemy.itemDrops>>
+	/* Assumes itemDrops is an object with property names of items corresponding to a number between 1 and 100 equal to the % chance of the item being dropped. */
+		<<if typeof(_item) == 'string' && typeof(_chance) == 'number'>>
+			<<set _r = random(1,100)>>
+			<<if _r <= _chance>>
+				<<run inv().addItem(_item); _itemDrops.push(_item)>>
+			<</if>>
+		<</if>>
+	<</for>>
+<</for>>
+<<if _itemDrops.length > 0>>
+	<center style="margin-top:1em;">
+	<div style="font-size:20pt; font-weight:bold">DROPS:</div>
+	<span class="itembox" style="width:30%">
+	<<for _item range _itemDrops>>
+		<b><<print _item>></b><br/>
+	<</for>>
+	</span>
+	</center>
+<</if>>
+
+<<timed _animationTime>>
+	<<for _i, _puppet range puppets()>>
+		<<if _puppet.xp >= _puppet.XPtoNext()>>
+			<<set _id = "#lv"+_i>>
+			<<replace _id>><span style="font-weight:bold"><<print (_puppet.level+1)>></span><</replace>>
+			<<set _id = "#lvlupmsg"+_i>>
+			<<replace _id>><span style="font-weight:bold; color:cyan">LEVEL UP!</span><</replace>>
+		<</if>>
+	<</for>>
+	<<levelcheck>>
+	<<timed 3s>>
+		<<goto "Level Check">>
+	<</timed>>
+<</timed>>
+
+:: Level Check [nobr battle]
+<<if $LevelUps.length > 0>>
+	<<set _p = $LevelUps.shift()>>
+	<center><<LevelUp _p>></center>
+<<else>>
+	<<goto $B.destination>>
+	<<endofbattle>>
+<</if>>
+
+:: Defeat
+You lost! You can add a special defeat message here.
+
+>[[Retry this battle|Preparation]]
+>[[Return|Start]]
+
+<<endofbattle>>

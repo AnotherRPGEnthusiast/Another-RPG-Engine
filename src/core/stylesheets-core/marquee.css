@@ -1,0 +1,28 @@
+.marqueeWrapper {
+    position: relative;
+    display: flex;
+}
+.marqueeWrapper div {
+    position: relative;
+    box-sizing: border-box;
+    padding: 0 0.2em;
+    white-space: nowrap;
+}
+.marqueeWrapper div#marquee {
+    flex-grow: 1;
+    overflow: hidden;
+}
+.marqueeWrapper div#marquee span {
+    position: relative;
+    display: inline-block;
+    animation: scroll 10s linear infinite;
+}
+
+@keyframes scroll {
+    0%   {
+        left: 100%;
+    }
+    100% {
+        left: -100%;
+    }
+}

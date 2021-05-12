@@ -1,0 +1,89 @@
+html.dyslexic {
+	font-family: 'OpenDyslexic';
+}
+
+.monospace {
+	font-family: monospace;
+}
+
+html.dyslexic .monospace {
+	font-family: 'OpenDyslexicMono';
+	font-size: 10pt;
+}
+
+html.greenLinks a {
+	color: #090;
+}
+
+html.greenLinks a:hover {
+	color: #00e600;
+}
+
+html.redLinks a {
+	color: #c00;
+}
+
+html.redLinks a:hover {
+	color: #ff3333;
+}
+
+#passages {
+	border: 0;
+	margin: 0;
+}
+
+.passage {
+	width: auto;
+
+	margin-top: 2em;
+	margin-bottom: 2em;
+
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.passage.battle {
+  width: 1030px;
+}
+
+#content {
+	float: left;
+	width: 640px;
+	min-height: 85vh;
+  border: dotted 1px;
+  padding: 1em;
+	position: relative;
+}
+
+#status {
+	position: fixed;
+	display: inline-block;
+	top: 40px;
+	left: 1020px;
+	width: 250px;
+    min-height: 300px;
+	padding-left: 1em;
+	padding-right: 1em;
+	border-left: 1px solid;
+    font-weight: bold;
+}
+
+
+/* Use this #status definition if you do not want the status pane to scroll with the viewport */
+#status.static {
+	float: right;
+	width: 300px;
+    min-height: 300px;
+	padding: 1em;
+	border-left: 1px solid;
+    font-weight: bold;
+}
+
+
+#mutebutton {
+	padding-top: 6px;
+	padding-right: 2px;
+	padding-left: 2px;
+	background-color: silver;
+	border-radius: 4px;
+}

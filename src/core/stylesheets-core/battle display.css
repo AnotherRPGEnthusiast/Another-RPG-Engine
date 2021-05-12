@@ -1,0 +1,218 @@
+.invisible {
+	display: none;
+}
+
+.battlemsg {
+  border-bottom: 2px solid;
+  padding-bottom: 1em;
+  margin-bottom: 1em;
+  font-style: italic;
+  text-align: center;
+}
+
+.actors.invisible {
+	display: none;
+}
+
+.actors {
+  position: relative;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-evenly;
+  align-items: flex-start;
+  margin-bottom: 1em;
+}
+
+.actors.enemies {
+  border-bottom: 2px solid;
+  padding-bottom: 1em;
+}
+
+.actors.enemies.reverse {
+  flex-flow: row-reverse wrap-reverse;
+}
+
+.actor {
+	position: relative;
+  min-width: 130px;
+  font-weight: bold;
+  display: inline-block;
+  border: solid;
+  border-width: 2px;
+  border-radius: 4px;
+  padding: 1em;
+  margin-right: auto;
+	margin-left: auto;
+}
+
+.actor.victory {
+	font-weight: normal;
+	margin-bottom: 1em;
+	background-color:#fff;
+	color:#111;
+}
+
+.actor.menu {
+	margin-bottom: 10px;
+	min-width: 90%;
+	border-radius: 0px;
+	height: auto;
+}
+
+.actor.full {
+  width: 100%;
+  text-align: center;
+}
+
+.selected {
+  /* background-color: cyan; */
+  border-color: blue;
+}
+
+/*
+.itemcontainer {
+  display: flex;
+  align-items: flex-start;
+  border: solid blue;
+}
+
+.items {
+  display: inline-block;
+  border: solid;
+  width: 45%;
+}
+*/
+
+.commandcontainer {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-evenly;
+  align-items: space-evenly;
+  min-height: 90px;
+  margin-bottom: 10px;
+}
+
+.commands {
+  min-width: 130px;
+  display: inline-block;
+  padding-right: 1em;
+  padding-left: 1em;
+  align-content: center;
+  border: solid;
+  border-width: 3px;
+}
+
+.noact {
+  color: gray;
+  font-weight: bold;
+  text-align: center
+}
+
+.embargo {
+  color: gray;
+  font-weight: bold;
+}
+
+/*
+button {
+	text-transform: uppercase;
+	background-color: red;
+	border-radius: 2px;
+}
+*/
+
+.btn {
+  margin-left: 20px;
+  background-color: red;
+  padding: 2px;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
+.btn.back {
+  background-color: silver;
+}
+
+.formula {
+  font-style: italic;
+  text-align: center;
+}
+
+.right {
+  float: right;
+}
+
+.center {
+  text-align: center;
+  display: inline-block;
+}
+
+.actorname {
+  font-weight: bold;
+}
+
+.actorname .dead {
+	color: gray;
+}
+
+.hotkey {
+
+}
+
+.statusbutton {
+	float: right;
+	margin-left: 0.5em;
+}
+
+.statusbutton.absolute {
+	position:absolute;
+	top:1em;
+	right:1em;
+}
+
+.targetnumber {
+	position: absolute;
+	bottom: 1em;
+	right: 1em;
+	font-size: 9pt;
+}
+
+#actionlist {
+	overflow-y: auto;
+	padding-right: 1em;
+	max-height: 350px;
+}
+
+#actionlist.compressed {
+	display: grid;
+	grid-template-columns: repeat(2,1fr);
+	column-gap: 2em;
+	max-height: 250px;
+}
+
+#actionInfo {
+	visibility: hidden;
+	position: absolute;
+	border: solid 1px;
+	min-height: 100px;
+	width: 500px;
+	padding: 1em;
+	font-weight: normal;
+	max-height: 90vh;
+	overflow: hidden;
+	background-color: white;
+	color: black;
+}
+
+#quit {
+	position: absolute;
+	left: 1em;
+	bottom: 0;
+}
+
+#roundCounter {
+	font-weight: bold;
+	position: absolute;
+	right: 1em;
+	bottom: 0;
+}

@@ -1,0 +1,10 @@
+:: custom end of action effects[nobr]
+/* Appended to the action phase, immediately after mark attacks and potential surrender failure. Include any custom code or messages you want here. */
+
+<<if !_markActive>>
+	<<markAttack>>
+<</if>>
+
+<<if !_counterActive>>
+	<<hunterCheck>>
+<</if>>

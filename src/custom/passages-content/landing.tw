@@ -1,0 +1,57 @@
+:: Start [text]
+Welcome to Another RPG Engine, an RPG engine made in Twine. This engine is designed for deterministic multi-character battles, like you might see in RPG Maker or Japanese-style RPGs. I created a simple game with this engine called <i><a href="https://anotherrpgenthusiast.itch.io/cartoon-battle" target="_blank">Cartoon Battle</a></i> that I encourage you to try. I may make more complex games using this engine in the future!
+
+Click on the links above to learn about aspects of the engine in more detail.
+
+Download the source code and discuss the game at <a href="https://anotherrpgenthusiast.itch.io/another-rpg-engine" target="_blank">itch.io</a>. You can also discuss the game on <a href="https://archiveofourown.org/works/19398175" target="_blank">Archive of Our Own</a> if that's more your wheelhouse, and you can post your games there or on itch.io!
+
+Example battles:
+* [[Princess Bubblegum (Adventure Time)|Preparation][$scenario = "at1"]]
+* [[Mystery Twins (Gravity Falls)|Preparation][$scenario = "gf1"]]
+* [[Watterson Kids (The Amazing World of Gumball)|Preparation][$scenario = "gum1"]]
+* [[Crystal Gems (Steven Universe)|Preparation][$scenario = "su1"]]
+
+[[Here is the party menu|Menu: Status][$menu_screen = 0]] if you'd like to change your puppets or their equipment.
+
+Animation tests:
+* [[Single hit attack|Anim Test][$subtest = "Sword"]]
+* [[Multi-hit attack|Anim Test][$subtest = "Knife"]]
+* [[AoE|Anim Test][$subtest = "Red Tide"]]
+* [[Grenade|Anim Test][$subtest = "Grenade"]]
+* [[Weakpoint|Anim Test][$subtest = "Azure Frost"]]
+* [[Immunity|Anim Test][$subtest = "White Light"]]
+* [[Heal|Anim Test][$subtest = "Gold Sparks"]]
+* [[Shield Effect|Anim Test][$subtest = "block"]]
+* [[Ailment|Anim Test][$subtest = "Insult"]]
+* [[Hit and ailment|Anim Test][$subtest = "Flurry"]]
+* [[Remove ailment|Anim Test][$subtest = "Antidote"]]
+* Regeneration ([[light|Anim Test][$subtest = "regen"]], [[dark|Anim Test][$subtest = "regen dark"]])
+* [[Thorns|Anim Test][$subtest = "Thorns"]]
+* [[Killing blow|Anim Test][$subtest = "death"]]
+
+Here is a link to the [[Point-buy interface example]] for testing.
+
+Here is a link to the [[Item Shop]] for testing.
+
+Here is a link to the [[Decurse Station]] for testing.
+
+<<link "Start Music">><<playMusic "Happy 8bit Loop 01">><<goto "Start">><</link>>
+
+You can change the difficulty through the Settings button in the sidebar. Keep in mind that this is more of a randomness setting than a difficulty setting.<span style="font-size:12px">
+* Hard: smart targeting will only target vulnerable characters
+* Medium: smart targeting will preferentially target vulnerable characters, but other targets can be considered
+* Easy: disables smart targeting
+</span>
+
+:: navbar [nobr]
+<div id="navbar">
+  <span><b>Version: <<print setup.version>></b> ([[Changelog]])</span>
+  <div>
+  <span style="font-weight:bold"><<if passage() == "Start">>Home<<else>>[[Home|Start]]<</if>></span>
+  <span><<if passage() == "Installation">><b>Installation</b><<else>>[[Installation]]<</if>></span>
+  <span>Documentation (<<if passage() == "Documentation (Basic)">><b>Basic</b><<else>>[[Basic|Documentation (Basic)]]<</if>>, <<if passage() == "Documentation (Advanced)">><b>Advanced</b><<else>>[[Advanced|Documentation (Advanced)]]<</if>>)</span>
+  <span><<if passage() == "Design">><b>Design</b><<else>>[[Design]]<</if>></span>
+  <span><<if passage() == "Additional Features">><b>Additional Features</b><<else>>[[Additional Features]]<</if>></span>
+  </div>
+</div>
+<hr/>

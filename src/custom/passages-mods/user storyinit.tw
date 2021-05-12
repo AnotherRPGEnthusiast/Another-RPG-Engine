@@ -1,0 +1,84 @@
+:: User-defined variables
+/* Appended to the default StoryInit passage. Add any additional code you want here. */
+
+<<cacheaudio "Happy_8bit_Loop_01" setup.SoundPath+"8bitloop.wav">> /* This is to set up the audio for the example music in the engine help file. Feel free to remove it. */
+
+<<set setup.formula to "subtractive">>
+/*
+Can choose between multiple premade damage formulas here.
+subtractive: (base + damper * a.get("Attack")) * weight - damper * b.get("Defense")
+subtractive lumped: (base + damper * (a.get("Attack") - b.get("Defense"))) * weight
+rpgmaker: (a.get("Attack") * 4 - b.get("Defense") * 2) * damper * weight
+divisive: (base * (a.get("Attack")/b.get("Defense"))) * weight
+*/
+
+<<set setup.LEVEL_CAP = 10>>
+
+<<set setup.PORTRAIT_SIZE = 50>> /* Portrait size in px, used for save game display */
+
+/* Defining starting inventory. */
+<<set $inventory = new Inventory([
+	new Item("Antidote",1),
+	new Item("Fire Extinguisher",1),
+	new Item("Canned Air",1),
+	new Item("Healing Crystal",1),
+	new Item("Nanites",1),
+	new Item("Painkiller",1),
+	new Item("Asprin",1),
+	new Item("Panacea",1),
+	new Item("Bottled Chi",1),
+	new Item("Stimulant",2),
+	new Item("Adrenaline",1),
+	new Item("Stoneskin",1),
+	new Item("Nootropic",1),
+	new Item("Throwing Knife",5),
+	new Item("Powdered Glass",1),
+	new Item("Grenade",0),
+	new Item("Flamethrower",0),
+	new Item("Gas Bomb",0),
+	new Item("Calamity Bomb",0),
+	new Item("Flashbang",0),
+	new Item("Apple of Life",1),
+	new Item("Symbol of Destruction",1),
+	new Item("Aura of Protection",1),
+	new Item("Color of Defeat",1),
+	new Item("Color of Growth",2),
+	new Item("Cursed Ring",3)
+	])>>
+
+<<if setup.formula == "subtractive">>
+	<<set setup.MIN_STAT = 0>>
+<<else>>
+	<<set setup.MIN_STAT = 1>>
+<</if>>
+
+<<if setup.THREAT_TARGETING === true>>
+	<<set setup.STATUS_SCREENS.battle.push("aggression")>>
+<</if>>
+
+<<if setup.BATTLE_GRID === true>>
+	<<set setup.ROW_SIZE = 3>>
+	<<set setup.COLUMN_SIZE = 3>>
+	<<set setup.PARTY_SIZE = setup.ROW_SIZE * setup.COLUMN_SIZE>>
+	<<set setup.MENU_OPTIONS.push("Formation")>>
+<</if>>
+
+/* Initialize bestiary (if you want one) */
+<<set $bestiary = new Bestiary()>>
+
+<<run customMods()>>
+
+<<if def $bestiary>>
+	<<run setup.MENU_OPTIONS.push("Bestiary")>>
+
+	<<for _entry range $bestiary>>
+		<<set _entry.revealAll()>>
+	<</for>>
+<</if>>
+
+<<set $currentArea = "Example Area">>
+
+/* Define the starting party and area here. */
+<<set $puppets = [new Puppet("Rogue"),new Puppet("Fighter"),new Puppet("Artist")]>>
+
+<<set $Reserve_Puppets = [new Puppet("Bard"),new Puppet("Archer"),new Puppet("Cleric"),new Puppet("Witch"),new Puppet("Mage")]>>

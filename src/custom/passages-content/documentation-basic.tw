@@ -1,0 +1,1296 @@
+:: Documentation (Basic) [text info]
+Use the table of contents to navigate. You can come back to the top at any time by pressing the "home" key on your keyboard.
+
+This introduction will teach you how to add content to the default engine settings. For advanced documentation and advice on customization, see [[Documentation (Advanced)]]. This documentation will assume you are familiar with SugarCube basics; see <a href="https://www.motoslave.net/sugarcube/2/docs/" target="_blank">the SugarCube documentation</a> for reference.
+
+<h1>Table of Contents</h1>
+><a href="#databases">Objects, Classes, and Databases</a>
+><a href="#data.puppets">Creating Puppets</a>
+><a href="#data.actions">Creating Actions</a>
+><a href="#data.effects">Creating Effects</a>
+><a href="#data.items">Creating Items</a>
+><a href="#data.enemies">Creating Enemies</a>
+>><a href="#enemyactions">Enemy Actions</a>
+>>><a href="#enemyactions.finn">Simple Example: Finn</a>
+>>><a href="#enemyactions.bubblegum">Advanced Example: Princess Bubblegum</a>
+>>><a href="#enemyactions.bonnibel">Complex Example: Bonnibel</a>
+><a href="#encounters">Creating Encounters</a>
+><a href="#customization">Customization</a>
+>><a href="#custom.init">Initial Variables</a>
+>><a href="#custom.passages">Customizing Passages</a>
+
+<h2 id="databases">Objects, Classes, and Databases</h2>
+RPGs tend to involve a lot of <i>stuff</i>. Heroes, stats, items, equipment, spells, enemies... It can get dizzying quite quickly. Fortunately, the engine is set up to make creating these objects easy.
+
+An <i>object</i>, in programming, is a general term for a data structure that contains other data structures within it. Objects are very useful for keeping track of variables that have a lot of associated data. As an example, say you are the manager of a company and want to maintain a digital list of employees. You might want to keep track of various attributes like the name, age, and income of every employee. It would be tedious and confusing to have to keep track of each of these variables if they were not connected in any way. You'd have to give them names like {{{John_age}}}, {{{Jane_name}}}, {{{Jane_income}}}, and {{{John_name}}}, all floating around in a huge unconnected mess.
+
+With objects, you could simply collect all these variables under one person, using the curly brace <code>{}</code> operators:
+{{{
+var John = {
+  firstName: "John",
+  lastName: "Smith",
+  age: 18,
+  income: 27
+}
+}}}
+From then on, every time you want to access one of John's sub-variables, you can simply place a dot ({{{.}}}) symbol after the "John" object to call them. {{{John.firstName}}} will return "John", {{{John.age}}} will return "18", and so on. These sub-variables are called <b>properties</b> or <b>attributes</b>, and can, themselves, contain objects (or even functions). You can call up attributes of attributes the same way, with another dot operator, as many times as you need. For instance, if we split John's {{{income}}} attribute into two properties, {{{hourly}}} and {{{yearly}}}, we could write {{{John.income.hourly}}} to get his hourly wage.
+
+Objects are helpful, but for something as complicated as a game, we need to go one step further, and turn them into <b>classes</b>. Classes can be thought of as a template or assembly line to produce many copies the same object. Classes of objects all share the same structure, construction method, and functions. This is very useful in RPGs, where we may want to classify our data into broad groups -- say, characters, actions, and items -- that each have unique data but should each behave similarly. For instance, all characters in an RPG should have attributes like HP and Attack. By defining a class, we can create a general template for an object that will always be constructed through the <b>constructor</b> method defined within it.
+
+To create an object via a class template, you use a different syntax than defining regular objects. You use the keyword {{{new}}} paired with the class name, like so:
+{{{
+var John = new Employee("John Smith");
+}}}
+You will always need to pair a class instantiation with a function call {{{()}}}; this calls the constructor function used to create the object. You can pass arguments to the constructor like any other function to modify the instance being created; for instance, in this code, the constructor might be able to use the argument "John Smith" to assign the {{{Employee}}}'s {{{firstName}}} and {{{lastName}}} attributes.
+
+(For more information, see w3school's tutorials on <a href="https://www.w3schools.com/js/js_objects.asp" target="_blank">objects</a> and <a href="https://www.w3schools.com/Js/js_classes.asp" target="_blank">classes</a>.)
+
+The details of how our classes are defined are explained in [[Documentation (Advanced)]], but to get started, all you need to do is provide data for your objects. This is handled through <b>database</b> passages, found in the "custom" subfolder of the "javascript" folder.
+
+Each database is handled similarly. We create a database object as the attribute of the {{{setup}}} variable, which is a special variable used by SugarCube. (Assigning databases to {{{setup}}} is important for reasons <a href="https://www.motoslave.net/sugarcube/2/docs/#guide-state-sessions-and-saving-refreshing-and-restarting" target="_blank">explained in the SugarCube documentation</a>.) Each property of this database object corresponds to a single object we want to define, and contains data that will be read to create an instance of the object when the game is up and running. Once you have a fully-defined database entry, you need only pass the entry's name as the argument to the object constructor, and you'll create a live instance of that object.
+
+<h2 id="data.puppets">Creating Puppets</h2>
+The class for playable characters is called "Puppet", as a carry-over joke from <i>Cartoon Battle</i>. As such, the database object is called {{{puppetData}}}.
+
+Puppet data entries look like this:
+{{{
+"Fighter": {
+	"gender": 'N',
+	"hp": 1000,
+	"stats": {
+		"Attack"	: 30,
+		"Defense"	: 50,
+		"Special"	: 10
+	},
+	"actions": [
+		"Firefly",
+		"Sword",
+		"Punch",
+		"Hammer",
+		"Bull Rush",
+		"Assault",
+		"Meditate",
+		"Berserker",
+		"Defender",
+		"Protector",
+		"Martyr"
+	],
+	"defaultAction": "Sword",
+	"crisis": "Perfect Defense",
+	"specialInit": function (actor) {
+		actor.firefly = true;
+	}
+}
+}}}
+This isn't what a live {{{Puppet}}} object looks like, but it contains all the data the {{{Puppet}}} constructor needs to create one.
+* {{{gender}}} determines what pronouns the system will use to refer to the character. You can spell out "male", "female", or "neutral", or use the one-letter shorthand. If undefined, pronouns will default to "it/its".
+* {{{fullname}}} is a string; this is the name that will be displayed in the actor box. Defaults to the character's regular name.
+* {{{hp}}} determines the character's starting number of hit points. This determines how much damage they can take before they are defeated.
+* {{{stats}}} is, itself, an object. You can define any stats you want here, but the defaults are {{{Attack}}}, {{{Defense}}}, and {{{Special}}}. The character will be created with stats equal to the numbers assigned here.
+* {{{actions}}} is an array listing the actions this character can take in battle. You only need to provide the names of each action here; see <a class="noExternal" href="#data.actions">Creating Actions</a> for details on action construction.
+* {{{equipSlots}}} is an object; the keys are the names of equipment slots, and the value is the number of subslots. Defaults to the object specified in {{{DEFAULT_EQUIP_SLOTS}}}.
+* {{{defaultAction}}} determines what action will be used when the player uses the {{{[Q]}}} shortcut in battle.
+* {{{crisis}}} determines the character's Crisis ability. Like with regular actions, only the name is required. An array can be used here to give a character multiple Crises. If undefined, the character simply won't have a Crisis ability.
+* {{{tolerances}}} is an object that sets the character's ailment tolerances. The character must be hit with the ailment a number of times equal to 1 plus the tolerance before it will apply. A value of -1 conveys total immunity to the ailment.
+* {{{elements}}} is an object that sets the character's elemental affinities. Note that these are multipliers, not percentile values; e.g. a value of 2 will make the character take double damage, and a value of -1 will heal the character for whatever damage the attack would have normally done. The property names must match elements defined in {{{ELEMENT_LIST}}}.
+* {{{respawn}}} is an integer; after the character is defeated, they will be revived after this many turns. If unset, the character will never respawn automatically.
+** {{{respawnHP}}} is a number between 0 and 1; the character will regain this proportion of their max HP when respawning.
+** {{{respawnMessage}}} is the message that will be displayed when the character respawns.
+* {{{retaliations}}} is an integer; sets how many times the character can counterattack on their turn. Note that you will also need to assign a {{{counter}}} property for it to trigger.
+* {{{deathMessage}}} is a string; printed when the character is defeated (HP reaches 0). Defaults to "{{{<character name> is defeated!}}}".
+* {{{immortal}}} is a Boolean; if {{{true}}}, the character will not be defeated if their HP reaches 0. (Make sure their encounter has a custom resolution handler!)
+* {{{large}}} is a Boolean; if {{{true}}}, the character's actor box will span the full width of the screen.
+* {{{maskhp}}} is a Boolean; if {{{true}}}, the character's HP bar and HP total will not be displayed in their actor box.
+* {{{specialInit}}} is a function that is run at the end of the {{{Puppet}}} constructor. This is a catchall that allows you to tweak any other variables you want that aren't specified by the regular attributes. (Due to a coding quirk, the object under construction needs to pass itself as an argument to this function, so assign your code to {{{actor}}} rather than {{{this}}}.) In addition to custom variables, it supports the assignment of the following properties:
+** {{{showMaxHP}}} is a Boolean; if {{{true}}}, the character's max HP will be displayed alongside their current HP in their actor box.
+** {{{caps}}} is a Boolean; if {{{true}}}, the character's name will be capitalized in their actor box.
+** {{{firefly}}} is a Boolean; if {{{true}}}, the character will have a higher chance of being targeted by enemies.
+** {{{wallflower}}} is a Boolean; if {{{true}}}, the character will have a lower chance of being targeted by enemies.
+
+<h2 id="data.actions">Creating Actions</h2>
+Actions determine what things your characters can do in battle -- attacking, casting spells, etc. The database object for actions is called {{{actionData}}}, and its entries look like this:
+{{{
+"Sword": {
+	"cost": 2,
+	"weight": 1,
+	"basic": true,
+	"info": function (action) {return `Attack with a weight of ${action.weight}.`},
+	"desc": `Ah, the sword: favored weapon of heroes everywhere. In reality they're pretty impractical and hard to use, but they just look so cool!`,
+	"useText": null,
+	"actText": function () {
+		return `$B.subject.name swings their sword with perfect form.`;
+	},
+	"act": justdmg
+}
+}}}
+This isn't what a live {{{Action}}} object looks like, but it contains all the data the {{{Action}}} constructor needs to create one. There are additional attributes not shown in this entry that are detailed below:
+* {{{useText}}} is displayed in bold before the action's description in the action phase. Set this to {{{null}}} to omit that section entirely. By default, this text is {{{<user>.name uses "<action>.name".}}}, quotes included.
+* {{{actText}}} is a prose description of the action. It is entirely optional, and only for flavor. (Note that if you want to use variables such as the user's name in this description, you will need to make it a function that returns a string; if you write it as a raw string, the variable you need won't exist when the {{{Action}}} object is created!)
+* {{{act}}} is the code for what the action actually does in a gameplay sense. It is recommended to make this function return a string of SugarCube code containing your real code, as it is much easier to print text to the screen with SugarCube, and many gameplay functions are contained in SugarCube widgets. Alternatively, there are a number of generic action functions you can assign here. (See the file {{{2_action-functions.js}}} for details.)
+* {{{preview}}} is a function that provides a projection of the action's effects in the confirm phase. Set to {{{null}}} to display nothing. By default, it previews the damage of a basic attack.
+* {{{info}}} provides information about the action's gameplay function to the player, and is displayed in the action's help description. (Note that if you want to reference data values of the action, you will need to make this a function, as shown in the example entry.)
+* {{{desc}}} is flavor text describing the action, and is displayed below {{{info}}} in the action's help description. Optional.
+* {{{phase}}} is a string; forwards the player to the matching battle phase passage when the action is selected. Must match a passage name EXACTLY. Defaults to "targeting phase".
+* {{{target}}} is a string; can take a value of "enemy", "ally", or "all". Determines which party or parties can be targeted by the action. Defaults to "enemy".
+* {{{cost}}} is a nonnegative integer; determines how many EN points the action consumes when used.
+* {{{hpcost}}} is a nonnegative integer; determines how many hit points the action consumes when used. Defaults to 0.
+* {{{weight}}} is a number; multiplied by the user's {{{Attack}}} stat when determining the damage of an attack. (See the damage formula for a deeper explanation.)
+* {{{effweight}}} is a number; determines the strength of any status effects applied by the action.
+* {{{dur}}} is an integer; determines the duration of any status effects applied by the action.
+* {{{accuracy}}} is a nonnegative integer; equal to the percentile value of the action's chance to hit. Set to {{{true}}} to make the action always hit. Defaults to {{{true}}}.
+* {{{critRate}}} is a nonnegative integer; equal to the percentile value of the action's chance of landing a critical hit. Defaults to 0.
+* {{{critMultiplier}}} is a nonnegative number; damage is multipled by this value if the attack lands a critical hit. Defaults to 1.5.
+* {{{element}}} is a string; determines the action's elemental property. Must match one of the elements defined in {{{ELEMENT_LIST}}}. Optional.
+* {{{useSpecial}}} is a number between 0 and 1; determines proportion of base damage dependent on Special. Defaults to 0.
+* {{{uses}}} is a nonnegative integer; determines how many times an action can be used before its uses must be refilled. If not defined, this attribute will not be set. Optional.
+* {{{cooldown}}} is a nonnegative integer; determines how many turns must elapse after use before the action can be used again. If not defined, this attribute will not be set. Optional.
+** {{{enemyCD}}} is a nonnegative integer; determines the cooldown of this action when used by an enemy. Defaults to {{{cooldown}}}. Optional.
+** {{{nameCD}}} is a string; determines the key in the enemy's {{{cd}}} Map the cooldown will reference when set. Defaults to the action's name. Optional.
+* {{{warmup}}} is a nonnegative integer; determines how many turns must elapse from the start of a battle before the action can be used. Requires a defined {{{cooldown}}} attribute. If not defined, this attribute will not be set. Optional.
+* {{{formula}}} is a function; if defined, it will be used in place of the regular formula when calculating attack damage.
+* {{{basic}}} is a Boolean; if {{{true}}}, the action can be used when the character is dizzy.
+* {{{pierce}}} is a Boolean; if {{{true}}}, the attack ignores the target's {{{Defense}}} stat when calculating damage.
+* {{{instant}}} is a Boolean; if {{{true}}}, the action will not end the user's turn.
+* {{{counter}}} is a Boolean; if {{{true}}}, the action is considered a counterattack action.
+* {{{noself}}} is a Boolean; if {{{true}}}, the user cannot target themselves with this action.
+* {{{oncePerTurn}}} is a Boolean; if {{{true}}}, the action can only be used once per turn, even if it is instant.
+* {{{noShock}}} is a Boolean; if {{{true}}}, the action will not cure effects that can be cured through direct damage.
+* {{{silent}}} is a Boolean; if {{{true}}}, action code will execute without any display in the action phase.
+* {{{truce}}} is a Boolean; if {{{true}}}, it won't violate the enemy's surrender. By default, this is {{{true}}} for {{{silent}}} actions, and {{{false}}} otherwise.
+* {{{noDefault}}} is a Boolean; if {{{true}}}, the action cannot be set as a character's default action. By default, this is {{{false}}} if the action inflicts damage, and {{{true}}} otherwise.
+* {{{nosave}}} is a Boolean; if {{{true}}}, the action will not be saved as the character's last action after use.
+* {{{saveMod}}} is a string; the user's last action will be set to the action named with {{{saveMod}}}. Defaults to the action itself.
+* {{{crisis}}} is a Boolean; if {{{true}}}, the action is a Crisis action and can only be used by fully consuming the user's Crisis points.
+* {{{ranged}}} is a Boolean; if {{{true}}}, the action will ignore range limitations on the battle grid (see [[Additional Features]]).
+* {{{setupAction}}} is a string; if populated, a delayed action of the same name will be stored in the user's {{{delayedAction}}} property.
+** {{{setupDelay}}} is an integer; specifies the number of turns that must elapse before the delayed action specified by {{{setupAction}}} will occur. Defaults to 1.
+** {{{delayPersist}}} is a Boolean; if {{{true}}}, the delayed action will occur even if the user would otherwise be incapable of using an action (dead, stunned, etc). This must be set <b>on the action that will be performed</b>, not the setup action.
+* {{{targetMethod}}} is a function; used to determine the target for actions that must find their target logically (e.g. delayed and enemy actions). It must return the object you want to be the target of the action. Defaults to the logic in {{{Hitlist.targetEnemy}}}.
+
+<h2 id="data.effects">Creating Effects</h2>
+Status effects change characters in some way. They can be beneficial, like boosting one or more stats, or detrimental, like preventing the character from using certain actions. (For more information, see [[Design]].) The database object for effects is called {{{effectData}}}, and its entries look like this:
+{{{
+"ATK Boost": {
+  "buff": true,
+  "stackable": true,
+  "statmod": true,
+  "onApply": function (puppet) {
+    this.id = puppet.stats["Attack"].addMod("ATK Boost",this.power);
+  },
+  "onRemove": function (puppet) {
+    puppet.stats["Attack"].removeMod("ATK Boost",this.id);
+  },
+  "info": function (effect) {
+    return `Attack boosted by ${this.power}.`;
+  },
+  "addText": function (target) {
+    return `${target} is surging with strength!`;
+  },
+  "removeText": setup.effectFunctions.remBuff
+}
+}}}
+This isn't what a live {{{Effect}}} object looks like, but it contains all the data the {{{Effect}}} constructor needs to create one. There are additional attributes not shown in this entry that are detailed below:
+* {{{onApply}}} is a function run when the effect is applied. It takes the target character as an argument. As an example, this function may involve changing a stat or applying a special flag.
+* {{{onRemove}}} is a function run when the effect is removed from a character. It takes the target character as an argument. This function usually reverses the effects of {{{onApply}}}, but may include additional code.
+* {{{info}}} is a description of the effect, printed in the status pane. If you want this description to reference attributes of the effect, you will need to make this a function.
+* {{{addText}}} and {{{removeText}}} are text messages displayed when the effect is added or removed, respectively. It takes the host character's name as an argument.
+** There are default text formats defined in {{{setup.effectFunctions}}}, above the database.
+* {{{shock}}} is an integer between 1 and 100; corresponds to the percent chance of direct damage removing the effect. Optional.
+* {{{topDec}}} is a Boolean; if {{{true}}}, the effect will decay at the start of the round. By default, effects decay at the end of the round.
+* {{{sticky}}} is a Boolean; if {{{true}}}, the effect cannot be removed through normal means.
+* {{{ULTIMATESTICKY}}} is a Boolean; if {{{true}}}, the effect cannot be removed through <i>any</i> means except ending the battle.
+* {{{unblockable}}} is a Boolean; if {{{true}}}, the effect cannot be blocked by protective effects such as Stasis.
+* {{{synonym}}} is a string; if set, tolerance calculations will use the tolerance value specified by this string instead of the effect's own name. Note that this must match a valid tolerance name EXACTLY.
+* {{{persistAfterBattle}}} and {{{persistAfterDeath}}} are Booleans; if {{{true}}}, the effect will persist past their respective events. By default, effects are always removed after battle and on character defeat.
+* {{{buff}}} is a Boolean; if {{{true}}}, the effect is considered positive. Relevant to some actions and system messages.
+* {{{stackable}}} is a Boolean; if {{{true}}}, multiple instances of the same effect can exist on the same character.
+* {{{exclusive}}} is a Boolean; no two {{{Effect}}}s with {{{exclusive}}} set to {{{true}}} can exist at the same time on the same character.
+* {{{unique}}} is a Boolean; no two {{{Effect}}}s with {{{unique}}} set to {{{true}}} can exist at the same time in the same party.
+* {{{statmod}}} is a Boolean; if {{{true}}}, the effect modifies a character's stats. Relevant for some effect calculations.
+* {{{untargetable}}} is a Boolean; if {{{true}}}, the effect prevents a character from being directly targeted by attacks. This property will hold as long as a character has any effects with this property.
+* {{{uncontrollable}}} is a Boolean; if {{{true}}}, the effect is considered a loss-of-control effect. Characters will be uncontrollable as long as they have any effects with this property.
+* {{{threat}}} is a number; determines how highly a logic function will value this effect for the purposes of dispels, cures, etc. This value will be automatically incremented based on the effect's current duration minus 1. (In the case of effects with indefinite durations, this value will instead be multiplied by the value specified in {{{INDEFINITE_EFFECT_MULTIPLIER}}}.)
+* {{{hold}}} is a Boolean; if {{{true}}}, the effect is considered a hold action that restricts the victim from moving. As long as a character has any hold effects, they cannot act.
+** {{{holdAction}}} is a function for hold effects; it returns the dummy action that will be displayed if an enemy is held by the effect. This is usually just text, but may include other functionality.
+** {{{priority}}} is an integer; determines the order in which enemies must resolve hold effects. Lower numbers are resolved first.
+* {{{dot}}} is a Boolean; it is short for "damage over time". If {{{true}}}, the effect is a damage-over-time effect.
+** {{{dmgtype}}} is a function; determines how the damage-over-time is calculated. Several pre-written functions are specified in {{{setup.effectFunctions}}}.
+** {{{msg}}} is the message displayed when the damage-over-time triggers.
+** {{{weight}}} determines the strength of the damage-over-time. For most effects, this is calculated as part of the action that applies the effect, but some damage-over-time effects use a fixed weight.
+* {{{shield}}} is a Boolean; if {{{true}}}, this is a "shielding" effect and will block attacks.
+** {{{uses}}} is a nonnegative integer; sets the number of hits a shielding effect can block.
+** {{{onHit}}} is a function run when the shield is hit. This may just be a message, or it can include other functionality.
+
+<h2 id="data.items">Creating Items</h2>
+Items are objects that characters can obtain during gameplay. They may be consumed on use for a one-time benefit, such as a healing potion, or they may be equipment that grants some bonus when equipped. The database object for items is called {{{itemData}}}, and its entries look like this:
+{{{
+"Apple of Life": {
+  "usable": ["inmenu"],
+  "onUse": function (puppet) {
+    puppet.maxhp += 100;
+    inv().decItem(this.name);
+    return;
+  },
+  "info": "Permanently increases max HP by 100.",
+  "desc": `The apple Adam and Eve didn't eat. It's lost much of its power, this far from the Garden, but it'll still make a puppet a little more vivacious than usual.`
+}
+}}}
+This isn't what a live {{{Item}}} object looks like, but it contains all the data the {{{Item}}} constructor needs to create one. There are additional attributes not shown in this entry that are detailed below:
+* {{{info}}} and {{{desc}}} function exactly like they do in <a class="noExternal" href="#data.actions">Actions</a>.
+* {{{usable}}} is an array that can have up to two elements: "inmenu" and "inbattle". This determines if the item can be used in the party menu, in battle, or both (if both strings are included in the array). Optional.
+** {{{onUse}}} is a function that determines what happens when the item is used in the party menu.
+** {{{action}}} is a string; name of the action the item will generate if used in-battle. This defaults to the item's name.
+* {{{value}}} is an integer; determines the units of currency the item can be bought and sold for at shops.
+* {{{fakeName}}} is a string; alternate name that will be displayed until the item is used or equipped. Optional.
+
+Equippable items have several additional properties. An example entry looks like this:
+{{{
+"Symbol of Destruction": {
+	"equippable": {slot: "Weapon", tags: ["symbol"], restrictedTo: []},
+	"onEquip": function (puppet) {
+		puppet.stats["Attack"].addMod("Symbol of Destruction",5,true);
+	},
+	"onRemove": function (puppet) {
+		puppet.stats["Attack"].removeMod("Symbol of Destruction");
+	},
+	"desc": "A weapon.",
+	"info": "ATK +5"
+}
+}}}
+* {{{equippable}}} is an object with three sub-properties. Its existence is checked to determine if an item can be equipped.
+** {{{slot}}} is a string; states what slot the item will be equipped to. Must match a character equipment slot.
+** {{{restrictedTo}}} is an array; contains the names of characters who can equip the item. Make the array empty for no restrictions.
+** {{{tags}}} is an array; stores any additional metadata, such as e.g. equipment restrictions by character class. Optional.
+* {{{onEquip}}} and {{{onRemove}}} are functions determining the behavior of the item when it is equipped and removed, respectively.
+* {{{sticky}}} is a Boolean; if {{{true}}}, the item is considered cursed and can only be removed through a decurse station.
+
+Note that items are stored in an {{{Inventory}}} object, the code for which can be found in {{{class-item.js}}}. Use the {{{addItem}}} and {{{removeItem}}} functions when adding or removing items to an inventory.
+
+<h2 id="data.enemies">Creating Enemies</h2>
+Enemies are the opponents your player will face off against in battles. They are similar to {{{Puppet}}} objects in most respects, but contain several key differences. The database object for enemies is called {{{enemyData}}}, and its entries look like this:
+{{{
+"Dipper": {
+  "bestiaryNo": 0,
+  "alts": ["Big Dipper"],
+  "gender": 'M',
+  "hp": 1000,
+  "stats": {
+    "Attack"	: 25,
+    "Defense"	: 30,
+    "Special"	: 35
+  },
+  "elements": {
+    "black"	: 0.8,
+    "white"	: 1.2,
+    "blue"	: 0,
+    "yellow": -0.1
+  },
+  "cooldown": {
+    "Dispel Magick": 0
+  },
+  "actions": function () {
+    while (V().action === null) {
+      (...)
+    } // end loop
+		return;
+	}
+}
+}}}
+This isn't what a live {{{Enemy}}} object looks like, but it contains all the data the {{{Enemy}}} constructor needs to create one. Most attributes common to {{{Puppet}}} entries work the same here, but additional attributes are detailed below:
+* {{{cooldown}}} is an object that determines the cooldown for the enemy's actions. You can have multiple property names for different actions.
+* {{{noAttacks}}} is a nonnegative integer that determines how many actions the enemy can take per round. By default, this is 1.
+* {{{priority}}} is a number that determines the order in which enemies will act during the enemy turn. By default, this is equal to their index in the enemy party array. Lower numbers act first.
+* {{{mercy}}} is a number; determines the chance of an enemy skipping smart targeting. (See [[Documentation (Advanced)]] for details on targeting logic.)
+* {{{surrender}}} is a function; run when an enemy is spared (if the option is available).
+* {{{surrenderFail}}} is a function; run when the player violates an enemy's surrender by using a damaging action.
+* {{{xp}}} and {{{gp}}} are the number of experience points and currency points, respectively, the enemy awards on defeat. Must be integers. Defaults to 0 in both cases.
+* {{{itemDrops}}} is an object. Property names must correspond to items, and values must be integers between 1 and 100. Values are the percentile chance of the respective item dropping upon the enemy's defeat.
+* {{{boss}}} is a Boolean; denotes that this is a boss enemy. Bosses are treated differently by some system code. (Must be assigned through {{{specialInit}}}.)
+* {{{specialdeath}}} is a string; the player will be forwarded to this passage when the enemy is defeated. (Must be assigned through {{{specialInit}}}.)
+* {{{bestiaryNo}}} is an integer that determines the order in which the enemy appears in the bestiary, if there is one.
+** {{{alts}}} is an array of strings listing any alternate forms to display in the bestiary entry. Optional.
+** {{{desc}}} is a description to be displayed in the enemy's bestiary entry.
+
+<h3 id="enemyactions">Enemy Actions</h3>
+The most complicated attribute for enemies is {{{actions}}}. Unlike player characters, enemies don't have any human mind to pick their actions for them, so it's not enough to just list what actions they can use. We have to provide a logic for how and when they should act as well.
+
+Here is an example of the beginning of one enemy's logic function:
+{{{
+"actions": function () {
+	while (V().action === null){
+		var act = random(1,100);
+
+	if (act <= 20){
+		V().action = new Action("Cuteness Poisoning");
+	}
+}}}
+Let's break this down.
+{{{
+while (V().action === null)
+}}}
+We generally want to wrap this whole function in this {{{while}}} loop. There will be some random variance and conditionals when choosing an action for an enemy, so an action may not always be chosen on the first pass. This loop can only be exited if an action is chosen, which ensures that an action <i>will</i> be chosen for the enemy. (If not, all sorts of bugs could occur when the engine tries to read a {{{null}}} action.) <b>However, be wary of infinite loops.</b> Make sure it is always possible for this function to pick some action under any circumstance, even if it's only a dummy action. Otherwise, the program will be stuck running this loop forever, which will prevent the program from continuing and crash the user's browser.
+{{{
+if (act <= 20)
+}}}
+When an enemy has multiple actions, they're chosen through an if-else tree. The program will test each conditional in order to find what action to select. Typically, there is an element of randomness to this, as enemies could become solved games if they always behaved exactly the same way.
+
+(I align these conditionals with the same indentation as the {{{while}}} loop. Formatting standards typically suggest indenting everything within a loop, but I find it easier to keep them at this level due to the amount of data inside them. You can format them either way.)
+{{{
+if (this.CDcheck("Glitter Bomb") && act <= 60 && act > 40)
+}}}
+It is possible to use further conditionals to implement more complex behavior and disqualify a selected action based on other factors, such as this example from Mabel's Glitter Bomb ability. If Glitter Bomb hasn't finished its cooldown (which we can find with {{{CDcheck()}}}, a function common to all {{{Enemy}}} objects), it can't be selected, even if it otherwise falls into the correct {{{act}}} threshold. Thanks to the {{{while (V().action === null)}}}, a new action will be chosen afterwards.
+{{{
+puppets().forEach(function(puppet){
+  count += puppet.effects.length;
+});
+
+  var t = 20 + (count-2)*20;
+
+if (this.CDcheck("Wild Magic") && count >= 2 && act <= t)
+}}}
+We can also run additional code in the action selector itself to get additional variables and dynamic reactions to the player's state. In this example, from Bill Cipher, we count the number of effects present on all puppets, then plug that into a function: {{{20 + (count-2)*20}}}. In addition to "Wild Magic" needing to pass the cooldown check, {{{act}}} must also be less than this variable for it to work. This makes selecting Wild Magic 20% more likely for every effect present on the player's party.
+
+To learn more about the targeting logic and customizations you can make, see the relevant section in [[Documentation (Advanced)]].
+
+After this, we can define the statistics of the action, either manually or through a call to the actions database. In the default examples, action values are all set manually within these conditionals. I like this method because it allows me to see both the action statistics and the logic used to trigger them at the same time, which is helpful for balance tweaking. In <i>Cartoon Battle</i> every enemy was a set piece with unique abilities, but if you want to create an RPG with enemies who share general actions, you may want to define them separately in the database.
+
+These are the basic components of enemy behavior. The default engine includes the behavior of every first-tier enemy in <i>Cartoon Battle</i> for you to examine to get a sense of how it works in practice. If you'd like additional examples, the fan wiki for <i>Final Fantasy</i>, a popular RPG franchise, <a href="https://finalfantasy.fandom.com/wiki/Final_Fantasy_VII_enemies" target="_blank">lists the AI code for every enemy in <i>Final Fantasy VII</i></a>, which may be instructive, especially for how to write simpler enemies.
+
+For now, let's go over Finn and Princess Bubblegum as simple and complicated examples, respectively.
+
+<h4 id="enemyactions.finn">Simple Example: Finn</h4>
+{{{
+this.actions = function () {
+	while (V().action === null){
+		var act = random(1,2);
+
+	if (act == 1) {
+		V().action = new Action("Sword");
+		V().action.actText = "Finn swings his sword wildly!";
+		V().action.useText = null;
+	} else if (act == 2) {
+		V().action = new Action("Assault");
+		V().action.actText = "Finn charges in recklessly!";
+		V().action.useText = null;
+    V().action.act = applyEffect("Off-Balance",{self: true, dmg: true});
+	}
+
+	} /* end loop */
+	return;
+}
+}}}
+Finn shows us the basics of how enemy actions are structured. We set the variable {{{act}}} based on some logic -- here, randomly -- and then create an {{{if}}} tree keyed to it, with actions in each branch.
+
+Finn has only two actions: a regular attack, and a reckless charge. We determine which one to use based on a random coin flip; then the {{{$action}}} variable is set through a call to the {{{Action}}} constructor; then we set the attributes of the action. In this case, we don't need to do much to define the actions, as they are intentionally exact copies of extant actions: Fighter's Sword and Assault skills. We only need to alter the flavor text (and the applied effect, for Assault). If you plan to have multiple enemies use the same actions, it may be a good idea to define them in the action database so you don't have to set as many attributes here.
+
+You can see here that Finn has very simple behavior: half the time he will use a regular attack, and half the time he will use a stronger attack that leaves him open. This behavior is totally random; he won't avoid using the charge attack if he's low on health or afflicted with a Defense debuff, as the player might in his position. This is a lot easier to code, but it also aligns well with how I wanted Finn to behave. In <i>Adventure Time</i>, Finn is a reckless and foolhardy character, so this behavior is fitting for his personality.
+
+<h4 id="enemyactions.bubblegum">Advanced Example: Princess Bubblegum</h4>
+{{{
+"cooldown": {
+  "mass buff": 0,
+  "Chi Shield": 0
+},
+"actions": function () {
+	while (V().action === null){
+		var act = random(1,100);
+
+	if (this.cd.get("mass buff") < 0) {
+		act = random(1,3)
+		switch (act) {
+			case 1:
+				V().action = new Action("Call to Arms");
+				break;
+			case 2:
+				V().action = new Action("Walled City");
+				break;
+			case 3:
+				V().action = new Action("Age of Enlightenment");
+				break;
+		}
+		this.cd.set("mass buff",2);
+	}
+	else if (this.ready) {
+		act = random(1,2)
+		if (act == 1) {
+			V().action = new ItemAction("Grenade");
+			V().action.weight = 1;
+			V().action.useText = null;
+			V().action.actText = `Princess Bubblegum throws what appears to be a giant peppermint, but as soon as it hits the ground it explodes with the force of a grenade, spreading hard candy shrapnel everywhere.`;
+		}
+		else if (act == 2) {
+			V().action = new Action();
+			V().action.effweight = 0.8;
+			V().action.dur = 4;
+			V().action.useText = null;
+			V().action.actText = `Princess Bubblegum douses $B.target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
+			V().action.act = justeffect('t',"Poisoned");
+		}
+		this.ready = false;
+	}
+	else if (act <= 50) {
+		var hitlist = [];
+		if (!V().enemies[0].dead && !V().enemies[0].stasis){
+			hitlist.push(V().enemies[0]);
+		} else if (!V().enemies[2].dead && !V().enemies[2].stasis){
+			hitlist.push(V().enemies[2]);
+		}
+		if (hitlist.length > 0) {
+			var t = random(0,hitlist.length-1);
+			target() = hitlist[t];
+			act = random(1,3)
+			switch (act) {
+				case 1:
+					V().action = new Action("Adrenaline");
+					V().action.dur = 2;
+					V().action.effweight = 0.4;
+					V().act = justeffect('t',"ATK Boost");
+					break;
+				case 2:
+					V().action = new Action("Stoneskin");
+					V().action.dur = 2;
+					V().action.effweight = 0.4;
+					V().act = justeffect('t',"DEF Boost");
+					break;
+				case 3:
+					V().action = new Action("Nootropic");
+					V().action.dur = 2;
+					V().action.effweight = 0.4;
+					V().act = justeffect('t',"SPC Boost");
+					break;
+			}
+		}
+	}
+	else if (this.cd.get("Chi Shield") < 0 && act <= 75 && act > 50) {
+		V().action = new Action();
+		V().action.dur = 2;
+		V().action.useText = null;
+		V().action.actText = function () {
+			var str;
+			if (target() == subject()){
+				str = "becomes";
+			} else {
+				str = "$B.target.name is";
+			}
+			return `$B.subject.name presses a button, the air around ${str} surrounded by a force field.`
+		}
+		V().act = justeffect('t',"Chi Shield");
+		this.cd.set("Chi Shield",1);
+	}
+	else {
+		V().action = new Action();
+		V().action.useText = null;
+		V().action.actText = `Princess Bubblegum pulls something out of her pack.`;
+		V().act = `Something has changed...`;
+		this.ready = true;
+	}
+
+	} /* end loop */
+	return;
+}
+}}}
+In contrast to Finn, Princess Bubblegum has a highly intelligent and pragmatic personality, so to be true to her character I wanted to give her more sophisticated behavior.
+
+To begin with, you'll notice she has additional attributes above {{{actions}}}. Just like the player's abilities, we need some way to balance enemy abilities. Some abilities are very powerful, and would make the game way too hard if enemies could use them all the time! You could implement an energy system like the player characters use, but I found that too difficult. I used a simpler system: when the enemy uses a powerful attack, their "cooldown" variable for that attack is increased. Cooldown is reduced by 1 at the start of every turn, so enemies must wait that many turns before using a special attack again.
+
+Cooldown is set with the {{{cooldown}}} property of an enemy entry, and you can evaluate if an action is usable with the function {{{CDcheck(<cooldown key>)}}}, which is common to all {{{Enemy}}} objects.
+{{{
+if (this.CDcheck("mass buff")) {
+	act = random(1,3)
+	switch (act) {
+		case 1:
+			V().action = new Action("Call to Arms");
+			break;
+		case 2:
+			V().action = new Action("Walled City");
+			break;
+		case 3:
+			V().action = new Action("Age of Enlightenment");
+			break;
+	}
+	this.cd.set("mass buff",3);
+}
+}}}
+We can use {{{if}}} statements to make these variables influence Bubblegum's behavior. If her "mass buff" cooldown passes the check, she can choose this action; otherwise, she will skip it. This is the first branch of the if tree, so it gets the highest priority: she will <i>always</i> choose this action if the conditional is fulfilled.
+
+Because there are three possible buffs for her to choose from, we have to add additional logic to select the specific action. We could make complicated logic here, such as prioritizing Defense if the party is injured or Special if she's already readied a bomb, but for simplicity's sake I just made the choice completely random. Bubblegum gets an even chance of selecting any buff ability, 1/3rd each.
+
+(Like with Finn, since these are actions shared by puppets and therefore already defined in the database, we just need a single constructor call. We don't even need to modify the flavor text, since these skills don't have any to begin with.)
+
+At the very end, we set the "mass buff" cooldown to 3, which is the duration of the buffs. The game could get pretty unfair if she could stack mass buffs, so we want to make sure she can only have one buff active at a time.
+{{{
+else if (this.ready) {
+	act = random(1,2)
+	if (act == 1) {
+		V().action = new ItemAction("Grenade");
+		V().action.weight = 1;
+		V().action.useText = null;
+		V().action.actText = `Princess Bubblegum throws what appears to be a giant peppermint, but as soon as it hits the ground it explodes with the force of a grenade, spreading hard candy shrapnel everywhere.`;
+	}
+	else if (act == 2) {
+		V().action = new Action();
+		V().action.effweight = 0.8;
+		V().action.dur = 4;
+		V().action.useText = null;
+		V().action.actText = `Princess Bubblegum douses $B.target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
+		V().action.act = justeffect('t',"Poisoned");
+	}
+	this.ready = false;
+}
+}}}
+The very next branch checks against Bubblegum's {{{ready}}} attribute. If it's true, she's going to throw a bomb. Since this is the branch immediately after the last one, it takes priority over all other actions: she <i>will always</i> throw a bomb if she's ready and can't use a mass buff.
+
+Once again, there are multiple specific actions she can take here, so we do another randomized roll. Half the time she will use a grenade, and half the time she will use a poisoning attack.
+{{{
+V().action = new ItemAction("Grenade");
+V().action.weight = 1;
+}}}
+Notice that we call a pre-defined action here, but we proceed to specify a {{{weight}}} value anyway. In this case, I decided that the normal Grenade weight would be too unfair for this battle, so I lowered it to 1. Anything you specify here will overwrite anything that was defined by the constructor.
+{{{
+else if (act <= 50) {
+	var hitlist = [];
+	if (!V().enemies[0].dead && !V().enemies[0].stasis){
+		hitlist.push(V().enemies[0]);
+	} else if (!V().enemies[2].dead && !V().enemies[2].stasis){
+		hitlist.push(V().enemies[2]);
+	}
+	if (hitlist.length > 0) {
+		var t = random(0,hitlist.length-1);
+		target() = hitlist[t];
+		act = random(1,3)
+		switch (act) {
+			case 1:
+				V().action = new Action("Adrenaline");
+				V().action.dur = 2;
+				V().action.effweight = 0.4;
+				V().act = justeffect('t',"ATK Boost");
+				break;
+			case 2:
+				V().action = new Action("Stoneskin");
+				V().action.dur = 2;
+				V().action.effweight = 0.4;
+				V().act = justeffect('t',"DEF Boost");
+				break;
+			case 3:
+				V().action = new Action("Nootropic");
+				V().action.dur = 2;
+				V().action.effweight = 0.4;
+				V().act = justeffect('t',"SPC Boost");
+				break;
+		}
+	}
+}
+}}}
+In the next branch we finally get into one of her "normal" actions: giving a buff drug to one of her allies.
+{{{
+if (act <= 50)
+}}}
+We see that the conditional uses the {{{act}}} variable. Because {{{act}}} was set to a random value between 1 and 100, this action will be selected half the time.
+{{{
+var hitlist = [];
+if (!V().enemies[0].dead && !V().enemies[0].stasis){
+	hitlist.push(V().enemies[0]);
+} else if (!V().enemies[2].dead && !V().enemies[2].stasis){
+	hitlist.push(V().enemies[2]);
+}
+if (hitlist.length > 0) {
+	var t = random(0,hitlist.length-1);
+	target() = hitlist[t];
+}}}
+We then proceed to implement some unique targeting logic, though it's similar to the logic discussed previously. Bubblegum will exclude herself as a viable target, and only choose between her allies (at index 0 and index 2). She won't target them if they're already defeated, of course, and since this is a buff, she won't target them if they're in Stasis either. The action definition is inside the final {{{if}}}, so this action will only be chosen if a viable target was found.
+{{{
+act = random(1,3)
+switch (act) {
+	case 1:
+		V().action = new ItemAction("Adrenaline");
+		V().action.dur = 2;
+		V().action.effweight = 0.4;
+		V().act = justeffect('t',"ATK Boost");
+		break;
+	(etc.)
+}}}
+As with the mass buffs, Bubblegum has three to choose from, and once again the choice is made with a simple random roll. And as with the grenade, though the action mimics a database action, I have chosen to overwrite its values for game balance purposes.
+{{{
+else if (this.CDcheck("Chi Shield") && act <= 75 && act > 50) {
+	if (target() !== null){
+		V().action = new Action();
+		V().action.dur = 2;
+		V().action.useText = null;
+		V().action.actText = function () {
+			var str;
+			if (target() == subject()){
+				str = "her becomes";
+			} else {
+				str = "$B.target.name is";
+			}
+			return `$B.subject.name presses a button, the air around ${str} surrounded by a force field.`
+		}
+		V().act = justeffect('t',"Chi Shield");
+		this.cd.set("Chi Shield",2);
+	}
+}
+}}}
+Bubblegum's next action is another buff, this time providing Chi Shield.
+{{{
+if (this.cd.get("Chi Shield") < 0 && act <= 75 && act > 50)
+}}}
+This is another action with a cooldown, so we must check against it in the conditional. However, it must also pass an {{{act}}} range. Even with no cooldowns active, this action will only be selected when {{{act}}} is between 51 and 75, or 25% of the time.
+
+The action is otherwise quite straightforward. We create a blank action, define its attributes, and set the cooldown when we're done.
+{{{
+else {
+	V().action = new Action();
+	V().action.useText = null;
+	V().action.actText = `Princess Bubblegum pulls something out of her pack.`;
+	V().act = `Something has changed...`;
+	this.ready = true;
+}
+}}}
+Bubblegum's final action is covered under a default {{{else}}} clause, so it will always trigger if no other condition is met. Effectively, this means it will trigger at {{{act}}} values 76-100, or 25% of the time. This action just sets {{{ready}}} to true, enabling Bubblegum to throw a bomb on the next turn.
+
+Princess Bubblegum is my favorite character from <i>Adventure Time</i>, so I played favorites: I made her the focus of the battle and gave her two separate behaviors depending on what stage the battle was in. This has only described her normal behavior, but you can look up the "PB alone" case in {{{changeInto}}} to see how her behavior changes when the player defeats her cohorts.
+
+<h4 id="enemyactions.bonnibel">Complex Example: Bonnibel</h4>
+Princess Bubblegum reappears in the final battle of <i>Cartoon Battle</i>, but this time in her season 7 incarnation, where she has been stripped of her crown and forced to rely only on her own wits for survival. Not content to simply reuse her behavior from the first fight, I designed the most complex AI in the game for her, making her a "mirror" to the player's own Rogue.
+{{{
+"specialInit": function(actor) {
+  actor._idname = "PB Champ";
+  actor.name = "Bonnibel";
+  actor.ready = true;
+  actor.inventory = new Map([
+      ["Bottled Chi",3],
+      ["Adrenaline",3],
+      ["Stoneskin",3],
+      ["Nootropic",3],
+      ["Powdered Glass",2],
+      ["Grenade",2],
+      ["Calamity Bomb",2],
+      ["Gas Bomb",1],
+      ["Flamethrower",1],
+      ["Chaff Grenade",1],
+      ["Panacea",3]
+    ]);
+  actor.attackItemLogic = function () {
+  	while (V().action === null) { // hasItem check should prevent infinite loop but BE CAREFUL
+  		var act = random(1,100);
+  		var noPowderedGlass = false;
+  		var noCalamityBomb = false;
+  		var count = 0;
+
+  		if (act <= 40) { // use single-target item
+  			console.log("Bonnibel single-target attack item branch");
+  			chiCheck(["alert","dead"]);
+  			console.log("Chi check performed, count = "+count);
+  			if (count == V().puppets.length) {
+  				noPowderedGlass = true; // if all puppets are alert or dead, there are no viable targets for Powdered Glass
+  			}
+  			chiCheck(["dead"]);
+  			if (count == V().puppets.length) {
+  				noCalamityBomb = true; // if all puppets are protected or dead, there are no viable targets for Calamity Bomb
+  			}
+  			if (noPowderedGlass && noCalamityBomb) {
+  				act = 2;
+  			} else if (noPowderedGlass) {
+  				act = random(2,3);
+  			} else if (noCalamityBomb) {
+  				act = random(1,2);
+  			} else {
+  				act = random(1,3);
+  			}
+  			if (this.inventory.get("Powdered Glass") > 0 && act == 1) {
+  				$.wiki('<<randomTarget "smart">>');
+  				if (!target().alert && !target().chi && !target().stasis) {
+  					V().action = new ItemAction("Powdered Glass");
+  					action().actText = `Bonnibel pours what appears to be bright pink sugar onto her palm. She blows it into ${target().name}'s face, and they recoil and claw at their face as if they were shards of glass.`;
+  				}
+  			}
+  			else if (this.inventory.get("Grenade") > 0 && act == 2) {
+  				$.wiki('<<randomTarget "smart">>');
+  				V().action = new ItemAction("Grenade");
+  				action().act = splashDamage('p');
+  			}
+  			else if (this.inventory.get("Calamity Bomb") > 0 && act == 3) {
+  				$.wiki('<<randomTarget "smart" "debuff">>');
+  				V().action = new ItemAction("Calamity Bomb");
+  			}
+  		}
+  		else { // use multi-target item
+  			act = random(1,3);
+  			if (this.inventory.get("Gas Bomb") > 0 && act == 1) {
+  				V().action = new ItemAction("Gas Bomb");
+  				V().action.act = massAttack('p',"Poisoned",V().action.dur);
+  			}
+  			else if (this.inventory.get("Flamethrower") > 0 && act == 2) {
+  				V().action = new ItemAction("Flamethrower");
+  				action().actText = `Bonnibel assembles a flamethrower from components on her tool belt, and douses your puppets in flame.`;
+  				V().action.act = massAttack('p',"Burning",V().action.dur);
+  			}
+  			else if (this.inventory.get("Chaff Grenade") > 0 && act == 3) {
+  				V().action = new ItemAction("Chaff Grenade");
+  				V().action.weight = 1;
+  				V().action.dur = 3;
+  				V().action.actText = `Bonnibel lobs a grenade at you -- but to your surprise, when it explodes it leaves a massive cloud of shiny metal flakes. It just looks like silly confetti to you, but your puppets stutter and freeze up trying to see through all the flashing lights!`;
+  				V().action.act = massAttack('p',"Dizzy");
+  			}
+  		}
+  	}
+  }
+},
+"actions": function () {
+	while (V().action === null){
+		var act = random(1,100);
+		console.log("Bonnibel act = "+act);
+		var hasItem;
+		var stasisCount = 0;
+		var deadCount = 0;
+		enemies().forEach(function(enemy) {
+			if (enemy.stasis) {stasisCount++;}
+			if (enemy.dead) {deadCount++;}
+		});
+
+	/*
+	Rogue. Can use items freely, but has limited stock. Has 1 of each attack item + chaff grenade, puts rest of her points into drugs and Bottled Chi.
+
+	if SPC buffed, 75% chance to use attack item
+	normal:
+	50%: support
+	-first, check if anyone has >= 2 buffs and <= 1 ailment. If yes, they are added to a hitlist. If hitlist contains viable targets, 50% chance to use Stasis (target selection totally random). Otherwise...
+	-target is random, but (1-hp/maxhp) chance to reroll if they are below half health (don't waste items on doomed people)
+	-25%: bottled chi
+	-50%: buff drug for focus stat (Gumball gets 25% for all)
+	-12.5%: buff drug for other stat
+	20%: attack item
+	20%: off-balance one
+	10%/default: gun or reload
+	*/
+
+	this.inventory.forEach(function(stock,item) {
+		switch (item) {
+			case "Powdered Glass":
+			case "Grenade":
+			case "Calamity Bomb":
+			case "Flamethrower":
+			case "Gas Bomb":
+			case "Chaff Grenade":
+				if (stock > 0) {
+					hasItem = true;
+					break;
+				}
+		}
+	});
+
+	if (this.get("Special") > this.getBase("Special") && act <= 85 && hasItem === true) {
+		this.attackItemLogic();
+		this.inventory.inc(action().name,-1);
+		return;
+	}
+
+		act = random(1,100);
+		console.log("Special attack item check failed, new act = "+act);
+
+	if (stasisCount < (V().enemies.length - deadCount) && act <= 50) {
+		if (this.CDcheck("stasis")) {
+			var buffCount;
+			var ailmentCount;
+			var hitlist = [];
+			enemies().forEach(function(enemy) {
+				buffCount = 0;
+				ailmentCount = 0;
+				if (!enemy.stasis && !enemy.stunned){
+					enemy.effects.forEach(function(effect) {
+						if (effect.buff) {buffCount++;}
+						if (!effect.buff) {ailmentCount++;}
+					});
+					if (buffCount >= 2 && ailmentCount <= 1) {
+						hitlist.push(enemy);
+					}
+				}
+			});
+			if (hitlist.length > 0) {
+				act = random(0,hitlist.length-1);
+				V().B.target = hitlist[act];
+				V().action = new Action("Thaumastasis");
+				action().actText = `Bonnibel pulls a strange device out of her pocket, and points it at ${target().name}. There is an indescribable noise, and then the flow of magic around ${target().name} has frozen like amber.`;
+				this.cd.set("stasis",5);
+				return;
+			}
+		}
+		hasItem = false;
+		this.inventory.forEach(function(stock,item) {
+			switch (item) {
+				case "Bottled Chi":
+				case "Adrenaline":
+				case "Stoneskin":
+				case "Nootropic":
+					if (stock > 0) {
+						hasItem = true;
+						break;
+					}
+			}
+		});
+		if (hasItem) {
+			var keepGoing = true;
+			var chance;
+			while (keepGoing) {
+				$.wiki('<<allytarget "buff">>');
+				if (deadCount == 3) { // There is no point in rerolling if the user is the only viable target
+					keepGoing = false;
+				}
+				else if (target().name != "Bonnibel" && target().hp < (target().maxhp / 2)){ // Don't waste items on people who are about to die (but Bonnibel is a little selfish and excludes herself from this check)
+					chance = random(1,100);
+					if (chance < ((target().hp / target().maxhp) * 100)) {
+						keepGoing = false;
+					}
+				}
+				else {
+					keepGoing = false;
+				}
+			}
+			while (V().action === null) { // The hasItem check SHOULD prevent an infinite loop from occurring here, but be careful
+				act = random(1,8);
+				if (act <= 2 && this.inventory.get("Bottled Chi") > 0) {
+					V().action = new ItemAction("Bottled Chi");
+				}
+				else if (target().name == "Gumball") {
+					act = random(1,3);
+					switch (act) {
+						case 1:
+							if (this.inventory.get("Adrenaline") > 0) {V().action = new ItemAction("Adrenaline")};
+							break;
+						case 2:
+							if (this.inventory.get("Stoneskin") > 0) {V().action = new ItemAction("Stoneskin")};
+							break;
+						case 3:
+							if (this.inventory.get("Nootropic") > 0) {V().action = new ItemAction("Nootropic")};
+							break;
+					}
+				}
+				else {
+					switch (target().name) {
+						case "Bonnibel":
+							if (this.inventory.get("Nootropic") > 0 && act <= 6 && act > 2) {
+								V().action = new ItemAction("Nootropic");
+							}
+							else if (this.inventory.get("Stoneskin") > 0 && act == 7) {
+								V().action = new ItemAction("Stoneskin");
+							}
+							else if (this.inventory.get("Adrenaline") > 0 && act == 8) {
+								V().action = new ItemAction("Adrenaline");
+							}
+							break;
+						case "Dipper":
+							if (this.inventory.get("Adrenaline") > 0 && act <= 6 && act > 2) {
+								V().action = new ItemAction("Adrenaline");
+							}
+							else if (this.inventory.get("Stoneskin") > 0 && act == 7) {
+								V().action = new ItemAction("Stoneskin");
+							}
+							else if (this.inventory.get("Nootropic") > 0 && act == 8) {
+								V().action = new ItemAction("Nootropic");
+							}
+							if (V().B.dipper_drug_event != "done" && V().action !== null) {V().B.dipper_drug_event = "active";}
+							break;
+						case "Stevonnie":
+							if (this.inventory.get("Stoneskin") > 0 && act <= 6 && act > 2) {
+								V().action = new ItemAction("Stoneskin");
+							}
+							else if (this.inventory.get("Nootropic") > 0 && act == 7) {
+								V().action = new ItemAction("Nootropic");
+							}
+							else if (this.inventory.get("Adrenaline") > 0 && act == 8) {
+								V().action = new ItemAction("Adrenaline");
+							}
+							break;
+					}
+				}
+			}
+			this.inventory.inc(action().name,-1);
+		}
+	}
+	else if (act <= 80 && act > 50) {
+		this.attackItemLogic();
+		this.inventory.inc(action().name,-1);
+	}
+	else if (deadCount < 3 && act <= 90 && act > 80) { // no point in using this if she is only one left
+		$.wiki('<<randomTarget "ignore downed">>');
+		V().action = new Action("sonar");
+		action().useText = null;
+		action().actText = `Bonnibel pulls out a strange device and points it at ${target().name}. You hear a strange, high-pitched noise just on the edge of your hearing. It's easy enough for you to ignore, but ${target().name} can't seem to stand it -- they twitch and spasm, jerking backward and swaying.`;
+		action().act = justeffect('t',"Off-Balance",1);
+	}
+	else {
+		if (this.ready){
+			$.wiki('<<randomTarget "pierce">>');
+			V().action = new Action("shotgun");
+			action().weight = 1;
+			action().pierce = true;
+			action().useText = null;
+			action().actText = `Bonnibel blasts ${target().name} with her shotgun.`;
+			action().act = justdmg;
+			this.ready = false;
+		}
+		else {
+			V().action = new Action("load");
+			action().useText = null;
+			action().actText = `Bonnibel loads a cartridge into her shotgun.`;
+			action().act = null;
+			this.ready = true;
+		}
+	}
+
+	} /* end loop */
+	return;
+}
+}}}
+That's a lot, yeah? Let's break it down.
+{{{
+actor.inventory = new Map([
+		["Bottled Chi",3],
+		["Adrenaline",3],
+		["Stoneskin",3],
+		["Nootropic",3],
+		["Powdered Glass",2],
+		["Grenade",2],
+		["Calamity Bomb",2],
+		["Gas Bomb",1],
+		["Flamethrower",1],
+		["Chaff Grenade",1],
+		["Panacea",3]
+	]);
+}}}
+To begin with, I gave her an actual inventory with limited item stocks, just like the player's. I avoided doing this for Bubblegum's first fight, instead giving her an infinite stock of items but requiring her to spend two turns to use them, because I feared it would be too complicated. However, I realized that if I wanted to truly mirror the player's own abilities (as is the intended theme of the final fight), I'd have to do it this way. It actually wasn't as difficult to implement as I feared; but we will get into that shortly.
+
+We will revist {{{attackItemLogic}}} later. Let's look at the main {{{actions}}} function first.
+{{{
+var hasItem;
+var stasisCount = 0;
+var deadCount = 0;
+enemies().forEach(function(enemy) {
+	if (enemy.stasis) {stasisCount++;}
+	if (enemy.dead) {deadCount++;}
+});
+}}}
+The first thing you should notice is that we define additional variables here, not just the normal {{{act}}} randomizer. Because Bonnibel has a limited inventory stock, we need a variable that tells us whether or not she has the item she plans to use; and because she uses buff abilities, she needs to know if her allies have Stasis or are defeated -- if everyone is, there's no point in even considering using a buff.
+{{{
+this.inventory.forEach(function(stock,item) {
+	switch (item) {
+		case "Powdered Glass":
+		case "Grenade":
+		case "Calamity Bomb":
+		case "Flamethrower":
+		case "Gas Bomb":
+		case "Chaff Grenade":
+			if (stock > 0) {
+				hasItem = true;
+				break;
+			}
+	}
+});
+
+if (this.get("Special") > this.getBase("Special") && act <= 85 && hasItem === true) {
+	this.attackItemLogic();
+	this.inventory.inc(action().name,-1);
+	return;
+}
+}}}
+Then we get into the actual action selection logic. However, our first check is a special circumstance that occurs outside the normal action tree.
+
+Bonnibel's attack items are extremely valuable, so it makes sense that she should favor their use when she can get the most out of them; which is to say, when her Special stat is boosted. We can model this by giving her a higher chance of using an attack item than she would normally when {{{this.get("Special") > this.getBase("Special")}}}. However, this is hard to model within the same tree as other actions without interfering with the probabilities of those other actions. For instance, let's say a character takes one action at {{{act}}} values 0-30 and another at {{{act}}} values 31-50. Under a special circumstance, you want the character to take the first action 50% of the time instead. You could model this by telling them to perform the action {{{if (act <= 30 || (circumstance === true && act <= 50)}}}... but if you do not change the {{{act}}} range for the second action as well, now the character will <i>never</i> take that action if {{{circumstance}}} is {{{true}}}! All possible values for {{{act}}} that could trigger it will now trigger the first action instead, and so the second action will be ignored. In some cases, this may be what you want; but for most cases, it is easier to segregate these special actions away from the main {{{if}}} tree.
+
+Additionally, because Bonnibel has a limited inventory, we need to check if she has any items that match with this action at all; otherwise, running through this logic will be at best a waste of time, and at worst a glitch that will allow her to keep using items after she's exhausted them. We check this with a simple {{{forEach}}} loop run over her {{{inventory}}} attribute; if any of her attack items have a {{{stock}}} value greater than 0, she can use an attack item, and so we set {{{hasItem}}} to {{{true}}}.
+
+We've outsourced the actual details of this action to {{{attackItemLogic}}}, because the exact same logic will be used later in the tree. We will discuss it then.
+{{{
+act = random(1,100);
+}}}
+Finally, to avoid the crowding-out problem I just discussed, we have to reroll the {{{act}}} variable before entering the main tree; otherwise, no actions with {{{act}}} thresholds less than 85 would be possible!
+{{{
+if (stasisCount < (V().enemies.length - deadCount) && act <= 50)
+}}}
+We then enter Bonnibel's main action tree. Because I wanted Bonnibel to be more support-oriented, her support moves come first, and have a high probability of being used. However, because they're all buffs, it's worth checking if this branch is worth attempting at all. Remember, Stasis prevents the application of new effects, good or bad, so if every surviving character is in Stasis, buffs are useless. That's what we check with {{{stasisCount < (V().enemies.length - deadCount)}}}, using the variables we initialized at the beginning of the loop: this branch will only activate if the number of enemy characters with Stasis is less than the number of enemy characters remaining; i.e., if there are any viable targets for Bonnibel's buffs.
+
+This branch actually has two sub-branches. Bonnibel can use one of her buff items, or she can use Witch's "Thaumastasis" ability to give someone Stasis. The latter is simpler, so that comes first:
+{{{
+if (this.CDcheck("stasis")) {
+	var buffCount;
+	var ailmentCount;
+	var hitlist = [];
+	enemies().forEach(function(enemy) {
+		buffCount = 0;
+		ailmentCount = 0;
+		if (!enemy.stasis && !enemy.stunned){
+			enemy.effects.forEach(function(effect) {
+				if (effect.buff) {buffCount++;}
+				if (!effect.buff) {ailmentCount++;}
+			});
+			if (buffCount >= 2 && ailmentCount <= 1) {
+				hitlist.push(enemy);
+			}
+		}
+	});
+	if (hitlist.length > 0) {
+		act = random(0,hitlist.length-1);
+		V().B.target = hitlist[act];
+		V().action = new Action("Thaumastasis");
+		action().actText = `Bonnibel pulls a strange device out of her pocket, and points it at ${target().name}. There is an indescribable noise, and then the flow of magic around ${target().name} has frozen like amber.`;
+		this.cd.set("stasis",5);
+		return;
+	}
+}
+}}}
+Stasis is a risky buff to use, because it has potentially severe downsides: it prevents you from adding any other buffs for a long time, and any ailments the character has will be extended for the duration. For that reason, Bonnibel shouldn't just use it on anyone: we want her to check to make sure their number of buffs and ailments are within acceptable parameters. We can do this by running a {{{forEach}}} loop over the enemy party and tracking each character's number of buffs and ailments with {{{buffCount}}} and {{{ailmentCount}}}, respectively. If and only if the character has 2 or more buffs <i>and</i> 1 or fewer ailments, they become a viable target for Stasis and we add them to {{{hitlist}}}. (The character is not considered at all if they are Stunned, because that's too debilitating of an ailment to lock in Stasis no matter what.)
+
+The likelihood of these things aligning is so rare that I did not include any other checks against Thaumastasis, such as an {{{act}}} randomizer -- if Bonnibel can use it, she will always use it.
+
+If Bonnibel does not use Thaumastasis, she will move on to using one of her buff items.
+{{{
+hasItem = false;
+this.inventory.forEach(function(stock,item) {
+	switch (item) {
+		case "Bottled Chi":
+		case "Adrenaline":
+		case "Stoneskin":
+		case "Nootropic":
+			if (stock > 0) {
+				hasItem = true;
+				break;
+			}
+	}
+});
+}}}
+First, as with the attack items, we have to check to make sure she has any items to use in the first place. Since it's possible {{{hasItem}}} was flipped to {{{true}}} when checking for attack items, we have to reset it to {{{false}}} to avoid a false positive here. Otherwise, the check works exactly the same, with buff item names in place of attack item names.
+
+Then things get complicated.
+{{{
+if (hasItem) {
+	var keepGoing = true;
+	var chance;
+	while (keepGoing) {
+		$.wiki('<<allytarget "buff">>');
+		if (deadCount == 3) { // There is no point in rerolling if the user is the only viable target
+			keepGoing = false;
+		}
+		else if (target().name != "Bonnibel" && target().hp < (target().maxhp / 2)){ // Don't waste items on people who are about to die (but Bonnibel is a little selfish and excludes herself from this check)
+			chance = random(1,100);
+			if (chance < ((target().hp / target().maxhp) * 100)) {
+				keepGoing = false;
+			}
+		}
+		else {
+			keepGoing = false;
+		}
+	}
+}}}
+Before anything else, Bonnibel has to pick a target. We already have a widget for this scenario, {{{<<allytarget>>}}}... but Bonnibel's targeting is a little more complicated. Because her items are limited in stock, she shouldn't throw them around willy-nilly: if someone looks likely to die before they can use the buff, she's not going to waste it on them. Cold, but efficient! The way I modeled this logic is thus: select a target as normal with {{{<<allytarget>>}}}, and then check if that target is below half HP. If they are, roll a random percentile value, and if it's greater than the percentage of HP they have remaining, roll for a new target. This effectively means that characters have a chance of being selected equal to the proportion of HP they have remaining; someone with 40% HP left still has a decent chance of getting a buff, but someone at 10% HP is almost certainly going to get passed over. This is accomplished through a {{{while}}} loop tied to the aptly-named Boolean {{{keepGoing}}}; Bonnibel will keep selecting new targets until we set {{{keepGoing}}} to {{{false}}}, which occurs if she is the only viable target, if the target is above half health, or the target is below half health but passes its luck test.
+{{{
+while (V().action === null) { // The hasItem check SHOULD prevent an infinite loop from occurring here, but be careful
+	act = random(1,8);
+	if (act <= 2 && this.inventory.get("Bottled Chi") > 0) {
+		V().action = new ItemAction("Bottled Chi");
+	}
+	else if (target().name == "Gumball") {
+		act = random(1,3);
+		switch (act) {
+			case 1:
+				if (this.inventory.get("Adrenaline") > 0) {V().action = new ItemAction("Adrenaline")};
+				break;
+			case 2:
+				if (this.inventory.get("Stoneskin") > 0) {V().action = new ItemAction("Stoneskin")};
+				break;
+			case 3:
+				if (this.inventory.get("Nootropic") > 0) {V().action = new ItemAction("Nootropic")};
+				break;
+		}
+	}
+	else {
+		switch (target().name) {
+			case "Bonnibel":
+				if (this.inventory.get("Nootropic") > 0 && act <= 6 && act > 2) {
+					V().action = new ItemAction("Nootropic");
+				}
+				else if (this.inventory.get("Stoneskin") > 0 && act == 7) {
+					V().action = new ItemAction("Stoneskin");
+				}
+				else if (this.inventory.get("Adrenaline") > 0 && act == 8) {
+					V().action = new ItemAction("Adrenaline");
+				}
+				break;
+			case "Dipper":
+				if (this.inventory.get("Adrenaline") > 0 && act <= 6 && act > 2) {
+					V().action = new ItemAction("Adrenaline");
+				}
+				else if (this.inventory.get("Stoneskin") > 0 && act == 7) {
+					V().action = new ItemAction("Stoneskin");
+				}
+				else if (this.inventory.get("Nootropic") > 0 && act == 8) {
+					V().action = new ItemAction("Nootropic");
+				}
+				if (V().B.dipper_drug_event != "done" && V().action !== null) {V().B.dipper_drug_event = "active";}
+				break;
+			case "Stevonnie":
+				if (this.inventory.get("Stoneskin") > 0 && act <= 6 && act > 2) {
+					V().action = new ItemAction("Stoneskin");
+				}
+				else if (this.inventory.get("Nootropic") > 0 && act == 7) {
+					V().action = new ItemAction("Nootropic");
+				}
+				else if (this.inventory.get("Adrenaline") > 0 && act == 8) {
+					V().action = new ItemAction("Adrenaline");
+				}
+				break;
+		}
+	}
+}
+}}}
+Then it's time to pick which item Bonnibel uses. This is accomplished through a minature version of the greater action loop: Bonnibel will keep looping until she's selected an action. Note that this is why I was careful to exclude this branch entirely if she had no items to choose from; because this loop requires her to pick an item, if I didn't make that check, this could result in an infinite loop! We check to make sure she hasn't exhausted her stock with {{{this.inventory.get(<item name>) > 0}}} before each selection.
+
+Bonnibel has four items to pick from: Bottled Chi, Adrenaline, Stoneskin, and Nootropics. However, I added a twist to make her seem a little more tactical: she'll play to characters' existing strengths. She has a higher chance to use Nootropics on herself, the item-user; a higher chance to use Adrenaline on Dipper, the damager; and a higher chance to use Stoneskin on Stevonnie, the tank. (Gumball, the jack-of-all-trades, has an even chance of getting any item.) Because of the fixed options here, I rolled the {{{act}}} randomizer from 1 to 8 instead of the normal percentile value. Bottled Chi gets a 1/4 chance, the "strong" buff a 1/2 chance, and the "weak" buffs get 1/8 each.
+
+(As you can see in the inventory definition, I planned to give her status cure items as well. However, I decided designing logic for that was too much work and gave a general status cure ability to Dipper instead.)
+{{{
+this.inventory.inc(action().name,-1);
+}}}
+After the loop (meaning that an item was successfully selected), we decrement that item in the inventory so it's actually used up.
+{{{
+else if (act <= 80 && act > 50) {
+	this.attackItemLogic();
+	this.inventory.inc(action().name,-1);
+}
+}}}
+Next is the normal branch for using an attack item. Normally, Bonnibel has only a 30% chance of using one, as opposed to an 85% chance when her Special stat is boosted. Because the same action occurs in two different places, I outsourced its logic to a function.
+{{{
+this.attackItemLogic = function () {
+	while (V().action === null) { // hasItem check should prevent infinite loop but BE CAREFUL
+		var act = random(1,100);
+		var noPowderedGlass = false;
+		var noCalamityBomb = false;
+		var count = 0;
+
+		if (act <= 40) { // use single-target item
+			console.log("Bonnibel single-target attack item branch");
+			chiCheck(["alert","dead"]);
+			console.log("Chi check performed, count = "+count);
+			if (count == V().puppets.length) {
+				noPowderedGlass = true; // if all puppets are alert or dead, there are no viable targets for Powdered Glass
+			}
+			chiCheck(["dead"]);
+			if (count == V().puppets.length) {
+				noCalamityBomb = true; // if all puppets are protected or dead, there are no viable targets for Calamity Bomb
+			}
+			if (noPowderedGlass && noCalamityBomb) {
+				act = 2;
+			} else if (noPowderedGlass) {
+				act = random(2,3);
+			} else if (noCalamityBomb) {
+				act = random(1,2);
+			} else {
+				act = random(1,3);
+			}
+			if (this.inventory.get("Powdered Glass") > 0 && act == 1) {
+				$.wiki('<<randomTarget "smart">>');
+				if (!target().alert && !target().chi && !target().stasis) {
+					V().action = new ItemAction("Powdered Glass");
+					action().actText = `Bonnibel pours what appears to be bright pink sugar onto her palm. She blows it into ${target().name}'s face, and they recoil and claw at their face as if they were shards of glass.`;
+				}
+			}
+			else if (this.inventory.get("Grenade") > 0 && act == 2) {
+				$.wiki('<<randomTarget "smart">>');
+				V().action = new ItemAction("Grenade");
+				action().act = splashDamage('p');
+			}
+			else if (this.inventory.get("Calamity Bomb") > 0 && act == 3) {
+				$.wiki('<<randomTarget "smart" "debuff">>');
+				V().action = new ItemAction("Calamity Bomb");
+			}
+		}
+		else { // use multi-target item
+			act = random(1,3);
+			if (this.inventory.get("Gas Bomb") > 0 && act == 1) {
+				V().action = new ItemAction("Gas Bomb");
+				V().action.act = massAttack('p',"Poisoned",V().action.dur);
+			}
+			else if (this.inventory.get("Flamethrower") > 0 && act == 2) {
+				V().action = new ItemAction("Flamethrower");
+				action().actText = `Bonnibel assembles a flamethrower from components on her tool belt, and douses your puppets in flame.`;
+				V().action.act = massAttack('p',"Burning",V().action.dur);
+			}
+			else if (this.inventory.get("Chaff Grenade") > 0 && act == 3) {
+				V().action = new ItemAction("Chaff Grenade");
+				V().action.weight = 1;
+				V().action.dur = 3;
+				V().action.actText = `Bonnibel lobs a grenade at you -- but to your surprise, when it explodes it leaves a massive cloud of shiny metal flakes. It just looks like silly confetti to you, but your puppets stutter and freeze up trying to see through all the flashing lights!`;
+				V().action.act = massAttack('p',"Dizzy");
+			}
+		}
+	}
+}
+}}}
+This logic is similar to the support item logic. It's segregated into single-target items (Powdered Glass, Calamity Bombs, and Grenades) and items that don't require a target (Gas Bombs, Flamethrowers, and Chaff Grenades). There's some additional checks for Powdered Glass and Calamity Bombs using the {{{chiCheck}}} function; if all possible targets are Alert, there's no point in even considering the former, and likewise, there's no point in considering the latter if all possible targets have Chi Shield or Stasis. If either of those cases turn out to be true, they're removed as a possibility for selection.
+
+Bonnibel's other abilities are normal and should be straightforward to follow.
+
+Your takeaway from this example should be that <b>supportive AI is hard!</b> Just dealing damage is simple, but knowing when and how to strategically apply a buff is quite complicated -- even something as simple as personalizing buffs to certain characters required a huge {{{switch}}} statement. It's worthwhile to step back and analyze your own decisions when playing RPGs -- what goes through your mind when you decide who to pick for a buff or heal? What variables influce your decision? Can you think of how to translate your reasoning into code? It can be quite hard to account for every possibility!
+
+These examples should hopefully show you how to implement enemy behavior yourself. AI design is unfortunately not my forte, so many of these examples are relatively simplistic. If you ask around RPG design communities, they may be able to help you with more complex designs.
+
+<h2 id="encounters">Creating Encounters</h2>
+Once you've created your enemies, you still have to bundle them into an <i>encounter</i>. An encounter is a specific battle containing a party of enemies. Each one may correspond to, for example, a particular room of a dungeon, or to one of several possible random encounters.
+
+Encounters are defined in the {{{database-encounters.tw}}} file in the {{{passages-custom}}} folder. In this file, you'll see a widget called {{{<<callEncounter>>}}} that contains a {{{<<switch>>}}} statement keyed to the variable {{{$scenario}}}. Create a case statement for your scenario id and define your {{{$enemies}}} party variable within it. You can also add other variables, such as making the encounter an ambush or defining an aesthetic style. (Any string you assign to the {{{$B.style}}} property will be added to the passage body as a class for the duration of the battle.)
+
+There is another widget defined here, {{{<<populateEnemies>>}}}, to make your work a little easier. Instead of having to write {{{new Enemy}}} for every single enemy, just pass their names to {{{<<populateEnemies>>}}} and it'll automate that for you. Note that you will have to wrap the argument in backticks {{{`}}} for it to be read correctly.
+
+To start an encounter in-game, you can set the {{{$scenario}}} manually and make a direct link to the "Preparation" passage, or you can use the {{{<<fight>>}}} widget.
+{{{
+<<widget "fight">>
+<<if $args.length > 0>>
+	<<if typeof($args[1]) == "string">>
+		<<set _text = $args[1]>>
+	<<else>>
+		<<set _text = "BATTLE">>
+	<</if>>
+<center><<button _text "Preparation">><<set $scenario = $args[0]>><</button>></center>
+<<else>>
+	<b>ERROR in fight: no arguments</b>
+<</if>>
+<</widget>>
+}}}
+This widget provides a quick and standardized format for battle links. Pass the name of the encounter you want to call as the first argument, and custom text for the battle button as the second. By default, the button text will default to "BATTLE". The widget will create a centered button that forwards the player to the battle, all with just one widget call.
+
+<h2 id="customization">Customization</h2>
+Another RPG Engine is designed to be modular and to allow the user to customize features to suit their needs. This is handled through the passages stored in the {{{passages-custom}}} folder, which are slotted into core passages when needed.
+
+<h3 id="custom.init">Initial Variables</h3>
+<code>StoryInit</code> is a special passage that is run when the game starts. It is used to define many variables that determine several aspects of the engine, such as the color of health bars, the constants used in damage formulas, and the elements used for magic spells. These variables are set to certain defaults, but you can overwrite them with new specifications by editing {{{user storyinit.tw}}}.
+
+Most variables are explained in the comments of the <code>StoryInit</code> file, but this section will go into detail on some of the more complex ones:
+* {{{formula}}} determines the default damage formula used for attacks. A few options are provided by default. See [[Design]] for more information.
+* {{{statInfo}}} provides a tooltip description of every stat when the player hovers over its name in the party menu. This is helpful for communicating to your player what each stat does, especially if you use particularly complex or esoteric stats.
+** {{{statInfo}}} is also considered a database of every stat used in the game, so make sure it matches the stats you define for characters.
+* {{{hiddenStats}}} is an array of stat names that will be hidden in places where stats are normally displayed, such as the party menu.
+* {{{ELEMENT_LIST}}} is an array of names corresponding to all the elemental properties that will be used in your game.
+** {{{elementMessages}}} is an object containing messages that will be added to damage reports to show that an attack has hit an elemental weakness or resistance.
+* {{{MENU_OPTIONS}}} is an array of strings corresponding to what options the player can select in the party menu. For the options available in the default engine, see the "party menu" twee files. Additional options you will have to create yourself.
+* {{{STATUS_SCREENS}}} is an object of arrays of strings corresponding to what options the player can select in status panes. There are separate lists for the status menu, the in-battle status pane, and the bestiary. Additional options you will have to create yourself.
+* {{{DEFAULT_EQUIP_SLOTS}}} is an object that will be read to generate default equipment slots if no {{{equipSlots}}} object is provided in the character database entry. Keys correspond to equipment slots, values correspond to the number of subslots.
+* {{{THREAT_TARGETING}}} and {{{BATTLE_GRID}}} are Booleans that allow you to activate alternate gameplay styles. See [[Documentation (Advanced)]] for details on threat targeting and [[Additional Features]] for details on the battle grid.
+* The various animation variables determine the length of the battle popup animations, in milliseconds.
+
+This is also where you should define the player's starting party with the {{{$puppets}}} variable, and their starting inventory with the {{{$inventory}}} variable.
+
+<h3 id="custom.passages">Customizing Passages</h3>
+The passages in {{{passages-custom}}} are slotted into certain core passages through the {{{<<include>>}}} macro. By modifying these custom passages, you can customize various features without needing to alter the core passages.
+* {{{battle display mods actorlist}}} lets you conditionally add classes to the enemy or puppet displays in the battle layout, such as reversing the display order for certain encounters.
+* {{{battle interruptions}}} will appear during the action phase, after the action's {{{useText}}} but before its {{{actText}}}. You can make them appear conditionally based on encounter scenario or other variables. The interruptions for the Steven Universe encounter are provided as an example.
+* {{{custom battle preparation}}} is run at the end of the setup code before every battle. By default, it only adds the {{{<<restock>>}}} widget, which refreshes any items used during the battle.
+* {{{custom end of action effects}}} is run on every action, after followup attacks and potential surrender failure. Use it for any special action adjustments you want to make. By default, this only includes the EN refund for the "Focus" ability.
+* {{{custom end of battle}}} is run at the end of the {{{<<endofbattle>>}}} widget. By default, it only adds the {{{<<restock>>}}} widget, which refreshes any items used during the battle.
+* {{{custom newturn}}} is run at the end of the {{{<<newTurn>>}}} widget. By default, it regenerates puppet EN.
+* {{{damagecalc custom factors}}} is run at the end of {{{<<damageCalc>>}}}, the widget that runs damage calculation. Use it for any miscellaneous modifiers you want to apply to damage, such as the multipliers from Fighter's "Defender" and "Berserker" effects.
+* The various {{{formula}}} passages let you customize the formulas for various calculations, such as accuracy, critical rate, and damage.
+* {{{loss of control effects}}} handles the logic for loss-of-control effects, and is run at the start of every player turn. The default passage includes logic for the "Hatred", "Confusion", and "Charmed" effects, but you can add additional branches for your own effects.
+* {{{special battle lines}}} is displayed in-between the enemy and player parties in the battle screen. This is useful for displaying relevant in-battle messages, such as the progress for Mage's sunrise spell in the Marceline battle.
+* {{{special checks}}} is run at the start of the player turn, and is used to forward the player to special scenes, such as Dipper and Mabel's transformations, or to make other adjustments. By default, it includes the handler for loss-of-control effects.
+* {{{user storyinit}}} is appended to {{{StoryInit}}}, as previously discussed.
+
+Additionally, if you create a passage file with the same name as an existing passage, it will be overwritten when your game is compiled. This allows you to overwrite the default widgets and passages completely with your own versions if you need to radically change things -- but make sure you know what you're doing!

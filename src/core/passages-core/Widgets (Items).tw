@@ -1,0 +1,29 @@
+:: Widget: restock [widget nobr]
+/* Restock: sets starting inventory values for each battle. */
+<<widget "restock">>
+<<for _k, _v range $inventory>>
+	<<set _v.stock = _v.maxstock>>
+<</for>>
+<</widget>>
+
+:: Widget: itemDrop [widget nobr]
+<<widget "itemDrop">>
+<<set _item = new Item($args[0])>>
+<<if def $args[1] && typeof($args[1]) == 'number'>>
+	<<set _amt = $args[1]>>
+<<else>>
+	<<set _amt = 1>>
+<</if>>
+
+<<set _added = $inventory.addItem($args[0],_amt)>>
+<center>
+<div class="itembox">
+<b>_item.name<span style="float:right">x<<print _amt>></span></b><br/>
+<<print _item.info>><br/>
+<span class="actdesc"><<print _item.desc>></span>
+</div>
+<<if _added === false>>
+	<i>You can't hold any more of these! Use or sell some and then come back.</i>
+<</if>>
+</center>
+<</widget>>

@@ -1,0 +1,211 @@
+:: hotkey definitions
+<<event keydown>>
+	<<which 81>> /* Q pressed */
+		<<if $inbattle>>
+			<<switch $B.phase>>
+				<<case "command">>
+					<<if $B.subject !== null>>
+						<<set _id = "#actbtn a">>
+						<<trigger 'click' _id>>
+					<</if>>
+				<<case "actions">>
+					<<if typeof(subject().defaultAction) === "string">>
+						<<set _action = subject().actions.find(function (act) { return act && act.name === subject().defaultAction })>>
+						<<if _action instanceof Action>>
+							<<actionLink>>
+						<</if>>
+					<</if>>
+				<<case "confirm">>
+					<<trigger 'click' "#confirmLink a">>
+				<<case "selection">>
+					/* do nothing */
+				<<default>>
+					<<trigger 'click' "button.macro-button">>
+			<</switch>>
+		<<elseif passage() == "Menu: Inventory" && def _display>>
+			<<set _id = '#button1 button'>>
+			<<trigger 'click' _id>>
+		<</if>>
+	<<which 87>> /* W pressed */
+		<<if $inbattle>>
+			<<run console.log("W handler: inbattle")>>
+			<<switch $B.phase>>
+				<<case "command">>
+					<<if $B.subject !== null>>
+						<<set _id = "#restbtn a">>
+						<<trigger 'click' _id>>
+					<</if>>
+				<<case "actions">>
+					<<if typeof(subject().lastAction) === "string">>
+						<<set _action = subject().actions.find(function (act) { return act && act.name === subject().lastAction })>>
+						<<if _action instanceof Action>>
+							<<actionLink>>
+						<</if>>
+					<</if>>
+			<</switch>>
+		<<elseif passage() == "Menu: Inventory" && def _display>>
+			<<set _id = '#button2 button'>>
+			<<trigger 'click' _id>>
+		<<elseif !tags().includes("nomenu") && !tags().includes("noreturn")>>
+			<<run console.log("W handler: tags do not include nomenu or noreturn")>>
+			<<set $menu_screen = 0>>
+			<<goto "Menu: Status">>
+		<</if>>
+	<<which 69>> /* E pressed */
+		<<if $inbattle>>
+			<<switch $B.phase>>
+				<<case "command">>
+					<<if $B.subject !== null>>
+						<<set _id = "#itembtn a">>
+						<<trigger 'click' _id>>
+					<</if>>
+				<<case "actions">>
+					<<if document.getElementById("crisisLink")>>
+						<<set _id = "#crisisLink a">>
+						<<trigger 'click' _id>>
+					<</if>>
+				<<case "crisis">>
+					<<set _id = "#regularActions a">>
+					<<trigger 'click' _id>>
+			<</switch>>
+		<</if>>
+	<<which 82>> /* R pressed */
+		<<if $inbattle>>
+			<<switch $B.phase>>
+				<<default>>
+					<<if $('#battlebackbtn').length > 0>>
+						<<trigger 'click' '#battlebackbtn a'>>
+					<</if>>
+			<</switch>>
+		<<else>>
+			<<if passage() == "Menu: Status" && def _display>>
+				<<trigger 'click' '#toggle a'>>
+			<<elseif passage() == "Menu: Equipment" && def _s>>
+				<<trigger 'click' '#toggle a'>>
+			<<elseif passage() == "Menu: Inventory" && document.getElementById("cancelbutton")>>
+				<<set _id = '#cancelbutton button'>>
+				<<trigger 'click' _id>>
+			<<elseif passage() == "Menu: Bestiary" && def _display>>
+				<<trigger 'click' '#toggle a'>>
+			<<else>>
+				<<trigger 'click' '#menu-return a'>>
+			<</if>>
+		<</if>>
+	<<which 65>> /* A pressed */
+		<<if $inbattle || passage() == "Menu: Status" && def _display>>
+			<<trigger 'click' '#statusback a'>>
+		<<elseif passage() == "Menu: Bestiary" && def _display>>
+			<<trigger 'click' '#lastentry a'>>
+		<<else>>
+			<<set $menu_screen-->>
+			<<if $menu_screen < 0>>
+				<<set $menu_screen = setup.MENU_OPTIONS.length-1>>
+			<</if>>
+			<<set _menupos = "#menu"+$menu_screen+" a">>
+			<<trigger 'click' _menupos>>
+		<</if>>
+	<<which 68>> /* D pressed */
+		<<if $inbattle || passage() == "Menu: Status" && def _display>>
+			<<trigger 'click' '#statusforward a'>>
+		<<elseif passage() == "Menu: Bestiary" && def _display>>
+			<<trigger 'click' '#nextentry a'>>
+		<<else>>
+			<<set $menu_screen++>>
+			<<if $menu_screen >= setup.MENU_OPTIONS.length>>
+				<<set $menu_screen = 0>>
+			<</if>>
+			<<set _menupos = "#menu"+$menu_screen+" a">>
+			<<trigger 'click' _menupos>>
+		<</if>>
+	<<which 49>> /* 1 pressed */
+		<<numKey 0>>
+	<<which 50>> /* 2 pressed */
+		<<numKey 1>>
+	<<which 51>> /* 3 pressed */
+		<<numKey 2>>
+	<<which 52>> /* 4 pressed */
+		<<numKey 3>>
+	<<which 53>> /* 5 pressed */
+		<<numKey 4>>
+	<<which 54>> /* 6 pressed */
+		<<numKey 5>>
+	<<which 55>> /* 7 pressed */
+		<<numKey 6>>
+	<<which 56>> /* 8 pressed */
+		<<numKey 7>>
+	<<which 57>> /* 9 pressed */
+		<<numKey 8>>
+	<<which 48>> /* 0 pressed */
+		<<numKey 9>>
+	<<which 16>> /* Shift pressed */
+		<<if $inbattle>>
+			<<switch $B.phase>>
+				<<case "targeting">>
+					<<if _targetingEnemy === true>>
+						<<set _targetingEnemy = false>>
+					<<elseif _targetingEnemy === false>>
+						<<set _targetingEnemy = true>>
+					<</if>>
+					<<if $('#target_help').length > 0>>
+						<<replace '#target_help'>>[Hotkeys targeting <<if _targetingEnemy === true>>enemies<<else>>allies<</if>>. Press Shift to switch targets.]<</replace>>
+					<</if>>
+			<</switch>>
+		<</if>>
+	<<which 77>> /* M pressed */
+		<<if $muted === true>>
+			<<masteraudio unmute>>
+			<<set $muted = false>>
+			<<replace "#mutebutton">><<include "mute button">><</replace>>
+		<<else>>
+			<<masteraudio mute>>
+			<<set $muted = true>>
+			<<replace "#mutebutton">><<include "mute button">><</replace>>
+		<</if>>
+<</event>>
+
+:: Widget: numKey [widget nobr]
+<<widget "numKey">>
+/* Functionality for number hotkeys. By default, used to select characters in selection screens. */
+<<run console.assert($args.length > 0 && Number.isInteger($args[0]),"ERROR in numKey: key is undefined or non-integer")>>
+<<set _n = $args[0]>>
+
+<<if $inbattle>>
+	<<switch $B.phase>>
+		<<case "selection">>
+			<<if def $puppets[_n] && $puppets[_n] !== null && !$puppets[_n].isDone && !$puppets[_n].dead>>
+				<<set _id = "#pname"+_n+" a">>
+				<<trigger 'click' _id>>
+			<</if>>
+		<<case "targeting">>
+			<<switch $B.targeting>>
+				<<case "enemy">>
+					<<if !$enemies[_n].hidden>>
+						<<set _party = $enemies>>
+						<<set _id = "#ename">>
+					<</if>>
+				<<case "ally">>
+					<<set _party = $puppets>>
+					<<set _id = "#pname">>
+				<<case "all">>
+					<<if _targetingEnemy === true>>
+						<<set _party = $enemies>>
+						<<set _id = "#ename">>
+					<<elseif _targetingEnemy === false>>
+						<<set _party = $puppets>>
+						<<set _id = "#pname">>
+					<</if>>
+			<</switch>>
+			<<if def _party>>
+				<<set _id += _n+' a'>>
+				<<trigger 'click' _id>>
+			<</if>>
+	<</switch>>
+<<elseif passage() == "Menu: Status" && ndef _display>>
+	<<set _id = '#'+_n+' a'>>
+	<<trigger 'click' _id>>
+<<elseif passage() == "Menu: Equipment" && ndef _s>>
+	<<set _id = '#'+_n+' a'>>
+	<<trigger 'click' _id>>
+<</if>>
+
+<</widget>>

@@ -1,0 +1,9 @@
+:: custom newTurn[nobr]
+<<if $B.turn == "player" && passage() == "end of round">>
+	<<for _puppet range puppets()>>
+		<<if !_puppet.winded && !_puppet.petrified>>
+			<<set _puppet.en += _puppet.ENregen>>
+		<</if>>
+	<</for>>
+	<<set $B.item_used = false>>
+<</if>>

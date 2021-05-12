@@ -1,0 +1,54 @@
+:: music info[nobr]
+<<if def $music>>
+<div style="text-align:left">
+<div class="marqueeWrapper">
+    <div style="margin-right:0.5em">♪</div>
+    <div id="marquee"><span>$music.title</span></div>
+</div>
+<span style="font-size:14px">by $music.author <<if $music.distributor !== null>>via $music.distributor<</if>></span>
+<<if $music.license !== null>><br/>
+<<if $music.license.toLowerCase() == "permission">>
+Used with permission
+<<elseif $music.license.toLowerCase() == "public domain">>
+Public Domain
+<<else>>
+<<set _imgsrc = setup.ImagePath + "CC/" + $music.license + ".png">>
+<<switch $music.license>>
+	<<case "CC BY">>
+		<<set _imglink = "https://creativecommons.org/licenses/by/4.0/">>
+	<<case "CC BY-NC">>
+		<<set _imglink = "https://creativecommons.org/licenses/by-nc/4.0/">>
+	<<case "CC BY-NC-ND">>
+		<<set _imglink = "https://creativecommons.org/licenses/by-nc-nd/4.0/">>
+	<<case "CC BY-NC-SA">>
+		<<set _imglink = "https://creativecommons.org/licenses/by-nc-sa/4.0/">>
+	<<case "CC BY-ND">>
+		<<set _imglink = "https://creativecommons.org/licenses/by-nd/4.0/">>
+	<<case "CC BY-SA">>
+		<<set _imglink = "https://creativecommons.org/licenses/by-sa/4.0/">>
+	<<default>>
+		<<set _imglink = "">>
+<</switch>>
+<a @href=_imglink target="_blank"><img @src=_imgsrc /></a>
+<</if>>
+<</if>>
+<br/><span id="mutebutton"><<include "mute button">></span>
+</div>
+<</if>>
+
+:: mute button[nobr]
+<<if !$muted>>
+	<<set _imgsrc = setup.ImagePath + "ui/volume_on_outline.png">>
+	<img @src=_imgsrc /> <span style="position:relative; bottom:4px"><<link "[M]">>
+		<<masteraudio mute>>
+		<<set $muted = true>>
+		<<replace "#mutebutton">><<include "mute button">><</replace>>		
+	<</link>></span>
+<<elseif $muted === true>>
+	<<set _imgsrc = setup.ImagePath + "ui/volume_off_outline.png">>
+	<img @src=_imgsrc /> <span style="position:relative; bottom:4px"><<link "[M]">>
+		<<masteraudio unmute>>
+		<<set $muted = false>>
+		<<replace "#mutebutton">><<include "mute button">><</replace>>		
+	<</link>></span>
+<</if>>

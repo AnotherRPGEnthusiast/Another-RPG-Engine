@@ -1,0 +1,30 @@
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+  all: initial;
+  visibility: hidden;
+  width: 300px;
+  background-color:white;
+  text-align:center;
+  border:1px solid;
+  border-radius: 6px;
+  padding: 5px;
+
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 110%;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
+html.dyslexic .tooltiptext {
+  font-family: 'OpenDyslexic';
+}

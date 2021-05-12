@@ -1,0 +1,24 @@
+:: damageCalc custom factors[nobr]
+/* Any additional logic you want to add to damage calculation. Run after element logic, immediately before damage rounding. */
+
+<<if _target.invincible>>
+	<<set $dmg = 0; _noDmgFloor = true>>
+<<else>>
+
+<<if $B.subject.berserker is true>>
+	<<set $dmg *= (1+setup.BERSERK_FACTOR)>>
+<</if>>
+<<if _target.berserker is true>>
+	<<set $dmg *= (1+setup.BERSERK_FACTOR)>>
+<</if>>
+<<if $B.subject.defender is true>>
+	<<set $dmg *= setup.DEFEND_FACTOR>>
+<</if>>
+<<if _target.defender is true>>
+	<<set $dmg *= setup.DEFEND_FACTOR>>
+<</if>>
+<<if _target.shield is true>>
+	<<set $dmg *= (1-setup.SHIELD_FACTOR)>>
+<</if>>
+
+<</if>>

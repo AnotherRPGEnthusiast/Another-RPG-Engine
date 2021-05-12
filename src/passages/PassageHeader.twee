@@ -1,4 +1,0 @@
-:: PassageHeader
-<<if tags().includes("text")>>
-	<<include "navbar">>
-<</if>>

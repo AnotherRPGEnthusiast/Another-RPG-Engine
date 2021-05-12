@@ -1,0 +1,4 @@
+:: echoDamage threat gain [nobr]
+/* Default: Dragon Age style. Attacker gains threat equal to the percentage of maximum HP dealt. */
+<<set _threatGain = 1 * ($dmg / target().maxhp)>>
+<<run target().threat.inc(subject().name,_threatGain)>>

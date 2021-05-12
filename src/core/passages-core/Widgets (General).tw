@@ -1,0 +1,328 @@
+:: Widget: fight [widget nobr]
+<<widget "fight">>
+<<if $args.length > 0>>
+	<<if typeof($args[1]) == "string">>
+		<<set _text = $args[1]>>
+	<<else>>
+		<<set _text = "BATTLE">>
+	<</if>>
+<center><<button _text "Preparation">><<set $scenario = $args[0]>><</button>></center>
+<<else>>
+	<b>ERROR in fight: no arguments</b>
+<</if>>
+<</widget>>
+
+:: Widget: victorymessage [widget nobr]
+<<widget "victorymessage">>
+<<set _m = random(1,4)>>
+<<switch _m>>
+<<case 1>>
+You win!
+<<case 2>>
+Victory!
+<<case 3>>
+You've won!
+<<case 4>>
+You are victorious! /* this is a reference to an old game, cookies if you recognize it */
+<</switch>>
+<</widget>>
+
+:: Widget: victorycheck [widget nobr]
+<<widget "victorycheck">>
+<<set _victory to 0>>
+<<set _defeat to 0>>
+<<for _enemy range enemies()>>
+	<<if _enemy.dead>>
+		<<set _victory++>>
+	<</if>>
+<</for>>
+<<if _victory == enemies().length>>
+	<<set $B.victory = true>>
+	<<goto "Victory">>
+<</if>>
+<<for _puppet range puppets()>>
+	<<if _puppet.dead>>
+		<<set _defeat++>>
+	<</if>>
+<</for>>
+<<if _defeat == puppets().length>>
+	<<set $B.defeat = true>>
+	<<goto "Defeat">>
+<</if>>
+<</widget>>
+
+:: Widget: refreshPuppets [widget nobr]
+<<widget "refreshPuppets">>
+/* Refreshes puppets to resting states. Use this to tidy up any flags or changes that might occur in battle. */
+
+<<for _puppet range puppets()>>
+	<<set delete _puppet._displayHP>>
+	<<set _puppet.lastDmg = 0>>
+	<<set _puppet.isDone = false>>
+	<<set _puppet.inspired = false>>
+	<<set _puppet.lastAction = null>>
+	<<set _puppet.lastUsed = null>>
+	<<set _puppet.battleMsg = []>>
+	<<if !$lastingDamage || $reviveAfterBattle>>
+		<<set _puppet.dead = false>>
+		<<set _puppet.hp = Math.round(_puppet.maxhp * setup.RESPAWN_HP)>>
+	<</if>>
+	<<if !$lastingDamage>>
+		<<set _puppet.hp = _puppet.maxhp>>
+		<<set _puppet.en = 5>>
+	<</if>>
+	<<if !$actionRefillAfterBattle>>
+		<<for _action range _puppet.actions.filter(function (a) { return a.uses !== undefined })>>
+			<<run _action.refill()>>
+		<</for>>
+	<</if>>
+	<<for _action range _puppet.actions.filter(function (act) { return act.used === true })>>
+		<<run _action.used = false>>
+	<</for>>
+	<<for _action range _puppet.actions.filter(function (act) { return act.cd !== undefined })>>
+		<<run _action.cd = _action.warmup>>
+	<</for>>
+	<<for _effect range _puppet.effects.filter(function (eff) { return !eff.persistAfterBattle })>>
+		<<run _puppet.removeEffect(_effect, {pierce: true, unsticky: true})>>
+	<</for>>
+	<<for _k, _v range _puppet.tolerances>>
+		<<run _puppet.resetTol(_k)>>
+	<</for>>
+	<<if def _puppet._respawn>>
+		<<run _puppet._respawn.refill()>>
+	<</if>>
+	<<if def _puppet._retaliations>>
+		<<run _puppet._retaliations.refill()>>
+	<</if>>
+	<<set _x = _puppet.actions.find(function (a) { return a && a.name == "Reload" })>>
+	<<if def _x>>
+		<<set $B.subject = _puppet; _x.act()>>
+	<</if>>
+<</for>>
+<</widget>>
+
+:: Widget: chain [widget nobr]
+<<widget "chain">>
+/*
+<<for _i, _a range $args>>
+	<<if def $args[_i] and $args[_i] isnot null and $args[_i][1] isnot null>>
+		<<set $args[_i][0] = State.getVar($args[_i][1])>>
+	<</if>>
+<</for>>
+*/
+<<if $B.target !== null>>
+<<run getActor("target")>>
+<</if>>
+<<if $B.subject !== null>>
+<<run getActor("subject")>>
+<</if>>
+<<if $B.actor !== null>>
+<<run getActor("actor")>>
+<</if>>
+<</widget>>
+
+:: Widget: find [widget nobr]
+<<widget "find">>
+/* args0 is target array, args1 is attribute, args2 is key value */
+/* Note that if your key is a string, it must be in quotes in the final code, which means you must send it to the widget with an extra pair of literal quotes (preceeded by the escape slash) */
+<<print '<<set _pos = '+$args[0]+'.map(function(x) { return(x.'+$args[1]+') }).indexOf('+$args[2]+')>>'>>
+<</widget>>
+
+:: Widget: longreturn [widget nobr]
+<<widget "longreturn">>
+<<link "Return" $return>><</link>>
+<</widget>>
+
+:: Widget: deathcheck [widget nobr]
+<<widget "deathcheck">>
+<<if $args.length > 0>>
+	<<set _targ = $args[0]>>
+<<else>>
+	<<set _targ = target()>>
+<</if>>
+<<if _targ.hp <= 0 && !_targ.dead>>
+	<<if typeof(_targ.specialdeath) == "string" && !$B.specialdeath.includes(_targ.specialdeath)>>
+		<<run $B.specialdeath.push(_targ.specialdeath)>>
+	<<elseif !_targ.immortal>> /* This is necessary in the case of specialdeaths that don't actually kill the enemy, such as stage changes. If you want to run these cleanup functions, set the character's specialdeath flag to false and run deathcheck again in the special death passage. */
+		<<set _targ.dead to true>>
+		<<if _targ._deathMessage !== null>>
+			<<print _targ.deathMessage>>
+		<</if>>
+		<<if _targ instanceof Enemy>>
+			<<run $B.kills.push(_targ)>>
+			<<if def $bestiary && def $bestiary.fetch(_targ.name)>>
+				<<set  $bestiary.fetch(_targ.name).defeated++>>
+				<<if setup.ENEMY_DATA_ON_KILL>>
+					<<run $bestiary.fetch(_targ.name).revealAll()>>
+				<</if>>
+			<</if>>
+			<<if typeof(subject().kills) == 'number'>>
+				<<set subject().kills++>>
+			<</if>>
+			<<set $B.XPreward += _targ.xp; $B.moneyReward += _targ.gp>>
+			<<if $B.enemyTurns > 0 && _targ.noAttacks > 1>>
+				<<run $B.enemyTurns -= 1>>
+			<</if>>
+		<<elseif _targ instanceof Puppet>>
+			<<run _targ.defeats++>>
+		<</if>>
+
+		/* Remove all effects unless they are meant to persist past unconsciousness */
+		<<for _k, _effect range _targ.effects.filter(function (eff) { return !eff.persistAfterDeath; })>>
+			<<run _targ.removeEffect(_effect,{pierce: true, unsticky: true, noPopup: true})>>
+		<</for>>
+
+		/* If defeated character was protected, their protector's protection effect must be removed */
+		<<if _targ.protectedBy !== null>>
+			<<switch _targ.protectedBy.charAt(0)>>
+				<<case "p">>
+					<<set _targets = $puppets>>
+				<<case "e">>
+					<<set _targets = $enemies>>
+				<<default>>
+					<<run console.log("ERROR in deathcheck: protected character's protector has invalid ID")>>
+			<</switch>>
+			<<set _temp = _targets.find(function(t) { return t && t.id === _targ.protectedBy; })>>
+			<<print _temp.removeEffect("Protector",{pierce: true})>>
+		<</if>>
+
+	<<elseif _targ.immortal>>
+		<<if _targ._deathMessage !== null>>
+			<<print _targ.deathMessage>>
+		<</if>>
+	<</if>>
+<</if>>
+<</widget>>
+
+:: Widget: playMusic [widget nobr]
+<<widget "playMusic">>
+<<if $args.length > 0 && typeof($args[0]) == 'string'>>
+    <<set _trackId = $args[0].split(' ').join('_')>>
+	<<if !SimpleAudio.tracks.get(_trackId).isPlaying()>>
+		<<audio ":playing" stop>>
+	<</if>>
+    <<set $music = new Music($args[0])>>
+    <<if !$args.includes("instant") && !SimpleAudio.tracks.get(_trackId).isPlaying()>>
+        <<script>>
+		/* code provided by The Mad Exile */
+        var selector = State.temporary.trackId;
+        setTimeout(function () {
+            SimpleAudio.select(selector)
+                .loop(true)
+                .volume(1)
+                .play();
+        }, 500); /* in milliseconds */
+        <</script>>
+    <<else>>
+        <<audio _trackId volume 1 play loop>>
+    <</if>>
+	<<if document.getElementById("musicInfo")>>
+		<<replace "#musicInfo">><<include "music info">><</replace>>
+	<</if>>
+<<else>>
+    <<run console.log("ERROR in playMusic: non-string argument passed")>>
+<</if>>
+<</widget>>
+
+:: Widget: clearMusic [widget nobr]
+<<widget "clearMusic">>
+	<<audio ":playing" volume 1 stop>>
+	<<unset $music>>
+	<<if document.getElementById("musicInfo")>>
+		<<replace "#musicInfo">><<include "music info">><</replace>>
+	<</if>>
+<</widget>>
+
+:: Widget: typewriter [widget nobr]
+<<widget "typewriter">>
+    <!-- Create a SPAN with an ID -->
+  <span id="typewriter"></span>
+    <!-- In SugarCube, arrays start at 0 -->
+  <<set _textArrayLength to 0>>
+    <!-- Repeat every second -->
+  <<repeat $args[1]>>
+      <!-- Test if textArrayLength is greater than length of $args[0] -->
+      <<if _textArrayLength gte $args[0].length>>
+        <<stop>>
+      <<else>>
+      <!-- Append the current position to the existing characters -->
+      <<append "#typewriter">>$args[0][_textArrayLength]<</append>>
+      <!-- Update the length -->
+      <<set _textArrayLength++>>
+      <</if>>
+   <</repeat>>
+<</widget>>
+
+:: Widgets (Depreciated) [widget nobr]
+<<widget "neutralize">>
+/* DEPRECIATED as of v1.01. Use the dispelCalc() function in the actions database instead. */
+/* Determines effects to be removed by Neutralize and Restoration. */
+/* Because these actions are so similar, the same widget can be used for both. */
+
+<<if $B.target.stasis isnot true>>
+/* Stasis blocks any effect changes, so it blocks this too. */
+<<set _effects to $B.target.effects>> /* This is done just so you don't have to write out the longer name */
+<<for _i = (_effects.length-1); _i >= 0; _i-->>
+/* Loop runs over the effects array starting from the END and working backwards. This is why we can't use a "range" loop, because that only goes forwards. */
+	<<if $effects_to_remove <= 0>>
+		<<break>>
+/* The number of effects removed by Neutralize/Restoration varies depending on energy invested. If there are more effects than the spell can remove, we end the function here. Otherwise the spell would clear all effects regardless of strength! */
+	<</if>>
+	<<if $B.target instanceof Puppet is true>>
+		<<if _effects[_i].buff isnot true and _effects[_i].sticky isnot true>>
+/* Because there are fewer buffs than debuffs, a single "buff" flag is used to distinguish them. We only want Restoration to remove debuffs, so it will only trigger the removal code if the effect's buff flag is NOT true. */
+/* You may also want some effects to be irremovable. This is the purpose of the "sticky" flag, which is set in the story JavaScript. */
+			<<run $removed_effects.push(_effects[_i])>>
+			<<set $effects_to_remove -= 1>>
+		<</if>>
+	<<elseif $B.target instanceof Enemy is true>>
+		<<if _effects[_i].buff is true and _effects[_i].sticky isnot true>>
+			<<run $removed_effects.push(_effects[_i])>>
+			<<set $effects_to_remove -= 1>>
+		<</if>>
+	<</if>>
+<</for>>
+<</if>>
+<</widget>>
+
+<<widget "deathcheckOLD">>
+/* Old death check method that runs over all characters. Depreciated. */
+<<for _enemy range $enemies>>
+	<<if _enemy.hp <= 0 and _enemy.dead is false>>
+		<<set _enemy.hp = 0>>
+		<<run $B.kills.push(_enemy.name)>>
+		<<if _enemy.deathMessage is "special">>
+			<<print "\n\n...">>
+			<<set $B.specialdeath++>>
+		<<else>>
+			<<set _enemy.dead to true>>
+			<<print _enemy.deathMessage>>
+			<<for _effect range _enemy.effects>>
+				<<set _effect.duration to 0>>
+			<</for>>
+			<<effectmanager _enemy>> /* to strip effect flags, just in case they can still interfere during the turn */
+		<</if>>
+	<</if>>
+<</for>>
+<<for _puppet range puppets()>>
+	<<if _puppet.hp <= 0 and _puppet.dead is false>>
+		<<set _puppet.hp = 0>>
+		<<set _puppet.dead to true>>
+		<<print _puppet.deathMessage>>
+		<<for _effect range _puppet.effects>>
+			<<set _effect.duration to 0>>
+		<</for>>
+		<<effectmanager _puppet>>
+	<</if>>
+<</for>>
+<</widget>>
+
+<<widget "removeEffect">>
+/* DEPRECIATED as of v0.91. Use Actor.removeEffect instead. */
+<<set _actor = $args[0]>>
+<<set _effect = $args[1]>>
+<<if _actor.stasis is false or $args.includes("pierce")>>
+	<<set _effect.duration = 0>>
+	<<effectmanager _actor>>
+<</if>>
+<</widget>>

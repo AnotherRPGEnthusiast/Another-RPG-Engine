@@ -1,0 +1,11 @@
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url("fonts/OpenDyslexic-Regular.otf") format("otf"),
+  url("fonts/OpenDyslexic-Regular.woff") format("woff");
+}
+
+@font-face {
+  font-family: 'OpenDyslexicMono';
+  src: url("fonts/OpenDyslexicMono-Regular.otf") format("otf"),
+  url("fonts/OpenDyslexicMono-Regular.woff") format("woff");
+}

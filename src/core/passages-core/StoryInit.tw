@@ -1,0 +1,178 @@
+:: StoryInit
+<<include "hotkey definitions">>
+
+<<set setup.formula = "subtractive">>
+
+<<set setup.base = 80>> /* base constant for dmg formula */
+<<set setup.damper = 1>> /* damping factor for dmg formula */
+<<set setup.effbase = 30>> /* base constant for stat mods */
+<<set setup.effdamper = 0.5>> /* damping factor for stat mods */
+<<set setup.MIN_DMG = 1>> /* minimum damage */
+<<set setup.min_DoT = 1>> /* minimum DoT damage */
+<<set setup.min_buff = 0>> /* minimum buff effect */
+<<set setup.min_debuff = 5>> /* minimum debuff effect */
+
+/*	Tooltip information associated with each stat, to be displayed in the status menu.
+		Also used elsewhere as a reference for the identity of core stats. */
+<<set setup.statInfo = {
+	"Attack": "Increases damage of regular attacks by 1 per point.",
+	"Defense": "Reduces damage taken by 1 per point.",
+	"Special": "Improves effectiveness of status effects, mitigates received status ailments, and increases damage of item attacks by 1 per point.",
+	"Skill": "Increases critical hit chance by 1% per point.",
+	"Accuracy": "Increases attack accuracy by 1% per point.",
+	"Evasion": "Reduces incoming attack accuracy by 1% per point."
+}>>
+
+/*	These stats will not be displayed in the menu or status pane even if they are core stats
+		Entries must match stat names exactly, case-sensitive */
+<<set setup.hiddenStats = ["Skill","Accuracy","Evasion"]>>
+
+/*	Default equipment slots. Keys are the name of the slot, value is number of subslots (only considered if >1) */
+<<set setup.DEFAULT_EQUIP_SLOTS = {
+  "Weapon": 1,
+	"Armor": 1,
+	"Accessory": 2
+  }>>
+
+/* An array of all the elements that will appear in your game, in the order you wish for them to be displayed on the elemental resistances screen. The Actor constructor will automatically initialize everyone's values for these strings to 1. Note that any use of these elements must be set to EXACTLY the same string, case-sensitive. */
+<<set setup.ELEMENT_LIST to ["black","white","red","blue","yellow"]>>
+
+<<set setup.elementMessages = {
+		weakpoint: "Super effective!",
+		resist: "It's not very effective...",
+		immune: "No effect!",
+		absorb: "Absorbed!"
+	}>>
+
+/* An array of all additional status screens you want displayed in the status box. There are separate lists for the menu status screen and the battle status pane, if you want different information displayed in each. If you set one of the attributes to an empty array or unset it entirely, the arrow buttons will not display at all, and the player will only see the default screen. */
+<<set setup.STATUS_SCREENS to {
+	menu: ["equipment","elements","ailments"],
+	bestiary: ["stats","elements","ailments","rewards"],
+	battle: ["elements","ailments"]
+	}>>
+
+<<set setup.MENU_OPTIONS = ["Status","Inventory","Equipment","Party"]>>
+
+<<set $currency = 0>>
+<<set setup.CURRENCY_NAME = "GP">>
+/* This is the name that will be displayed every time the game refers to currency. By default it is the Dungeons & Dragons standard, GP for "gold pieces". */
+
+/* Set whether to show animations in battle. */
+<<set setup.ANIMATIONS = true>>
+
+/* Set whether to show health meters in battle. */
+<<set setup.SHOW_HEALTHBARS = true>>
+
+<<set setup.ENEMY_BAR_COLOR = "#cc0000">>
+<<set setup.PLAYER_BAR_COLOR = "green">>
+<<set setup.MP_BAR_COLOR = "blue">>
+<<set setup.HEALTH_BAR_TIME = "500ms">> /* animation duration for health bar updates (after taking damage, etc.) */
+
+<<set setup.PORTRAITS = false>>
+<<set setup.SHOW_MP = true>>
+
+/* Set whether to display soak and flat regen in status screens. If you don't use either, you can set these to false for clarity. */
+<<set setup.SOAK = true>>
+<<set setup.FLAT_REGEN = true>>
+
+/* Variables for determining lasting damage. By default, puppets are fully restored after every battle. See refreshPuppets for more info. */
+<<set $lastingDamage = false>>
+<<set $reviveAfterBattle = true>>
+<<set $actionRefillAfterBattle = true>>
+
+/* Initializing constants that will be used elsewhere. DON'T define variables that will be used in JavaScript database definitions here, as StoryInit is run after JavaScript initialization. */
+<<set setup.ENregen = 2>>
+<<set setup.STRUGGLE_COST = 2>>
+<<set setup.BERSERK_FACTOR = 0.5>>
+<<set setup.DEFEND_FACTOR = 0.5>>
+<<set setup.SHIELD_FACTOR = 0.3>>
+<<set setup.ITEM_COST = 2>> /* EN cost of using items */
+<<set setup.RESPAWN_HP = 1>> /* proportion of HP that respawned characters will revive at */
+<<set setup.THREAT_DECAY = 0.10>> /* threat decay per round */
+<<set setup.ITEM_MAX = 9>> /* maximum of each item that can be stored in inventory */
+<<set setup.PARTY_SIZE = 3>>
+<<set setup.ACCURACY_RATE = true>> /* default accuracy of attacks in percent value or Boolean, default always-accurate */
+<<set setup.MIN_ACCURACY = 0>> /* minimum accuracy rate if reduced by e.g. evasion stat */
+<<set setup.CRITICAL_RATE = 0>> /* default critical hit rate in percent value, default 0% (no crits) */
+<<set setup.CRITICAL_MULTIPLIER = 1.5>> /* default multiplier for critical hit damage */
+<<set setup.CRISIS_FACTOR = (10/7)>> /* multiplied by dmg/maxhp to get crisis points per hit, at 1 target must take 100% max HP to fill Crisis */
+<<set setup.DURATION_MAX = 9>> /* maximum turns a status effect can last */
+<<set setup.FIREFLY_FACTOR = 2>> /* targeting probability multiplier for characters with Firefly */
+<<set setup.WALLFLOWER_FACTOR = 0.5>> /* targeting probability multiplier for characters with Wallflower */
+<<set setup.INDEFINITE_EFFECT_MULTIPLIER = 2>> /* multiplier for effect threat value for indefinite effects */
+<<set setup.EFFECT_THREAT_CUT = 4>> /* divisor for threat addition based on duration */
+<<set setup.PRAGMATIC_CUTOFF = 0.5>> /* proportion of HP a character must lose to be excluded from pragmatic targeting */
+<<set setup.RUTHLESS_FACTOR = 3>> /* multiplied by remaining HP proportion when calculating targeting for "ruthless" attacks */
+
+<<set setup.MISS_MESSAGE = "$B.subject.name misses!">>
+<<set setup.CRIT_MESSAGE = "<b>Critical hit!</b>">>
+
+<<set setup.STATUS_BUTTON = "[*]">> /* Text used for the appearance of the status button */
+
+<<set setup.popupMod = {
+		weakpoint: "orange",
+		resist: "gray",
+		crit: "gold"
+	}
+>>
+
+<<set $difficulty to "hard">>
+/*
+Hard: smart targeting will only target vulnerable characters
+Medium: smart targeting gives preference to vulnerable characters
+Easy: no smart targeting
+*/
+
+<<set $inventory = new Inventory([])>>
+
+/* This is a controller object. Use it to store any variables you don't want to persist after battles. Then, instead of having to remember and reset every variable, just reset this to a blank object. */
+<<set $B = {}>>
+
+/* Stores whether encounters have been fought. Useful if you want to be able to quickly refer to them e.g. to allow the player to progress after they have defeated an encounter in a certain passage. */
+<<set $encounters = {}>>
+
+/* Initializing miscellaneous variables. */
+<<set $action to null>>
+<<set $effects_to_remove = 0>>
+<<set $removed_effects = []>>
+<<set $tutorial to false>>
+<<set $inbattle to false>>
+<<set $LevelUps = []>>
+
+/* Determines whether the action list shows full action data or not. If true, hovering over an action will display a tooltip with the full action information. */
+<<set setup.COMPRESSED_ACTIONS = true>>
+
+/* Set whether to display the confirm phase in battle. This can be toggled by the user in the UI bar. */
+<<set setup.SHOW_CONFIRM = true>>
+
+/* Set whether to automatically end the player's turn. This can be toggled by the user in the UI bar. */
+<<set setup.AUTO_ENDTURN = true>>
+
+/* Set whether to use threat-based/aggro targeting. Turned off by default. */
+<<set setup.THREAT_TARGETING = false>>
+
+/* Set whether to use a 3x3 battle grid or a standard lineup. Turned off by default. */
+<<set setup.BATTLE_GRID = false>>
+
+/* Set whether to use turn exchange (force an enemy action for every player action). Turned off by default. */
+<<set setup.TURN_EXCHANGE = false>>
+
+/* Determine how multiple-element attacks calculate affinity factors.
+		-true: Damage modifier will be the average of all of the target's affinities
+			ex/ If target takes 0.5x damage from Red and 1x damage from Blue, a dual Red & Blue attack will inflict x0.75
+		-false: Damage modifier will find the best (for the attacker) of all the target's affinities
+			ex/ If target takes 0.5x damage from Red and 1x damage from Blue, a dual Red & Blue attack will inflict x1
+*/
+<<set setup.AVERAGE_ELEMENTS = true>>
+
+/* Set whether to reveal all enemy data on kill. */
+<<set setup.ENEMY_DATA_ON_KILL = true>>
+
+/* Time values for hit animations, in ms. */
+<<set setup.ANIM_WINDUP = 750;
+	setup.ANIM_DURATION = 750;
+	setup.DMG_DURATION = 1000;
+	setup.ANIM_DELAY = 600;>>
+
+<<include "User-defined variables">>
+/* Put any additional variables and code you want to run during StoryInit here so you don't have to juggle multiple files on a version update. */

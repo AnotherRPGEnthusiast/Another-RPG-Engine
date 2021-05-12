@@ -1,0 +1,32 @@
+:: Installation[text]
+<b>IMPORTANT NOTE: Another RPG Engine uses ES6 components and may not function on all browswers. Google Chrome and Firefox should work, but other browsers may not. If you encounter errors, make sure you are using the most current version of your browser.</b>
+
+Another RPG Engine contains a lot of components. To use them all together, you will need a special compiler.
+
+I use <a href="http://www.motoslave.net/tweego/" target="_blank">Tweego</a>, which has an installer <a href="https://github.com/ChapelR/tweego-installer" target="_blank">here</a>. <b>Note the instructions regarding <code>StoryData</code> if you do not wish to use Twine to create your project.</b>
+
+Once you have everything set, you can open your comand prompt (search "cmd" in Windows) and use the "tweego" command to compile Twine stories. If you place your story file in a folder with JavaScript, CSS, and twee files, and target that folder with the "tweego" command, they will all be bundled together. The default download package has already lumped these into a "src" folder for you.
+
+The "src" folder is grouped into the following subfolders:
+* {{{javascript}}}, for JavaScript files
+** {{{core}}}, for core files necessary for the engine's function
+** {{{custom}}}, for user-defined elements such as character definitions
+* {{{macros-additional}}}, third-party SugarCube macros not included in the default SugarCube package
+* {{{passages-core}}}, for Twee files necessary for the engine's function
+* {{{passages-custom}}}, for optional mods and your own Twee files
+* {{{stylesheets}}}, for CSS stylesheets
+
+In the final product, everything will become part of the same story. However, there are a few rules that you must keep in mind:
+
+<b>If there is a conflict in the data between two story files</b>, such as passages with the same names, <b>the last file compiled will overwrite the first.</b> Tweego will compile files in the same order they are seen in the directory, which generally means in alphabetical order. Fortunately, "passages-custom" comes after "passages-core", so any unique passages you make will overwrite the defaults.
+
+However, <b>be careful if you have any passages with the same names</b>. If anything in the engine gets overwritten, the whole thing could break. This probably won't be a problem for most passages, but <b>be aware that the engine uses the special passages StoryInit, PassageReady, and PassageDone.</b> You will likely want to use these passages for your own purposes in your story, so make sure there is no conflict in the core files.
+
+Another resource you may find helpful is <a href="https://www.johnayliff.com/works.html" target="_blank">a SugarCube language definition for Notepad++</a>, by John Ayliff. SugarCube does not have a default language definition in Twine, so this may be helpful for organizing your code. Click on "save link as", save the file anywhere on your computer, and import the file under Language -> User Defined Language in Notepad++. If you use a different coding environment, there is also <a href="https://github.com/otommod/twee-sugarcube.vim" target="_blank">a .vim version</a> by otommod.
+
+The engine uses ChapelR's custom SugarCube macros, the documentation for which can be found <a href="https://twinelab.net/custom-macros-for-sugarcube-2/#/" target="_blank">here</a>.
+
+<b>Summary:</b>
+* Download Tweego <a href="http://www.motoslave.net/tweego/" target="_blank">here</a>. If you can't follow the directions, use the installer <a href="https://github.com/ChapelR/tweego-installer" target="_blank">here</a>.
+* You can compile multiple story and twee files at once, but later conflicts will overwrite earlier ones.
+* Store customized engine passages in passages-custom to avoid conflicts.

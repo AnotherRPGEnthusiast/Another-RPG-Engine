@@ -1,0 +1,11 @@
+:: crit formula[nobr]
+<<set _critChance = $action.critRate>>
+<<set _toCrit = random(1,100)>>
+<<if subject().stats.hasOwnProperty("Skill")>>
+  <<set _critChance += subject().get("Skill")>>
+<</if>>
+<<if _toCrit <= _critChance>>
+  <<print setup.CRIT_MESSAGE+" ">>
+  <<set $dmg *= $action.critMultiplier>>
+  <<set _crit = true>>
+<</if>>

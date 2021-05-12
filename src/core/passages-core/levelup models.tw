@@ -1,0 +1,118 @@
+:: Widgets: Leveling Up[nobr widget]
+<<widget "levelcheck">>
+<<set _keepGoing = true; $LevelUps = []>>
+<<for _keepGoing === true>>
+	<<set _keepGoing = false>>
+	<<for _puppet range $puppets>>
+		<<if _puppet !== null>>
+			<<if _puppet.level < setup.LEVEL_CAP && _puppet.xp >= _puppet.XPtoNext()>>
+				<<run _puppet.level++; $LevelUps.push(_puppet)>>
+				<<set _keepGoing = true>>
+				/* This is needed if you want it to be possible for characters to level up multiple times within the same widget call. This ensures the whole check will be done again to check if the puppet's XP matches the requirement for the next level too. */
+			<</if>>
+		<</if>>
+	<</for>>
+<</for>>
+<</widget>>
+
+<<widget "LevelUp">>
+/* To implement this, you will need to enable the level up code detailed in the story JavaScript. */
+
+<<set $B.subject = $args[0]>>
+<<run getActor("subject")>>
+
+<<set _num = 1>>
+
+$B.subject.name has reached Level <<print $B.subject.level>>!<br/>
+
+<<for _pn, _rate range $B.subject.growthRates>>
+	<<run $B.subject.stats[_pn].base += _rate>>
+	<<print _pn>> +<<print _rate>> = <b><<print $B.subject.getBase(_pn)>></b><br/>
+<</for>>
+
+/* You could also make the growth rate a formula that changes based on level. You could calculate it through a function similar to XPtoNext. */
+
+/* Alternatively, use a stat table with unique returns for each level: */
+<<set _return = $B.subject.StatTable(subject().level)>>
+<<if typeof(_return) == 'string'>>
+	/* If only a string is returned, this assumes it is a stat name, and will increment the stat by a default amount (here, 1). */
+	<<run $B.subject.stats[_return].base += 1>>
+	<<print _return>> +1 = <<print $B.subject.getBase(_return)>>
+<<elseif _return instanceof Action>>
+	/* If an action is returned, it will be added to the character's actions. */
+	<<run subject().actions.push(_action)>>
+<<elseif typeof(_return) == 'object'>>
+	/* If an object is returned, behaves like growthRates. */
+	<<for _pn, _rate range _return>>
+		<<if _pn.toLowerCase() == "hp">>
+			<<run subject().maxhp += _rate>>
+		<<else>>
+			<<run $B.subject.stats[_pn].base += _rate>>
+		<</if>>
+		<<print _pn>> +<<print _rate>> = <b><<print $B.subject.getBase(_pn)>></b><br/>
+	<</for>>
+<<else>>
+	<<print "ERROR in StatTable: undefined result">>
+<</if>>
+<br/>
+
+<<if ($B.subject.level % _num) == 0>>
+/* This is a handler for if you want to provide a special bonus at certain intervals. For instance, Dungeons & Dragons provides a stat point every 4 levels. This if case will trigger every _num levels. */
+<</if>>
+<br/>
+<br/>
+<center><<button "Continue" "Level Check">><</button>></center>
+<</widget>>
+
+:: Point-buy interface example[nobr nomenu]
+/* Presumably the player would get here by clicking a link from a menu passage of some kind. We'll assume this link set the $subject variable to the character in question. */
+
+<<set $subject = $puppets[0]>>
+<<set $subject.statPoints = 3>>
+
+<<set _curr = new Map()>>
+<<run _curr.set("points",$subject.statPoints)>>
+
+<<for _key, _value range $subject.stats>>
+	<<run _curr.set(_key,_value.base)>>
+<</for>>
+
+<div id="stats">
+<<include "statblock">>
+</div>
+
+/* This is for a regular stat point system. For a more complex point-buy system, you'd just use the "getStatCost" function and check stat points/XP against that instead of 0. */
+
+<br/>Leaving this screen will make stat investments permanent!<br/>
+<br/>
+<<return>>/* Presumably you would have a link back to the menu or whatever here */
+
+:: statblock[nobr]
+Leveling up $subject.name!<br/>
+<br/>
+Current stat points: $subject.statPoints / <<print _curr.get("points")>><br/>
+<<for _key, _value range $subject.stats>>
+<<capture _key, _value>>
+	<span class="statname"><<print _key>>:</span> _value.base
+	<<if $subject.statPoints > 0>>
+	[<<link "+">>
+		<<replace "#stats">>
+			<<run _value.base++>>
+			<<run $subject.statPoints-->>
+			<<include "statblock">>
+		<</replace>>
+	<</link>>]
+	<</if>>
+	<<if $subject.statPoints > 0 and _value.base > _curr.get(_key)>> / <</if>>
+	<<if $subject.statPoints < _curr.get("points") and _value.base > _curr.get(_key)>>
+	[<<link "-">>
+		<<replace "#stats">>
+			<<run _value.base-->>
+			<<run $subject.statPoints++>>
+			<<include "statblock">>
+		<</replace>>
+	<</link>>]
+	<</if>>
+	<br/>
+<</capture>>
+<</for>>

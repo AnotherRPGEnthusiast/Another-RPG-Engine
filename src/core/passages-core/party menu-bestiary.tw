@@ -1,0 +1,211 @@
+:: Menu: Bestiary[menu battle noreturn nobr]
+<span id="content" class="menu" style="padding:0">
+<div id="bestiary">
+	<<include "bestiary-list">>
+</div>
+</span>
+
+:: bestiary-list[nobr]
+<div class="bestiary-header">
+BESTIARY<br/>
+<span class="smalltext">Click an enemy name to see detailed information.</span>
+</div>
+<div class="bestiary-container">
+<<for _i, _enemy range $bestiary>>
+	/* if even (no remainder from modulo 2), go on right side (column 3), else go on left side (column 1) */
+	<<if (_i+1) % 2 === 0>>
+		<<set _col = 3>>
+	<<else>>
+		<<set _col = 1>>
+	<</if>>
+	<div class="bestiary-numbering" @style="'grid-column:'+_col">
+		<<print _enemy.bestiaryNo>>.
+	</div>
+	<div class="bestiary-entry" @style="'grid-column:'+(_col+1)">
+		<<if _enemy.encountered>>
+			<<set _name = $bestiary.fetch(_enemy.name).access().fullname>>
+			<<capture _enemy>>
+			<<link "_name">>
+				<<set _display = clone(_enemy); _stScreen = 1>>
+				<<replace "#bestiary" t8n>><<include "bestiary-display">><</replace>>
+			<</link>>
+			<</capture>>
+		<<else>>
+			????
+		<</if>>
+	</div>
+<</for>>
+</div>
+
+:: bestiary-display[nobr]
+<div class="bestiary-display">
+	<div id="toggle" class="bestiary-name">
+		<<set _name = _display.access().fullname>>
+		<<link _name>>
+			<<unset _display>>
+			<<replace "#bestiary" t8n>><<include "bestiary-list">><</replace>>
+		<</link>>
+		<div class="bestiary-display-numbering">
+			#<<print _display.bestiaryNo>><br/>
+			<span id="lastentry">
+			<<link "⬅">>
+				<<set _display = clone($bestiary.lastEntry(_display.bestiaryNo-1))>>
+				<<replace "#bestiary" t8n>><<include "bestiary-display">><</replace>>
+			<</link>>
+			</span>
+			&nbsp;
+			<span id="nextentry">
+			<<link "⮕">>
+				<<set _display = clone($bestiary.nextEntry(_display.bestiaryNo-1))>>
+				<<replace "#bestiary" t8n>><<include "bestiary-display">><</replace>>
+			<</link>>
+			</span>
+		</div>
+	</div>
+	<div class="bestiary-detail">
+		<div class="monospace bestiary-form-container">
+		<<if _display.altsKnown>>
+			<span class="bestiary-form-entry">
+				<<set _formName = (setup.enemyData[_display.name].bestiaryName || _display.name)>>
+				<<if _display.altSkin === null>>
+					<b><<print _formName>></b>
+				<<else>>
+					<<link "_formName">>
+						<<set _display.altSkin = null>>
+						<<replace "#bestiary">><<include "bestiary-display">><</replace>>
+					<</link>>
+				<</if>>
+			</span>
+			<<for _pn, _v range _display.altsKnown>>
+				<<if _v === true>>
+					<span class="bestiary-form-entry">
+						<<set _formName = (setup.enemyData[_pn].bestiaryName || _pn)>>
+						<<if _display.altSkin == _pn>>
+							<b><<print _formName>></b>
+						<<else>>
+							<<capture _pn>>
+							<<link "_formName">>
+								<<set _display.altSkin = _pn>>
+								<<replace "#bestiary">><<include "bestiary-display">><</replace>>
+							<</link>>
+							<</capture>>
+						<</if>>
+					</span>
+				<</if>>
+			<</for>>
+		<<else>>
+			&nbsp;
+		<</if>>
+		</div>
+		<div class="bestiary-detail-container">
+			<div id="bestiary-infoblock" class="monospace">
+				<<include "bestiary infoblock">>
+			</div>
+
+			<div class="bestiary-desc">
+				<<print _display.desc>>
+			</div>
+		</div>
+
+		<div class="abilities-header">ABILITIES</div>
+		<div>
+			<<print _display.abilityInfo>>
+		</div>
+
+		<div class="bestiary-defeated-count">
+			Defeated: <<print _display.defeated>>
+		</div>
+	</div>
+</div>
+
+:: bestiary infoblock[nobr]
+<div style="position:relative">
+	<<switch setup.STATUS_SCREENS.bestiary[_stScreen-1]>>
+		<<case "elements">>
+			<<set _title = "elemental affinities">>
+		<<case "ailments">>
+			<<set _title = "ailment tolerances">>
+		<<default>>
+			<<set _title = setup.STATUS_SCREENS.bestiary[_stScreen-1]>>
+	<</switch>>
+	<div class="menuactor-special-title">_title</div>
+	<<if setup.STATUS_SCREENS.bestiary.length > 1>>
+	<div class="cyclebuttons" style="right:0">
+		<<link "<">>
+			<<set _stScreen-->>
+			<<if _stScreen < 1>>
+				<<set _stScreen = setup.STATUS_SCREENS.bestiary.length>>
+			<</if>>
+			<<replace "#bestiary-infoblock">><<include "bestiary infoblock">><</replace>>
+		<</link>>
+		<<link ">">>
+			<<set _stScreen++>>
+			<<if _stScreen > setup.STATUS_SCREENS.bestiary.length>>
+				<<set _stScreen = 1>>
+			<</if>>
+			<<replace "#bestiary-infoblock">><<include "bestiary infoblock">><</replace>>
+		<</link>>
+	</div>
+	<</if>>
+</div>
+<<switch setup.STATUS_SCREENS.bestiary[_stScreen-1]>>
+<<case "stats">>
+	<div style="display:grid; grid-auto-rows:auto; grid-template-columns: 75% 25%; width:75%">
+		<div>HP:</div>
+		<div style="text-align:right">
+			<<print _display.get("hp")>>
+		</div>
+		<<for _k, _v range setup.statInfo>>
+			<<if !setup.hiddenStats.includes(_k)>>
+				<div style="text-transform:uppercase"><<print _k>>:</div>
+				<div style="text-align:right">
+					<<print _display.get(_k)>>
+				</div>
+			<</if>>
+		<</for>>
+	</div>
+<<case "rewards">>
+	<div style="display:grid; grid-template-columns: 50% 50%;">
+		<div>
+			XP: <<print _display.get("XP")>>
+		</div>
+		<div>
+			GP: <<print _display.get("GP")>>
+		</div>
+	</div><br/>
+	<center>ITEM DROPS</center>
+	<<set _itemTable = _display.itemDrops>>
+	<<if _itemTable.length > 0>>
+		<<for _item, _chance range _itemTable>>
+			<<print _item>><span style="float:right; font-weight:normal; margin-left:1em"><<print _chance>>%<br/>
+		<</for>>
+	<<else>>
+		<span style="color:gray; font-style:italic; font-weight:normal; font-family:Helmet,sans-serif;">No items.</span>
+	<</if>>
+<<case "elements">>
+	<<for _k, _v range _display.access().elements>>
+		<span class="statname"><<print _k>></span>
+		<span class="elementdisplay">
+			<<if _display.statsKnown[_k] === true>>
+				<<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:45px; text-align:right"><<res _v>></div>
+			<<else>>
+				<<if setup.SOAK>>?? /<</if>><div style="display: inline-block; min-width:45px; text-align:right">???%</div>
+			<</if>>
+		</span>
+		<br/>
+	<</for>>
+<<case "ailments">>
+	<div style="width:75%; font-weight:bold">
+	<<for _k, _v range _display.access().tolerances>>
+		<<if _v.current != 0>>
+			<<if _display.tolerancesKnown[_k] === true>>
+				<<print _k>>
+				<<tol _v>>
+			<<else>>
+				<div class="tolerance" style="text-align:left">????</div>
+			<</if>>
+			<br/>
+		<</if>>
+	<</for>>
+	</div>
+<</switch>>

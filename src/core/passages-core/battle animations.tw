@@ -1,0 +1,79 @@
+:: animation activator [nobr]
+<<if _animationActive && _queue.size > 0 && $("#continue") !== undefined>>
+	<<script>>
+	$("#continue .macro-button").each((index, element) => {
+			element.disabled = true;
+		});
+	<</script>>
+<</if>>
+<<set _animationsToComplete = 0>>
+<<set _animationsComplete = 0>>
+<<timed setup.ANIM_WINDUP+"ms">>
+<<if ($('#dmgBox0') !== undefined)>>
+	<<run $(".animationContainer").css("height",$("#dmgBox0").outerHeight()+"px")>>
+<</if>>
+<<for _i, _p range _queue>>
+	<<set _idA = "#dmgBox"+_i>>
+	<<capture _idA, _p>>
+    <<for _x, _m range _p.battleMsg>>
+			<<if passage() == "Battle!">>
+				<<if _p instanceof Enemy>>
+					<<set _idx = $enemies.findIndex(function (a) { return _p.id == a.id; })>>
+				<<elseif _p instanceof Puppet>>
+					<<set _idx = $puppets.findIndex(function (a) { return _p.id == a.id; })>>
+				<</if>>
+				<<set _idB = "#dmg"+_idx+'-'+_x>>
+			<<else>>
+				<<set _idB = "#dmg"+_i+'-'+_x>>
+			<</if>>
+			<<capture _x, _idB, _m>>
+			<<set _time = (_x*setup.ANIM_DELAY)+"ms">>
+			<<if _m.shake>> /* if true, box shakes */
+				<<timed _time>>
+					<<if $(_idA).hasClass("animate__animated")>>
+						<<run resetAnimation(_idA,"headShake")>>
+					<<else>>
+						<<run animateCSS(_idA,"headShake",setup.ANIM_DURATION+"ms")>>
+					<</if>>
+					<<include "popup animation">>
+				<</timed>>
+			<<else>>
+				<<timed _time>>
+					<<include "popup animation">>
+				<</timed>>
+			<</if>>
+			<</capture>>
+    <</for>>
+	<</capture>>
+	<<set _animationsToComplete += _p.battleMsg.length>>
+	<<set _p.battleMsg = []>>
+<</for>>
+<</timed>>
+
+:: popup animation [nobr]
+<<set _animation = "slideOutUp">>
+<<switch _m.type>>
+	<<case "damage">>
+		<<set _p.displayHP -= _m.content>>
+	<<case "healing">>
+		<<run $(_idB).addClass("green")>>
+		<<set _p.displayHP += _m.content>>
+	<<case "regen">>
+		<<run $(_idB).addClass("regen")>>
+		<<run $(_idB).addClass("small")>>
+	<<case "block">>
+		<<run $(_idB).addClass("small")>>
+	<<case "addEffect">>
+		<<run $(_idB).addClass("small")>>
+		<<run $(_idB).addClass("stat-raised")>>
+	<<case "removeEffect">>
+		<<run $(_idB).addClass("small")>>
+		<<run $(_idB).addClass("maroon")>>
+		<<set _animation = "slideOutDown">>
+<</switch>>
+<<update>>
+<<if typeof(_m.mod) == "string">>
+	<<run console.log("mod for "+_idB+" is "+_m.mod)>>
+	<<run $(_idB).addClass(_m.mod)>>
+<</if>>
+<<run animateCSS(_idB,_animation,setup.DMG_DURATION+"ms")>>

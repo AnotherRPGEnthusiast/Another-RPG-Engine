@@ -1,0 +1,63 @@
+:: Menu: Formation[menu battle noreturn]
+<div id="content" class="menu"><<nobr>>
+<div id="puppets" class="actors grid">
+<<include "formation puppets">>
+</div>
+<</nobr>>
+
+Click on a character to select them, then click on another space to move or swap.
+</div>
+
+:: formation puppets[nobr]
+<div class="leaderlabel formation-label">Front Row</div>
+<div class="frontrowlabel formation-label">Middle Row</div>
+<div class="backrowlabel formation-label">Back Row</div>
+	<<for _i, _puppet range $puppets>>
+		<<set _puppet_class = "actor grid">>
+		<div @class="_puppet_class" @id="'p'+_i">
+			<<if _puppet !== null>>
+				<div style="display: flex;  justify-content: center;  align-items: center; height: -webkit-fill-available">
+				<span @id="'pname'+_i">
+				<<if ndef _s>>
+					<<capture _i, _puppet>>
+					<<link "_puppet.name">>
+						<<set _s = _i>>
+						<<replace "#puppets">><<include "formation puppets">><</replace>>
+					<</link>>
+					<</capture>>
+				<<elseif $puppets[_s] !== _puppet>>
+					<<capture _i, _puppet>>
+					<<link "_puppet.name">>
+						<<set _holder = _puppet>>
+						<<set $puppets[_i] = $puppets[_s]; $puppets[_s] = _holder>>
+						<<unset _s>>
+						<<replace "#puppets">><<include "formation puppets">><</replace>>
+					<</link>>
+					<</capture>>
+				<<else>>
+					<span class="actorname" style="font-weight:bold">_puppet.name</span>
+				<</if>>
+				</span>
+				</div>
+			<<elseif _puppet == null>>
+				<<if def _s>>
+				<div style="display: flex;  justify-content: center;  align-items: center; height: -webkit-fill-available">
+				<<link "[MOVE]">>
+					<<set _holder = _puppet>>
+					<<set $puppets[_i] = $puppets[_s]; $puppets[_s] = _holder>>
+					<<unset _s>>
+					<<replace "#puppets">><<include "formation puppets">><</replace>>
+				<</link>>
+				</div>
+				<</if>>
+			<</if>>
+		</div>
+	<</for>>
+
+<<timed 0s>>
+	<<script>>
+	$("#puppets.actors.grid").css({
+	  "grid-template-columns": `auto repeat(${setup.ROW_SIZE},1fr)`
+	});
+	<</script>>
+<</timed>>

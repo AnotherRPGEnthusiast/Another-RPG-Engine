@@ -1,0 +1,17 @@
+:: Effect Adder[widget nobr]
+/* Handles effect applications. */
+
+<<widget "addEffect">>
+/* Sets power for relevant effects and avoids duplicating an effect if it's already in the array. */
+/* args0 is target, args1 is effect name, args2 is duration, args3 is inflictor (where applicable). If you want the power to be a flat value, pass a number to args3 instead and it will be used as an override. */
+<<if $args.length > 0>>
+
+<<set _target = $args[0]>> /* for clarity */
+<<set _subject = $B.subject>>
+
+<<print _target.addEffect($args[1],{time: $args[2], actor: $args[3]})>>
+
+<<else>>
+<<run console.log("ERROR in addEffect: no arguments passed")>>
+<</if>> /* end args check */
+<</widget>>
