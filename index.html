@@ -251,7 +251,7 @@ html.redLinks a:hover {
 	margin-bottom: 0.5em;
 }
 
-.action-name {
+.action-name, .item-name {
   font-weight: bold;
 }
 
@@ -5516,37 +5516,10 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	font-weight:normal;
 }
 
-/*
-.inmenu {
-	display: inline-block;
-	vertical-align: top;
-	height: 100%;
-	width: 160px;
-	border-right: 1px solid;
-	padding-right: 1em;
-	padding-left: 1em;
+.item-equippable {
+	font-style: italic;
+	font-size: 12px;
 }
-
-.inmenu.equipment {
-	width: auto;
-	border-right: none;
-	display: inline-grid;
-	grid-template-columns: 100px 1fr;
-	grid-template-rows: auto;
-	grid-auto-rows: auto;
-}
-
-.equipment.slot {
-	grid-column: 1 / span 1;
-	grid-row: auto;
-}
-
-.equipment.item {
-	font-weight: normal;
-	grid-column: 2 / span 1;
-	grid-row: auto;
-}
-*/
 /* twine-user-stylesheet #13: "status.css" */
 .statusname {
   text-transform: uppercase;
@@ -7429,7 +7402,7 @@ window.Action = class Action {
 			val = this.actionData.basic;
 		}
 		if (val === undefined) {
-			val = false;
+			val = this instanceof ItemAction ? true : false;
 		}
 		return val;
 	}
@@ -8076,16 +8049,14 @@ window.Action = class Action {
     if (this.basic) tags += `[Basic] `;
     if (this.instant) tags += `[Instant] `;
     if (this.passive) tags += `[Passive] `;
-    if (this instanceof ItemAction && !this.crisis) {
-      tags += `x${inv().get(this.name).stock}`;
-    } else if (!this.passive && Number.isInteger(this.cost) &&
+    if (!this.passive && Number.isInteger(this.cost) &&
               ((!this.crisis && this.cost >= 0) || (this.crisis && this.cost > 0))) {
       tags += this.cost;
       if (this.phase === "spell phase") tags += `+`;
       tags += ` EN`;
     }
     text += `<span class="action-tags">${tags}</span>`;
-    var data = this instanceof ItemAction ? new Item(this.name) : this;
+    var data = this;
     text += `<div class="action-info">${data.info}</div>`;
     if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
     return text;
@@ -8132,11 +8103,11 @@ window.ItemAction = class ItemAction extends Action {
 	}
 
 	get useText() {
-        return (this._useText || this.actionData.useText || null);
-    }
+      return (this._useText || this.actionData.useText || null);
+  }
 
 	get actText() {
-        return (this._actText || this.actionData.actText ||
+    return (this._actText || this.actionData.actText ||
 			function () {
 				var article;
 				if (this.name) {
@@ -8155,7 +8126,46 @@ window.ItemAction = class ItemAction extends Action {
 				}
 			}
 			|| null);
+  }
+
+	get source() {
+		//	The item from which the ItemAction comes. Defaults to the action's name.
+
+		return (this.actionData.source || this.name);
+	}
+
+	check () {
+		return (inv().get(this.source).stock < 1);
+	}
+
+	toString () {
+		//	Determines the default way actions are displayed in-game. Used with actionList.
+		var subj = subject() || temporary().display;
+
+    var text = `<span class="action-name">${this.name}</span>`;
+		var tags = "";
+    if (!this.crisis) {
+      tags += `x${inv().get(this.source).stock}`;
     }
+    text += `<span class="action-tags">${tags}</span>`;
+    var data = new Item(this.source);
+    text += `<div class="action-info">${data.info}</div>`;
+    if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
+    return text;
+  }
+
+	printCompressed () {
+		//	Determines the display for compressed actions.
+		//	By default, this strips tags, info, and description.
+
+		var text = `<span class="action-name">${this.name}</span>`;
+		var tags = "";
+    if (!this.crisis) {
+      tags += `x${inv().get(this.source).stock}`;
+    }
+    text += `<span class="action-tags">${tags}</span>`;
+		return text;
+	}
 
 	clone () {
 		// Return a new instance containing our current data.
@@ -9907,6 +9917,14 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 		//	DEPRECIATED as of v1.18. Use the Actor version instead.
 		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing or if the restricted listing is empty.
 		return (this.equippable.restrictedTo.length == 0 || this.equippable.restrictedTo.includes(puppet.name));
+	}
+
+	toString () {
+		var text = `<span class="item-name">${this.name}</span>`;
+		if (this.equippable) text += `<div class="item-equippable">${this.equippable.slot}</div>`;
+		text += `<div class="action-info">${this.info}</div>`;
+		text += `<div class="action-desc">${this.desc}</div>`;
+		return text;
 	}
 
 	clone () {
@@ -19344,8 +19362,9 @@ Macro.add('scrolldown', {
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="9" name="Widget: actionListBattle" tags="widget nobr" position="1100,100" size="100,100">&lt;&lt;widget &quot;actionListBattle&quot;&gt;&gt;
 /* Widget for display of player actions in battle. */
 
-&lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Puppet),&quot;ERROR in actionListBattle: no Puppet&quot;)&gt;&gt;
-&lt;&lt;set _char = $args[0]&gt;&gt;
+&lt;&lt;set _char = ($args[0] || subject())&gt;&gt;
+&lt;&lt;run console.assert(_char instanceof Puppet,&quot;ERROR in actionListBattle: no Puppet&quot;)&gt;&gt;
+
 &lt;&lt;if $args.includes(&quot;crisis&quot;)&gt;&gt;
 	&lt;&lt;set _actions = _char.crisis&gt;&gt;
 &lt;&lt;else&gt;&gt;
@@ -19365,15 +19384,42 @@ Macro.add('scrolldown', {
 		&lt;&lt;timed 0s&gt;&gt;
 			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-name&quot;&gt;&gt;
 			&lt;&lt;replace _selector&gt;&gt;
-				&lt;&lt;actionName&gt;&gt;
+				&lt;&lt;actionName _action&gt;&gt;
 			&lt;&lt;/replace&gt;&gt;
 		&lt;&lt;/timed&gt;&gt;
 		&lt;&lt;/capture&gt;&gt;
 	&lt;/div&gt;
 &lt;&lt;/if&gt;&gt;
 &lt;&lt;/for&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="10" name="Widget: actionName" tags="widget nobr" position="1225,100" size="100,100">&lt;&lt;widget &quot;actionName&quot;&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="10" name="Widget: itemList" tags="widget nobr" position="1225,100" size="100,100">&lt;&lt;widget &quot;itemList&quot;&gt;&gt;
+&lt;&lt;set _char = ($args[0] || subject())&gt;&gt;
+&lt;&lt;run console.assert(_char instanceof Puppet,&quot;ERROR in itemList: no Puppet&quot;)&gt;&gt;
+&lt;&lt;set _inv = (_char.inventory || inv())&gt;&gt;
+&lt;&lt;for _name, _item range _inv&gt;&gt;
+&lt;&lt;if _item.usable.includes(&quot;inbattle&quot;) &amp;&amp; _item.action instanceof Action&gt;&gt;
+	&lt;&lt;set _action = _item.action&gt;&gt;
+	&lt;&lt;set _actionID = &quot;item_&quot;+_name.split(&#39; &#39;).join(&#39;_&#39;)&gt;&gt;
+	&lt;div @id=&quot;_actionID&quot; class=&quot;actionDisplay&quot;&gt;
+		&lt;&lt;if setup.COMPRESSED_ACTIONS === true&gt;&gt;
+			&lt;&lt;print _action.printCompressed()&gt;&gt;
+		&lt;&lt;else&gt;&gt;
+			&lt;&lt;print _action&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;&lt;capture _action, _actionID&gt;&gt;
+		&lt;&lt;timed 0s&gt;&gt;
+			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-name&quot;&gt;&gt;
+			&lt;&lt;replace _selector&gt;&gt;
+				&lt;&lt;actionName _action&gt;&gt;
+			&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/timed&gt;&gt;
+		&lt;&lt;/capture&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="11" name="Widget: actionName" tags="widget nobr" position="100,225" size="100,100">&lt;&lt;widget &quot;actionName&quot;&gt;&gt;
 /* Renders the action link and other formatting e.g. for skill locks. */
+&lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Action),&quot;ERROR in actionName: no Action&quot;)&gt;&gt;
+&lt;&lt;set _action = $args[0]&gt;&gt;
 
 &lt;&lt;mouseover&gt;&gt;
 &lt;span class=&quot;mouseover&quot;&gt;
@@ -19410,7 +19456,7 @@ Macro.add('scrolldown', {
 &lt;/span&gt;
 &lt;&lt;/mouseover&gt;&gt;
 
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="11" name="Widget: actionLink" tags="widget nobr" position="100,225" size="100,100">&lt;&lt;widget &quot;actionLink&quot;&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="12" name="Widget: actionLink" tags="widget nobr" position="225,225" size="100,100">&lt;&lt;widget &quot;actionLink&quot;&gt;&gt;
 &lt;&lt;if $args.length &gt; 0&gt;&gt;
 	&lt;&lt;set _action = $args[0]&gt;&gt;
 &lt;&lt;/if&gt;&gt;
@@ -19439,7 +19485,7 @@ Macro.add('scrolldown', {
 	&lt;&lt;/if&gt;&gt;
 
 &lt;&lt;/if&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="12" name="Widget: crisisLink" tags="widget nobr" position="225,225" size="100,100">&lt;&lt;widget &quot;crisisLink&quot;&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="13" name="Widget: crisisLink" tags="widget nobr" position="350,225" size="100,100">&lt;&lt;widget &quot;crisisLink&quot;&gt;&gt;
 &lt;&lt;if typeof($args[0]) == &quot;string&quot;&gt;&gt;
 	&lt;&lt;set _text = $args[0]&gt;&gt;
 &lt;&lt;else&gt;&gt;
@@ -19450,48 +19496,6 @@ Macro.add('scrolldown', {
 	&lt;&lt;replace &quot;#phase&quot;&gt;&gt;&lt;&lt;include &quot;crisis actions&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 &lt;&lt;/link&gt;&gt;
 &lt;/span&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="13" name="Widget: itemlist" tags="widget nobr" position="350,225" size="100,100">&lt;&lt;widget &quot;itemlist&quot;&gt;&gt;
-&lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Puppet),&quot;ERROR in actionList: no Puppet&quot;)&gt;&gt;
-&lt;&lt;set _char = $args[0]&gt;&gt;
-&lt;&lt;for _k, _v range inv()&gt;&gt;
-&lt;&lt;if _v.usable.includes(&quot;inbattle&quot;)&gt;&gt;
-	&lt;div class=&quot;actionDisplay&quot;&gt;
-	&lt;&lt;capture _v&gt;&gt;
-	&lt;&lt;mouseover&gt;&gt;
-	&lt;span class=&quot;actionName&quot;&gt;
-	&lt;b&gt;
-	&lt;&lt;if _v.stock &gt; 0 &amp;&amp; $inbattle&gt;&gt;
-		&lt;&lt;link _k&gt;&gt;
-			&lt;&lt;actionLink _v.action&gt;&gt;
-		&lt;&lt;/link&gt;&gt;
-	&lt;&lt;else&gt;&gt;
-		&lt;&lt;print _k&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;/b&gt;
-	&lt;/span&gt;
-	&lt;&lt;onmouseover&gt;&gt;
-		&lt;&lt;if setup.COMPRESSED_ACTIONS === true&gt;&gt;
-			&lt;&lt;run $(&quot;#actionBox&quot;).css(&quot;visibility&quot;,&quot;visible&quot;)&gt;&gt;
-			&lt;&lt;replace &#39;#actionBox&#39;&gt;&gt;
-				&lt;&lt;actionInfo _v.action &quot;full&quot;&gt;&gt;
-			&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;onmouseout&gt;&gt;
-		&lt;&lt;if setup.COMPRESSED_ACTIONS === true&gt;&gt;
-			&lt;&lt;run $(&quot;#actionBox&quot;).css(&quot;visibility&quot;,&quot;hidden&quot;)&gt;&gt;
-			&lt;&lt;replace &#39;#actionBox&#39;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/mouseover&gt;&gt;
-	&lt;&lt;/capture&gt;&gt;
-	&lt;&lt;if setup.COMPRESSED_ACTIONS === true &amp;&amp; $inbattle&gt;&gt;
-		&lt;&lt;actionInfo _v.action &quot;no name&quot;&gt;&gt;
-	&lt;&lt;else&gt;&gt;
-		&lt;&lt;actionInfo _v.action &quot;no name&quot; &quot;full&quot;&gt;&gt;
-		&lt;br/&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;/for&gt;&gt;
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="14" name="Widget: newTurn" tags="widget nobr" position="475,225" size="100,100">&lt;&lt;widget &quot;newTurn&quot;&gt;&gt;
 /* arg 0 = party array. MUST be an array; use an array with 1 element if you wish to call this for a single actor */
 &lt;&lt;run console.assert($args[0] instanceof Array,&quot;ERROR in newTurn: invalid argument&quot;)&gt;&gt;
@@ -19987,13 +19991,13 @@ Macro.add('scrolldown', {
 
 &lt;&lt;if setup.COMPRESSED_ACTIONS === true&gt;&gt;
 	&lt;&lt;set _actionClass = &quot;compressed&quot;&gt;&gt;
-	&lt;div id=&quot;actionInfo&quot;&gt;
+	&lt;div id=&quot;actionBox&quot;&gt;
 	&lt;/div&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;set _actionClass = &quot;&quot;&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 &lt;div id=&quot;actionList&quot; @class=&quot;_actionClass&quot;&gt;
-&lt;&lt;itemlist&gt;&gt;
+&lt;&lt;itemList&gt;&gt;
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="30" name="action box default" tags="nobr" position="1225,350" size="100,100">&lt;div class=&quot;actionBoxHelp&quot;&gt;Hover over an action to see info&lt;/div&gt;</tw-passagedata><tw-passagedata pid="31" name="targeting phase" tags="nobr battle" position="100,475" size="100,100">&lt;&lt;set $B.phase = &quot;targeting&quot;&gt;&gt;
 &lt;&lt;replace &quot;#actorlist&quot;&gt;&gt;&lt;&lt;include &quot;actorlist&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 &lt;&lt;if $B.targeting == &quot;enemy&quot;&gt;&gt;
@@ -23224,6 +23228,16 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 			&lt;&lt;default&gt;&gt;
 				&lt;&lt;print _puppet.name&gt;&gt;
 		&lt;&lt;/switch&gt;&gt;
+	&lt;&lt;case &quot;action&quot;&gt;&gt;
+		&lt;&lt;capture _puppet&gt;&gt;
+			&lt;&lt;link _puppet.name&gt;&gt;
+				&lt;&lt;run _displayedAction.onUse(_puppet,_display)&gt;&gt;
+				&lt;&lt;unset _displayedAction&gt;&gt;
+				&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;
+					&lt;&lt;include &quot;status party display&quot;&gt;&gt;
+				&lt;&lt;/replace&gt;&gt;
+			&lt;&lt;/link&gt;&gt;
+		&lt;&lt;/capture&gt;&gt;
 	&lt;&lt;case &quot;decurse&quot;&gt;&gt;
 	/* In the decurse menu, the name has no special functionality. Just display it normally. */
 		&lt;&lt;print _puppet.name&gt;&gt;
@@ -23441,11 +23455,13 @@ ARG 0 = equipped item
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="128" name="action use puppets" tags="nobr" position="975,1600" size="100,100">&lt;div id=&quot;menu-display&quot;&gt;
 	&lt;&lt;print _displayedAction&gt;&gt;
 &lt;/div&gt;
+&lt;div id=&quot;puppets&quot;&gt;
 &lt;&lt;set _HPmeters = []&gt;&gt;
 &lt;&lt;set _MPmeters = []&gt;&gt;
 &lt;&lt;for _i, _p range puppets()&gt;&gt;
 	&lt;&lt;actorDisplay _p &quot;action&quot;&gt;&gt;
-&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="129" name="Widget: unequipAll" tags="widget nobr" position="1100,1600" size="100,100">&lt;&lt;widget &quot;unequipAll&quot;&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="129" name="Widget: unequipAll" tags="widget nobr" position="1100,1600" size="100,100">&lt;&lt;widget &quot;unequipAll&quot;&gt;&gt;
 &lt;&lt;link &quot;Unequip All&quot;&gt;&gt;
 	&lt;&lt;for _puppet range puppets().concat($Reserve_Puppets).filter(function(p){ return !p.lockEquipment; })&gt;&gt;
 		&lt;&lt;run _puppet.unequipAll()&gt;&gt;
@@ -23651,10 +23667,7 @@ ARG 0 = equipped item
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="137" name="inventory item display" tags="nobr" position="850,1725" size="100,100">&lt;&lt;if ndef _display || _display === null&gt;&gt;
 	&lt;div style=&quot;text-align: center; line-height: 70px; color: gray&quot;&gt;Click on an item to see info&lt;/div&gt;
 &lt;&lt;else&gt;&gt;
-&lt;b&gt;_display.name&lt;/b&gt;&lt;br/&gt;
-&lt;&lt;if def _display.equippable&gt;&gt;&lt;i style=&quot;font-size:12px&quot;&gt;&lt;&lt;print _display.equippable.slot&gt;&gt;&lt;/i&gt;&lt;br/&gt;&lt;&lt;/if&gt;&gt;
-&lt;div class=&quot;action-info&quot;&gt;_display.info&lt;/div&gt;
-&lt;div class=&quot;action-desc&quot;&gt;_display.desc&lt;/div&gt;
+&lt;&lt;print _display&gt;&gt;
 &lt;&lt;if _display.usable.includes(&#39;inmenu&#39;) || _display.equippable&gt;&gt;
 &lt;div style=&quot;display: flex; justify-content: space-evenly&quot;&gt;
 	&lt;&lt;set _b = 0&gt;&gt;
@@ -25233,6 +25246,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;New &lt;code&gt;Action&lt;/code&gt; properties:
 &lt;ul&gt;&lt;li&gt;&lt;code&gt;invisible&lt;/code&gt;: If &lt;code&gt;true&lt;/code&gt;, the action will not be displayed in the action list.&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;onApply&lt;/code&gt; and &lt;code&gt;onRemove&lt;/code&gt;: Function as the corresponding properties for &lt;code&gt;Effect&lt;/code&gt;s and &lt;code&gt;Item&lt;/code&gt;s. Useful for keeping track of passive abilities, and other side-effects if you want to have modular actions. However, currently there&#39;s no in-built functionality for this in the party menu.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;onUse&lt;/code&gt;: Functions as the corresponding property for &lt;code&gt;Item&lt;/code&gt;s. Rudimentary GUI has been added in the party menu code, but is untested. Report any bugs.&lt;/li&gt;
 &lt;li&gt;The checks for action link availability. The freefloating functions have been removed.&lt;/li&gt;&lt;/ul&gt;
 &lt;li&gt;New &lt;code&gt;Item&lt;/code&gt; property: &lt;code&gt;instantUse&lt;/code&gt;. This is a Boolean that will cause the item&#39;s &lt;code&gt;onUse&lt;/code&gt; function to be executed immediately when selected, instead of selecting a target first.&lt;/li&gt;
 &lt;/ul&gt;

@@ -309,7 +309,7 @@ window.Action = class Action {
 			val = this.actionData.basic;
 		}
 		if (val === undefined) {
-			val = false;
+			val = this instanceof ItemAction ? true : false;
 		}
 		return val;
 	}
@@ -956,16 +956,14 @@ window.Action = class Action {
     if (this.basic) tags += `[Basic] `;
     if (this.instant) tags += `[Instant] `;
     if (this.passive) tags += `[Passive] `;
-    if (this instanceof ItemAction && !this.crisis) {
-      tags += `x${inv().get(this.name).stock}`;
-    } else if (!this.passive && Number.isInteger(this.cost) &&
+    if (!this.passive && Number.isInteger(this.cost) &&
               ((!this.crisis && this.cost >= 0) || (this.crisis && this.cost > 0))) {
       tags += this.cost;
       if (this.phase === "spell phase") tags += `+`;
       tags += ` EN`;
     }
     text += `<span class="action-tags">${tags}</span>`;
-    var data = this instanceof ItemAction ? new Item(this.name) : this;
+    var data = this;
     text += `<div class="action-info">${data.info}</div>`;
     if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
     return text;
@@ -1012,11 +1010,11 @@ window.ItemAction = class ItemAction extends Action {
 	}
 
 	get useText() {
-        return (this._useText || this.actionData.useText || null);
-    }
+      return (this._useText || this.actionData.useText || null);
+  }
 
 	get actText() {
-        return (this._actText || this.actionData.actText ||
+    return (this._actText || this.actionData.actText ||
 			function () {
 				var article;
 				if (this.name) {
@@ -1035,7 +1033,47 @@ window.ItemAction = class ItemAction extends Action {
 				}
 			}
 			|| null);
+  }
+
+	get source() {
+		//	The item from which the ItemAction comes. Defaults to the action's name.
+
+		return (this.actionData.source || this.name);
+	}
+
+	standardCheck (i) {
+		var inv = (i || inv());
+		return (inv.get(this.source).stock < 1);
+	}
+
+	toString () {
+		//	Determines the default way actions are displayed in-game. Used with actionList.
+		var subj = subject() || temporary().display;
+
+    var text = `<span class="action-name">${this.name}</span>`;
+		var tags = "";
+    if (!this.crisis) {
+      tags += `x${inv().get(this.source).stock}`;
     }
+    text += `<span class="action-tags">${tags}</span>`;
+    var data = new Item(this.source);
+    text += `<div class="action-info">${data.info}</div>`;
+    if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
+    return text;
+  }
+
+	printCompressed () {
+		//	Determines the display for compressed actions.
+		//	By default, this strips tags, info, and description.
+
+		var text = `<span class="action-name">${this.name}</span>`;
+		var tags = "";
+    if (!this.crisis) {
+      tags += `x${inv().get(this.source).stock}`;
+    }
+    text += `<span class="action-tags">${tags}</span>`;
+		return text;
+	}
 
 	clone () {
 		// Return a new instance containing our current data.

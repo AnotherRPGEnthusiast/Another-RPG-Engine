@@ -569,10 +569,7 @@ ARG 0 = equipped item
 <<if ndef _display || _display === null>>
 	<div style="text-align: center; line-height: 70px; color: gray">Click on an item to see info</div>
 <<else>>
-<b>_display.name</b><br/>
-<<if def _display.equippable>><i style="font-size:12px"><<print _display.equippable.slot>></i><br/><</if>>
-<div class="action-info">_display.info</div>
-<div class="action-desc">_display.desc</div>
+<<print _display>>
 <<if _display.usable.includes('inmenu') || _display.equippable>>
 <div style="display: flex; justify-content: space-evenly">
 	<<set _b = 0>>

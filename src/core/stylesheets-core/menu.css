@@ -445,34 +445,7 @@
 	font-weight:normal;
 }
 
-/*
-.inmenu {
-	display: inline-block;
-	vertical-align: top;
-	height: 100%;
-	width: 160px;
-	border-right: 1px solid;
-	padding-right: 1em;
-	padding-left: 1em;
+.item-equippable {
+	font-style: italic;
+	font-size: 12px;
 }
-
-.inmenu.equipment {
-	width: auto;
-	border-right: none;
-	display: inline-grid;
-	grid-template-columns: 100px 1fr;
-	grid-template-rows: auto;
-	grid-auto-rows: auto;
-}
-
-.equipment.slot {
-	grid-column: 1 / span 1;
-	grid-row: auto;
-}
-
-.equipment.item {
-	font-weight: normal;
-	grid-column: 2 / span 1;
-	grid-row: auto;
-}
-*/

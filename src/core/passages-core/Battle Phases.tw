@@ -92,8 +92,9 @@
 <<widget "actionListBattle">>
 /* Widget for display of player actions in battle. */
 
-<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionListBattle: no Puppet")>>
-<<set _char = $args[0]>>
+<<set _char = ($args[0] || subject())>>
+<<run console.assert(_char instanceof Puppet,"ERROR in actionListBattle: no Puppet")>>
+
 <<if $args.includes("crisis")>>
 	<<set _actions = _char.crisis>>
 <<else>>
@@ -113,7 +114,35 @@
 		<<timed 0s>>
 			<<set _selector = "#"+_actionID+" .action-name">>
 			<<replace _selector>>
-				<<actionName>>
+				<<actionName _action>>
+			<</replace>>
+		<</timed>>
+		<</capture>>
+	</div>
+<</if>>
+<</for>>
+<</widget>>
+
+:: Widget: itemList [widget nobr]
+<<widget "itemList">>
+<<set _char = ($args[0] || subject())>>
+<<run console.assert(_char instanceof Puppet,"ERROR in itemList: no Puppet")>>
+<<set _inv = (_char.inventory || inv())>>
+<<for _name, _item range _inv>>
+<<if _item.usable.includes("inbattle") && _item.action instanceof Action>>
+	<<set _action = _item.action>>
+	<<set _actionID = "item_"+_name.split(' ').join('_')>>
+	<div @id="_actionID" class="actionDisplay">
+		<<if setup.COMPRESSED_ACTIONS === true>>
+			<<print _action.printCompressed()>>
+		<<else>>
+			<<print _action>>
+		<</if>>
+		<<capture _action, _actionID>>
+		<<timed 0s>>
+			<<set _selector = "#"+_actionID+" .action-name">>
+			<<replace _selector>>
+				<<actionName _action>>
 			<</replace>>
 		<</timed>>
 		<</capture>>
@@ -125,6 +154,8 @@
 :: Widget: actionName [widget nobr]
 <<widget "actionName">>
 /* Renders the action link and other formatting e.g. for skill locks. */
+<<run console.assert($args.length > 0 && ($args[0] instanceof Action),"ERROR in actionName: no Action")>>
+<<set _action = $args[0]>>
 
 <<mouseover>>
 <span class="mouseover">
@@ -207,51 +238,6 @@
 	<<replace "#phase">><<include "crisis actions">><</replace>>
 <</link>>
 </span>
-<</widget>>
-
-:: Widget: itemlist [widget nobr]
-<<widget "itemlist">>
-<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionList: no Puppet")>>
-<<set _char = $args[0]>>
-<<for _k, _v range inv()>>
-<<if _v.usable.includes("inbattle")>>
-	<div class="actionDisplay">
-	<<capture _v>>
-	<<mouseover>>
-	<span class="actionName">
-	<b>
-	<<if _v.stock > 0 && $inbattle>>
-		<<link _k>>
-			<<actionLink _v.action>>
-		<</link>>
-	<<else>>
-		<<print _k>>
-	<</if>>
-	</b>
-	</span>
-	<<onmouseover>>
-		<<if setup.COMPRESSED_ACTIONS === true>>
-			<<run $("#actionBox").css("visibility","visible")>>
-			<<replace '#actionBox'>>
-				<<actionInfo _v.action "full">>
-			<</replace>>
-		<</if>>
-	<<onmouseout>>
-		<<if setup.COMPRESSED_ACTIONS === true>>
-			<<run $("#actionBox").css("visibility","hidden")>>
-			<<replace '#actionBox'>><</replace>>
-		<</if>>
-	<</mouseover>>
-	<</capture>>
-	<<if setup.COMPRESSED_ACTIONS === true && $inbattle>>
-		<<actionInfo _v.action "no name">>
-	<<else>>
-		<<actionInfo _v.action "no name" "full">>
-		<br/>
-	<</if>>
-	</div>
-<</if>>
-<</for>>
 <</widget>>
 
 :: Widget: newTurn [widget nobr]
@@ -767,7 +753,7 @@
 	<<set _actionClass = "">>
 <</if>>
 <div id="actionList" @class="_actionClass">
-<<actionListBattle $B.subject>>
+<<actionListBattle>>
 </div>
 
 :: crisis actions[nobr]
@@ -795,13 +781,13 @@
 
 <<if setup.COMPRESSED_ACTIONS === true>>
 	<<set _actionClass = "compressed">>
-	<div id="actionInfo">
+	<div id="actionBox">
 	</div>
 <<else>>
 	<<set _actionClass = "">>
 <</if>>
 <div id="actionList" @class="_actionClass">
-<<itemlist>>
+<<itemList>>
 </div>
 
 :: action box default[nobr]

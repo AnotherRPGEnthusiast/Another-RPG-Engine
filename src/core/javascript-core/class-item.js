@@ -141,6 +141,14 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 		return (this.equippable.restrictedTo.length == 0 || this.equippable.restrictedTo.includes(puppet.name));
 	}
 
+	toString () {
+		var text = `<span class="item-name">${this.name}</span>`;
+		if (this.equippable) text += `<div class="item-equippable">${this.equippable.slot}</div>`;
+		text += `<div class="action-info">${this.info}</div>`;
+		text += `<div class="action-desc">${this.desc}</div>`;
+		return text;
+	}
+
 	clone () {
 		// Return a new instance containing our current data.
 		return new Item(this);
