@@ -88,12 +88,11 @@
 <</link>>
 <</widget>>
 
-:: Widget: actionList [widget nobr]
-<<widget "actionList">>
+:: Widget: actionListBattle [widget nobr]
+<<widget "actionListBattle">>
 /* Widget for display of player actions in battle. */
-/* Individual action widgets take cost, damage multiplier, and other relevant variables as arguments so they can be displayed in the description. Values are given in "Database: Actions". */
 
-<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionList: no Puppet")>>
+<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionListBattle: no Puppet")>>
 <<set _char = $args[0]>>
 <<if $args.includes("crisis")>>
 	<<set _actions = _char.crisis>>
@@ -102,30 +101,23 @@
 <</if>>
 <<for _action range _actions>>
 <<if !_action.invisible>>
-	<<if setup.COMPRESSED_ACTIONS === true>>
-		<<set _actionClass = "actionDisplay">>
-	<<else>>
-		<<set _actionClass = "actionDisplay uncompressed">>
-	<</if>>
-	<<set _actionID = "#action"+_actions.indexOf(_action)>>
-	<div @id="_actionID" @class="_actionClass">
+	<<set _actionID = "action"+_actions.indexOf(_action)>>
+	<div @id="_actionID" class="actionDisplay">
 		<<if setup.COMPRESSED_ACTIONS === true>>
 			<<print _action.printCompressed()>>
 		<<else>>
 			<<print _action>>
 		<</if>>
 
-
+		<<capture _action, _actionID>>
+		<<timed 0s>>
+			<<set _selector = "#"+_actionID+" .action-name">>
+			<<replace _selector>>
+				<<actionName>>
+			<</replace>>
+		<</timed>>
+		<</capture>>
 	</div>
-	<<capture _action, _actionID>>
-	<<timed 0s>>
-		<<run console.log($(_actionID+" .action-name"))>>
-		<<set _selector = _actionID+" .action-name">>
-		<<replace _selector>>
-			<<actionName>>
-		<</replace>>
-	<</timed>>
-	<</capture>>
 <</if>>
 <</for>>
 <</widget>>
@@ -169,60 +161,6 @@
 </span>
 <</mouseover>>
 
-<</widget>>
-
-:: Widget: actionInfo [widget nobr]
-<<widget "actionInfo">>
-<<run console.assert($args.length > 0 && ($args[0] instanceof Action),"ERROR in actionInfo: no arguments passed")>>
-<<if $args[1] instanceof Puppet>>
-	<<set _char = $args[1]>>
-<</if>>
-<<set _act = $args[0]>>
-<<if !$args.includes("no name")>><b><<print _act.name>></b><</if>>
-<<if def _act.uses>>&nbsp;<span class="usedisplay">(Uses: <<print _act.uses>>/<<print _act.maxUses>>)</span><</if>>
-<span style="float:right; margin-left:0.5em;">
-<<if $args.includes("full")>>
-	<<if !$inbattle && _char.defaultAction === _act.name>>
-		<b>[Default]</b>&nbsp;
-	<</if>>
-	<<if _act.crisis>>
-		<b>[Crisis]</b>&nbsp;
-	<</if>>
-	<<if _act.basic>>
-		[Basic]&nbsp;
-	<</if>>
-	<<if _act.instant>>
-		[Instant]&nbsp;
-	<</if>>
-	<<if _act.passive>>
-		[Passive]
-	<</if>>
-<</if>>
-<<if _act instanceof ItemAction && !_act.crisis>>
-	x<<print inv().get(_act.name).stock>>
-<<else>>
-	<<if !_act.passive && Number.isInteger(_act.cost) && ((!_act.crisis && _act.cost >= 0) || (_act.crisis && _act > 0))>>
-		<<print _act.cost>><<if _act.phase === "spell phase">>+<</if>> EN
-	<</if>>
-<</if>>
-</span>
-<<if !$inbattle && !_act.noDefault && _char.defaultAction !== _act.name>>
-	<div style="font-size:9pt">
-	<<capture _act>>
-	<<link "[Set as default]">>
-		<<set _char.defaultAction = _act.name>>
-		<<replace "#menuActionList">><<actionList _display>><</replace>>
-	<</link>>
-	<</capture>>
-	</div>
-<</if>>
-<<if $args.includes("full")>>
-	<<if _act instanceof ItemAction>>
-		<<set _act = new Item(_act.name)>>
-	<</if>>
-	<div><<print _act.info>></div>
-	<<if _act.desc !== null>><div class="actdesc"><<print _act.desc>></div><</if>>
-<</if>>
 <</widget>>
 
 :: Widget: actionLink [widget nobr]
@@ -823,13 +761,13 @@
 
 <<if setup.COMPRESSED_ACTIONS === true>>
 	<<set _actionClass = "compressed">>
-	<div id="actionInfo">
+	<div id="actionBox">
 	</div>
 <<else>>
 	<<set _actionClass = "">>
 <</if>>
 <div id="actionList" @class="_actionClass">
-<<actionList $B.subject>>
+<<actionListBattle $B.subject>>
 </div>
 
 :: crisis actions[nobr]
@@ -849,7 +787,7 @@
 	<<set _actionClass = "">>
 <</if>>
 <div id="actionList" @class="_actionClass">
-<<actionList $B.subject "crisis">>
+<<actionListBattle $B.subject "crisis">>
 </div>
 
 :: items[nobr battle]

@@ -3,9 +3,16 @@ Version 3.01
 <ul>
 <li>Equipment slots are now always occupied by arrays, instead of only those with multiple subslots. This should result in no functional change, but allows me to clean up equipment functions by not having to account for branching functionalities. <b>Note that this update will generate errors with existing games that used previous versions.</b> You will need to update your characters' equipment slots to match the new standards.</li>
 <li>Default and last actions are now stored as strings rather than full Action objects. <b>This update will cause errors with existing games that store these variables as Actions.</b> Make sure to update existing savefiles if you update to this version.</li>
+<li>The widget <code>actionlist</code> has been split into <code>actionListBattle</code> and <code>actionListMenu</code>, for the different displays of actions in and out of battle.</li>
+<li><code>Action</code>s now have a unique <code>toString</code> function that performs the function of the <code>actionInfo</code> widget, which is now depreciated. <code>actionList</code> has been restructured to take advantage of this function, making it much simpler and easier to use. (To customize the action display, use <code>Object.defineProperty</code> to overwrite <code>toString</code> with your own version.)</li>
 <li>You can now customize the text used to display the status button with the <code>setup</code> variable <code>STATUS_BUTTON</code>.</li>
 <li>New <code>Effect</code> property: <code>skillLock</code>. This denotes effects that prevent the use of non-basic actions (e.g. Dizzy).</li>
-<li>The checks for action link availability are now properties of <code>Action</code> objects rather than freefloating functions.</li>
+<li>New <code>Action</code> properties:
+<ul><li><code>invisible</code>: If <code>true</code>, the action will not be displayed in the action list.</li>
+<li><code>onApply</code> and <code>onRemove</code>: Function as the corresponding properties for <code>Effect</code>s and <code>Item</code>s. Useful for keeping track of passive abilities, and other side-effects if you want to have modular actions. However, currently there's no in-built functionality for this in the party menu.</li>
+<li><code>onUse</code>: Functions as the corresponding property for <code>Item</code>s. Rudimentary GUI has been added in the party menu code, but is untested. Report any bugs.</li>
+<li>The checks for action link availability. The freefloating functions have been removed.</li></ul>
+<li>New <code>Item</code> property: <code>instantUse</code>. This is a Boolean that will cause the item's <code>onUse</code> function to be executed immediately when selected, instead of selecting a target first.</li>
 </ul>
 Version 3.00
 <ul>

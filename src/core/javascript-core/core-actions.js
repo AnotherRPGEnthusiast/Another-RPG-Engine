@@ -59,12 +59,24 @@ setup.actionData = {
 
 	"Firefly": {
 		"passive": true,
+		"onApply": function (actor) {
+			actor.firefly = true;
+		},
+		"onRemove": function (actor) {
+			actor.firefly = false;
+		},
 		"info": function (action) {return `Enemies are twice as likely to target this character.`},
 		"desc": null
 	},
 
 	"Crafty": {
 		"passive": true,
+		"onApply": function (actor) {
+			actor.crafty = true;
+		},
+		"onRemove": function (actor) {
+			actor.crafty = false;
+		},
 		"info": function (action) {return `Items cost half as much Energy to use.`},
 		"desc": null
 	},

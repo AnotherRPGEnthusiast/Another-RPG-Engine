@@ -25,12 +25,39 @@
   margin-bottom: 1em;
 }
 
-.actionDisplay {
-	margin-bottom: 0.5em;
+#actionList {
+	overflow-y: auto;
+	padding-right: 1em;
+	max-height: 350px;
 }
 
-.actionDisplay.uncompressed {
+#actionList.compressed {
+	display: grid;
+	grid-template-columns: repeat(2,1fr);
+	column-gap: 2em;
+	max-height: 250px;
+}
+
+#actionBox {
+	visibility: hidden;
+	position: absolute;
+	border: solid 1px;
+	min-height: 100px;
+	width: 500px;
+	padding: 1em;
+	font-weight: normal;
+	max-height: 90vh;
+	overflow: hidden;
+	background-color: white;
+	color: black;
+}
+
+.actionDisplay {
 	margin-bottom: 1.5em;
+}
+
+.compressed .actionDisplay {
+	margin-bottom: 0.5em;
 }
 
 .action-name {
@@ -70,6 +97,10 @@
 .action-lock {
   color: gray;
   font-style: italic;
+}
+
+.default-link {
+  font-size: 9pt;
 }
 
 .actionBoxHelp {

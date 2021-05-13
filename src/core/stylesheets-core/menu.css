@@ -136,7 +136,7 @@
 	float: right;
 }
 
-#itemdisplay {
+#menu-display {
 	border: 2px solid;
 	border-radius: 1em;
 	min-height: 5em;
@@ -295,6 +295,7 @@
 	font-weight: bold;
 	border-bottom: 1px solid;
 	text-transform: uppercase;
+	margin-bottom: 1em;
 }
 
 .menuactor-equipment.small-display, .menuactor-equipment.inventory-display {

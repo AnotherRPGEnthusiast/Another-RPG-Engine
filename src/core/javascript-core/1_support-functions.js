@@ -126,7 +126,7 @@ window.deadCount = function deadCount () {
 		// Add an event to the window.mousemove event
 		window.addEventListener("mousemove", function(e) {
 
-			popup = document.getElementById("actionInfo");
+			popup = document.getElementById("actionBox");
 
 			if (popup) {
 				popup.style.left = e.clientX - $("#content").position().left + 10 + "px";

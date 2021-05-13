@@ -848,6 +848,11 @@ window.Action = class Action {
 		return val;
 	}
 
+	set invisible (val) {
+		console.assert(typeof(val) === "boolean",`ERROR: invisible must be Boolean`);
+		this._invisible = val;
+	}
+
 	get invisible () {
 		//	Boolean. If true, action will not be displayed in the action list.
 		//	By default, passive abilities are invisible if displayed in-battle, but not if viewed from the menu.
@@ -862,45 +867,91 @@ window.Action = class Action {
 		return val;
 	}
 
+	set onApply (val) {
+		console.assert(val instanceof Function,`ERROR: onApply is not function`);
+		this._onApply = val;
+	}
+
+	get onApply () {
+		return (this._onApply || this.actionData.onApply || function () { return; });
+	}
+
+	set onRemove (val) {
+		console.assert(val instanceof Function,`ERROR: onRemove is not function`);
+		this._onRemove = val;
+	}
+
+	get onRemove () {
+		return (this._onRemove || this.actionData.onRemove || function () { return; });
+	}
+
+	set onUse (val) {
+		console.assert(val instanceof Function,`ERROR: onUse is not function`);
+		this._onUse = val;
+	}
+
+	get onUse() {
+		//	Determines the effect abilities will have when used from the menu outside of battle. Optional.
+
+    return (this._onUse || this.actionData.onUse || undefined);
+  }
+
+	set instantUse (val) {
+		console.assert(typeof(val) === "boolean",`ERROR: instantUse must be Boolean`);
+		this._instantUse = val;
+	}
+
+	get instantUse() {
+		//	Boolean. If true, the action's onUse will be executed immediately, instead of requiring a target.
+		//	This is useful for e.g. action that affect the whole party or call up another passage for more detailed interaction.
+
+		return (this._instantUse || this.actionData.instantUse || false);
+	}
+
 	//	Checks for action availability. Separate ones needed to customize UI feedback.
 	//	A true return means the action FAILED the check and will be unavailable.
 
-	standardCheck () {
+	standardCheck (actor) {
 		//	Checks for EN cost, uses, cooldown, and crisis points.
-		return (subject().en < this.cost)
+		let subj = subject() || actor;
+		return (subj.en < this.cost)
 		|| (typeof(this.uses) == "number" && this.uses < 1)
 		|| (typeof(this.cd) == "number" && this.cd !== 0)
 		|| (this.used === true)
 		|| (this.crisis && subject().crisisPoints < 100);
 	}
 
-	lockCheck () {
+	lockCheck (actor) {
 		//	Checks if character is under a skill lock.
-		return (subject().skillLock && !this.basic);
+		let subj = subject() || actor;
+		return (subj.skillLock && !this.basic);
 	}
 
-	HPCheck () {
+	HPCheck (actor) {
 		//	Checks if character cannot pay the HP cost.
-		return (this.hpcost && subject().hp <= this.hpcost);
+		let subj = subject() || actor;
+		return (this.hpcost && subj.hp <= this.hpcost);
 	}
 
-	elementCheck () {
+	elementCheck (actor) {
 		//	Checks that a character has a prior element stored for actions that need a prior element.
-		return (this.needsPriorElement && typeof(subject().lastUsed) !== "string");
+		let subj = subject() || actor;
+		return (this.needsPriorElement && typeof(subj.lastUsed) !== "string");
 	}
 
-	check () {
-		return (this.standardCheck() || this.lockCheck() || this.HPCheck() || this.elementCheck());
+	check (actor) {
+		return (this.standardCheck(actor) || this.lockCheck(actor) || this.HPCheck(actor) || this.elementCheck(actor));
 	}
 
 	toString () {
 		//	Determines the default way actions are displayed in-game. Used with actionList.
+		var subj = subject() || temporary().display;
 
     var text = `<span class="action-name">${this.name}</span>`;
 		if (typeof(this.cd) === "number" && this.cd !== 0) text += ` <span class="action-cooldown">[CD ${this.cd}]</span>`
     if (this.uses !== undefined) text += ` <span class="action-uses">(Uses: ${this.uses}/${this.maxUses})</span>`;
     var tags = "";
-    if (!V().inbattle && subject().defaultAction === this.name) tags += `<b>[Default]</b> `;
+    if (!V().inbattle && subj.defaultAction === this.name) tags += `<b>[Default]</b> `;
     if (this.crisis) tags += `<b>[Crisis]</b> `;
     if (this.basic) tags += `[Basic] `;
     if (this.instant) tags += `[Instant] `;

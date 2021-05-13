@@ -148,7 +148,7 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 ** {{{nameCD}}} is a string; determines the key in the enemy's {{{cd}}} Map the cooldown will reference when set. Defaults to the action's name. Optional.
 * {{{warmup}}} is a nonnegative integer; determines how many turns must elapse from the start of a battle before the action can be used. Requires a defined {{{cooldown}}} attribute. If not defined, this attribute will not be set. Optional.
 * {{{formula}}} is a function; if defined, it will be used in place of the regular formula when calculating attack damage.
-* {{{basic}}} is a Boolean; if {{{true}}}, the action can be used when the character is dizzy.
+* {{{basic}}} is a Boolean; if {{{true}}}, the action can be used when the character is under a skill lock effect.
 * {{{pierce}}} is a Boolean; if {{{true}}}, the attack ignores the target's {{{Defense}}} stat when calculating damage.
 * {{{instant}}} is a Boolean; if {{{true}}}, the action will not end the user's turn.
 * {{{counter}}} is a Boolean; if {{{true}}}, the action is considered a counterattack action.
@@ -157,6 +157,7 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 * {{{noShock}}} is a Boolean; if {{{true}}}, the action will not cure effects that can be cured through direct damage.
 * {{{silent}}} is a Boolean; if {{{true}}}, action code will execute without any display in the action phase.
 * {{{truce}}} is a Boolean; if {{{true}}}, it won't violate the enemy's surrender. By default, this is {{{true}}} for {{{silent}}} actions, and {{{false}}} otherwise.
+* {{{invisible}}} is a Boolean; if {{{true}}}, the action will not be displayed by the standard action listing. By default this is {{{true}}} for {{{passive}}} abilities when in-battle, and {{{false}}} otherwise.
 * {{{noDefault}}} is a Boolean; if {{{true}}}, the action cannot be set as a character's default action. By default, this is {{{false}}} if the action inflicts damage, and {{{true}}} otherwise.
 * {{{nosave}}} is a Boolean; if {{{true}}}, the action will not be saved as the character's last action after use.
 * {{{saveMod}}} is a string; the user's last action will be set to the action named with {{{saveMod}}}. Defaults to the action itself.
@@ -210,6 +211,7 @@ This isn't what a live {{{Effect}}} object looks like, but it contains all the d
 * {{{untargetable}}} is a Boolean; if {{{true}}}, the effect prevents a character from being directly targeted by attacks. This property will hold as long as a character has any effects with this property.
 * {{{uncontrollable}}} is a Boolean; if {{{true}}}, the effect is considered a loss-of-control effect. Characters will be uncontrollable as long as they have any effects with this property.
 * {{{threat}}} is a number; determines how highly a logic function will value this effect for the purposes of dispels, cures, etc. This value will be automatically incremented based on the effect's current duration minus 1. (In the case of effects with indefinite durations, this value will instead be multiplied by the value specified in {{{INDEFINITE_EFFECT_MULTIPLIER}}}.)
+* {{{skillLock}}} is a Boolean; if {{{true}}}, the effect prevents the victim from using non-basic actions.
 * {{{hold}}} is a Boolean; if {{{true}}}, the effect is considered a hold action that restricts the victim from moving. As long as a character has any hold effects, they cannot act.
 ** {{{holdAction}}} is a function for hold effects; it returns the dummy action that will be displayed if an enemy is held by the effect. This is usually just text, but may include other functionality.
 ** {{{priority}}} is an integer; determines the order in which enemies must resolve hold effects. Lower numbers are resolved first.
@@ -240,6 +242,7 @@ This isn't what a live {{{Item}}} object looks like, but it contains all the dat
 * {{{usable}}} is an array that can have up to two elements: "inmenu" and "inbattle". This determines if the item can be used in the party menu, in battle, or both (if both strings are included in the array). Optional.
 ** {{{onUse}}} is a function that determines what happens when the item is used in the party menu.
 ** {{{action}}} is a string; name of the action the item will generate if used in-battle. This defaults to the item's name.
+** {{{instantUse}}} is a Boolean; if {{{true}}}, the item's {{{onUse}}} will execute as soon as it is selected, rather than requiring a target first. (This is useful for e.g. items that affect the whole party or which take the player to another passage for more detailed interaction.)
 * {{{value}}} is an integer; determines the units of currency the item can be bought and sold for at shops.
 * {{{fakeName}}} is a string; alternate name that will be displayed until the item is used or equipped. Optional.
 

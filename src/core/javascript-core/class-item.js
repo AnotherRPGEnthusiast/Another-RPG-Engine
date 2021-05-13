@@ -74,23 +74,30 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
   }
 
 	get special() {
-      return (this.itemData.special || 0);
+    return (this.itemData.special || 0);
   }
 
 	get value() {
-			let r = (this.itemData.value || 0);
-			console.assert(Number.isInteger(r),`ERROR in value getter for ${this.name}: non-integer value`);
+		let r = (this.itemData.value || 0);
+		console.assert(Number.isInteger(r),`ERROR in value getter for ${this.name}: non-integer value`);
 
-      return (this.itemData.value || 0);
+    return (this.itemData.value || 0);
   }
 
   get usable() {
-      return (this.itemData.usable || []);
+    return (this.itemData.usable || []);
   }
 
 	get onUse() {
-      return (this.itemData.onUse || undefined);
+    return (this.itemData.onUse || undefined);
   }
+
+	get instantUse() {
+		//	Boolean. If true, the item's onUse will be executed immediately, instead of requiring a target.
+		//	This is useful for e.g. items that affect the whole party or call up another passage for more detailed interaction.
+
+		return (this.itemData.instantUse || false);
+	}
 
 	get equippable() {
       return (this.itemData.equippable || undefined);
