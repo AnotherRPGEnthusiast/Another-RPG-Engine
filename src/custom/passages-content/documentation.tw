@@ -2078,7 +2078,7 @@ The first branch of the if clause here may look complicated, but it's only for a
 <<set $B.phase = "actions">>
 <span class="hotkey monospace">[Q] = basic action | [W] = last action</span><br/><br/>
 
-<<actionlist $B.subject>>
+<<actionList $B.subject>>
 }}}
 Instead of making a separate passage for every character (which would quickly get cumbersome), everything is outsourced to another widget in order to reduce clutter. This can be found the widgets section of the "Battle Phases" file, and is discussed in <a class="noExternal" href="#actions">Action Mechanics</a>.
 
@@ -2864,11 +2864,11 @@ Note that all of this assumes you are using a standard RPG model with XP, levels
 
 <h2 id="actions">Action Mechanics</h2>
 {{{
-<<widget "actionlist">>
+<<widget "actionList">>
 /* Widget for display of player actions. */
 /* Individual action widgets take cost, damage multiplier, and other relevant variables as arguments so they can be displayed in the description. Values are given in "Database: Actions". */
 
-<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionlist: no Puppet")>>
+<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionList: no Puppet")>>
 <<set _char = $args[0]>>
 (...)
 <<set _actions = _char.actions>>
@@ -2895,13 +2895,13 @@ Note that all of this assumes you are using a standard RPG model with XP, levels
 	</span>
 	<<onmouseover>>
 		<<if $COMPRESSED_ACTIONS === true>>
-			<<replace '#actionInfo'>>
+			<<replace '#actionBox'>>
 				<<actionInfo _action _char "full">>
 			<</replace>>
 		<</if>>
 	<<onmouseout>>
 		<<if $COMPRESSED_ACTIONS === true>>
-			<<replace '#actionInfo'>>
+			<<replace '#actionBox'>>
 				<<include "action box default">>
 			<</replace>>
 		<</if>>
@@ -3082,7 +3082,7 @@ We could stop here, and we'd technically still have a functioning game. However,
 	<<capture _act>>
 	<<link "[Set as default]">>
 		<<set _char.defaultAction = _act>>
-		<<replace "#menuActionList">><<actionlist _display>><</replace>>
+		<<replace "#menuActionList">><<actionList _display>><</replace>>
 	<</link>>
 	<</capture>>
 	</div>
@@ -3145,8 +3145,8 @@ Why do we need all these handlers? Because the action list can be displayed two 
 <<else>>
 	<<set _actionClass = "">>
 <</if>>
-<div id="actionlist" @class="_actionClass">
-<<actionlist $B.subject>>
+<div id="actionList" @class="_actionClass">
+<<actionList $B.subject>>
 </div>
 <<if $COMPRESSED_ACTIONS === true>>
 <br/>
@@ -3171,17 +3171,17 @@ However, players using the compressed display still need a way to see the full i
 (...)
 <<onmouseover>>
 	<<if $COMPRESSED_ACTIONS === true>>
-		<<replace '#actionInfo'>>
+		<<replace '#actionBox'>>
 			<<actionInfo _action "full">>
 		<</replace>>
 	<</if>>
 <<onmouseout>>
 	<<if $COMPRESSED_ACTIONS === true>>
-		<<replace '#actionInfo'>><</replace>>
+		<<replace '#actionBox'>><</replace>>
 	<</if>>
 <</mouseover>>
 }}}
-The answer: with the {{{mouseover}}} macro. This code is wrapped around the action name in {{{actionlist}}}, and will make the action name a mouse-sensitive element. When the player mouses over the action name, we will populate the {{{#actionInfo}}} element with the action's full information using {{{actionInfo}}}. When the mouse leaves the element, the info box will become blank again. (This is why we needed to wrap the {{{capture}}} macro around the whole name display code, rather than just the link.)
+The answer: with the {{{mouseover}}} macro. This code is wrapped around the action name in {{{actionList}}}, and will make the action name a mouse-sensitive element. When the player mouses over the action name, we will populate the {{{#actionBox}}} element with the action's full information using {{{actionInfo}}}. When the mouse leaves the element, the info box will become blank again. (This is why we needed to wrap the {{{capture}}} macro around the whole name display code, rather than just the link.)
 
 <h3 id="crossbow">How does Rogue's crossbow work?</h3>
 [img[setup.ImagePath + "documentation/054.PNG"]]

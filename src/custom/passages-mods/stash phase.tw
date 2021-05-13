@@ -7,7 +7,7 @@ Select an item to use from stash. <<backbtn>>
 <<else>>
 	<<set _actionClass = "">>
 <</if>>
-<div id="actionlist" @class="_actionClass">
+<div id="actionList" @class="_actionClass">
 <<stashlist $B.subject>>
 </div>
 <<if $COMPRESSED_ACTIONS === true>>
@@ -35,13 +35,13 @@ Select an item to use from stash. <<backbtn>>
 	</span>
 	<<onmouseover>>
 		<<if $COMPRESSED_ACTIONS === true>>
-			<<replace '#actionInfo'>>
+			<<replace '#actionBox'>>
 				<<actionInfo _action "full">>
 			<</replace>>
 		<</if>>
 	<<onmouseout>>
 		<<if $COMPRESSED_ACTIONS === true>>
-			<<replace '#actionInfo'>><<include "action box default">><</replace>>
+			<<replace '#actionBox'>><<include "action box default">><</replace>>
 		<</if>>
 	<</mouseover>>
 	<</capture>>

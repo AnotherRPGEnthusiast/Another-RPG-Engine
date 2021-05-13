@@ -1,5 +1,33 @@
 const customMods = function () {
 
+const ActionProto = Object.getPrototypeOf(new Action(""));
+
+Object.defineProperty(ActionProto,'toString', {
+  value: function () {
+    var text = `<span class="action-name">${this.name}</span>`;
+    if (this.uses !== undefined) text += ` <span class="action-uses">(Uses: ${this.uses}/${this.maxUses})</span>`;
+    var tags = "";
+    if (!V().inbattle && subject().defaultAction === this.name) tags += `<b>[Default]</b> `;
+    if (this.crisis) tags += `<b>[Crisis]</b> `;
+    if (this.basic) tags += `[Basic] `;
+    if (this.instant) tags += `[Instant] `;
+    if (this.passive) tags += `[Passive] `;
+    if (this instanceof ItemAction && !this.crisis) {
+      tags += `x${inv().get(this.name).stock}`;
+    } else if (!this.passive && Number.isInteger(this.cost) &&
+              ((!this.crisis && this.cost >= 0) || (this.crisis && this.cost > 0))) {
+      tags += this.cost;
+      if (this.phase === "spell phase") tags += `+`;
+      tags += ` EN`;
+    }
+    text += `<span class="action-tags">${tags}</span>`;
+    var data = this instanceof ItemAction ? new Item(this.name) : this;
+    text += `<div class="action-info">${data.info}</div>`;
+    if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
+    return text;
+  }
+});
+
 //  PUPPET MODS
 
 const PuppetProto = Object.getPrototypeOf(new Puppet("Dummy"));

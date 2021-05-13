@@ -88,12 +88,12 @@
 <</link>>
 <</widget>>
 
-:: Widget: actionlist [widget nobr]
-<<widget "actionlist">>
-/* Widget for display of player actions. */
+:: Widget: actionList [widget nobr]
+<<widget "actionList">>
+/* Widget for display of player actions in battle. */
 /* Individual action widgets take cost, damage multiplier, and other relevant variables as arguments so they can be displayed in the description. Values are given in "Database: Actions". */
 
-<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionlist: no Puppet")>>
+<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionList: no Puppet")>>
 <<set _char = $args[0]>>
 <<if $args.includes("crisis")>>
 	<<set _actions = _char.crisis>>
@@ -101,62 +101,74 @@
 	<<set _actions = _char.actions>>
 <</if>>
 <<for _action range _actions>>
-<<if $inbattle && !_action.passive>> /* do not display anything if a passive action and not inbattle */
+<<if !_action.invisible>>
 	<<if setup.COMPRESSED_ACTIONS === true>>
 		<<set _actionClass = "actionDisplay">>
 	<<else>>
 		<<set _actionClass = "actionDisplay uncompressed">>
 	<</if>>
-	<div @class="_actionClass">
-	<<capture _action>>
-	<<mouseover>>
-	<span class="actionName">
-	<<if actionStandardCheck(_action)>>
-	/* If insufficient energy, uses, or cooldown, just display the action name (no link). */
-	_action.name<<if (def _action.cd && _action.cd !== 0)>>&nbsp;<span class="cooldowndisplay">[CD <<print _action.cd>>]</span><</if>>
-	<<elseif actionLockCheck(_action)>>
-	/* If dizzy and action not basic, display the name as crossed out followed by a gray "Dizzy!" message. */
-	<del>_action.name</del> <span class="dizzy">Dizzy!</span>
-	<<elseif actionHPCheck(_action)>>
-	/* If puppet has insufficient HP for an HP-consuming skill, the name is crossed out. */
-	<del>_action.name</del> <span class="dizzy">Not enough HP!</span>
-	<<elseif actionElementCheck(_action)>>
-	<del>_action.name</del> <span class="dizzy">No element.</span>
-	<<else>>
-		<<link "_action.name">>
-			<<actionLink>>
-		<</link>>
-	<</if>>
-	</span>
-	<<onmouseover>>
+	<<set _actionID = "#action"+_actions.indexOf(_action)>>
+	<div @id="_actionID" @class="_actionClass">
 		<<if setup.COMPRESSED_ACTIONS === true>>
-			<<run $("#actionInfo").css("visibility","visible")>>
-			<<replace '#actionInfo'>>
-				<<actionInfo _action _char "full">>
-			<</replace>>
+			<<print _action.printCompressed()>>
+		<<else>>
+			<<print _action>>
 		<</if>>
-	<<onmouseout>>
-		<<if setup.COMPRESSED_ACTIONS === true>>
-			<<run $("#actionInfo").css("visibility","hidden")>>
-			<<replace '#actionInfo'>>
-				<<include "action box default">>
-			<</replace>>
-		<</if>>
-	<</mouseover>>
-	<</capture>>
-	<<if setup.COMPRESSED_ACTIONS === true && $inbattle>>
-		<<actionInfo _action _char "no name">>
-	<<else>>
-		<<actionInfo _action _char "no name" "full">>
-	<</if>>
-	</div>
 
-<<elseif !$inbattle>> /* If outside of battle (e.g. in menu), display full action info with no interactivity. */
-	<div class="actionDisplay uncompressed">
-		<<actionInfo _action _char "full">>
+
 	</div>
+	<<capture _action, _actionID>>
+	<<timed 0s>>
+		<<run console.log($(_actionID+" .action-name"))>>
+		<<set _selector = _actionID+" .action-name">>
+		<<replace _selector>>
+			<<actionName>>
+		<</replace>>
+	<</timed>>
+	<</capture>>
 <</if>>
 <</for>>
+<</widget>>
+
+:: Widget: actionName [widget nobr]
+<<widget "actionName">>
+/* Renders the action link and other formatting e.g. for skill locks. */
+
+<<mouseover>>
+<span class="mouseover">
+<<if _action.standardCheck()>>
+/* If insufficient energy, uses, or cooldown, just display the action name (no link). */
+<<print _action.name>>
+<<elseif _action.lockCheck()>>
+/* If dizzy and action not basic, display the name as crossed out followed by a gray "Dizzy!" message. */
+<del><<print _action.name>></del> <span class="action-lock">Dizzy!</span>
+<<elseif _action.HPCheck()>>
+/* If puppet has insufficient HP for an HP-consuming skill, the name is crossed out. */
+<del><<print _action.name>></del> <span class="action-lock">Not enough HP!</span>
+<<elseif _action.elementCheck()>>
+<del><<print _action.name>></del> <span class="action-lock">No element.</span>
+<<else>>
+	<<link "_action.name">>
+		<<actionLink>>
+	<</link>>
+<</if>>
+<<onmouseover>>
+	<<if setup.COMPRESSED_ACTIONS === true>>
+		<<run $("#actionBox").css("visibility","visible")>>
+		<<replace '#actionBox'>>
+			<<print _action>>
+		<</replace>>
+	<</if>>
+<<onmouseout>>
+	<<if setup.COMPRESSED_ACTIONS === true>>
+		<<run $("#actionBox").css("visibility","hidden")>>
+		<<replace '#actionBox'>>
+			<<include "action box default">>
+		<</replace>>
+	<</if>>
+</span>
+<</mouseover>>
+
 <</widget>>
 
 :: Widget: actionInfo [widget nobr]
@@ -199,7 +211,7 @@
 	<<capture _act>>
 	<<link "[Set as default]">>
 		<<set _char.defaultAction = _act.name>>
-		<<replace "#menuActionList">><<actionlist _display>><</replace>>
+		<<replace "#menuActionList">><<actionList _display>><</replace>>
 	<</link>>
 	<</capture>>
 	</div>
@@ -219,7 +231,7 @@
 	<<set _action = $args[0]>>
 <</if>>
 
-<<if !(actionCheck(_action))>>
+<<if !_action.check())>>
 
 	<<unset _s>>
 	<<if _action.passagejump>>
@@ -261,7 +273,7 @@
 
 :: Widget: itemlist [widget nobr]
 <<widget "itemlist">>
-<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionlist: no Puppet")>>
+<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionList: no Puppet")>>
 <<set _char = $args[0]>>
 <<for _k, _v range inv()>>
 <<if _v.usable.includes("inbattle")>>
@@ -281,15 +293,15 @@
 	</span>
 	<<onmouseover>>
 		<<if setup.COMPRESSED_ACTIONS === true>>
-			<<run $("#actionInfo").css("visibility","visible")>>
-			<<replace '#actionInfo'>>
+			<<run $("#actionBox").css("visibility","visible")>>
+			<<replace '#actionBox'>>
 				<<actionInfo _v.action "full">>
 			<</replace>>
 		<</if>>
 	<<onmouseout>>
 		<<if setup.COMPRESSED_ACTIONS === true>>
-			<<run $("#actionInfo").css("visibility","hidden")>>
-			<<replace '#actionInfo'>><</replace>>
+			<<run $("#actionBox").css("visibility","hidden")>>
+			<<replace '#actionBox'>><</replace>>
 		<</if>>
 	<</mouseover>>
 	<</capture>>
@@ -816,8 +828,8 @@
 <<else>>
 	<<set _actionClass = "">>
 <</if>>
-<div id="actionlist" @class="_actionClass">
-<<actionlist $B.subject>>
+<div id="actionList" @class="_actionClass">
+<<actionList $B.subject>>
 </div>
 
 :: crisis actions[nobr]
@@ -836,8 +848,8 @@
 <<else>>
 	<<set _actionClass = "">>
 <</if>>
-<div id="actionlist" @class="_actionClass">
-<<actionlist $B.subject "crisis">>
+<div id="actionList" @class="_actionClass">
+<<actionList $B.subject "crisis">>
 </div>
 
 :: items[nobr battle]
@@ -850,7 +862,7 @@
 <<else>>
 	<<set _actionClass = "">>
 <</if>>
-<div id="actionlist" @class="_actionClass">
+<div id="actionList" @class="_actionClass">
 <<itemlist>>
 </div>
 

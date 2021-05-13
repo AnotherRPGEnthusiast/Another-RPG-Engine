@@ -71,41 +71,6 @@ window.deadCount = function deadCount () {
 	return count;
 };
 
-//	Checks for action availability. Separate ones needed to customize UI feedback.
-//	A true return means the action FAILED the check and will be unavailable.
-
-var actionStandardCheck = function (action) {
-	//	Checks for EN cost, uses, cooldown, and crisis points.
-	return (subject().en < action.cost)
-	|| (typeof(action.uses) == "number" && action.uses < 1)
-	|| (typeof(action.cd) == "number" && action.cd !== 0)
-	|| (action.used === true)
-	|| (action.crisis && subject().crisisPoints < 100);
-}
-window.actionStandardCheck = actionStandardCheck;
-
-var actionLockCheck = function (action) {
-	//	Checks if character is under a skill lock.
-	return (subject().dizzy && !action.basic);
-}
-window.actionLockCheck = actionLockCheck;
-
-var actionHPCheck = function (action) {
-	//	Checks if character cannot pay the HP cost.
-	return (action.hpcost && subject().hp <= action.hpcost);
-}
-window.actionHPCheck = actionHPCheck;
-
-var actionElementCheck = function (action) {
-	//	Checks that a character has a prior element stored for actions that need a prior element.
-	return (action.needsPriorElement && typeof(subject().lastUsed) !== "string");
-}
-window.actionElementCheck = actionElementCheck;
-
-window.actionCheck = function actionCheck (action) {
-	return (actionStandardCheck(action) || actionLockCheck(action) || actionHPCheck(action) || actionElementCheck(action));
-}
-
 /*
 	Number-To-Words module
 	Converts a number, which must be a safe integer, into its short scale word equivalent.
@@ -157,7 +122,7 @@ window.actionCheck = function actionCheck (action) {
 
 		// Set up some variables
 		var popup;
-		var actionlist;
+		var actionList;
 		// Add an event to the window.mousemove event
 		window.addEventListener("mousemove", function(e) {
 
@@ -167,9 +132,9 @@ window.actionCheck = function actionCheck (action) {
 				popup.style.left = e.clientX - $("#content").position().left + 10 + "px";
 				popup.style.top = e.clientY + (popup.offsetHeight/2) > window.innerHeight ?
 					window.innerHeight - popup.offsetHeight - 1 + "px" : e.clientY - (popup.offsetHeight/2) + "px"
-				actionlist = document.getElementById("actionlist");
-				if (actionlist) {
-					actionlist.addEventListener("scroll", function() {
+				actionList = document.getElementById("actionList");
+				if (actionList) {
+					actionList.addEventListener("scroll", function() {
 						popup.style.visibility = "hidden";
 					});
 				}

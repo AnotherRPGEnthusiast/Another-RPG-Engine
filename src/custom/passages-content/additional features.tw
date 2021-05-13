@@ -1143,7 +1143,7 @@ The {{{<<crisisLink>>}}} widget itself is straightforward: It's just a link that
 <<if $args.includes("crisis")>>
 	<<set _actions = _char.crisis>>
 }}}
-The "crisis actions" passage is functionally identical to the standard "actions" passage, the only difference being that it iterates over Crisis actions rather than regular actions. That's accomplished through this little handler in {{{<<actionlist>>}}}.
+The "crisis actions" passage is functionally identical to the standard "actions" passage, the only difference being that it iterates over Crisis actions rather than regular actions. That's accomplished through this little handler in {{{<<actionList>>}}}.
 
 From here, the Crisis action can be handled like any other and reuses much of the same code, though we have to add some additional checks to account for the new resource:
 {{{

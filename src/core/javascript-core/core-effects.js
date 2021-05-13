@@ -209,6 +209,7 @@ setup.effectData = {
     "removeText": setup.effectFunctions.rem
   },
   "Dizzy": {
+		"skillLock": true,
     "onApply": function (puppet) {
       puppet.dizzy = true;
     },

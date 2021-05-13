@@ -4,6 +4,8 @@ Version 3.01
 <li>Equipment slots are now always occupied by arrays, instead of only those with multiple subslots. This should result in no functional change, but allows me to clean up equipment functions by not having to account for branching functionalities. <b>Note that this update will generate errors with existing games that used previous versions.</b> You will need to update your characters' equipment slots to match the new standards.</li>
 <li>Default and last actions are now stored as strings rather than full Action objects. <b>This update will cause errors with existing games that store these variables as Actions.</b> Make sure to update existing savefiles if you update to this version.</li>
 <li>You can now customize the text used to display the status button with the <code>setup</code> variable <code>STATUS_BUTTON</code>.</li>
+<li>New <code>Effect</code> property: <code>skillLock</code>. This denotes effects that prevent the use of non-basic actions (e.g. Dizzy).</li>
+<li>The checks for action link availability are now properties of <code>Action</code> objects rather than freefloating functions.</li>
 </ul>
 Version 3.00
 <ul>
@@ -203,7 +205,7 @@ Version 1.23
 <li>Added handlers for indirect damage (e.g. damage-over-time) to <code>echoDamage</code>. Indirect damage will ignore most checks such as damage reflection, off-balance, and counters.</li>
 <li>Damage-over-time damage is now handled through <code>echoDamage</code> rather than manually.</li>
 <li>The <code>decay</code> function for Effects will now always return something, and will return an empty string if the effect didn't expire.</li>
-<li>You can now pass a puppet as an argument to <code>actionlist</code>.</li>
+<li>You can now pass a puppet as an argument to <code>actionList</code>.</li>
 <li>The "struggle" and "rest" commands will now correctly remove their respective statuses.</li>
 <li>Fixed a bug in the "massAttack" actions and previews.</li>
 <li>Hunter and counter checks are now hardcoded into the main battle passages. The widgets governing Mark and Hunter attacks have been offloaded to their own passage, "Widgets (Special Attacks)" for easier modularity.</li>
@@ -358,7 +360,7 @@ Version 1.15
 <li>The commands menu will no longer continue to display after selecting a command. This should hopefully make playing with the mouse a little easier.</li>
 <li>The functionality of number hotkeys has been moved to a widget, <code>numKey</code>, and can be found in <code>Widgets (Misc)</code>. This will allow you to change the behavior of all number keys by just altering one block of code.</li>
 <li>The "last action" notification in battle now says what the last action is, and does not display at all if there isn't one.</li>
-<li>The action list display has been revamped. By default, it now displays only the action names and their EN cost, with additional information appearing on mouseover. (For mobile users, you can return to the old display through an option in the Settings menu.) Additionally, the action list is now contained to a fixed height, and gains a scrollbar if the text exceeds that height. (This should prevent it from overflowing the viewport on most monitors.) This can be changed by modifying the <code>actionlist</code> ID in <code>battle display.css</code>.</li>
+<li>The action list display has been revamped. By default, it now displays only the action names and their EN cost, with additional information appearing on mouseover. (For mobile users, you can return to the old display through an option in the Settings menu.) Additionally, the action list is now contained to a fixed height, and gains a scrollbar if the text exceeds that height. (This should prevent it from overflowing the viewport on most monitors.) This can be changed by modifying the <code>actionList</code> ID in <code>battle display.css</code>.</li>
 <li>Fixed some unterminated class and function expressions.</li>
 <li>Fixed several bugs in the action functions that used <code>findTarget</code>. They should now work more intuitively, and you no longer need to wrap them in a double-function call on the database end.</li>
 <li>Protector should work again.</li>
@@ -457,7 +459,7 @@ Version 1.13
 <li><code>deathcheck</code> will now remove effects only if they <i>aren't</i> persistent, not only if they are.</li>
 <li>The check for legal action use has been moved from the hotkey code into the {{{<<actionLink>>}}} macro directly.</li>
 <li>The Q key now triggers the link in the confirm phase rather than just forwarding the player to the action phase. This is useful if you want the confirm link to perform additional code.</li>
-<li>The code for <code>actionlist</code> now looks a bit neater.</li>
+<li>The code for <code>actionList</code> now looks a bit neater.</li>
 <li>Fixed a broken link in Design.</li>
 <li>Updated documentation.</li>
 </ul>
@@ -736,7 +738,7 @@ Version 1.0-beta
 <li>New function <code>unequipAll</code> added to Actor class.</li>
 <li>Items now consume 2 Energy when used.</li>
 <li>Fixed a bug that allowed you to add extra characters to your party through the party picker.</li>
-<li><code>actionlist</code> updated to display passive abilities when out of battle.</li>
+<li><code>actionList</code> updated to display passive abilities when out of battle.</li>
 <li>HP regeneration implemented. Puppets and enemies will both regain a percentage of their max HP based on their <code>HPregen</code> attribute at the start of their turns. You can play with this by equipping the "Color of Growth" item.</li>
 <li>Effect descriptions are no longer bolded, and effect names are no longer underlined.</li>
 <li>Updated documentation for new features.</li>

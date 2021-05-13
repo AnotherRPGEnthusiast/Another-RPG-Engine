@@ -424,7 +424,7 @@ ARG 0 = equipped item
 	<div class="abilities-header">ABILITIES</div>
 	<br/>
 	<div id="menuActionList">
-	<<actionlist _display>>
+	<<actionList _display>>
 	</div>
 <<elseif ndef _display>>
 	<<set _HPmeters = []>>

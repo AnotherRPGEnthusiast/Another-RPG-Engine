@@ -33,14 +33,33 @@
 	margin-bottom: 1.5em;
 }
 
-.actionName {
+.action-name {
   font-weight: bold;
 }
 
-.actdesc {
+.action-tags {
+  float: right;
+  margin-left: 0.5em;
+}
+
+.action-info {
+
+}
+
+.action-desc {
   color: gray;
   font-style: italic;
   font-size: 12px;
+}
+
+.action-uses {
+	font-size: 11pt;
+	margin-left: 1em;
+}
+
+.action-cooldown {
+  color: gray;
+  font-weight: bold;
 }
 
 .preview {
@@ -48,19 +67,9 @@
   font-style: italic;
 }
 
-.dizzy {
+.action-lock {
   color: gray;
   font-style: italic;
-}
-
-.usedisplay {
-	font-size: 11pt;
-	margin-left: 1em;
-}
-
-.cooldowndisplay {
-  color: gray;
-  font-weight: bold;
 }
 
 .actionBoxHelp {

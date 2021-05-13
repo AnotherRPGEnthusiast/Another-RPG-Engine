@@ -848,6 +848,96 @@ window.Action = class Action {
 		return val;
 	}
 
+	get invisible () {
+		//	Boolean. If true, action will not be displayed in the action list.
+		//	By default, passive abilities are invisible if displayed in-battle, but not if viewed from the menu.
+
+		var val = this._invisible;
+		if (val === undefined) {
+			val = this.actionData.invisible;
+		}
+		if (val === undefined) {
+			val = V().inbattle && this.passive ? true : false;
+		}
+		return val;
+	}
+
+	//	Checks for action availability. Separate ones needed to customize UI feedback.
+	//	A true return means the action FAILED the check and will be unavailable.
+
+	standardCheck () {
+		//	Checks for EN cost, uses, cooldown, and crisis points.
+		return (subject().en < this.cost)
+		|| (typeof(this.uses) == "number" && this.uses < 1)
+		|| (typeof(this.cd) == "number" && this.cd !== 0)
+		|| (this.used === true)
+		|| (this.crisis && subject().crisisPoints < 100);
+	}
+
+	lockCheck () {
+		//	Checks if character is under a skill lock.
+		return (subject().skillLock && !this.basic);
+	}
+
+	HPCheck () {
+		//	Checks if character cannot pay the HP cost.
+		return (this.hpcost && subject().hp <= this.hpcost);
+	}
+
+	elementCheck () {
+		//	Checks that a character has a prior element stored for actions that need a prior element.
+		return (this.needsPriorElement && typeof(subject().lastUsed) !== "string");
+	}
+
+	check () {
+		return (this.standardCheck() || this.lockCheck() || this.HPCheck() || this.elementCheck());
+	}
+
+	toString () {
+		//	Determines the default way actions are displayed in-game. Used with actionList.
+
+    var text = `<span class="action-name">${this.name}</span>`;
+		if (typeof(this.cd) === "number" && this.cd !== 0) text += ` <span class="action-cooldown">[CD ${this.cd}]</span>`
+    if (this.uses !== undefined) text += ` <span class="action-uses">(Uses: ${this.uses}/${this.maxUses})</span>`;
+    var tags = "";
+    if (!V().inbattle && subject().defaultAction === this.name) tags += `<b>[Default]</b> `;
+    if (this.crisis) tags += `<b>[Crisis]</b> `;
+    if (this.basic) tags += `[Basic] `;
+    if (this.instant) tags += `[Instant] `;
+    if (this.passive) tags += `[Passive] `;
+    if (this instanceof ItemAction && !this.crisis) {
+      tags += `x${inv().get(this.name).stock}`;
+    } else if (!this.passive && Number.isInteger(this.cost) &&
+              ((!this.crisis && this.cost >= 0) || (this.crisis && this.cost > 0))) {
+      tags += this.cost;
+      if (this.phase === "spell phase") tags += `+`;
+      tags += ` EN`;
+    }
+    text += `<span class="action-tags">${tags}</span>`;
+    var data = this instanceof ItemAction ? new Item(this.name) : this;
+    text += `<div class="action-info">${data.info}</div>`;
+    if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
+    return text;
+  }
+
+	printCompressed () {
+		//	Determines the display for compressed actions.
+		//	By default, this strips tags, info, and description.
+
+		var text = `<span class="action-name">${this.name}</span>`;
+		var tags = "";
+    if (this instanceof ItemAction && !this.crisis) {
+      tags += `x${inv().get(this.name).stock}`;
+    } else if (!this.passive && Number.isInteger(this.cost) &&
+              ((!this.crisis && this.cost >= 0) || (this.crisis && this.cost > 0))) {
+      tags += this.cost;
+      if (this.phase === "spell phase") tags += `+`;
+      tags += ` EN`;
+    }
+    text += `<span class="action-tags">${tags}</span>`;
+		return text;
+	}
+
 	clone () {
 		// Return a new instance containing our current data.
 		return new Action(this);

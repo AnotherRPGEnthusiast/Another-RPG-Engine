@@ -177,20 +177,20 @@ button {
 	font-size: 9pt;
 }
 
-#actionlist {
+#actionList {
 	overflow-y: auto;
 	padding-right: 1em;
 	max-height: 350px;
 }
 
-#actionlist.compressed {
+#actionList.compressed {
 	display: grid;
 	grid-template-columns: repeat(2,1fr);
 	column-gap: 2em;
 	max-height: 250px;
 }
 
-#actionInfo {
+#actionBox {
 	visibility: hidden;
 	position: absolute;
 	border: solid 1px;

@@ -333,10 +333,23 @@ window.Effect = class Effect {
 
 	get unique () {
 		//	Boolean. If true, only one instance of this effect can exist per party.
-		
+
 		var val = this._unique;
 		if (val === undefined) {
 			val = this.effectData.unique;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
+	get skillLock () {
+		//	Boolean. If true, this effect will prevent the victim from using non-basic actions.
+
+		var val = this._skillLock;
+		if (val === undefined) {
+			val = this.effectData.skillLock;
 		}
 		if (val === undefined) {
 			val = false;

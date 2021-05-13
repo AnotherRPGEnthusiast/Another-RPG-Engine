@@ -187,6 +187,13 @@ window.Actor = class Actor {
 		return this.effects.find(function(eff) { return eff && eff.uncontrollable });
 	}
 
+	get skillLock () {
+		//	Checks if the Actor is under a skill-locking effect (e.g. Dizzy)
+		//	If skillLock effect found, will return a truthy value, else will return a falsy value.
+
+		return this.effects.find(function(eff) { return eff && eff.skillLock });
+	}
+
 	get hp () {
 		return this._hp;
 	}
