@@ -27,13 +27,13 @@ Effect.prototype.calculatePower = function (target,subject) {
   return Math.max(power,check);
 }
 
-Actor.prototype.testEffect = function (name,mods) {
+Actor.prototype.testEffect = function (name,mods = {}) {
   //  Tests if an effect will be applied (for previews).
   //  Returns string or Boolean.
   //  If the effect will go through, return true; else, return a string describing the exact point of failure.
 
   console.assert(typeof(name) == "string",`ERROR in testEffect: no effect passed`);
-  mods = (mods || {});
+  console.log(`testEffect running for ${this.name}`);
   var E = new Effect(name);
   let entry;
   if (V().bestiary instanceof Bestiary && V().bestiary.fetch(this.name) instanceof BestiaryEntry) {
@@ -45,6 +45,7 @@ Actor.prototype.testEffect = function (name,mods) {
     .sort(function(a,b) { return a.priority - b.priority; })
     .forEach(function (effect) {
       if (effect.blockCondition(E)) {
+        console.log("block found");
         return "block";
       }
     },this);
@@ -53,9 +54,11 @@ Actor.prototype.testEffect = function (name,mods) {
   let n = (E.synonym || E.name);
   if (this.tolerances.get(n).current != 0 && !mods.pierceImmunity) {
 
+    console.log("tolerance found");
     //  If this character has a bestiary entry, we must check if the tolerance is known
     if (entry && entry.tolerancesKnown[n] !== true) {
       //  If it isn't, we return true -- no spoilers!
+      console.log("tolerance not known");
       return true;
     }
 
@@ -64,6 +67,7 @@ Actor.prototype.testEffect = function (name,mods) {
       return "immune";
     }
     else if (this.getTol(n) > 0 && !mods.pierceTol) {
+      console.log("tolerance");
       return "tolerance";
     }
   }
@@ -245,15 +249,38 @@ Actor.prototype.addEffect = function (name,mods) {
   return text;
 };
 
-Actor.prototype.removeEffect = function (effect,mods) {
+Actor.prototype.testRemoval = function (effect,mods = {}) {
+  //  Tests if an effect will be removed (for previews).
+  //  Returns string or Boolean.
+  //  If the removal will happen, return true; else, return a string describing the exact point of failure.
+
+  console.assert(typeof(effect) === "string",`ERROR in testEffect: effect must be string`);
+  if (this.stasis && !mods.pierce === true) {
+    return "block";
+  } else if (effect === "all") {
+    if (this.effects.length === 0) return "none";
+  } else if (effect === "ailments") {
+    if (this.effects.filter(function(e) { return e && !e.buff }).length === 0) return "none";
+  } else if (effect === "buffs") {
+    if (this.effects.filter(function(e) { return e && e.buff }).length === 0) return "none";
+  } else {
+    var E = this.effects.find(function(e) { return e && e.name === effect; });
+    if (E === undefined) return "absent";
+    if ((E.sticky && !mods.unsticky) || (E.ULTIMATESTICKY && mods.unsticky !== "ultimate")) return "sticky";
+  }
+  return true;
+
+}
+
+Actor.prototype.removeEffect = function (effect,mods = {}) {
   //	effect = Effect or string. If Effect, will remove that particular Effect object from actor's effects array. If string, will search for an Effect with that name and remove it if found.
   //	mods = object, contains optional properties:
   //		pierce = Boolean. Set true to remove effects through stasis.
   //		unsticky = Boolean. Set true to remove sticky effects, "ultimate" to remove ULTIMATESTICKY
   //		removeStack = Boolean. Set true to remove all instances of a stackable effect (only matters if string used for effect ID)
 
+  console.assert(typeof(effect) === "string" || effect instanceof Effect,`ERROR in removeEffect: effect must be string or Effect`);
   var result = "";
-  mods = (mods || {});
   if (!this.stasis || mods.pierce === true){
     var E;
     if (typeof(effect) == 'string') {

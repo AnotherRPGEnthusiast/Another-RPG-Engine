@@ -157,7 +157,6 @@ window.Enemy = class Enemy extends Actor {
 		//	Returns Boolean. Determination for if character can be selected by the player in targeting phase.
 		//	To customize, use Object.defineProperty.
 
-		console.log("running validTarget for "+this.name);
 		if (!(V().B.targeting === "all" || V().B.targeting === "enemy")) {
 			//	If not targeting enemies, invalid target
 			return false;
@@ -297,7 +296,7 @@ window.BestiaryEntry = class BestiaryEntry {
 		for (let pn in this.statsKnown) {
 			this.statsKnown[pn] = true;
 		}
-		if (this.tolerancesKnown.length > 0) {
+		if (Object.keys(this.tolerancesKnown).length > 0) {
 			for (let pn in this.tolerancesKnown) {
 				this.tolerancesKnown[pn] = true;
 			}

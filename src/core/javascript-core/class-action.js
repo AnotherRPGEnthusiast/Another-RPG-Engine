@@ -173,28 +173,71 @@ window.Action = class Action {
 								_enemy.name will take <b>$dmg</b> damage<br/>\
 							<</if>>\
 						<</for>>`;
-			case "cure":
-				//	under construction
+			case "cleanse":
+			case "removeEffect":
 				break;
 			default:
 				return val;
 		}
 		if (result.length > 0) result += "<br/>";
+		if (val === "cleanse" && Number.isInteger(this.removedEffects)) {
+			this.effects = [];
+			let e = this.removedEffects;
+			let effects = target().effects;
+			for (let i = effects.length-1; i >= 0; i--) {
+				if (e <= 0) {
+					break;
+					// The number of effects removed by Neutralize/Restoration varies depending on energy invested. If there are more effects than the spell can remove, we end the function here. Otherwise the spell would clear all effects regardless of strength!
+				}
+				if (subject().ownParty === target().ownParty && !effects[i].buff) {
+					// If using this on ally, only remove ailments
+					this.effects.push(effects[i].name);
+					e--;
+				} else if (effects[i].buff) {
+					this.effects.push(effects[i].name);
+					e--;
+				}
+			}
+			val = "removeEffect";
+		}
 		if (this.effects instanceof Array && target() instanceof Actor) {
-			for (let effect of this.effects) {
-				switch (target().testEffect(effect)) {
-					case "immune":
-						result += `<b>${target().name}</b> <b>is immune to ${effect}</b>`;
-						break;
-					case "block":
-						result += `<b>${target().name}</b> <b>is protected from ${effect}</b>`;
-						break;
-					case "tolerance":
-						result += `<b>${target().name}</b> will lose <b>${this.toleranceDamage} ${effect} tolerance</b>`;
-						break;
-					default:
-						result += `<b>${target().name}</b> will gain <b>${effect}</b>`;
-						if (this.dur > 1) result += ` for <b>${this.dur}</b> rounds`;
+			if (val === "removeEffect") {
+				for (let effect of this.effects) {
+					switch (target().testRemoval(effect)) {
+						case "block":
+							result += `<b>${target().name}'s effects are sealed</b>`;
+							break;
+						case "none":
+							result += `<b>${target().name} doesn't have any effects to remove!</b>`;
+							break;
+						case "absent":
+							result += `<b>${target().name}</b> <b>does not have ${effect}</b>`;
+							break;
+						case "sticky":
+							result += `<b>${effect} can't be removed!</b>`;
+							break;
+						default:
+							result += `<b>${target().name}</b> will lose <b>${effect}</b>`;
+					}
+					result += `<br/>`;
+				}
+			} else {
+				for (let effect of this.effects) {
+					switch (target().testEffect(effect)) {
+						case "immune":
+							result += `<b>${target().name}</b> <b>is immune to ${effect}</b>`;
+							break;
+						case "block":
+							result += `<b>${target().name}</b> <b>is protected from ${effect}</b>`;
+							break;
+						case "tolerance":
+							result += `<b>${target().name}</b> will lose <b>${this.toleranceDamage} ${effect} tolerance</b>`;
+							break;
+						default:
+							result += `<b>${target().name}</b> will gain <b>${effect}</b>`;
+							if (this.dur > 1) result += ` for <b>${this.dur}</b> rounds`;
+					}
+					result += `<br/>`;
 				}
 			}
 		}
@@ -202,7 +245,7 @@ window.Action = class Action {
   }
 
 	set preview (val) {
-		console.assert(val instanceof Function,`ERROR: preview is not function`);
+		console.assert(typeof(val) === "string" || val instanceof Function,`ERROR: preview must be string or function`);
 		this._preview = val;
 	}
 
@@ -1043,15 +1086,18 @@ window.Action = class Action {
 	}
 
 	set effects (val) {
-		console.assert(val instanceof Array && val.length > 0,`ERROR: effects must be array`);
+		console.assert(val instanceof Array,`ERROR: effects must be array`);
 		this._effects = val;
 	}
 
 	get effects () {
 		//	Array of strings. Name of effects that will be applied by the action.
+		//		if single string is passed, it will be converted into a 1-element array
 		//	Used in previews and as defaults for applyEffect.
 
-		return (this._effects || this.actionData.effects || null);
+		var result = (this._effects || this.actionData.effects || null);
+		if (typeof(result) == "string") result = [result];
+		return result;
 	}
 
 	//	Checks for action availability. Separate ones needed to customize UI feedback.
@@ -1188,8 +1234,8 @@ window.ItemAction = class ItemAction extends Action {
 	}
 
 	standardCheck (i) {
-		var inv = (i || inv());
-		return (inv.get(this.source).stock < 1);
+		var inventory = (i || inv());
+		return (inventory.get(this.source).stock < 1);
 	}
 
 	toString () {

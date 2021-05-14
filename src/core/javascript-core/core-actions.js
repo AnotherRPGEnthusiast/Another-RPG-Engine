@@ -127,6 +127,7 @@ setup.actionData = {
 		"cost": 4,
 		"weight": 1.1,
 		"dur": 1,
+		"effects": ["Off-Balance"],
 		"info": function (action) {return `Inflicts damage with an attack weight of ${action.weight} and knocks the enemy <b>Off-Balance</b>, but knocks Fighter Off-Balance too.`},
 		"desc": `A reckless charge that attempts to overpower the enemy with sheer force. Fighter can put a lot of strength behind this attack, but it'll leave them overbalanced and open to a counterattack.`,
 		"actText": function () {
@@ -158,26 +159,26 @@ setup.actionData = {
 		"cost": 0,
 		"instant": true,
 		"phase": "confirm phase",
+		"effects": ["Berserker"],
 		"info": function (action) {return `Increase damage dealt and received by ${setup.BERSERK_FACTOR*100}%.`},
 		"desc": `Fighter will throw down their shield and fight with reckless abandon, hitting harder but hurting harder, too.`,
 		"actText": function () {
 			return `${subject().name}'s shield drops to the ground with a <i>clang</i>, and ${subject().they} grip ${subject().their} weapon with fiery determination. No holding back, now!`;
 		},
-		"act": applyEffect("Berserker",{self:true}),
-		"preview": Prev.stance
+		"act": applyEffect("Berserker",{self:true})
 	},
 
 	"Defender": {
 		"cost": 0,
 		"instant": true,
 		"phase": "confirm phase",
+		"effects": ["Defender"],
 		"info": function (action) {return `Reduce damage dealt and received by ${setup.DEFEND_FACTOR*100}%.`},
 		"desc": `Fighter will hunker behind their shield, blocking oncoming blows but making it harder for them to attack.`,
 		"actText": function () {
 			return `An expression of cool stillness passes over ${subject().name}'s face as they hunker behind ${subject().their} shield, eyes peeled for all incoming attacks.`;
 		},
-		"act": applyEffect("Defender",{self:true}),
-		"preview": Prev.stance
+		"act": applyEffect("Defender",{self:true})
 	},
 
 	"Meditate": {
@@ -185,11 +186,12 @@ setup.actionData = {
 		"basic": true,
 		"dur": 4,
 		"phase": "confirm phase",
+		"effects": ["ailments"],
 		"info": function (action) {return `Cure user of all negative ailments and bestow <b>Chi Shield</b>, protecting them from future ailments for ${action.dur} turns.`},
 		"actText": function () {
 			return `${subject().name} stops, and closes ${subject().their} eyes. ${subject().their.toUpperFirst()} sudden tranquility is discordant with the chaos of the battle. ${subject().they.toUpperFirst()} take a deep breath, and when ${subject().they} let it out you swear you can see a physical presence leave ${subject().them}. ${subject().they.toUpperFirst()} stand up straighter, positively glowing.`;
 		},
-		"act": removeEffect({type: "all", target:'s', cure:true},
+		"act": removeEffect({target:'s'},
 						applyEffect("Chi Shield",{self:true},
 						`<<set $B.heal_used = true>>`)),
 		"preview": function () {
@@ -209,6 +211,7 @@ setup.actionData = {
 		"dur":		3,
 		"target":	"ally",
 		"noself":	true,
+		"effects": ["Protector"],
 		"info":	function (action) {return 	`Take hits for an ally and gain a Defense bonus for ${action.dur} rounds.`},
 		"actText": function () {
 			return `Without hesitation ${subject().name} jumps in front of ${subject().their} charge, shielding them from all harm.`;
@@ -221,10 +224,10 @@ setup.actionData = {
 	"Martyr": {
 		"cost":		2,
 		"phase":	"confirm phase",
+		"effects": ["Martyr"],
 		"info":	function (action) {return 	`Draw all direct attacks for this round.`},
 		"actText": null,
 		"act": applyEffect("Martyr",{self:true}),
-		"preview": Prev.stance,
 		"desc":		`The blinding intensity of Fighter's spirit can warp perception itself. Through sheer will they can become so overpoweringly <b>real</b> that enemies become unable to see anything else, compelling them to send all attacks Fighter's way. Unfortunately, the technique requires too much concentration for Fighter to raise their shield.`
 	},
 
@@ -234,6 +237,7 @@ setup.actionData = {
 		"cost":		2,
 		"weight":	setup.knife_weight,
 		"basic":	true,
+		"hits": 2,
 		"info":	function (action) {return 	`Attack twice with a weight of ${action.weight.toFixed(2)}.`},
 		"desc":		`It's not as strong as Fighter's big sword, but Rogue is fast enough to get two licks before their victim knows what's hit them. This is most effective against enemies with poor defense.`,
 		"useText": null,
@@ -241,7 +245,7 @@ setup.actionData = {
 			return `${subject().name} draws two knives and rushes in, slashing with one hand and stabbing with the other.`;
 		},
 		"act": multihit({hits: 2}),
-		"preview": Prev.multihit(2)
+		"preview": "multihit"
 	},
 
 	"Crossbow": {
@@ -282,14 +286,14 @@ setup.actionData = {
 
 	"Something in your eye": {
 		"cost":		2,
+		"effects": ["Stunned"],
 		"info":	function (action) {return 	`Stun an enemy.`},
 		"desc":		`It's amazing how if you say something ridiculous, people will hold still long enough for you to make it true. It's like they want it to happen, really.`,
 		"actText": function () {
 			return `"Hey," you say. "Something in your eye."
 			'Something' turns out to be a fistful of dirt.`;
 		},
-		"act": applyEffect("Stunned"),
-		"preview": Prev.effect("Stunned")
+		"act": applyEffect("Stunned")
 	},
 
 	"Poison Prick": {
@@ -297,13 +301,13 @@ setup.actionData = {
 		"weight":	0.5,
 		"effweight":	0.6,
 		"dur":		3,
+		"effects": ["Poisoned"],
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and inflict Poisoned for ${action.dur} rounds.`},
 		"desc":		`The tiny knife may barely break the skin, but the poison it's coated in ensures they'll be feeling it for a while to come.`,
 		"actText": function () {
 			return `$B.subject.name feints to the side, then with blinding speed draws a tiny concealed knife, stabbing it into the enemy like a needle. The skin around it breaks into welts and sickly purple splotches.`;
 		},
-		"act": applyEffect("Poisoned",{dmg: true}),
-		"preview": Prev.effect("Poisoned",'dmg')
+		"act": applyEffect("Poisoned",{dmg: true})
 	},
 
 	"Off Your High Horse": {
@@ -315,14 +319,7 @@ setup.actionData = {
 			return `$B.subject.name leaps forward, twirling ${subject().their} knife in a strange pattern before slicing it across the enemy. Glimmering lines of energy trail after it like strands of cobweb, then wink out of existence.`;
 		},
 		"act": justdmg(removeLastEffect()),
-		"preview": `<<damageCalc>>\
-			<<if !$B.target.dead && !$B.target.stasis>>\
-				<<run _effect = target().effects.filter(function (eff) { return eff && eff.buff && !eff.sticky }).last()>>\
-				<<if _effect instanceof Effect>>\
-					<<set _s = _effect.name>>\
-				<</if>>\
-			<</if>>\
-			This will inflict $dmg damage<<if def _s>> and remove _s<</if>>.`
+		"preview": "cleanse"
 	},
 
 	"A Farewell to Arms": {
@@ -330,13 +327,13 @@ setup.actionData = {
 		"weight":	1,
 		"effweight":	setup.STD_DEBUFF,
 		"dur":		3,
+		"effects": ["Injury"],
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and inflict Injury for ${action.dur} rounds.`},
 		"desc":		`A savage laceration of the arm muscles that leaves the enemy crippled.`,
 		"actText": function () {
 			return `$B.subject.name pauses, their eyes flicking over their opponent. They raise their knife level with their eyes, and the next instant lunge forward with a crippling stab to the arm joints.`;
 		},
-		"act": applyEffect("Injury", {dmg: true}),
-		"preview": Prev.effect("Injury",'dmg')
+		"act": applyEffect("Injury", {dmg: true})
 	},
 
 	"Below the Belt": {
@@ -344,13 +341,13 @@ setup.actionData = {
 		"weight":	1,
 		"effweight":	setup.STD_DEBUFF,
 		"dur":		3,
+		"effects": ["Pain"],
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and inflict Pain for ${action.dur} rounds.`},
 		"desc":		`A nasty kick to the joints and other painful regions that leaves the enemy too distracted by pain to defend themselves.`,
 		"actText": function () {
 			return `$B.subject.name pauses, their eyes flicking over their opponent. Suddenly they strike out like a viper, ramming a sharp kick into an exposed weak point.`;
 		},
-		"act": applyEffect("Pain", {dmg: true}),
-		"preview": Prev.effect("Pain",'dmg')
+		"act": applyEffect("Pain", {dmg: true})
 	},
 
 	"Dead Ringer": {
@@ -358,39 +355,41 @@ setup.actionData = {
 		"weight":	1,
 		"effweight":	setup.STD_DEBUFF,
 		"dur":		3,
+		"effects": ["Headache"],
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and inflict Headache for ${action.dur} rounds.`},
 		"desc":		`An unsporting blow to the temple that leaves the enemy's head ringing.`,
 		"actText": function () {
 			return `$B.subject.name kicks dust into their opponent's eyes, disorienting ${target().them} just long enough for them to ram their dagger's pommel straight into ${target().their} temple.`;
 		},
-		"act": applyEffect("Headache", {dmg: true}),
-		"preview": Prev.effect("Headache",'dmg')
+		"act": applyEffect("Headache", {dmg: true})
 	},
 
 	"Flurry": {
 		"cost":		5,
 		"weight":	0.55,
+		"hits": 3,
 		"dur":	1,
+		"effects": ["Off-Balance"],
 		"info":	function (action) {return 	`Attack thrice with a weight of ${action.weight} and inflict Off-Balance.`},
 		"desc":		`Descend on the enemy in a whirlwind of strikes! The sudden ferocity will make them lose their footing, leaving them open to another puppet's attack.`,
 		"actText": function () {
 			return `With uncharacteristic unsubtlety, $B.subject.name charges forward, swinging their blades in a whirlwind of flashing steel. Not every swing connects, but it doesn't need to. The enemy stumbles and sways from the pressing assault, looking like they could be knocked over by a light breeze. $B.subject.name grins and leaps away, their job done.`;
 		},
 		"act": multihit({hits: 3},applyEffect("Off-Balance")),
-		"preview": Prev.effect("Off-Balance",Prev.multihit(3))
+		"preview": "multihit"
 	},
 
 	"Sneak": {
 		"cost":		2,
 		"phase":	"confirm phase",
 		"dur":		3,
+		"effects": ["Hidden"],
 		"info":	function (action) {return 	`Become untargetable for ${action.dur} rounds.`},
 		"desc":		`Become one with the shadows.`,
 		"actText": function () {
 			return `The arena should be well-lit, but as $B.subject.name presses themselves against the wall, their surroundings suddenly become dimmer. You blink, and suddenly you can't tell where they end and the shadows begin.`;
 		},
-		"act": applyEffect("Hidden",{self:true}),
-		"preview": Prev.stance
+		"act": applyEffect("Hidden",{self:true})
 	},
 
 	"Procure": {
@@ -481,6 +480,7 @@ setup.actionData = {
 		"cost":		10,
 		"weight":	3,
 		"saveMod": "Blast",
+		"effects": ["Knocked Down"],
 		"actText": function () {
 			return `$B.subject.name calmly steps forward, and raises a hand to the heavens. In an instant, the sky is suddenly ablaze with wrathful fire. Fire and lightning rain down from the inferno to strike the earth, blasting the enemy in a terrifying and beautiful display of utter destruction.`;
 		},
@@ -497,6 +497,7 @@ setup.actionData = {
 		"cost":		4,
 		"weight":	1,
 		"effweight":	0.6,
+		"effects": ["Burning"],
 		"phase":	"spell phase",
 		"spellMod": function () {
 			switch (action().cost){
@@ -524,14 +525,14 @@ setup.actionData = {
 					return `$B.subject.name points a finger at the enemy, and a perfect sphere of orange-red flame shoots out like a missile. When it connects it lights up like a firework, exploding in a brilliant inferno.`;
 			}
 		},
-		"act": applyEffect("Burning", {dmg: true}),
-		"preview": Prev.effect("Burning",'dmg')
+		"act": applyEffect("Burning", {dmg: true})
 	},
 
 	"Perdition": {
 		"cost":		10,
 		"weight":	1,
 		"effweight":	0.4,
+		"effects": ["Perdition"],
 		"saveMod": "Fireball",
 		"actText": function () {
 			return `$B.subject.name raises their palms as if lifting a great weight, and $B.target.name is suddenly enveloped in a pillar of screaming white fire. The ember, lodged in $B.target.their heart, is unquenchable.`;
@@ -565,7 +566,7 @@ setup.actionData = {
 		},
 		"preview": function () {
 			var note = "";
-			if ((target().en + V().action.cost) > 10) {
+			if ((target().en + V().action.cost) > target().maxen) {
 				note = ` ...but they already have $B.target.en Energy, so some of it will be wasted.`;
 			}
 			return `$B.subject.name will transfer $action.cost Energy to $B.target.name.`+note;
@@ -602,7 +603,7 @@ setup.actionData = {
 					V().B.target = null;
 					break;
 				default:
-					V().effects_to_remove = 1+(action().cost-V().B.mincost);
+					this.removedEffects = 1+(action().cost-V().B.mincost);
 			}
 		},
 		"target":	"ally",
@@ -611,8 +612,8 @@ setup.actionData = {
 		"actText": function () {
 			return `$B.subject.name waves their hands in smooth, wide motions, as if polishing a surface. When they're finished they stretch their hands out imperiously, and positive energy washes over $B.target.name in a bright burst.`;
 		},
-		"act": dispel,
-		"preview": Prev.cleanse
+		"act": removeEffect(),
+		"preview": "cleanse"
 	},
 
 	"Salvation": {
@@ -642,7 +643,7 @@ setup.actionData = {
 					V().B.target = null;
 					break;
 				default:
-					V().effects_to_remove = 1+(action().cost-V().B.mincost);
+					this.removedEffects = 1+(action().cost-V().B.mincost);
 			}
 		},
 		"info":	function (action) {return 	`Strip an enemy of their most recent buff, plus one buff per Energy invested.`},
@@ -650,8 +651,8 @@ setup.actionData = {
 		"actText": function () {
 			return `$B.subject.name waves their hands in contracted, sprialling motions, as if gathering up dust. When they're finished, they swipe a hand sharply to the side as if in dismissal. You see $B.target.name's magic flash and sputter, fading away like mist.`;
 		},
-		"act": dispel,
-		"preview": Prev.cleanse
+		"act": removeEffect(),
+		"preview": "cleanse"
 	},
 
 	"Annulment": {
@@ -690,6 +691,7 @@ setup.actionData = {
 	"Blessing": {
 		"cost":		5,
 		"effweight":	(10/45),
+		"effects": ["Blessing"],
 		"phase":	"spell phase",
 		"spellMod": function () {
 			switch (action().cost){
@@ -730,8 +732,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$B.subject.name raises their arms skyward, then clasps their hands together as if in prayer. They suddenly let go, and wave their hands over $B.target.name with a flourish. Motes of light fall over ${target().them}, making ${target().them} glow with a strange aura.`;
 		},
-		"act": applyEffect("Blessing"),
-		"preview": Prev.effect("Blessing")
+		"act": applyEffect("Blessing")
 	},
 
 	"Ascension": {
@@ -752,6 +753,7 @@ setup.actionData = {
 	"Curse": {
 		"cost":		5,
 		"effweight":	(1/3),
+		"effects": ["Curse"],
 		"phase":	"spell phase",
 		"spellMod": function () {
 			switch (action().cost){
@@ -798,6 +800,7 @@ setup.actionData = {
 		"cost":		10,
 		"effweight":	1,
 		"dur":		5,
+		"effects": ["Forsaken"],
 		"saveMod": "Curse",
 		"actText": function () {
 			return `$B.subject.name does not even move. They only spare $B.target.name a look, and <<print target().theyare>> suddenly drowned in darkness.`;
@@ -818,12 +821,13 @@ setup.actionData = {
 		"actText": function () {
 			return `${subject().name} elegantly stabs the foe with ${subject().their} rapier.`;
 		},
-		"act": justdmg
+		"act": justdmg()
 	},
 
 	"Dagger": {
 		"cost":		2,
 		"weight":	setup.knife_weight,
+		"hits": 2,
 		"basic":	true,
 		"info": function (action) {return 	`Attack twice with a weight of ${action.weight.toFixed(2)}.`},
 		"desc":		`A real dagger, not the shoddy knife you'd find in the hands of a thug! Longer than a knife and shorter than a sword, the dagger is an elegant weapon combining strength and concealment. It's favored by assassins and scheming nobles.`,
@@ -831,8 +835,7 @@ setup.actionData = {
 		"actText": function () {
 			return `${subject().name} draws an ornate dagger and slashes it twice across the enemy.`;
 		},
-		"act": multihit({hits: 2}),
-		"preview": Prev.multihit(2)
+		"act": multihit({hits: 2})
 	},
 
 	"Shout": {
@@ -855,81 +858,74 @@ setup.actionData = {
 		"cost":		4,
 		"weight":	0.9,
 		"dur": 1,
+		"effects": ["Off-Balance"],
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and inflict Off-Balance.`},
 		"desc":		`"This statement is false!" Sometimes you need to do the thing they least expect. It'll throw them off-kilter, especially after you follow it with a sucker punch.`,
 		"useText": null,
 		"actText": function () {
 			return `$B.subject.name says something so random the enemy has to stop to process it. While they're doing that, $B.subject.name socks them in the face.`;
 		},
-		"act": applyEffect("Off-Balance",{dmg: true}),
-		"preview": Prev.effect("Off-Balance",'dmg')
+		"act": applyEffect("Off-Balance",{dmg: true})
 	},
 
 	"Insult": {
 		"cost":		2,
 		"effweight":	0.4,
 		"dur":		3,
+		"effects": ["Injury"],
 		"info":	function (action) {return 	`Inflict an Injury for ${action.dur} rounds.`},
 		"desc":		`"You fight like a cow!" Any bard worth their salt knows exactly what wicked wordplay will leave their victims a laughingstock. The injury inflicted is only emotional, but really, isn't that worse?`,
 		"useText": null,
 		"actText": function () {
 			return `$B.subject.name insults the opponent's fighting style so wickedly they are crushed by despair.`;
 		},
-		"act": applyEffect("Injury"),
-		"preview": Prev.effect("Injury")
+		"act": applyEffect("Injury")
 	},
 
 	"Joke": {
 		"cost":		2,
 		"effweight":	0.4,
 		"dur":		3,
+		"effects": ["Pain"],
 		"info":	function (action) {return 	`Inflict Pain for ${action.dur} rounds.`},
 		"desc":		`Bard can make jokes so bad they cause physical pain. Bard assures us they're doing it ironically. You think that makes worse.`,
 		"useText": null,
 		"actText": function () {
 			return `$B.subject.name makes a painfully bad joke.`;
 		},
-		"act": applyEffect("Pain"),
-		"preview": Prev.effect("Pain")
+		"act": applyEffect("Pain")
 	},
 
 	"Equivocate": {
 		"cost":		2,
 		"effweight":	0.4,
 		"dur":		3,
+		"effects": ["Headache"],
 		"info":	function (action) {return 	`Inflict Headache for ${action.dur} rounds.`},
 		"desc":		`"Oh, I believe that <b>you</b> believe, but have you considered..." Also known as "playing devil's advocate" or, more colloquially, "trolling". Bard is a master.`,
 		"useText": null,
 		"actText": function () {
 			return `$B.subject.name leads the enemy on a meandering and nonsensical argument. It's irritating to everyone, but $B.target.name gets the worst of it.`;
 		},
-		"act": applyEffect("Headache"),
-		"preview": Prev.effect("Headache")
+		"act": applyEffect("Headache")
 	},
 
 	"Rewrite": {
 		"cost":		4,
 		"target":	"all",
+		"effects": ["all"],
 		"info":	function (action) {return 	`Remove all effects (positive and negative) from a target.`},
 		"desc":		`Don't like the story? Then change it! It's the tales that are remembered, and in a way isn't that more real than what actually happened?`,
 		"actText": function () {
 			return `$B.subject.name crafts a personal narrative so compelling it overwrites $B.target.name's state of being. All the forces acting upon ${target().them} vanish like they were never even there.`;
 		},
-		"act": removeEffect({target:'t', type:"all"},`<<set $B.heal_used = true>>`),
-		"preview": function () {
-			var str = "";
-			if (target().stasis){
-				str += "<b>The target is in Stasis</b>, so this won't do anything!";
-			} else {
-				str += "This will remove all effects from the target, excepting Alert and Chi Shield.";
-			}
-			return str;
-		}
+		"act": removeEffect({target:'t'},`<<set $B.heal_used = true>>`)
 	},
 
 	"Provoke": {
 		"cost":		2,
 		"dur":		1,
+		"effects": ["Martyr"],
 		"phase":	"confirm phase",
 		"info":	function (action) {return 	`Draw all direct attacks for this round.`},
 		"desc":		`A bard thrives in the spotlight. This one knows just how to get it.`,
@@ -938,8 +934,7 @@ setup.actionData = {
 		},
 		"act": function () {
 			return `<<print subject().addEffect("Martyr")>>`;
-		},
-		"preview": Prev.stance
+		}
 	},
 
 	// ARCHER
@@ -950,8 +945,8 @@ setup.actionData = {
 		"phase":	"spell phase",
 		"spellMod": function () {
 			if (action().cost > 1) {
-				action()._act = multihit({hits: action().cost});
-				action()._preview = Prev.multihit(action().cost);
+				action().hits = action().cost;
+				action().act = multihit();
 			}
 		},
 		"basic":	true,
@@ -1082,47 +1077,42 @@ setup.actionData = {
 			return `${subject().name} straps a sizzling bomb to an arrow and lets it fly.`;
 		},
 		"act": splashDamage({target:'t', cut:2}),
-		"preview": Prev.grenade
+		"preview": "splash"
 	},
 
 	"Mark": {
 		"cost":		0,
 		"dur":		3,
+		"effects": ["Marked"],
 		"basic":	true,
 		"info":	function (action) {return 	`Paint a target on an enemy. Every time another puppet attacks, Archer will follow up with a 1-point Shot on every Marked enemy. (Archer will become Winded if their Energy is exhausted in this manner.)`},
 		"desc":		`Archer never lets up once an enemy is in their sights.`,
 		"actText": function () {
 			return `$B.subject.name stares with burning intensity, and if you squint, you think you can see a target over $B.target.name.`;
 		},
-		"act": applyEffect("Marked"),
-		"preview": Prev.effect("Marked")
+		"act": applyEffect("Marked")
 	},
 
 	"Mercy": {
 		"cost":		0,
+		"effects": ["Marked"],
 		"basic":	true,
 		"instant":	true,
 		"info":	function (action) {return 	`Remove a Mark from an enemy.`},
 		"desc":		`Archer wants you to know they're letting you live because they feel like it, and not because they're too tired to keep going. They never let up, remember!`,
 		"actText": null,
-		"act": removeEffect({target:'t', type:"Marked"}),
-		"preview": function () {
-			var str = "$B.target.name will lose their Mark.";
-			if (!target().marked){
-				str += " ...or they would, if they had one!";
-			}
-			return str;
-		}
+		"act": removeEffect({target:'t'}),
+		"preview": "removeEffect"
 	},
 
 	"Hunter": {
 		"cost":		2,
+		"effects": ["Hunter"],
 		"phase":	"confirm phase",
 		"info":	function (action) {return 	`Counterattack every enemy that attacks this round at a weight of ${setup.HUNTER_WEIGHT}.`},
 		"desc":		`Archer can forgo an attack to hone their senses to the peak of human perfection, straining their ears and eyes for the slightest movement. Any enemy that dares to come close will know their swift and vengeful wrath.`,
 		"actText": null,
-		"act": applyEffect("Hunter",{self:true}),
-		"preview": Prev.stance
+		"act": applyEffect("Hunter",{self:true})
 	},
 
 	"Call to Arms": {
@@ -1130,6 +1120,7 @@ setup.actionData = {
 		"effweight":	(1/2),
 		"phase":		"confirm phase",
 		"dur":		3,
+		"effects": ["ATK Boost"],
 		"info":	function (action) {return 	`Bestow an ATK Boost to all puppets for ${action.dur} rounds.`},
 		"desc":		`Let slip the dogs of war.`,
 		"actText": null,
@@ -1170,6 +1161,7 @@ setup.actionData = {
 
 	"Helping Hand": {
 		"cost": 2,
+		"effects": ["Knocked Down"],
 		"target": "ally",
 		"noself": true,
 		"info": function (action) {return `Right an ally who has been Knocked Down.`},
@@ -1177,21 +1169,21 @@ setup.actionData = {
 		"actText": function () {
 			return `$B.subject.name helps $B.target.name back to $B.target.their feet.`;
 		},
-		"act": removeEffect({type: "Knocked Down",pierce: true}),
-		"preview": Prev.cure("Knocked Down")
+		"act": removeEffect({pierce: true}),
+		"preview": "removeEffect"
 	},
 
 	"Assured Aegis": {
 		"cost":		3,
 		"dur":		4,
+		"effects": ["Shield"],
 		"target":	"ally",
 		"info":	function (action) {return 	`Bestows a Shield to a puppet for ${action.dur} rounds, reducing incoming damage by ${setup.SHIELD_FACTOR*100}%.`},
 		"desc":		`Don't worry. You're safe now.`,
 		"actText": function () {
 			return `$B.subject.name places a hand over $B.target.name like a benediction.`;
 		},
-		"act": applyEffect("Shield"),
-		"preview": Prev.effect("Shield")
+		"act": applyEffect("Shield")
 	},
 
 	"Lifegiver": {
@@ -1236,6 +1228,7 @@ setup.actionData = {
 			return w;
 		},
 		"special":  0.25,
+		"effects": ["buffs"],
 		"info":	function (action) {return 	`Inflict damage with a weight of ${action.weight} + ${action.special} for every buff empowering the enemy, removing them in the process.`},
 		"desc":		`Pride goeth before a fall. Cleric can turn the enemy's hubris against them, reminding them that even the strongest warrior can be brought low by the smallest among us.`,
 		"actText": function () {
@@ -1250,8 +1243,7 @@ setup.actionData = {
 			`<</for>>`+
 			`<<set $removed_effects = []>>`;
 		},
-		"preview": `<<echoDamage>>\
-		This will inflict $dmg damage and remove all buffs, excepting Alert and Chi Shield.`
+		"preview": "removeEffect"
 	},
 
 	"Walled City": {
@@ -1259,6 +1251,7 @@ setup.actionData = {
 		"effweight":	(1/2),
 		"phase":		"confirm phase",
 		"dur":		3,
+		"effects": ["DEF Boost"],
 		"info":	function (action) {return 	`Bestow a DEF Boost to all puppets for ${action.dur} rounds.`},
 		"desc":		`A line, to separate us from them. A shield to repel all.`,
 		"actText": null,
@@ -1272,6 +1265,7 @@ setup.actionData = {
 		"cost":		2,
 		"weight":	0.75,
 		"effweight":	0.5,
+		"effects": ["Pain"],
 		"phase":		"targeting phase",
 		"dur":		2,
 		"info":		function (action) {return `Inflict damage with a weight of ${action.weight} and inflict Pain for ${action.dur} rounds.`},
@@ -1279,8 +1273,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$B.subject.name points a finger at ${target().name}, and ${target().their} skin instantly breaks out in boils that swell and burst. It looks pretty painful.`;
 		},
-		"act": applyEffect("Pain", {dmg: true}),
-		"preview": Prev.effect("Pain",'dmg')
+		"act": applyEffect("Pain", {dmg: true})
 	},
 
 	"Gift": {
@@ -1343,7 +1336,7 @@ setup.actionData = {
 					V().B.target = null;
 					break;
 				default:
-					V().effects_to_remove = 1+(action().cost-V().B.mincost);
+					this.removedEffects = 1+(action().cost-V().B.mincost);
 			}
 		},
 		"basic":	true,
@@ -1353,8 +1346,8 @@ setup.actionData = {
 		"actText": function () {
 			return `$B.subject.name calmly waves a hand, and the magic passes like a dream.`;
 		},
-		"act": dispel,
-		"preview": Prev.cleanse
+		"act": removeEffect(),
+		"preview": "cleanse"
 	},
 
 	"Renewal": {
@@ -1390,46 +1383,47 @@ setup.actionData = {
 	"Forgetfulness": {
 		"cost":		2,
 		"dur":		1,
+		"effects": ["Stunned"],
 		"info":		`Stun an enemy.`,
 		"desc":		`There's no need to go through your opponent when you can go around them instead. A simple touch on the mind, and they'll lose all memory of what they were doing.`,
 		"actText": function () {
 			return `$B.subject.name slowly waves a hand over $B.target.name's eyes.`;
 		},
-		"act": applyEffect("Stunned"),
-		"preview": Prev.effect("Stunned")
+		"act": applyEffect("Stunned")
 	},
 
 	"Frenzy": {
 		"cost":		4,
 		"effweight":	(40/55),
 		"dur":		3,
+		"effects": ["Frenzy"],
 		"target":	"ally",
 		"info":		function (action) {return `Greatly boost Attack, but cut Defense by half the amount. Lasts ${action.dur} rounds.`},
 		"desc":		`Power like no other, at the expense of all else. Witch can give it to you, if you are prepared to accept it.`,
 		"actText": function () {
 			return `$B.subject.name bites their thumb, and smears the blood over $B.target.name's face in a strange pattern. Their eyes narrow into slits.`;
 		},
-		"act": applyEffect("Frenzy"),
-		"preview": Prev.effect("Frenzy")
+		"act": applyEffect("Frenzy")
 	},
 
 	"Thaumastasis": {
 		"cost":		5,
 		"phase":	"targeting phase",
 		"dur":		7,
+		"effects": ["Stasis"],
 		"target":	"ally",
 		"info":		function (action) {return `Place a puppet in Stasis, preventing any change to their effects for ${action.dur} rounds.`},
 		"desc":		`Being one with nature sounds all well and good right up until you're getting chased by a bear while suffering from some new and exciting disease and starving from the recent drought. Sometimes, nature needs a kick in the teeth. Witch can forcefully stop the flow of magic completely, forcing every one of an individual's effects to stay exactly as they are.`,
 		"actText": function () {
 			return `$B.subject.name snaps their fingers. The air around $B.target.name seems to freeze for a moment, then returns to normal.`;
 		},
-		"act": applyEffect("Stasis"),
-		"preview": `$B.target.name's effects will be held in Stasis.`
+		"act": applyEffect("Stasis")
 	},
 
 	"Age of Enlightenment": {
 		"cost":		7,
 		"effweight":	(1/2),
+		"effects": ["SPC Boost"],
 		"phase":	"confirm phase",
 		"dur":		3,
 		"info":		function (action) {return `Bestow a SPC Boost to all puppets for ${action.dur} rounds.`},
@@ -1477,7 +1471,7 @@ setup.actionData = {
 		"actText": function () {
 			return `${subject().name} paints dazzling gold arcs of electricity to shock the foe.`;
 		},
-		"act": justdmg
+		"act": justdmg()
 	},
 
 	"White Light": {
@@ -1517,7 +1511,7 @@ setup.actionData = {
 			return `${subject().name} paints a wave of blood-red water that washes away the enemies.`;
 		},
 		"act": massAttack(),
-		"preview": Prev.massAttack()
+		"preview": "mass"
 	},
 
 	"Blue Lightning": {
@@ -1531,7 +1525,7 @@ setup.actionData = {
 			return `${subject().name} paints a storm of sky-blue lightning to devastate the enemies.`;
 		},
 		"act": massAttack(),
-		"preview": Prev.massAttack()
+		"preview": "mass"
 	},
 
 	"Yellow Scorch": {
@@ -1545,7 +1539,7 @@ setup.actionData = {
 			return `${subject().name} paints a scorching blaze of star-yellow fire that sweeps over the enemies.`;
 		},
 		"act": massAttack(),
-		"preview": Prev.massAttack()
+		"preview": "mass"
 	},
 
 	"Violet Bloom": {
@@ -1569,7 +1563,7 @@ setup.actionData = {
 		"actText": function () {
 			return `${subject().name} splatters ${subject().their} canvas with a wild blaze of orange, consuming the foe utterly.`;
 		},
-		"act": justdmg
+		"act": justdmg()
 	},
 
 	"Green Toxin": {
@@ -1599,7 +1593,11 @@ setup.actionData = {
 	"Sacrament": {
 		"cost": 4,
 		"weight": 2,
+		"element": function () {
+			return subject().lastUsed;
+		},
 		"dur": 4,
+		"effects": ["Consecrated"],
 		"special": 0.5,
 		"noDefault": true,
 		"needsPriorElement": true,
@@ -1613,15 +1611,16 @@ setup.actionData = {
 							<<echoDamage>>\
 							<<print target().addEffect("Consecrated")>>`;
 		},
-		"preview": function () {
-			return `<<set $action._element = subject().lastUsed>>`+Prev.dmg;
-		}
 	},
 
 	"Blasphemy": {
 		"cost": 4,
 		"weight": 0.75,
+		"element": function () {
+			return subject().lastUsed;
+		},
 		"dur": 4,
+		"effects": ["Desecrated"],
 		"special": 0.5,
 		"noDefault": true,
 		"needsPriorElement": true,
@@ -1635,9 +1634,6 @@ setup.actionData = {
 							<<echoDamage>>\
 							<<print target().addEffect("Desecrated")>>`;
 		},
-		"preview": function () {
-			return `<<set $action._element = subject().lastUsed>>`+Prev.dmg;
-		}
 	},
 
 	// CRISIS
@@ -1648,13 +1644,13 @@ setup.actionData = {
 		"act": justdmg,
 		"actText": null,
 		"info": function (action) {return `Inflicts damage with a weight of ${action.weight}.`;},
-		"desc": null,
-		"preview": Prev.dmg
+		"desc": null
 	},
 
 	"Perfect Defense": {
 		"crisis": true,
 		"dur": 3,
+		"effects": ["Invincible"],
 		"act": applyEffect("Invincible",{self:true}),
 		"actText": null,
 		"info": function (action) {return `User becomes immune to all damage for ${action.dur} rounds.`;},
@@ -1679,7 +1675,7 @@ setup.actionData = {
 		},
 		"info": function (action) {return `Attack all enemies with a weight of ${action.weight}.`;},
 		"desc": null,
-		"preview": Prev.massAttack
+		"preview": "mass"
 	},
 
 	"Stash": {
@@ -1706,95 +1702,105 @@ setup.actionData = {
 
 	"Antidote": {
 		"target": "ally",
-		"act": removeEffect({type: "Poisoned"}),
-		"preview": Prev.cure("Poisoned")
+		"effects": ["Poisoned"],
+		"act": removeEffect(),
+		"preview": "removeEffect"
 	},
 
 	"Fire Extinguisher": {
 		"target": "ally",
-		"act": removeEffect({type: "Burning"}),
-		"preview": Prev.cure("Burning")
+		"effects": ["Burning"],
+		"act": removeEffect(),
+		"preview": "removeEffect"
 	},
 
 	"Healing Crystal": {
 		"target": "ally",
-		"act": removeEffect({type: "Dizzy"}),
-		"preview": Prev.cure("Dizzy")
+		"effects": ["Dizzy"],
+		"act": removeEffect(),
+		"preview": "removeEffect"
 	},
 
 	"Nanites": {
 		"target": "ally",
-		"act": removeEffect({type: "Injury", removeStack: true}),
-		"preview": Prev.cure("Injury")
+		"effects": ["Injury"],
+		"act": removeEffect({removeStack: true}),
+		"preview": "removeEffect"
 	},
 
 	"Painkiller": {
 		"target": "ally",
-		"act": removeEffect({type: "Pain", removeStack: true}),
-		"preview": Prev.cure("Pain")
+		"effects": ["Pain"],
+		"act": removeEffect({removeStack: true}),
+		"preview": "removeEffect"
 	},
 
 	"Asprin": {
 		"target": "ally",
-		"act": removeEffect({type: "Headache", removeStack: true}),
-		"preview": Prev.cure("Headache")
+		"effects": ["Headache"],
+		"act": removeEffect({removeStack: true}),
+		"preview": "removeEffect"
 	},
 
 	"Canned Air": {
 		"target": "ally",
+		"effects": ["Winded"],
 		"act": removeEffect({type: "Winded"},`<<set $B.target.en += 1>>`),
-		"preview": Prev.cure("Winded")
+		"preview": "removeEffect"
 	},
 
 	"Smelling Salts": {
 		"target": "ally",
-		"act": removeEffect({type: "Asleep"}),
-		"preview": Prev.cure("Asleep")
+		"effects": ["Asleep"],
+		"act": removeEffect(),
+		"preview": "removeEffect"
 	},
 
 	"Anti-Mineral Water": {
 		"target": "ally",
-		"act": removeEffect({type: "Petrified"}),
-		"preview": Prev.cure("Petrified")
+		"effects": ["Petrified"],
+		"act": removeEffect(),
+		"preview": "removeEffect"
 	},
 
 	"Panacea": {
 		"target": "ally",
-		"act": removeEffect({type:"all", unsticky: true}),
-		"preview": Prev.cure("all")
+		"effects": ["all"],
+		"act": removeEffect({unsticky: true}),
+		"preview": "removeEffect"
 	},
 
 	"Bottled Chi": {
 		"target": "ally",
 		"dur": 3,
-		"act": applyEffect("Chi Shield"),
-		"preview": Prev.effect("Chi Shield")
+		"effects": ["Chi Shield"],
+		"act": applyEffect("Chi Shield")
 	},
 
 	"Adrenaline": {
 		"effweight": setup.STD_BUFF,
 		"dur": 4,
+		"effects": ["ATK Boost"],
 		"target": "ally",
 		"actText": `$B.subject.name injects a shot of adrenaline.`,
-		"act": applyEffect("ATK Boost"),
-		"preview": Prev.effect("ATK Boost")
+		"act": applyEffect("ATK Boost")
 	},
 
 	"Stoneskin": {
 		"effweight": setup.STD_BUFF,
 		"dur": 4,
+		"effects": ["DEF Boost"],
 		"target": "ally",
 		"actText": `$B.subject.name uses some Stoneskin formula.`,
-		"act": applyEffect("DEF Boost"),
-		"preview": Prev.effect("DEF Boost")
+		"act": applyEffect("DEF Boost")
 	},
 
 	"Nootropic": {
 		"effweight": setup.STD_BUFF,
 		"dur": 4,
+		"effects": ["SPC Boost"],
 		"target": "ally",
-		"act": applyEffect("SPC Boost"),
-		"preview": Prev.effect("SPC Boost")
+		"act": applyEffect("SPC Boost")
 	},
 
 	"Stimulant": {
@@ -1814,24 +1820,22 @@ setup.actionData = {
 
 	"Throwing Knife": {
 		"weight": 1.25,
-		"act": justdmg(),
-		"preview": `<<damageCalc>>\
-		This attack will inflict $dmg damage.`
+		"act": justdmg()
 	},
 
 	"Powdered Glass": {
 		"weight": 1,
 		"dur":	1,
+		"effects": ["Stunned"],
 		"actText": `$B.subject.name throws powdered glass in your enemy's eyes. Ouch!`,
-		"act": applyEffect("Stunned",{dmg: true}),
-		"preview": Prev.effect("Stunned",'dmg')
+		"act": applyEffect("Stunned",{dmg: true})
 	},
 
 	"Grenade": {
 		"weight": 1.5,
 		"actText": `$B.subject.name chucks a grenade.`,
 		"act": splashDamage({target:'t',cut:2}),
-		"preview": Prev.grenade
+		"preview": "splash"
 	},
 
 	"Flamethrower": {
@@ -1864,17 +1868,9 @@ setup.actionData = {
 		"weight": 1,
 		"effweight": 0.6,
 		"dur": 3,
+		"effects": ["Injury","Pain","Headache"],
 		"actText": `$B.subject.name throws a calamity bomb.`,
-		"act": applyEffect(["Injury","Pain","Headache"],{dmg: true}),
-		"preview": function () {
-			var str = `<<damageCalc>>This will inflict $dmg damage as well as Injury, Pain, and Headache status.`;
-			if (target().stasis){
-				str += " ...but <b>the target's effects are in Stasis</b>.";
-			} else if (target().chi){
-				str += " ...but <b>the target's Chi Shield will block the ailments</b>.";
-			}
-			return str;
-		}
+		"act": applyEffect(["Injury","Pain","Headache"],{dmg: true})
 	}
 
 };

@@ -109,14 +109,14 @@ var multihit = function multihit (args = {},extension = "") {
 //	Function for simple multi-hit abilities that only inflict damage, e.g. Rogue's Knife. For more complex abilities, use multihitCustom.
 
 //Args = object with following properties:
-//	hits = int. Number of attacks. If undefined or noninteger, will attempt to read the active action for a "_hits" property. If that fails, the function will return an error message.
+//	hits = int. Number of attacks. If undefined or noninteger, will attempt to read the active action's hits property. If that fails, the function will return an error message.
 
 //	Note that extension is applied only after ALL hits are done.
 
 	return function () {
 		var final = "<<echoDamage>>";
 		if (!Number.isInteger(args.hits) && V().action !== null){
-			args.hits = action()._hits;
+			args.hits = action().hits;
 		}
 		if (!Number.isInteger(args.hits)) {
 			return "ERROR in multihit: args.hits must be an integer";
@@ -204,6 +204,7 @@ var applyEffect = function applyEffect (effects, args = {}, extension = "") {
 
 	return function () {
 
+	effects = (effects || action().effects);
 	console.assert(effects instanceof Array || typeof(effects) == 'string',"ERROR in applyEffect: invalid effects argument");
 	if (typeof(effects) == 'string') {
 		effects = [effects];
@@ -235,17 +236,17 @@ var removeEffect = function (args = {target: 't'}, extension = "") {
 //	By default, removes both buffs AND ailments if type is "all".
 
 //args = object with the following properties:
-//	type = string or array. Name of effect(s) to remove. Set to "all" to remove all effects. Defaults to "all".
+//	effects = array. Name of effect(s) to remove.
+//		Include "all" to remove all effects; "buffs" to remove all buffs; "ailments" to remove all ailments
+//		defaults to the action's "effects" property, or "all" if that is undefined
 //	target = string. Defaults to target if unset. See findTarget for details.
-//	dispel = Boolean. Set true to remove only buffs.
-//	cure = Boolean. Set true to remove only ailments.
 //	removeStack = Boolean. Set true to remove all instances of a stackable effect.
 //	unsticky = Boolean. Allows cure to remove sticky effects (but not ULTIMATESTICKY)
 //	pierce = Boolean. Allows effect removal through Stasis.
 //	perExtension = string. Extension to be added within each iteration of a mass targeting loop.
 
-	if (!(typeof(args.type) == "string" || args.type instanceof Array)) {
-		args.type = "all";
+	if (typeof(args.effects) === "string") {
+		args.effects = [args.effects];
 	}
 
 	if (args.target === undefined) {
@@ -253,17 +254,18 @@ var removeEffect = function (args = {target: 't'}, extension = "") {
 	}
 
 	return function () {
+		args.effects = (args.effects || action().effects || ["all"]);
 		var condition = `true`;	//filter for effects, by default selects all effects
 		var perExtension = args.perExtension;
 		temporary().mods = args;	//will be passed to removeEffect execution in SugarCube
 
-		if (args.type instanceof Array) {
-			temporary().removedEffects = args.type;
-			condition = `_removedEffects.includes(_effect.name)`;
-		}	else if (args.cure === true) {
+		if (args.effects.includes("ailments")) {
 			condition = `!_effect.buff`;
-		} else if (args.dispel === true) {
-			condition = `_effect.buff`;
+		} else if (args.effects.includes("buffs")) {
+			condition = `!_effect.buff`;
+		} else if (!args.effects.includes("all")) {
+			temporary().removedEffects = args.effects;
+			condition = `_removedEffects.includes(_effect.name)`;
 		}
 
 		if (extension instanceof Function) {
@@ -280,15 +282,11 @@ var removeEffect = function (args = {target: 't'}, extension = "") {
 		var content = "";
 		var [target,party,mass] = findTarget(args.target);
 
-		if (args.type == 'all' || args.type instanceof Array) {
-			content += `<<for _effect range ${target}.effects>>\
-			<<if ${condition}>>\
-				<<print ${target}.removeEffect(_effect,_mods)>>\
-			<</if>>\
-			<</for>>`
-		} else {
-			content += `<<print ${target}.removeEffect("${args.type}",_mods)>>`;
-		}
+		content += `<<for _effect range ${target}.effects>>\
+		<<if ${condition}>>\
+			<<print ${target}.removeEffect(_effect,_mods)>>\
+		<</if>>\
+		<</for>>`;
 
 		if (mass === true) {
 			return `<<for _a range ${party}>>\

@@ -149,7 +149,8 @@ window.deadCount = function deadCount () {
 
 /* Shorthand notation for player inventory. Set this to return whatever you want to call your inventory variable in-game, and it will work without needing to edit any of the code. */
 /* By default, the inventory variable is the story variable "$inventory" and is defined in StoryInit. To give characters unique inventories, you could define inventories as attributes of the Actor class and set this to return "this.inventory". */
-window.inv = function inv () {return V().inventory;}
+var inv = function inv () {return V().inventory;}
+window.inv = inv;
 
 window.reverseChildren = function reverseChildren(parent) {
 // Code by Ayman Abdel-Rahman
