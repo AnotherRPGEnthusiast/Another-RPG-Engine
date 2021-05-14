@@ -194,6 +194,16 @@ window.Actor = class Actor {
 		return this.effects.find(function(eff) { return eff && eff.skillLock });
 	}
 
+	get shieldHits () {
+		//	Returns the number of blocks from shield effects on this character, if they have any
+
+		var hits = 0;
+		this.effects.filter(function (eff) {return eff && eff.shield }).forEach(function (shield) {
+			hits += shield.uses;
+		});
+		return hits;
+	}
+
 	get hp () {
 		return this._hp;
 	}
@@ -593,8 +603,8 @@ window.Actor = class Actor {
 		}
 	}
 
-	decTol (k) {
-		this.tolerances.get(k).currentVal--;
+	decTol (key, amt = 1) {
+		this.tolerances.get(key).currentVal -= amt;
 	}
 
 	resetTol (key) {
@@ -662,7 +672,7 @@ window.Actor = class Actor {
 		if (gain === 0) {
 			return;
 		}
-		this.hp += gain;
+		this.hp = Math.max(this.hp + gain,1);		//	HP degen cannot take HP below 1
 		if (gain > 0) {
 			mod = "truegreen";
 			gain = "+"+gain;

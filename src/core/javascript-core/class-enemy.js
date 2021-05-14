@@ -153,6 +153,34 @@ window.Enemy = class Enemy extends Actor {
 		return;
 	}
 
+	validTarget () {
+		//	Returns Boolean. Determination for if character can be selected by the player in targeting phase.
+		//	To customize, use Object.defineProperty.
+
+		console.log("running validTarget for "+this.name);
+		if (!(V().B.targeting === "all" || V().B.targeting === "enemy")) {
+			//	If not targeting enemies, invalid target
+			return false;
+		} else if (this.martyr) {
+			//	If martyr, valid target
+			return true;
+		}
+		let martyr = this.ownParty.find(function (a) { return a && a.martyr === true });
+		if (martyr) {
+			//	If a martyr exists and they're not this, invalid target
+			return false;
+		} else if (this.untargetable) {
+			//	If untargetable, invalid target
+			return false;
+		} else if (action().ranged || Hitlist.guardCheck(this).id === this.id) {
+			//	For battle map: If guardCheck returns this (not guarded by anyone), valid target
+			//	Bypassed if using a ranged action, which can hit anyone
+			return true;
+		} else {
+			return true;
+		}
+	}
+
 	clone () {
 		// Return a new instance containing our current data.
 		return new Enemy(this);

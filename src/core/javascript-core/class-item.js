@@ -135,6 +135,13 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 		return (this.itemData.fakeName || false);
 	}
 
+	get stackSize() {
+		//	Integer. Maximum number of copies that can exist in an inventory.
+		//	Defaults to ITEM_MAX.
+
+		return (this.itemData.stackSize || setup.ITEM_MAX);
+	}
+
 	checkRestriction (puppet) {
 		//	DEPRECIATED as of v1.18. Use the Actor version instead.
 		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing or if the restricted listing is empty.
@@ -189,9 +196,10 @@ window.Inventory = class Inventory extends Map {
 			amt = 1;
 		}
 		if (this.has(name)){
-			if (this.get(name).stock + amt > setup.ITEM_MAX) {
+			var item = new Item(name);
+			if (this.get(name).stock + amt > item.stackSize) {
 				let s = 1;
-				while (((this.get(name).stock + 1) < setup.ITEM_MAX) && s < amt) {
+				while (((this.get(name).stock + 1) < item.stackSize) && s < amt) {
 					this.get(name).stock += 1;
 					s++;
 				}

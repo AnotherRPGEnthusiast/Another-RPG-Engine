@@ -27,6 +27,49 @@ Effect.prototype.calculatePower = function (target,subject) {
   return Math.max(power,check);
 }
 
+Actor.prototype.testEffect = function (name,mods) {
+  //  Tests if an effect will be applied (for previews).
+  //  Returns string or Boolean.
+  //  If the effect will go through, return true; else, return a string describing the exact point of failure.
+
+  console.assert(typeof(name) == "string",`ERROR in testEffect: no effect passed`);
+  mods = (mods || {});
+  var E = new Effect(name);
+  let entry;
+  if (V().bestiary instanceof Bestiary && V().bestiary.fetch(this.name) instanceof BestiaryEntry) {
+    entry = V().bestiary.fetch(this.name);
+  }
+
+  //  block check
+  this.effects.filter(function (e) { return e && e.block })
+    .sort(function(a,b) { return a.priority - b.priority; })
+    .forEach(function (effect) {
+      if (effect.blockCondition(E)) {
+        return "block";
+      }
+    },this);
+
+  //  tolerance check
+  let n = (E.synonym || E.name);
+  if (this.tolerances.get(n).current != 0 && !mods.pierceImmunity) {
+
+    //  If this character has a bestiary entry, we must check if the tolerance is known
+    if (entry && entry.tolerancesKnown[n] !== true) {
+      //  If it isn't, we return true -- no spoilers!
+      return true;
+    }
+
+    if (this.getTol(n) === -1) {
+      //  If tolerance value is -1, target is immune.
+      return "immune";
+    }
+    else if (this.getTol(n) > 0 && !mods.pierceTol) {
+      return "tolerance";
+    }
+  }
+  return true;
+}
+
 Actor.prototype.addEffect = function (name,mods) {
   console.assert(typeof(name) == "string" || name instanceof Effect,`ERROR in addEffect: no effect passed`);
   mods = (mods || {});
@@ -102,7 +145,7 @@ Actor.prototype.addEffect = function (name,mods) {
         }
         else if (this.getTol(n) > 0) {
           //  If tolerance is above 0, decrement tolerance and print a message to that effect, then terminate function.
-          this.decTol(n);
+          this.decTol(n,action().toleranceDamage);
           this.addPopup({shake: true, type: "block", content: "RESISTED"});
           return `${this.name}'s tolerance to ${name} was weakened.`+"\r\n";
         }

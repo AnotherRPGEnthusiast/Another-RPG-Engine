@@ -5975,6 +5975,10 @@ const getActorById = function (id) {
 };
 window.getActorById = getActorById;
 
+window.encounters = function encounters () {
+	return V().encounters;
+}
+
 Map.prototype.inc = function (key,amt) {
 	this.set(key,this.get(key)+amt);
 	return;
@@ -8134,8 +8138,9 @@ window.ItemAction = class ItemAction extends Action {
 		return (this.actionData.source || this.name);
 	}
 
-	check () {
-		return (inv().get(this.source).stock < 1);
+	standardCheck (i) {
+		var inv = (i || inv());
+		return (inv.get(this.source).stock < 1);
 	}
 
 	toString () {
@@ -8845,7 +8850,7 @@ window.Actor = class Actor {
 		if (gain === 0) {
 			return;
 		}
-		this.hp += gain;
+		this.hp = Math.max(this.hp + gain,1);		//	HP degen cannot take HP below 1
 		if (gain > 0) {
 			mod = "truegreen";
 			gain = "+"+gain;
@@ -9555,6 +9560,34 @@ window.Enemy = class Enemy extends Actor {
 		return;
 	}
 
+	validTarget () {
+		//	Returns Boolean. Determination for if character can be selected by the player in targeting phase.
+		//	To customize, use Object.defineProperty.
+
+		console.log("running validTarget for "+this.name);
+		if (!(V().B.targeting === "all" || V().B.targeting === "enemy")) {
+			//	If not targeting enemies, invalid target
+			return false;
+		} else if (this.martyr) {
+			//	If martyr, valid target
+			return true;
+		}
+		let martyr = this.ownParty.find(function (a) { return a && a.martyr === true });
+		if (martyr) {
+			//	If a martyr exists and they're not this, invalid target
+			return false;
+		} else if (this.untargetable) {
+			//	If untargetable, invalid target
+			return false;
+		} else if (action().ranged || Hitlist.guardCheck(this).id === this.id) {
+			//	For battle map: If guardCheck returns this (not guarded by anyone), valid target
+			//	Bypassed if using a ranged action, which can hit anyone
+			return true;
+		} else {
+			return true;
+		}
+	}
+
 	clone () {
 		// Return a new instance containing our current data.
 		return new Enemy(this);
@@ -10090,6 +10123,21 @@ window.Puppet = class Puppet extends Actor{
 
 	hasAction (name) {
 		return this.actions.map(function (a) { return a.name; }).includes(name);
+	}
+
+	validTarget () {
+		//	Returns Boolean. Determination for if character can be selected by the player in targeting phase.
+		//	To customize, use Object.defineProperty.
+
+		if (!(V().B.targeting === "all" || V().B.targeting === "ally")) {
+			//	If not targeting allies, invalid target
+			return false;
+		} else if (action().noself === true && subject().name === this.name) {
+			//	If action has noself enabled and this is the action user, invalid target
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	clone () {
@@ -19461,7 +19509,7 @@ Macro.add('scrolldown', {
 	&lt;&lt;set _action = $args[0]&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;if !_action.check())&gt;&gt;
+&lt;&lt;if !_action.check()&gt;&gt;
 
 	&lt;&lt;unset _s&gt;&gt;
 	&lt;&lt;if _action.passagejump&gt;&gt;
@@ -19549,7 +19597,8 @@ Macro.add('scrolldown', {
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="15" name="Widget: endOfRound" tags="widget nobr" position="600,225" size="100,100">&lt;&lt;widget &quot;endOfRound&quot;&gt;&gt;
 &lt;&lt;run console.assert($args[0] instanceof Array,&quot;ERROR in endOfRound: invalid argument&quot;)&gt;&gt;
 
-&lt;&lt;for _actor range $args[0].filter(function (a) { return a !== null; })&gt;&gt;
+&lt;&lt;set _party = $args[0].filter(function (a) { return a !== null; })&gt;&gt;
+&lt;&lt;for _actor range _party&gt;&gt;
 	&lt;&lt;run console.assert(_actor instanceof Actor,&quot;ERROR in endOfRound: non-Actor element&quot;)&gt;&gt;
 	&lt;&lt;set _actor.isDone = false&gt;&gt;
 	&lt;&lt;for _effect range _actor.effects&gt;&gt;
@@ -19591,6 +19640,7 @@ Macro.add('scrolldown', {
 		&lt;&lt;/if&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 &lt;&lt;/for&gt;&gt;
+&lt;&lt;include &quot;custom endOfRound&quot;&gt;&gt;
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="16" name="Widget: decayMessage" tags="widget nobr" position="725,225" size="100,100">&lt;&lt;widget &quot;decayMessage&quot;&gt;&gt;
 /* arg 0 = effects array, arg 1 = Boolean, top decrement (optional, defaults to false) */
 &lt;&lt;run console.assert($args[0] instanceof Array,&quot;ERROR in decayMessage: invalid argument&quot;)&gt;&gt;
@@ -19630,7 +19680,7 @@ Macro.add('scrolldown', {
 &lt;&lt;/if&gt;&gt;
 
 &lt;&lt;if !$B.defeated&gt;&gt;
-	&lt;&lt;set $encounters[$scenario] = true&gt;&gt;
+	&lt;&lt;set encounters()[$scenario] = true&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
 &lt;&lt;if $B.style&gt;&gt;
@@ -19638,9 +19688,9 @@ Macro.add('scrolldown', {
 	&lt;&lt;removeclass &quot;html&quot; $B.style&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;refreshPuppets&gt;&gt;
-
 &lt;&lt;include &quot;custom end of battle&quot;&gt;&gt;
+
+&lt;&lt;refreshPuppets&gt;&gt;
 
 &lt;&lt;unset $B; $enemies&gt;&gt;
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="18" name="Preparation" tags="" position="975,225" size="100,100">&lt;&lt;set $inbattle to true&gt;&gt;
@@ -19969,7 +20019,7 @@ Macro.add('scrolldown', {
 	&lt;&lt;set _actionClass = &quot;&quot;&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 &lt;div id=&quot;actionList&quot; @class=&quot;_actionClass&quot;&gt;
-&lt;&lt;actionListBattle $B.subject&gt;&gt;
+&lt;&lt;actionListBattle&gt;&gt;
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="28" name="crisis actions" tags="nobr" position="975,350" size="100,100">&lt;&lt;set $B.phase = &quot;crisis&quot;&gt;&gt;
 &lt;span class=&quot;hotkey monospace&quot;&gt;
 [E] = &lt;span id=&quot;regularActions&quot;&gt;
@@ -20989,6 +21039,16 @@ Easy: no smart targeting
 /* Set whether to reveal all enemy data on kill. */
 &lt;&lt;set setup.ENEMY_DATA_ON_KILL = true&gt;&gt;
 
+/* Prevents names from stretching actor boxes; names exceeding the length will be scaled. See scaledTextDiv in support functions for more details. */
+&lt;&lt;set setup.SCALE_NAMES = false&gt;&gt;
+
+/* Determine what properties, if any, are recovered by puppets after battle. */
+&lt;&lt;set $afterBattleRecovery = {
+	&quot;hp&quot;: true,
+	&quot;revive&quot;: true,
+	&quot;actions&quot;: true
+	}&gt;&gt;
+
 /* Time values for hit animations, in ms. */
 &lt;&lt;set setup.ANIM_WINDUP = 750;
 	setup.ANIM_DURATION = 750;
@@ -21421,7 +21481,11 @@ Easy: no smart targeting
       &lt;&lt;set _class += &quot; absolute&quot;&gt;&gt;
     &lt;&lt;/if&gt;&gt;
     &lt;span class=&quot;dead&quot;&gt;
-      _actor.fullname
+      &lt;&lt;if setup.SCALE_NAMES&gt;&gt;
+        &lt;&lt;print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,true)&gt;&gt;
+      &lt;&lt;else&gt;&gt;
+        &lt;&lt;print _actor.fullname&gt;&gt;
+      &lt;&lt;/if&gt;&gt;
       &lt;span @class=_class&gt;&amp;dagger;&lt;/span&gt;
     &lt;/span&gt;
   &lt;/span&gt;
@@ -21476,34 +21540,27 @@ Easy: no smart targeting
 &lt;&lt;elseif $B.phase == &quot;targeting&quot;&gt;&gt;
 	/* In the targeting phase, characters&#39; names must become links to select them, but only if they are valid targets. */
 	&lt;span class=&quot;targetnumber&quot;&gt;&lt;&lt;print _idx+1&gt;&gt;&lt;/span&gt;
-	/* Check which party is being targeted: */
-	&lt;&lt;if ($B.targeting == &quot;all&quot; || (_actor instanceof Enemy &amp;&amp; $B.targeting == &quot;enemy&quot;) || (_actor instanceof Puppet &amp;&amp; $B.targeting == &quot;ally&quot;))&gt;&gt;
-		/* Check if valid target.
-			For Puppets: Cannot target self if action has the noself property
-			For Enemies: Can only be targeted if
-				-Is a martyr OR
-				-No enemy has Martyr active
-				-The enemy is not untargetable
-				-(for battle grid) The enemy is not guarded OR the action is ranged
-		*/
-		&lt;&lt;if (_actor instanceof Puppet &amp;&amp; !($B.subject.name == _actor.name &amp;&amp; $B.noself === true)) ||
-			(_actor instanceof Enemy &amp;&amp;
-			((_actor.martyr || (!_martyr &amp;&amp; !_actor.untargetable)) &amp;&amp; ($action.ranged || guardCheck(_idx))))&gt;&gt;
-
-			/* If valid target, turn name into a link that assigns actor to the target variable, unsets the targeting varaible, and forwards the player to the next phase. We must also assign the ID variable determined earlier to a wrapper element to facilitate hotkey targeting. */
-			&lt;&lt;capture _actor&gt;&gt;
-			&lt;&lt;link &quot;_actor.fullname&quot;&gt;&gt;
-				&lt;&lt;set $B.target = _actor; $B.targeting = null&gt;&gt;
-				&lt;&lt;replace &quot;#phase&quot;&gt;&gt;&lt;&lt;include &quot;confirm phase&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-			&lt;&lt;/link&gt;&gt;
-			&lt;&lt;/capture&gt;&gt;
-		&lt;&lt;else&gt;&gt;
-			/* If invalid target, just display the name as normal. */
-			_actor.fullname
-		&lt;&lt;/if&gt;&gt;
+	&lt;&lt;if _actor.validTarget()&gt;&gt;
+    /* see validTarget in Puppet and Enemy classes */
+		/* If valid target, turn name into a link that assigns actor to the target variable, unsets the targeting varaible, and forwards the player to the next phase. We must also assign the ID variable determined earlier to a wrapper element to facilitate hotkey targeting. */
+		&lt;&lt;capture _actor&gt;&gt;
+    &lt;&lt;set _link = `&lt;&lt;link &quot;_actor.fullname&quot;&gt;&gt;
+  			&lt;&lt;set $B.target = _actor; $B.targeting = null&gt;&gt;
+  			&lt;&lt;replace &quot;#phase&quot;&gt;&gt;&lt;&lt;include &quot;confirm phase&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+  		&lt;&lt;/link&gt;&gt;`&gt;&gt;
+    &lt;&lt;if setup.SCALE_NAMES&gt;&gt;
+      &lt;&lt;print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,_link)&gt;&gt;
+    &lt;&lt;else&gt;&gt;
+      &lt;&lt;print _link&gt;&gt;
+    &lt;&lt;/if&gt;&gt;
+		&lt;&lt;/capture&gt;&gt;
 	&lt;&lt;else&gt;&gt;
-		/* If not being targeted, just display the name as normal. */
-		_actor.fullname
+		/* If invalid target, just display the name as normal. */
+    &lt;&lt;if setup.SCALE_NAMES&gt;&gt;
+      &lt;&lt;print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,true)&gt;&gt;
+    &lt;&lt;else&gt;&gt;
+      &lt;&lt;print _actor.fullname&gt;&gt;
+    &lt;&lt;/if&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 &lt;&lt;elseif _actor instanceof Puppet &amp;&amp; $B.phase == &quot;move&quot; &amp;&amp; _actor != $B.subject&gt;&gt;
 	/* For Puppets in the movement phase, their name becomes a link that swaps their position with the subject (except for the subject&#39;s own name) */
@@ -21516,7 +21573,11 @@ Easy: no smart targeting
 	&lt;&lt;/capture&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	/* In all other phases, just display the name as normal. */
-	_actor.fullname
+  &lt;&lt;if setup.SCALE_NAMES&gt;&gt;
+    &lt;&lt;print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,true)&gt;&gt;
+  &lt;&lt;else&gt;&gt;
+    &lt;&lt;print _actor.fullname&gt;&gt;
+  &lt;&lt;/if&gt;&gt;
 &lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="69" name="Actor Box Status" tags="nobr" position="1100,850" size="100,100">&lt;&lt;if !$args.includes(&quot;dmgDisplay&quot;)&gt;&gt;
 	&lt;&lt;set _class = &quot;statusbutton&quot;&gt;&gt;
 	&lt;&lt;if _actor.large&gt;&gt;
@@ -21625,15 +21686,14 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 	&lt;&lt;set _puppet.lastAction = null&gt;&gt;
 	&lt;&lt;set _puppet.lastUsed = null&gt;&gt;
 	&lt;&lt;set _puppet.battleMsg = []&gt;&gt;
-	&lt;&lt;if !$lastingDamage || $reviveAfterBattle&gt;&gt;
+	&lt;&lt;if _puppet.dead &amp;&amp; $afterBattleRecovery.revive === true&gt;&gt;
 		&lt;&lt;set _puppet.dead = false&gt;&gt;
 		&lt;&lt;set _puppet.hp = Math.round(_puppet.maxhp * setup.RESPAWN_HP)&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if !$lastingDamage&gt;&gt;
+	&lt;&lt;if !_puppet.dead &amp;&amp; $afterBattleRecovery.hp === true&gt;&gt;
 		&lt;&lt;set _puppet.hp = _puppet.maxhp&gt;&gt;
-		&lt;&lt;set _puppet.en = 5&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if !$actionRefillAfterBattle&gt;&gt;
+	&lt;&lt;if $afterBattleRecovery.actions === true&gt;&gt;
 		&lt;&lt;for _action range _puppet.actions.filter(function (a) { return a.uses !== undefined })&gt;&gt;
 			&lt;&lt;run _action.refill()&gt;&gt;
 		&lt;&lt;/for&gt;&gt;
@@ -21645,21 +21705,18 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 		&lt;&lt;run _action.cd = _action.warmup&gt;&gt;
 	&lt;&lt;/for&gt;&gt;
 	&lt;&lt;for _effect range _puppet.effects.filter(function (eff) { return !eff.persistAfterBattle })&gt;&gt;
-		&lt;&lt;run _puppet.removeEffect(_effect, {pierce: true, unsticky: true})&gt;&gt;
+		&lt;&lt;run _puppet.removeEffect(_effect, {pierce: true, unsticky: &quot;ultimate&quot;})&gt;&gt;
 	&lt;&lt;/for&gt;&gt;
 	&lt;&lt;for _k, _v range _puppet.tolerances&gt;&gt;
 		&lt;&lt;run _puppet.resetTol(_k)&gt;&gt;
 	&lt;&lt;/for&gt;&gt;
-	&lt;&lt;if def _puppet._respawn&gt;&gt;
+	&lt;&lt;if _puppet._respawn instanceof FillStat&gt;&gt;
 		&lt;&lt;run _puppet._respawn.refill()&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if def _puppet._retaliations&gt;&gt;
+	&lt;&lt;if _puppet._retaliations instanceof FillStat&gt;&gt;
 		&lt;&lt;run _puppet._retaliations.refill()&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;set _x = _puppet.actions.find(function (a) { return a &amp;&amp; a.name == &quot;Reload&quot; })&gt;&gt;
-	&lt;&lt;if def _x&gt;&gt;
-		&lt;&lt;set $B.subject = _puppet; _x.act()&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
+	&lt;&lt;include &quot;custom refreshPuppet&quot;&gt;&gt;
 &lt;&lt;/for&gt;&gt;
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="78" name="Widget: chain" tags="widget nobr" position="975,975" size="100,100">&lt;&lt;widget &quot;chain&quot;&gt;&gt;
 /*
@@ -25240,7 +25297,8 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;Equipment slots are now always occupied by arrays, instead of only those with multiple subslots. This should result in no functional change, but allows me to clean up equipment functions by not having to account for branching functionalities. &lt;b&gt;Note that this update will generate errors with existing games that used previous versions.&lt;/b&gt; You will need to update your characters&#39; equipment slots to match the new standards.&lt;/li&gt;
 &lt;li&gt;Default and last actions are now stored as strings rather than full Action objects. &lt;b&gt;This update will cause errors with existing games that store these variables as Actions.&lt;/b&gt; Make sure to update existing savefiles if you update to this version.&lt;/li&gt;
 &lt;li&gt;The widget &lt;code&gt;actionlist&lt;/code&gt; has been split into &lt;code&gt;actionListBattle&lt;/code&gt; and &lt;code&gt;actionListMenu&lt;/code&gt;, for the different displays of actions in and out of battle.&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;Action&lt;/code&gt;s now have a unique &lt;code&gt;toString&lt;/code&gt; function that performs the function of the &lt;code&gt;actionInfo&lt;/code&gt; widget, which is now depreciated. &lt;code&gt;actionList&lt;/code&gt; has been restructured to take advantage of this function, making it much simpler and easier to use. (To customize the action display, use &lt;code&gt;Object.defineProperty&lt;/code&gt; to overwrite &lt;code&gt;toString&lt;/code&gt; with your own version.)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Action&lt;/code&gt;s, &lt;code&gt;ItemAction&lt;/code&gt;s, and &lt;code&gt;Item&lt;/code&gt;s now have unique &lt;code&gt;toString&lt;/code&gt; functions that determine a standardized display for each. &lt;code&gt;actionList&lt;/code&gt; and &lt;code&gt;itemList&lt;/code&gt; have been restructured to take advantage of this function, making it much simpler and easier to use. (To customize the action display, use &lt;code&gt;Object.defineProperty&lt;/code&gt; to overwrite &lt;code&gt;toString&lt;/code&gt; with your own version.)&lt;/li&gt;
+&lt;ul&gt;&lt;li&gt;The widget &lt;code&gt;actionInfo&lt;/code&gt; has been removed, as it is now redundant with this feature.&lt;/li&gt;&lt;/ul&gt;
 &lt;li&gt;You can now customize the text used to display the status button with the &lt;code&gt;setup&lt;/code&gt; variable &lt;code&gt;STATUS_BUTTON&lt;/code&gt;.&lt;/li&gt;
 &lt;li&gt;New &lt;code&gt;Effect&lt;/code&gt; property: &lt;code&gt;skillLock&lt;/code&gt;. This denotes effects that prevent the use of non-basic actions (e.g. Dizzy).&lt;/li&gt;
 &lt;li&gt;New &lt;code&gt;Action&lt;/code&gt; properties:
@@ -25249,6 +25307,12 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;&lt;code&gt;onUse&lt;/code&gt;: Functions as the corresponding property for &lt;code&gt;Item&lt;/code&gt;s. Rudimentary GUI has been added in the party menu code, but is untested. Report any bugs.&lt;/li&gt;
 &lt;li&gt;The checks for action link availability. The freefloating functions have been removed.&lt;/li&gt;&lt;/ul&gt;
 &lt;li&gt;New &lt;code&gt;Item&lt;/code&gt; property: &lt;code&gt;instantUse&lt;/code&gt;. This is a Boolean that will cause the item&#39;s &lt;code&gt;onUse&lt;/code&gt; function to be executed immediately when selected, instead of selecting a target first.&lt;/li&gt;
+&lt;li&gt;Character HP can no longer be reduced below 1 by negative HP regeneration.&lt;/li&gt;
+&lt;li&gt;Added customization passages for &lt;code&gt;endOfRound&lt;/code&gt; and &lt;code&gt;refreshPuppets&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Renamed the variables &lt;code&gt;lastingDamage&lt;/code&gt;, &lt;code&gt;reviveAfterBattle&lt;/code&gt;, and &lt;code&gt;actionRefillAfterBattle&lt;/code&gt; to all be properties of one object, &lt;code&gt;afterBattleRecovery&lt;/code&gt;. &lt;code&gt;refreshPuppets&lt;/code&gt; has been tweaked to make more sensible use of this object.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;refreshPuppets&lt;/code&gt; now automatically removes effects with &lt;code&gt;ULTIMATESTICKY&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;endofbattle&lt;/code&gt; now runs its custom passage &lt;i&gt;before&lt;/i&gt; &lt;code&gt;refreshPuppets&lt;/code&gt;. This is useful if you need to alter a variable used in &lt;code&gt;refreshPuppets&lt;/code&gt;, such as &lt;code&gt;afterBattleRecovery&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Puppet&lt;/code&gt; and &lt;code&gt;Enemy&lt;/code&gt; objects now have an additional function: &lt;code&gt;validTarget&lt;/code&gt;. This determines whether they can be selected by the player in the targeting phase, and replaces the massive clunky blocks of logical expressions previously used for this determination. (To customize this logic, overwrite it with &lt;code&gt;Object.defineProperty&lt;/code&gt;.)&lt;/li&gt;
 &lt;/ul&gt;
 Version 3.00
 &lt;ul&gt;
@@ -33352,14 +33416,20 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 
 &lt;&lt;if !_counterActive&gt;&gt;
 	&lt;&lt;hunterCheck&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="custom end of battle" tags="nobr" position="225,2225" size="100,100">&lt;&lt;restock&gt;&gt;</tw-passagedata><tw-passagedata pid="173" name="custom newTurn" tags="nobr" position="350,2225" size="100,100">&lt;&lt;if $B.turn == &quot;player&quot; &amp;&amp; passage() == &quot;end of round&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="custom end of battle" tags="nobr" position="225,2225" size="100,100">&lt;&lt;restock&gt;&gt;</tw-passagedata><tw-passagedata pid="173" name="custom endOfRound" tags="nobr" position="350,2225" size="100,100">/* Custom code to be run at the end of the endOfRound widget. */</tw-passagedata><tw-passagedata pid="174" name="custom newTurn" tags="nobr" position="475,2225" size="100,100">&lt;&lt;if $B.turn == &quot;player&quot; &amp;&amp; passage() == &quot;end of round&quot;&gt;&gt;
 	&lt;&lt;for _puppet range puppets()&gt;&gt;
 		&lt;&lt;if !_puppet.winded &amp;&amp; !_puppet.petrified&gt;&gt;
 			&lt;&lt;set _puppet.en += _puppet.ENregen&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
 	&lt;&lt;/for&gt;&gt;
 	&lt;&lt;set $B.item_used = false&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="174" name="damageCalc custom factors" tags="nobr" position="475,2225" size="100,100">/* Any additional logic you want to add to damage calculation. Run after element logic, immediately before damage rounding. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="175" name="custom refreshPuppet" tags="nobr" position="600,2225" size="100,100">/* Appended to EVERY LOOP of refreshPuppets. Use variable _puppet to refer to the current puppet. */
+
+&lt;&lt;set _puppet.en = 5&gt;&gt;
+&lt;&lt;set _x = _puppet.actions.find(function (a) { return a &amp;&amp; a.name == &quot;Reload&quot; })&gt;&gt;
+&lt;&lt;if def _x&gt;&gt;
+  &lt;&lt;set $B.subject = _puppet; _x.act()&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="176" name="damageCalc custom factors" tags="nobr" position="725,2225" size="100,100">/* Any additional logic you want to add to damage calculation. Run after element logic, immediately before damage rounding. */
 
 &lt;&lt;if _target.invincible&gt;&gt;
 	&lt;&lt;set $dmg = 0; _noDmgFloor = true&gt;&gt;
@@ -33381,7 +33451,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	&lt;&lt;set $dmg *= (1-setup.SHIELD_FACTOR)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="175" name="Database: Encounters" tags="nobr widget" position="600,2225" size="100,100">/* This passage allows you to define encounters -- that is, unique parties of enemies. To define individual enemies and characters, see the database JS files. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="177" name="Database: Encounters" tags="nobr widget" position="850,2225" size="100,100">/* This passage allows you to define encounters -- that is, unique parties of enemies. To define individual enemies and characters, see the database JS files. */
 
 &lt;&lt;widget &quot;callEncounter&quot;&gt;&gt;
 /* The order characters are added to the array matters: they are displayed in that order from left to right when the stat blocks instantiate. */
@@ -33436,7 +33506,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;run console.log(&quot;ERROR in populateEnemies: invalid argument&quot;)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="176" name="accuracy formula" tags="nobr" position="725,2225" size="100,100">&lt;&lt;if $action.accuracy === true&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="178" name="accuracy formula" tags="nobr" position="975,2225" size="100,100">&lt;&lt;if $action.accuracy === true&gt;&gt;
 	&lt;&lt;set _hit = true&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;set _acc = $action.accuracy&gt;&gt;
@@ -33452,12 +33522,12 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	&lt;&lt;else&gt;&gt;
 		&lt;&lt;set _hit = false&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="177" name="crisis formula" tags="nobr" position="850,2225" size="100,100">&lt;&lt;if Number.isInteger(_target.crisisPoints) &amp;&amp; $dmg &gt; 0&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="179" name="crisis formula" tags="nobr" position="1100,2225" size="100,100">&lt;&lt;if Number.isInteger(_target.crisisPoints) &amp;&amp; $dmg &gt; 0&gt;&gt;
   &lt;&lt;switch _target.crisisMode&gt;&gt;
     &lt;&lt;default&gt;&gt;
       &lt;&lt;set _target.crisisPoints += Math.round(($dmg/_target.maxhp)*100*_target.crisisFactor)&gt;&gt;
   &lt;&lt;/switch&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="178" name="crit formula" tags="nobr" position="975,2225" size="100,100">&lt;&lt;set _critChance = $action.critRate&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="180" name="crit formula" tags="nobr" position="1225,2225" size="100,100">&lt;&lt;set _critChance = $action.critRate&gt;&gt;
 &lt;&lt;set _toCrit = random(1,100)&gt;&gt;
 &lt;&lt;if subject().stats.hasOwnProperty(&quot;Skill&quot;)&gt;&gt;
   &lt;&lt;set _critChance += subject().get(&quot;Skill&quot;)&gt;&gt;
@@ -33466,7 +33536,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
   &lt;&lt;print setup.CRIT_MESSAGE+&quot; &quot;&gt;&gt;
   &lt;&lt;set $dmg *= $action.critMultiplier&gt;&gt;
   &lt;&lt;set _crit = true&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="179" name="damageCalc formula" tags="nobr" position="1100,2225" size="100,100">/* Define the damage formula or formulae you want to use here. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="181" name="damageCalc formula" tags="nobr" position="100,2350" size="100,100">/* Define the damage formula or formulae you want to use here. */
 
 &lt;&lt;if !$action.formula&gt;&gt;
 /* Only use the default formula if the action does not have a custom formula (so, the formula property is falsy) */
@@ -33485,9 +33555,9 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;set $dmg = $action.formula()&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="180" name="echoDamage threat gain" tags="nobr" position="1225,2225" size="100,100">/* Default: Dragon Age style. Attacker gains threat equal to the percentage of maximum HP dealt. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="182" name="echoDamage threat gain" tags="nobr" position="225,2350" size="100,100">/* Default: Dragon Age style. Attacker gains threat equal to the percentage of maximum HP dealt. */
 &lt;&lt;set _threatGain = 1 * ($dmg / target().maxhp)&gt;&gt;
-&lt;&lt;run target().threat.inc(subject().name,_threatGain)&gt;&gt;</tw-passagedata><tw-passagedata pid="181" name="loss of control effects" tags="nobr" position="100,2350" size="100,100">&lt;&lt;set _u = $puppets.find(function (p) { return (p.uncontrollable &amp;&amp; !(p.isDone || p.noact || p.dead)); })&gt;&gt;
+&lt;&lt;run target().threat.inc(subject().name,_threatGain)&gt;&gt;</tw-passagedata><tw-passagedata pid="183" name="loss of control effects" tags="nobr" position="350,2350" size="100,100">&lt;&lt;set _u = $puppets.find(function (p) { return (p.uncontrollable &amp;&amp; !(p.isDone || p.noact || p.dead)); })&gt;&gt;
 &lt;&lt;if def _u&gt;&gt;
 	&lt;&lt;set $B.subject = _u&gt;&gt;
 	&lt;&lt;if subject().name == &quot;Mage&quot;&gt;&gt;
@@ -33510,13 +33580,13 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 		&lt;&lt;/if&gt;&gt;
 		&lt;&lt;goto &quot;action phase&quot;&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="182" name="special battle lines" tags="nobr" position="225,2350" size="100,100">/* Displays in-between the two party listings in actorlist. */</tw-passagedata><tw-passagedata pid="183" name="Widget: Special Checks" tags="widget nobr" position="350,2350" size="100,100">&lt;&lt;widget &quot;specialcheck&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="184" name="special battle lines" tags="nobr" position="475,2350" size="100,100">/* Displays in-between the two party listings in actorlist. */</tw-passagedata><tw-passagedata pid="185" name="Widget: Special Checks" tags="widget nobr" position="600,2350" size="100,100">&lt;&lt;widget &quot;specialcheck&quot;&gt;&gt;
 /* Called on the &quot;Battle!&quot; passage. Use this to direct a player to any special scenes or scenarios you want to occur upon specific triggers, such as a character reacting to another character&#39;s defeat or changing into a different form. */
 
 &lt;&lt;include &quot;loss of control effects&quot;&gt;&gt;
 &lt;&lt;include &quot;delayed actions&quot;&gt;&gt;
 
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="184" name="Stash Phase" tags="battle nobr" position="475,2350" size="100,100">&lt;&lt;replace &quot;#actorlist&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="186" name="Stash Phase" tags="battle nobr" position="725,2350" size="100,100">&lt;&lt;replace &quot;#actorlist&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 &lt;br/&gt;&lt;br/&gt;
 &lt;&lt;if $COMPRESSED_ACTIONS === true&gt;&gt;
@@ -33532,7 +33602,7 @@ Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 &lt;div id=&quot;actionInfo&quot;&gt;
 	&lt;&lt;include &quot;action box default&quot;&gt;&gt;
 &lt;/div&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="185" name="Widget: stashlist" tags="widget nobr" position="600,2350" size="100,100">&lt;&lt;widget &quot;stashlist&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="187" name="Widget: stashlist" tags="widget nobr" position="850,2350" size="100,100">&lt;&lt;widget &quot;stashlist&quot;&gt;&gt;
 &lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Puppet),&quot;ERROR in stashlist: no Puppet&quot;)&gt;&gt;
 &lt;&lt;run console.assert($args[0].stash !== undefined,&quot;ERROR in stashlist: stash is undefined&quot;)&gt;&gt;
 &lt;&lt;set _char = $args[0]&gt;&gt;
@@ -33567,7 +33637,7 @@ Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 	&lt;/div&gt;
 &lt;&lt;/for&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="186" name="User-defined variables" tags="" position="725,2350" size="100,100">/* Appended to the default StoryInit passage. Add any additional code you want here. */
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="188" name="User-defined variables" tags="" position="975,2350" size="100,100">/* Appended to the default StoryInit passage. Add any additional code you want here. */
 
 &lt;&lt;cacheaudio &quot;Happy_8bit_Loop_01&quot; setup.SoundPath+&quot;8bitloop.wav&quot;&gt;&gt; /* This is to set up the audio for the example music in the engine help file. Feel free to remove it. */
 

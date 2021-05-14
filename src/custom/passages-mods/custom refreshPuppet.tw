@@ -1,0 +1,8 @@
+:: custom refreshPuppet [nobr]
+/* Appended to EVERY LOOP of refreshPuppets. Use variable _puppet to refer to the current puppet. */
+
+<<set _puppet.en = 5>>
+<<set _x = _puppet.actions.find(function (a) { return a && a.name == "Reload" })>>
+<<if def _x>>
+  <<set $B.subject = _puppet; _x.act()>>
+<</if>>

@@ -99,10 +99,106 @@ window.Action = class Action {
 		if (val === undefined) {
 			val = this.actionData.preview;
 		}
-		if (val === undefined) {
-			val = Prev.dmg;
+		var result = "";
+		var blocks = 0;
+		if (target() instanceof Actor) blocks += target().shieldHits;
+		var hits = this.hits - blocks;
+		switch (val) {
+			case undefined:
+				if (this.weight > 0) {
+					if (blocks > 0) {
+						result += `<b>${target().name}</b> <b>will block the hit</b>`;
+					} else {
+						result += `<<damageCalc>><b>${target().name}</b> will take <b>$dmg</b> damage`;
+					}
+				}
+				break;
+			case "multihit":
+				if (this.weight > 0) {
+					if (hits > 0) {
+						result += `<<damageCalc>><b>${target().name}</b> will take <b>$dmg x ${hits}</b> damage`;
+					} else {
+						result += `<b>${target().name}</b> <b>will block all ${this.hits} hits</b>`;
+					}
+				}
+				break;
+			case "spread":
+				if (this.weight > 0) {
+					result += `Will hit <b>${this.hits}</b> targets randomly`;
+				}
+				break;
+			case "splash":
+				if (this.weight > 0) {
+					result += `<<damageCalc>>This will inflict $dmg damage to ${target().name} and half damage to other enemies.`;
+				}
+				break;
+			case 'row':
+				return `<<for _i = (target().row - 1) * setup.ROW_SIZE; _i < (target().row * setup.ROW_SIZE); _i++>>\
+						<<if $enemies[_i] !== null && !$enemies[_i].dead && !$enemies[_i].guarded>>\
+							<<damageCalc $enemies[_i]>>\
+							$enemies[_i].name will take <b>$dmg</b> damage<br/>\
+						<</if>>\
+					<</for>>`;
+			case 'col':
+			case 'column':
+				return `<<for _i = (target().col - 1); _i < (setup.COLUMN_SIZE * setup.ROW_SIZE); _i += setup.ROW_SIZE>>\
+						<<if $enemies[_i] !== null && !$enemies[_i].dead && !$enemies[_i].guarded>>\
+							<<damageCalc $enemies[_i]>>\
+							$enemies[_i].name will take <b>$dmg</b> damage<br/>\
+						<</if>>\
+					<</for>>`
+			case 'adjacent':
+			case '+':
+				var hitlist = [V().enemies.indexOf(target()),			// center
+					V().enemies.indexOf(target())-setup.ROW_SIZE,		// above
+					V().enemies.indexOf(target())-1,					// left
+					V().enemies.indexOf(target())+1,					// right
+					V().enemies.indexOf(target())+setup.ROW_SIZE];		// below
+				hitlist.deleteWith(function (targIdx,i) {
+					// This will remove targets that are out of index bounds and left/right entries that jump rows
+					return (targIdx < 0 || targIdx >= V().enemies.length || (i == 2 && target().col == 1) || (i == 3 && target().col == setup.ROW_SIZE));
+				});
+				State.temporary.hitlist = hitlist;
+				return `<<for _t range _hitlist>>\
+						<<if $enemies[_t] !== null && !$enemies[_t].dead && !$enemies[_t].guarded>>\
+							<<damageCalc $enemies[_t]>>\
+							$enemies[_t].name will take <b>$dmg</b> damage<br/>\
+						<</if>>\
+					<</for>>`;
+			case "mass":
+			case "all":
+				return `<<for _enemy range enemies()>>\
+							<<if !_enemy.dead>>\
+								<<damageCalc _enemy>>\
+								_enemy.name will take <b>$dmg</b> damage<br/>\
+							<</if>>\
+						<</for>>`;
+			case "cure":
+				//	under construction
+				break;
+			default:
+				return val;
 		}
-		return val;
+		if (result.length > 0) result += "<br/>";
+		if (this.effects instanceof Array && target() instanceof Actor) {
+			for (let effect of this.effects) {
+				switch (target().testEffect(effect)) {
+					case "immune":
+						result += `<b>${target().name}</b> <b>is immune to ${effect}</b>`;
+						break;
+					case "block":
+						result += `<b>${target().name}</b> <b>is protected from ${effect}</b>`;
+						break;
+					case "tolerance":
+						result += `<b>${target().name}</b> will lose <b>${this.toleranceDamage} ${effect} tolerance</b>`;
+						break;
+					default:
+						result += `<b>${target().name}</b> will gain <b>${effect}</b>`;
+						if (this.dur > 1) result += ` for <b>${this.dur}</b> rounds`;
+				}
+			}
+		}
+		return result;
   }
 
 	set preview (val) {
@@ -906,6 +1002,56 @@ window.Action = class Action {
 		//	This is useful for e.g. action that affect the whole party or call up another passage for more detailed interaction.
 
 		return (this._instantUse || this.actionData.instantUse || false);
+	}
+
+	set toleranceDamage (val) {
+		console.assert(Number.isInteger(val) && val > 0,`ERROR: toleranceDamage must be positive integer`);
+		this._toleranceDamage = val;
+	}
+
+	get toleranceDamage() {
+		//	Positive integer. If action inflicts an effect, it will reduce tolerance by this number.
+		//	Defaults to 1.
+
+		var val = this._toleranceDamage;
+		if (val === undefined) {
+			val = this.actionData.toleranceDamage;
+		}
+		if (val === undefined) {
+			val = 1;
+		}
+		return val;
+	}
+
+	set hits (val) {
+		console.assert(Number.isInteger(val) && val > 0,`ERROR: hits must be positive integer`);
+		this._hits = val;
+	}
+
+	get hits() {
+		//	Positive integer. Determines number of hits if attack hits multiple times.
+		//	Defaults to 1.
+
+		var val = this._hits;
+		if (val === undefined) {
+			val = this.actionData.hits;
+		}
+		if (val === undefined) {
+			val = 1;
+		}
+		return val;
+	}
+
+	set effects (val) {
+		console.assert(val instanceof Array && val.length > 0,`ERROR: effects must be array`);
+		this._effects = val;
+	}
+
+	get effects () {
+		//	Array of strings. Name of effects that will be applied by the action.
+		//	Used in previews and as defaults for applyEffect.
+
+		return (this._effects || this.actionData.effects || null);
 	}
 
 	//	Checks for action availability. Separate ones needed to customize UI feedback.

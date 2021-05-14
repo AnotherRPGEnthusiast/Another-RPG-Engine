@@ -56,6 +56,21 @@ window.Puppet = class Puppet extends Actor{
 		return this.actions.map(function (a) { return a.name; }).includes(name);
 	}
 
+	validTarget () {
+		//	Returns Boolean. Determination for if character can be selected by the player in targeting phase.
+		//	To customize, use Object.defineProperty.
+
+		if (!(V().B.targeting === "all" || V().B.targeting === "ally")) {
+			//	If not targeting allies, invalid target
+			return false;
+		} else if (action().noself === true && subject().name === this.name) {
+			//	If action has noself enabled and this is the action user, invalid target
+			return false;
+		} else {
+			return true;
+		}
+	}
+
 	clone () {
 		// Return a new instance containing our current data.
 		return new Puppet(this);

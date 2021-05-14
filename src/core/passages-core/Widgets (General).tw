@@ -63,15 +63,14 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 	<<set _puppet.lastAction = null>>
 	<<set _puppet.lastUsed = null>>
 	<<set _puppet.battleMsg = []>>
-	<<if !$lastingDamage || $reviveAfterBattle>>
+	<<if _puppet.dead && $afterBattleRecovery.revive === true>>
 		<<set _puppet.dead = false>>
 		<<set _puppet.hp = Math.round(_puppet.maxhp * setup.RESPAWN_HP)>>
 	<</if>>
-	<<if !$lastingDamage>>
+	<<if !_puppet.dead && $afterBattleRecovery.hp === true>>
 		<<set _puppet.hp = _puppet.maxhp>>
-		<<set _puppet.en = 5>>
 	<</if>>
-	<<if !$actionRefillAfterBattle>>
+	<<if $afterBattleRecovery.actions === true>>
 		<<for _action range _puppet.actions.filter(function (a) { return a.uses !== undefined })>>
 			<<run _action.refill()>>
 		<</for>>
@@ -83,21 +82,18 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 		<<run _action.cd = _action.warmup>>
 	<</for>>
 	<<for _effect range _puppet.effects.filter(function (eff) { return !eff.persistAfterBattle })>>
-		<<run _puppet.removeEffect(_effect, {pierce: true, unsticky: true})>>
+		<<run _puppet.removeEffect(_effect, {pierce: true, unsticky: "ultimate"})>>
 	<</for>>
 	<<for _k, _v range _puppet.tolerances>>
 		<<run _puppet.resetTol(_k)>>
 	<</for>>
-	<<if def _puppet._respawn>>
+	<<if _puppet._respawn instanceof FillStat>>
 		<<run _puppet._respawn.refill()>>
 	<</if>>
-	<<if def _puppet._retaliations>>
+	<<if _puppet._retaliations instanceof FillStat>>
 		<<run _puppet._retaliations.refill()>>
 	<</if>>
-	<<set _x = _puppet.actions.find(function (a) { return a && a.name == "Reload" })>>
-	<<if def _x>>
-		<<set $B.subject = _puppet; _x.act()>>
-	<</if>>
+	<<include "custom refreshPuppet">>
 <</for>>
 <</widget>>
 

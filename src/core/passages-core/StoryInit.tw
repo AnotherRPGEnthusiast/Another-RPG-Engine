@@ -168,6 +168,16 @@ Easy: no smart targeting
 /* Set whether to reveal all enemy data on kill. */
 <<set setup.ENEMY_DATA_ON_KILL = true>>
 
+/* Prevents names from stretching actor boxes; names exceeding the length will be scaled. See scaledTextDiv in support functions for more details. */
+<<set setup.SCALE_NAMES = false>>
+
+/* Determine what properties, if any, are recovered by puppets after battle. */
+<<set $afterBattleRecovery = {
+	"hp": true,
+	"revive": true,
+	"actions": true
+	}>>
+
 /* Time values for hit animations, in ms. */
 <<set setup.ANIM_WINDUP = 750;
 	setup.ANIM_DURATION = 750;

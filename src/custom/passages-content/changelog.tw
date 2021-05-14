@@ -6,14 +6,31 @@ Version 3.01
 <li>The widget <code>actionlist</code> has been split into <code>actionListBattle</code> and <code>actionListMenu</code>, for the different displays of actions in and out of battle.</li>
 <li><code>Action</code>s, <code>ItemAction</code>s, and <code>Item</code>s now have unique <code>toString</code> functions that determine a standardized display for each. <code>actionList</code> and <code>itemList</code> have been restructured to take advantage of this function, making it much simpler and easier to use. (To customize the action display, use <code>Object.defineProperty</code> to overwrite <code>toString</code> with your own version.)</li>
 <ul><li>The widget <code>actionInfo</code> has been removed, as it is now redundant with this feature.</li></ul>
-<li>You can now customize the text used to display the status button with the <code>setup</code> variable <code>STATUS_BUTTON</code>.</li>
 <li>New <code>Effect</code> property: <code>skillLock</code>. This denotes effects that prevent the use of non-basic actions (e.g. Dizzy).</li>
 <li>New <code>Action</code> properties:
 <ul><li><code>invisible</code>: If <code>true</code>, the action will not be displayed in the action list.</li>
 <li><code>onApply</code> and <code>onRemove</code>: Function as the corresponding properties for <code>Effect</code>s and <code>Item</code>s. Useful for keeping track of passive abilities, and other side-effects if you want to have modular actions. However, currently there's no in-built functionality for this in the party menu.</li>
 <li><code>onUse</code>: Functions as the corresponding property for <code>Item</code>s. Rudimentary GUI has been added in the party menu code, but is untested. Report any bugs.</li>
+<li><code>toleranceDamage</code>: Determines the number of tolerance points the action will remove if it applies an effect.</li>
+<li><code>hits</code>: Determines the number of hits in a multi-hit attack.</li>
+<li><code>effects</code>: Array of strings; lists the effects the action will apply.</li>
 <li>The checks for action link availability. The freefloating functions have been removed.</li></ul>
-<li>New <code>Item</code> property: <code>instantUse</code>. This is a Boolean that will cause the item's <code>onUse</code> function to be executed immediately when selected, instead of selecting a target first.</li>
+<li>New <code>Item</code> properties:</li>
+<ul><li><code>instantUse</code>: If <code>true</code>, will cause the item's <code>onUse</code> function to be executed immediately when selected, instead of selecting a target first.</li>
+<li><code>stackSize</code>: Integer determining the maximum number of copies that can be stored in an inventory.</li></ul>
+<li>Character HP can no longer be reduced below 1 by negative HP regeneration.</li>
+<li>Added customization passages for <code>endOfRound</code> and <code>refreshPuppets</code>.</li>
+<li>Renamed the variables <code>lastingDamage</code>, <code>reviveAfterBattle</code>, and <code>actionRefillAfterBattle</code> to all be properties of one object, <code>afterBattleRecovery</code>. <code>refreshPuppets</code> has been tweaked to make more sensible use of this object.</li>
+<li><code>refreshPuppets</code> now automatically removes effects with <code>ULTIMATESTICKY</code>.</li>
+<li><code>endofbattle</code> now runs its custom passage <i>before</i> <code>refreshPuppets</code>. This is useful if you need to alter a variable used in <code>refreshPuppets</code>, such as <code>afterBattleRecovery</code>.</li>
+<li><code>Puppet</code> and <code>Enemy</code> objects now have an additional function: <code>validTarget</code>. This determines whether they can be selected by the player in the targeting phase, and replaces the massive clunky blocks of logical expressions previously used for this determination. (To customize this logic, overwrite it with <code>Object.defineProperty</code>.)</li>
+<li>New <code>Actor</code> properties:</li>
+<ul><li><code>shieldHits</code>: Returns the total number of hits remaining on shield effects possessed by the character.</li>
+<li><code>testEffect</code>: Tests to see if the named effect would be applied, and returns a message indicating the point of failure if it can't. Useful for preview functions.</li>
+<li><code>decTol</code> now takes an additional argument for the number of points to reduce the tolerance by (defaults to 1).</li></ul>
+<li>New <code>setup</code> variables:</li>
+<ul><li><code>STATUS_BUTTON</code>: Text to be displayed to create the status buttons.</li>
+<li><code>SCALE_NAMES</code>: Set to <code>true</code> to scale actor names to the width of the actor boxes, as specified in <code>scaledTextDiv</code>.</li></ul>
 </ul>
 Version 3.00
 <ul>

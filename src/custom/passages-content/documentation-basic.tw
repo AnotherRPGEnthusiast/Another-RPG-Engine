@@ -239,6 +239,7 @@ Items are objects that characters can obtain during gameplay. They may be consum
 }}}
 This isn't what a live {{{Item}}} object looks like, but it contains all the data the {{{Item}}} constructor needs to create one. There are additional attributes not shown in this entry that are detailed below:
 * {{{info}}} and {{{desc}}} function exactly like they do in <a class="noExternal" href="#data.actions">Actions</a>.
+* {{{stackSize}}} is an integer; determines the max number of copies of this item that can exist in an inventory. Defaults to the value of {{{ITEM_MAX}}} in {{{setup}}}.
 * {{{usable}}} is an array that can have up to two elements: "inmenu" and "inbattle". This determines if the item can be used in the party menu, in battle, or both (if both strings are included in the array). Optional.
 ** {{{onUse}}} is a function that determines what happens when the item is used in the party menu.
 ** {{{action}}} is a string; name of the action the item will generate if used in-battle. This defaults to the item's name.

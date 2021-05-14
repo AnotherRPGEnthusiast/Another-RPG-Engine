@@ -56,6 +56,10 @@ const getActorById = function (id) {
 };
 window.getActorById = getActorById;
 
+window.encounters = function encounters () {
+	return V().encounters;
+}
+
 Map.prototype.inc = function (key,amt) {
 	this.set(key,this.get(key)+amt);
 	return;

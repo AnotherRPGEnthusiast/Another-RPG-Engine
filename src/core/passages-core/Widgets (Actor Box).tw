@@ -56,7 +56,11 @@
       <<set _class += " absolute">>
     <</if>>
     <span class="dead">
-      _actor.fullname
+      <<if setup.SCALE_NAMES>>
+        <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,true)>>
+      <<else>>
+        <<print _actor.fullname>>
+      <</if>>
       <span @class=_class>&dagger;</span>
     </span>
   </span>
@@ -114,47 +118,49 @@
 <<elseif $B.phase == "targeting">>
 	/* In the targeting phase, characters' names must become links to select them, but only if they are valid targets. */
 	<span class="targetnumber"><<print _idx+1>></span>
-	/* Check which party is being targeted: */
-	<<if ($B.targeting == "all" || (_actor instanceof Enemy && $B.targeting == "enemy") || (_actor instanceof Puppet && $B.targeting == "ally"))>>
-		/* Check if valid target.
-			For Puppets: Cannot target self if action has the noself property
-			For Enemies: Can only be targeted if
-				-Is a martyr OR
-				-No enemy has Martyr active
-				-The enemy is not untargetable
-				-(for battle grid) The enemy is not guarded OR the action is ranged
-		*/
-		<<if (_actor instanceof Puppet && !($B.subject.name == _actor.name && $B.noself === true)) ||
-			(_actor instanceof Enemy &&
-			((_actor.martyr || (!_martyr && !_actor.untargetable)) && ($action.ranged || guardCheck(_idx))))>>
-
-			/* If valid target, turn name into a link that assigns actor to the target variable, unsets the targeting varaible, and forwards the player to the next phase. We must also assign the ID variable determined earlier to a wrapper element to facilitate hotkey targeting. */
-			<<capture _actor>>
-			<<link "_actor.fullname">>
-				<<set $B.target = _actor; $B.targeting = null>>
-				<<replace "#phase">><<include "confirm phase">><</replace>>
-			<</link>>
-			<</capture>>
-		<<else>>
-			/* If invalid target, just display the name as normal. */
-			_actor.fullname
-		<</if>>
+	<<if _actor.validTarget()>>
+    /* see validTarget in Puppet and Enemy classes */
+		/* If valid target, turn name into a link that assigns actor to the target variable, unsets the targeting varaible, and forwards the player to the next phase. We must also assign the ID variable determined earlier to a wrapper element to facilitate hotkey targeting. */
+		<<capture _actor>>
+    <<set _link = `<<link "_actor.fullname">>
+  			<<set $B.target = _actor; $B.targeting = null>>
+  			<<replace "#phase">><<include "confirm phase">><</replace>>
+  		<</link>>`>>
+    <<if setup.SCALE_NAMES>>
+      <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,_link)>>
+    <<else>>
+      <<print _link>>
+    <</if>>
+		<</capture>>
 	<<else>>
-		/* If not being targeted, just display the name as normal. */
-		_actor.fullname
+		/* If invalid target, just display the name as normal. */
+    <<if setup.SCALE_NAMES>>
+      <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,true)>>
+    <<else>>
+      <<print _actor.fullname>>
+    <</if>>
 	<</if>>
 <<elseif _actor instanceof Puppet && $B.phase == "move" && _actor != $B.subject>>
 	/* For Puppets in the movement phase, their name becomes a link that swaps their position with the subject (except for the subject's own name) */
 	<<capture _idx, _actor>>
-	<<link "_actor.name">>
-		<<set _m = $puppets.indexOf($B.subject)>>
-		<<set $puppets[_idx] = $B.subject; $puppets[_m] = _actor>>
-		<<replace "#puppets">><<include "actorlist puppets">><</replace>>
-	<</link>>
+  <<set _link = `<<link "_actor.fullname">>
+  		<<set _m = $puppets.indexOf($B.subject)>>
+  		<<set $puppets[_idx] = $B.subject; $puppets[_m] = _actor>>
+  		<<replace "#puppets">><<include "actorlist puppets">><</replace>>
+  	<</link>>`>>
+  <<if setup.SCALE_NAMES>>
+    <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,_link)>>
+  <<else>>
+    <<print _link>>
+  <</if>>
 	<</capture>>
 <<else>>
 	/* In all other phases, just display the name as normal. */
-	_actor.fullname
+  <<if setup.SCALE_NAMES>>
+    <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,true)>>
+  <<else>>
+    <<print _actor.fullname>>
+  <</if>>
 <</if>>
 
 :: Actor Box Status [nobr]
