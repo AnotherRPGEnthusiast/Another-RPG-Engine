@@ -3,11 +3,11 @@
 /* Assumes that elements of the action queue are two-element arrays with the subject's ID in the 0th element and the action as the 1st element. */
 <<if $B.actionQueue.length > 0>>
 	<<set _data = $B.actionQueue.shift()>>
-	<<set _OG = {target: $B.target, subject: $B.subject, action: $action}>>
-	<<set $B.subject = getActorById(_data[0]); $action = _data[1]>>
+	<<set _OG = {target: $target, subject: $subject, action: $action}>>
+	<<set $subject = getActorById(_data[0]); $action = _data[1]>>
 	<<if !(subject().dead || subject().noact)>>
 		<<if $action.counter>>
-			<<set $B.target = _OG.subject>>
+			<<set $target = _OG.subject>>
 			<<set _counterActive = true>>
 		<</if>>
 		<<include "action effects">><br/>
@@ -24,9 +24,9 @@
 
 	<<unset _party>>
 
-	<<if $B.target instanceof Puppet && $B.subject instanceof Enemy>>
+	<<if $target instanceof Puppet && $subject instanceof Enemy>>
 		<<set _party = $puppets>>
-	<<elseif $B.target instanceof Enemy && $B.subject instanceof Puppet>>
+	<<elseif $target instanceof Enemy && $subject instanceof Puppet>>
 		<<set _party = $enemies>>
 	<</if>>
 
@@ -47,9 +47,9 @@
 	find(function (p) { return p && p.name == "Archer" && !(p.dead || p.noact || p.uncontrollable) })>>
 
 <<if def _archer
-	&& $B.subject instanceof Puppet
+	&& $subject instanceof Puppet
 	&& subject().name != "Archer"
-	&& $B.target instanceof Enemy
+	&& $target instanceof Enemy
 	&& _archer.en > 0
 	&& enemies().filter(function (e) { return e.marked && !e.dead }).length > 0>>
 

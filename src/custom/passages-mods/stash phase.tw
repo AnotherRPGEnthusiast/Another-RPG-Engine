@@ -8,7 +8,7 @@ Select an item to use from stash. <<backbtn>>
 	<<set _actionClass = "">>
 <</if>>
 <div id="actionList" @class="_actionClass">
-<<stashlist $B.subject>>
+<<stashlist $subject>>
 </div>
 <<if $COMPRESSED_ACTIONS === true>>
 <br/>

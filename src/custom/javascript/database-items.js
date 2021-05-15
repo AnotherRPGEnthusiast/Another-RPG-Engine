@@ -11,13 +11,13 @@ setup.itemData = {
 		"info": "",
 		"desc": ""
 	},
-	
+
 
 	"Salve": {
 		"usable": ["inbattle","inmenu"],
 		"special": setup.actionData["Salve"].special,
 		"onUse": function (puppet) {
-			puppet.hp += this.special
+			puppet.hp += this.special;
 			inv().decItem(this.name);
 			return;
 		},

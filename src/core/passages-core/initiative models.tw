@@ -21,7 +21,7 @@
 <<if ndef _subj>>
 (You should write an error message here.)
 <<else>>
-	<<set $B.subject = _actor>>
+	<<set $subject = _actor>>
 	<<if subject() instanceof Enemy>>
 		<<set $B.turn = "enemy">>
 	<</if>>
@@ -60,7 +60,7 @@
 <<if ndef _subj>>
 (You should write an error message here.)
 <<else>>
-	<<set $B.subject = _actor>>
+	<<set $subject = _actor>>
 	<<if subject() instanceof Enemy>>
 		<<set $B.turn = "enemy">>
 	<</if>>
@@ -96,7 +96,7 @@
 <<if ndef _subj>>
 (You should write an error message here.)
 <<else>>
-	<<set $B.subject = _actor; subject().initiative = 0>>
+	<<set $subject = _actor; subject().initiative = 0>>
 	<<if subject() instanceof Enemy>>
 		<<set $B.turn = "enemy">>
 	<</if>>
@@ -159,7 +159,7 @@
 <<if ndef _subj>>
 (You should write an error message here.)
 <<else>>
-	<<set $B.subject = _actor; subject().initiative -= setup.ACTION_THRESHOLD>>
+	<<set $subject = _actor; subject().initiative -= setup.ACTION_THRESHOLD>>
 	<<if subject() instanceof Enemy>>
 		<<set $B.turn = "enemy">>
 	<</if>>
@@ -221,7 +221,7 @@
 <<if ndef _subj>>
 (You should write an error message here.)
 <<else>>
-	<<set $B.subject = _actor; subject().initiative -= setup.ACTION_THRESHOLD>>
+	<<set $subject = _actor; subject().initiative -= setup.ACTION_THRESHOLD>>
 	<<if subject() instanceof Enemy>>
 		<<set $B.turn = "enemy">>
 	<</if>>

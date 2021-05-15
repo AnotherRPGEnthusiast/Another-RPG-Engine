@@ -1,5 +1,3 @@
-To use the engine, download and extract rpgengine.zip, which contains all relevant files. The source files are also provided here in the src folder if you would like to see them individually.
-
-The engine's story file is itself an interactive help file with documentation for all features. A link to the live version has been provided in the description.
+See the interactive help file at <a href="https://anotherrpgenthusiast.itch.io/another-rpg-engine" target="_blank">itch.io</a> for detailed information on the engine's features.
 
 You will need a Twine compiler (e.g. Tweego) to use the engine. Installation instructions are provided in the interactive help file.

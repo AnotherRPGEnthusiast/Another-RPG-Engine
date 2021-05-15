@@ -238,7 +238,8 @@ setup.puppetData = {
 			"Blue Lightning",
 			"Yellow Scorch",
 			"Sacrament",
-			"Blasphemy"
+			"Blasphemy",
+			"Heal"
 		],
 		"defaultAction": "White Light",
 		"crisis": "Desperate Attack",

@@ -997,7 +997,7 @@ window.target = function target () {return State.variables.B === undefined ? nul
 window.subject = function subject () {return State.variables.B === undefined ? null : State.variables.B.subject;};
 window.action = function action () {return State.variables.action;};
 }}}
-A big draw are these functions, which allow us to more conveniently access the active target, subject, and action in battle. You'll be seeing these a lot. (However, be aware that <b>you cannot use a function to call a variable for assignment.</b> For example, you cannot say {{{target() = Object}}}. You must say {{{V().B.target = Object}}}.)
+A big draw are these functions, which allow us to more conveniently access the active target, subject, and action in battle. You'll be seeing these a lot. (However, be aware that <b>you cannot use a function to call a variable for assignment.</b> For example, you cannot say {{{target() = Object}}}. You must say {{{V().target = Object}}}.)
 {{{
 Map.prototype.inc = function (key,amt) {
 	this.set(key,this.get(key)+amt);
@@ -1883,7 +1883,7 @@ The simplest special case is if the actor is dead. In this case, all we want is 
   /* For Puppets in the selection phase, their name becomes a link that sets them as the subject and allows the player to select their commands. */
   <<capture _idx, _actor>>
   <<link "_actor.name">>
-    <<set $B.subject = _actor>>
+    <<set $subject = _actor>>
     <<set _s = _idx>>
     <<set $B.phase = "command">>
     <<if setup.BATTLE_GRID === true>>
@@ -1903,7 +1903,7 @@ To see what will happen when this link is clicked, we must take a quick trip to 
 (...)
 <<if def _s>>
 	<div style="position:absolute; top:0; right:0"><<backbtn>></div>
-	<<actorBox $B.subject>>
+	<<actorBox $subject>>
 }}}
 That's it! The puppet container will refresh to display only the character the player has just selected, allowing them to focus on them while they consider what commands to pick. Despite the complex setup code, the result is simple.
 
@@ -2012,7 +2012,7 @@ To show how this is done, we have to move up a step, and look at {{{actorlist pu
 (...)
 <<if def _s>>
 	<div style="position:absolute; top:0; right:0"><<backbtn>></div>
-	<<actorBox $B.subject>>
+	<<actorBox $subject>>
 <<else>>
 	(...)
 	<<for _i, _puppet range $puppets>>
@@ -2058,7 +2058,7 @@ As for the commands themselves, the mechanics required for these are a bit more 
 <<if _puppet.down is true>>
 	<<if $args[0].en >= setup.struggleCost>>
 		<<link "Struggle">>
-			<<set $B.subject = $args[0]; $action = new Action("struggle"); $B.target = null>>
+			<<set $subject = $args[0]; $action = new Action("struggle"); $target = null>>
 			<<replace "#phase">><<include "confirm phase">><</replace>>
 		<</link>>
 	<<else>>
@@ -2066,19 +2066,19 @@ As for the commands themselves, the mechanics required for these are a bit more 
 	<</if>>
 <<else>>
 	<<link "Act">>
-		<<set $B.subject = $args[0]>>
+		<<set $subject = $args[0]>>
 		<<replace "#phase">><<include "actions">><</replace>>
 	<</link>>
 <</if>>
 <span class="hotkey monospace right">[Q]</span>
 <</widget>>
 }}}
-The first branch of the if clause here may look complicated, but it's only for a special case that turns the "Act" button into a selection for a single action. The part that the player will see for most of the battle is the default {{{<<else>>}}} case, which links to the "actions" passage while assigning the current character to the {{{$B.subject}}} variable.
+The first branch of the if clause here may look complicated, but it's only for a special case that turns the "Act" button into a selection for a single action. The part that the player will see for most of the battle is the default {{{<<else>>}}} case, which links to the "actions" passage while assigning the current character to the {{{$subject}}} variable.
 {{{
 <<set $B.phase = "actions">>
 <span class="hotkey monospace">[Q] = basic action | [W] = last action</span><br/><br/>
 
-<<actionList $B.subject>>
+<<actionList $subject>>
 }}}
 Instead of making a separate passage for every character (which would quickly get cumbersome), everything is outsourced to another widget in order to reduce clutter. This can be found the widgets section of the "Battle Phases" file, and is discussed in <a class="noExternal" href="#actions">Action Mechanics</a>.
 
@@ -2113,12 +2113,12 @@ However, to see how it behaves under normal circumstances, let us return to {{{<
 <<elseif $B.phase == "targeting">>
 	<span class="targetnumber"><<print _idx+1>></span>
 	<<if ($B.targeting == "all" || (_actor instanceof Enemy && $B.targeting == "enemy") || (_actor instanceof Puppet && $B.targeting == "ally"))>>
-		<<if (_actor instanceof Puppet && !($B.subject.name == _actor.name && $B.noself === true)) ||
+		<<if (_actor instanceof Puppet && !($subject.name == _actor.name && $B.noself === true)) ||
 			(_actor instanceof Enemy &&
 			((_actor.martyr || (!_martyr && !_actor.untargetable)) && ($action.ranged || guardCheck(_idx))))>>
 			<<capture _actor>>
 			<<link "_actor.fullname">>
-				<<set $B.target = _actor; $B.targeting = null>>
+				<<set $target = _actor; $B.targeting = null>>
 				<<replace "#phase">><<include "confirm phase">><</replace>>
 			<</link>>
 			<</capture>>
@@ -2142,7 +2142,7 @@ This is the name-display clause we skipped over previously. During the targeting
 <<set $B.phase = "confirm">>
 <<backbtn>>
 
-$B.subject.name will
+$subject.name will
 
 <<if $action.name is "rest">>
 	<b>rest</b> this turn.
@@ -2153,7 +2153,7 @@ $B.subject.name will
 <<elseif $action.name is "spare">>
 	accept the enemy's surrender.
 <<else>>
-	use <b>$action.name</b><<if $B.target isnot null>> on <b>$B.target.name</b><</if>>.
+	use <b>$action.name</b><<if $target isnot null>> on <b>$target.name</b><</if>>.
 <</if>>
  [[Confirm?|action phase]]<br />
 <span class="preview">
@@ -2182,7 +2182,7 @@ In the default engine, Mage can expend additional energy points to make their sp
 You need to input a number.<br/>
 <<elseif $action.cost < $B.mincost>>
 Spell requires at least $B.mincost Energy.<br/>
-<<elseif $B.subject.en < $action.cost>>
+<<elseif $subject.en < $action.cost>>
 Not enough Energy!<br/>
 <</if>>
 
@@ -2197,7 +2197,7 @@ The <b>spell phase</b> passage is shown above. A {{{<<numberboxplus>>}}} macro i
 (Thanks to SugarCube developer TheMadExile for providing the {{{<<numberboxplus>>}}} macro, which was necessary for preserving the engine's structure.)
 {{{
 <<run $action.cost *= 1>>
-<<if ($action.cost < $B.mincost) or ($B.subject.en < $action.cost) or isNaN($action.cost)>>
+<<if ($action.cost < $B.mincost) or ($subject.en < $action.cost) or isNaN($action.cost)>>
 <<replace "#phase">><<include "spell phase">><</replace>>
 <<else>>
 
@@ -2293,7 +2293,7 @@ There is also a call to {{{<<include>>}}} the "battle interruptions" passage, wh
 Then, there is a similar section for mechanical effects. Like use and act text, this is defined as an attribute of the action, usually a string of SugarCube code (which will execute as normal when {{{<<print>>}}}ed), and the element will not appear at all if the attribute is set to {{{null}}}. There is also a handler for the {{{_targetingMsg}}} variable, which handles a complicated problem discussed in <a class="noExternal" href="#targeting.basic">Standard Targeting</a>.
 {{{
 <<if def _OG>>
-	<<set $B.subject = _OG.subject; $B.target = _OG.target; $action = _OG.action>>
+	<<set $subject = _OG.subject; $target = _OG.target; $action = _OG.action>>
 	<<unset _OG>>
 <</if>>
 }}}
@@ -2307,7 +2307,7 @@ We then bring this all together in the action phase:
 <span id="content">
 
 /* Some abilities (such as AoE attacks) don't always end with the same target as the one they started with. This saves the initial target if you want to use it for something, e.g. a reaction scene. */
-<<set _initialTarget = $B.target>>
+<<set _initialTarget = $target>>
 
 /* Saves the number of kills from before the action. By comparing this to the kills array afterwards, you can identify whether or not a kill happened during the action. */
 <<set _initialKills = $B.kills.length>>
@@ -2344,17 +2344,17 @@ We then bring this all together in the action phase:
 <</if>>
 
 /* If target was an enemy (i.e. an attacking skill was used), subject is marked as attacker. (This is for enemies that target the last puppet to attack them.) */
-<<if $B.target instanceof Enemy>>
-	<<set $B.attacker = $puppets.indexOf($B.subject)>>
+<<if $target instanceof Enemy>>
+	<<set $B.attacker = $puppets.indexOf($subject)>>
 <</if>>
 
 /* isDone logic; checks for confounding factors */
 <<if $action.instant>>
 	/* do nothing */
-<<elseif $B.subject.inspired>>
-	<<set $B.subject.inspired = false>>
+<<elseif $subject.inspired>>
+	<<set $subject.inspired = false>>
 <<else>>
-	<<set $B.subject.isDone = true>>
+	<<set $subject.isDone = true>>
 	<<set $B.enemyTurns++>>
 <</if>>
 
@@ -2365,13 +2365,13 @@ We then bring this all together in the action phase:
 /* Subtract action cost */
 <<if $action instanceof ItemAction>>
 	<<set $B.item_used = true>>
-	<<if $B.subject.crafty>>
+	<<if $subject.crafty>>
 		<<set $action._cost = Math.round(setup.ITEM_COST/2)>>
 	<<else>>
 		<<set $action._cost = setup.ITEM_COST>>
 	<</if>>
 <</if>>
-<<set $B.subject.en -= $action.cost>>
+<<set $subject.en -= $action.cost>>
 
 <<if $B.surrender && def $action.name>>
 	<<print $enemy_to_spare.surrenderCheck()>>
@@ -2410,11 +2410,11 @@ The "Action Queue" passage itself looks like this:
 {{{
 <<if $B.actionQueue.length > 0>>
 	<<set _data = $B.actionQueue.shift()>>
-	<<set _OG = {target: $B.target, subject: $B.subject, action: $action}>>
-	<<set $B.subject = getActorById(_data[0]); $action = _data[1]>>
+	<<set _OG = {target: $target, subject: $subject, action: $action}>>
+	<<set $subject = getActorById(_data[0]); $action = _data[1]>>
 	<<if !(subject().dead || subject().noact)>>
 		<<if $action.counter>>
-			<<set $B.target = _OG.subject>>
+			<<set $target = _OG.subject>>
 			<<set _counterActive = true>>
 		<</if>>
 		<<include "action effects">><br/>
@@ -2427,7 +2427,7 @@ The "Action Queue" passage itself looks like this:
 }}}
 We start by {{{shift}}}ing the first entry out of the {{{actionQueue}}} and storing it in {{{_data}}}. ({{{shift}}} is an array function that extracts the first entry from an array; this both removes it from the original array, and allows us to store the entry in another variable. Because this shortens the array, we will eventually empty the {{{actionQueue}}} this way.) Then, we need to store the original target, subject, and action in a holder variable, so that we can put them back when we're done.
 {{{
-<<set $B.subject = getActorById(_data[0]); $action = _data[1]>>
+<<set $subject = getActorById(_data[0]); $action = _data[1]>>
 }}}
 We then need to set the new subject and action. We do this by reading the entry we got from the {{{actionQueue}}}. Entries added to the {{{actionQueue}}} are assumed to be, themselves, arrays consisting of two elements: the ID of the character to perform the action, and then the action itself.
 
@@ -2613,8 +2613,8 @@ We then need to find the active enemy. We can't just iterate over the whole enem
 }}}
 However, we can only go ahead if that operation <i>did</i> find a valid enemy! If all the enemies have acted, {{{find}}} will fail and return {{{undefined}}}. In this case, we should end the enemy turn and forward the player to the next round.
 {{{
-<<set $B.subject = _enemy>>
-<<set $B.target = null>>
+<<set $subject = _enemy>>
+<<set $target = null>>
 <<if _enemy.isFirstAction>>
 	<<newTurn `[_enemy]`>>
 <</if>>
@@ -2700,7 +2700,7 @@ After the enemy's action is executed, we run some checks against their {{{noAtta
 <h3 id="advanceturn">Advancing Turns</h3>
 There is a feature added in version 1.12 that modifies the behavior of the "End Turn" button.
 {{{
-<<set $B.subject.isDone = true>>
+<<set $subject.isDone = true>>
 <<set $B.enemyTurns++>>
 (...)
 <<run _enemy.decCD(); $B.enemyTurns-->>
@@ -3016,12 +3016,12 @@ The functionality here is offloaded to a widget:
 	<<else>>
 		<<set $action = clone(_action)>>
 		<<if !$action.nosave>>
-			<<set $B.subject.lastAction = $action.name>>
+			<<set $subject.lastAction = $action.name>>
 		<</if>>
 		<<set $B.targeting = _action.target>>
 		<<set $B.noself = _action.noself>>
 		<<if _action.phase is "confirm phase">>
-			<<set $B.target = null>>
+			<<set $target = null>>
 			<<set $B.targeting = null>>
 		<<elseif _action.phase is "spell phase">>
 			<<set $B.mincost = _action.cost>>
@@ -3146,7 +3146,7 @@ Why do we need all these handlers? Because the action list can be displayed two 
 	<<set _actionClass = "">>
 <</if>>
 <div id="actionList" @class="_actionClass">
-<<actionList $B.subject>>
+<<actionList $subject>>
 </div>
 <<if $COMPRESSED_ACTIONS === true>>
 <br/>
@@ -3202,8 +3202,8 @@ When Rogue uses the Crossbow ability, it's replaced by a new ability, Reload, wh
 	},
 	"act": function () {
 		return `<<echoDamage>>`+
-		`<<find "$B.subject.actions" "name" "\'Crossbow\'">>`+
-		`<<set $B.subject.actions[_pos] = new Action("Reload")>>`;
+		`<<find "$subject.actions" "name" "\'Crossbow\'">>`+
+		`<<set $subject.actions[_pos] = new Action("Reload")>>`;
 	},
 },
 
@@ -3252,7 +3252,7 @@ The widgets for calculating and displaying damage are separate, due to the need 
 {{{
 <<set _w = $action.weight>>
 (...)
-<<set _atk = ($B.subject.get("Attack") * (1 - $action.useSpecial)) + ($B.subject.get("Special") * $action.useSpecial)>>
+<<set _atk = ($subject.get("Attack") * (1 - $action.useSpecial)) + ($subject.get("Special") * $action.useSpecial)>>
 
 /* Piercing? */
 <<if $action.pierce>>
@@ -3343,19 +3343,19 @@ If {{{AVERAGE_ELEMENTS}}} is not {{{true}}}, we simply pick the best modifier (f
 }}}
 After we're done with the calculation, there is then a check for if the elemental attack hit a weakness or a resistance. If it's a weakness ({{{$dmg}}} is greater than the original damage), we store a message informing the player they hit a weak point; if it's a resistance ({{{$dmg}}} is less than the original damage), we store a message informing the player they hit a resistance; and so on. These messages are defined in {{{StoryInit}}}; by default, they use the messages from <i>Pokemon</i>. This is a means of transparency to the player, to let them know when they've hit a weakness or resistance. You can customize these messages or even remove them entirely if you see fit; you could even expand the code to create a unique message for every element, if you want!
 {{{
-<<if $B.subject.berserker is true>>
+<<if $subject.berserker is true>>
 	<<set $dmg *= (1+setup.BERSERK_FACTOR)>>
 <</if>>
-<<if $B.target.berserker is true>>
+<<if $target.berserker is true>>
 	<<set $dmg *= (1+setup.BERSERK_FACTOR)>>
 <</if>>
-<<if $B.subject.defender is true>>
+<<if $subject.defender is true>>
 	<<set $dmg *= setup.DEFEND_FACTOR>>
 <</if>>
-<<if $B.target.defender is true>>
+<<if $target.defender is true>>
 	<<set $dmg *= setup.DEFEND_FACTOR>>
 <</if>>
-<<if $B.target.shield is true>>
+<<if $target.shield is true>>
 	<<set $dmg *= (1-setup.SHIELD_FACTOR)>>
 <</if>>
 }}}
@@ -3382,15 +3382,15 @@ Finally, we must use the {{{Math.round()}}} function to remove any decimal value
 {{{<<echoDamage>>}}} applies previously-calculated damage and alerts the player to this fact with a message.
 {{{
 <<if $args[0] instanceof Actor>>
-	<<set $B.target = $args[0]>>
+	<<set $target = $args[0]>>
 <</if>>
 }}}
-The beginning allows you to apply these effects to a specific target other than the {{{$B.target}}} variable, by passing the character as the first argument to the widget. (Because Puppet and Enemy are subclasses of Actor, they will both fulfill the {{{instanceof Actor}}} evaluation.)
+The beginning allows you to apply these effects to a specific target other than the {{{$target}}} variable, by passing the character as the first argument to the widget. (Because Puppet and Enemy are subclasses of Actor, they will both fulfill the {{{instanceof Actor}}} evaluation.)
 {{{
 <<if !($args.includes("indirect") || target().dead) && subject() instanceof Puppet && target() instanceof Enemy && target().protectedBy !== null>>
-	<<set _temp = $B.target.name>>
-	<<set $B.target = $enemies.find(function(t) { return t && t.id === $B.target.protectedBy; })>>
-	<<print $B.target.name+" took the hit for "+_temp+"!\n">>
+	<<set _temp = $target.name>>
+	<<set $target = $enemies.find(function(t) { return t && t.id === $target.protectedBy; })>>
+	<<print $target.name+" took the hit for "+_temp+"!\n">>
 <</if>>
 }}}
 Then there's a check for protected characters. If the target is protected by someone, we need to change the target to their protector, and also print a message informing the player of this fact.
@@ -3426,21 +3426,21 @@ Certain status effects also interact with direct damage, denoted by providing th
 {{{
 <<if def _elntmsg>><b><<print _elntmsg>></b><</if>>
 <<if $dmg < 0>>
-$B.target feeds on the energy, and recovers <<print $dmg*-1>> HP.
+$target feeds on the energy, and recovers <<print $dmg*-1>> HP.
 <<else>>
-$B.target.name takes $dmg damage!
+$target.name takes $dmg damage!
 <</if>>
 }}}
 If {{{_elntmsg}}} exists (which is to say, the element mattered), it's displayed before the damage message. You can move it elsewhere if you prefer. I also chose to make a totally separate message for absorbing an attack, because <i>[Name] takes -10 damage!</i> would probably look very confusing to a player even if it does give you the information you need.
 {{{
-<<set $B.target.hp -= $dmg>>
+<<set $target.hp -= $dmg>>
 (...)
 <<deathcheck>>
 }}}
-And now we apply damage. Since absorbed damage is negative, {{{$B.target.hp -= $dmg}}} will work for all cases and doesn't require multiple clauses. After, we run {{{<<deathcheck>>}}} to apply the "dead" flag if the character has fallen below 0 HP.
+And now we apply damage. Since absorbed damage is negative, {{{$target.hp -= $dmg}}} will work for all cases and doesn't require multiple clauses. After, we run {{{<<deathcheck>>}}} to apply the "dead" flag if the character has fallen below 0 HP.
 {{{
 <<if target().offbalance && $dmg >= 0>>
-	<<addEffect $B.target "Knocked Down" -1>>
+	<<addEffect $target "Knocked Down" -1>>
 <</if>>
 }}}
 But wait, there's more! After taking damage, the character is checked for the "Off-Balance" effect. If they have it, they gain a new "Knocked Down" effect. (As discussed in <a class="noExternal" href="#effects1">Applying Effects</a>, this will also remove the Off-Balance effect, but this functionality is built in to {{{<<addEffect>>}}}.) I chose to disallow this if the attack was absorbed, since logically you shouldn't be hurt by getting healed, but you could remove the clause if you think that's more logical.
@@ -3452,21 +3452,21 @@ Some RPGs feature "damage reflection", which inflicts damage on an attacking cha
 {{{
 <<if target().dmgreflection && !_dmgreflecting && target() !== subject() && $dmg > 0>>
 	<<set $dmg = Math.round($dmg * target().dmgreflection)>>
-	<<set _OG = {target: $B.target, subject: $B.subject}>>
-	<<set $B.target = _OG.subject; $B.subject = _OG.target>>
+	<<set _OG = {target: $target, subject: $subject}>>
+	<<set $target = _OG.subject; $subject = _OG.target>>
 	<<set _dmgreflecting = true>>
 	<<echoDamage "nocalc">>
-	<<set $B.target = _OG.target; $B.subject = _OG.subject>>
+	<<set $target = _OG.target; $subject = _OG.subject>>
 	<<unset _OG; _dmgreflecting>>
 <</if>>
 }}}
 Immediately after damage is applied to the target, we check if the target has a defined {{{dmgreflection}}} property. If it does, we calculate a new {{{$dmg}}} proportional to the target's {{{dmgreflection}}} value. (So, for instance, a {{{dmgreflection}}} of 1 would reflect all of the original damage, a {{{dmgreflection}}} of 0.5 would reflect half, etc.) We make sure to deactivate this clause if the subject is attacking itself, because being hit with your own damage reflection does not make logical sense and is liable to generate an infinite loop.
 {{{
-<<set _OG = {target: $B.target, subject: $B.subject}>>
-<<set $B.target = _OG.subject; $B.subject = _OG.target>>
+<<set _OG = {target: $target, subject: $subject}>>
+<<set $target = _OG.subject; $subject = _OG.target>>
 <<set _dmgreflecting = true>>
 <<echoDamage "nocalc">>
-<<set $B.target = _OG.target; $B.subject = _OG.subject>>
+<<set $target = _OG.target; $subject = _OG.subject>>
 }}}
 We then have to apply the damage to the attacker, the previous subject -- but wait! There are other effects that could occur after this action that are supposed to apply to the original target and subject. That means we have to store them in a temporary holder variable and set them back to the originals when we're done. We also set the {{{_dmgreflection}}} flag, which prevents further damage reflection within this action. This prevents an infinite loop from occurring if a damage reflector attacks another damage reflector.
 
@@ -3791,7 +3791,7 @@ In this engine, we handle these effects through a passage included in {{{<<speci
 {{{
 <<set _u = $puppets.find(function (p) { return (p.uncontrollable && !(p.isDone || p.noact || p.dead)); })>>
 <<if def _u>>
-	<<set $B.subject = _u>>
+	<<set $subject = _u>>
 	<<if subject().name == "Mage">>
 		<<set $action = new Action("Blast")>>
 	<<elseif subject().name == "Witch">>
@@ -3804,11 +3804,11 @@ In this engine, we handle these effects through a passage included in {{{<<speci
 		<<goto "Battle!">> /* necessary to find other potential uncontrollables */
 	<<else>>
 		<<if _u.confusion>>
-			<<set $B.target = Hitlist.targetEnemy(["any"])>>
+			<<set $target = Hitlist.targetEnemy(["any"])>>
 		<<elseif _u.charmed>>
-			<<set $B.target = Hitlist.targetEnemy(["allies"])>>
+			<<set $target = Hitlist.targetEnemy(["allies"])>>
 		<<elseif _u.hatred>>
-			<<set $B.target = Hitlist.targetEnemy(["enemies"])>>
+			<<set $target = Hitlist.targetEnemy(["enemies"])>>
 		<</if>>
 		<<goto "action phase">>
 	<</if>>
@@ -3823,11 +3823,11 @@ This code finds the first puppet who has been marked "uncontrollable" (excluding
 Of course, we need to be mindful of action limitations. Basic attacks aren't free in the default system, so it's possible an uncontrollable character is unable to pay the cost. There are a lot of ways you can handle this eventuality, but for simplicity, I just end the character's turn. We then have to refresh the passage so we can run this check again, in case there's another uncontrollable puppet. (The {{{find}}} function only finds the <i>first</i> element that matches its criteria, not all of them.)
 {{{
 <<if _u.confusion>>
-	<<set $B.target = Hitlist.targetEnemy(["any"])>>
+	<<set $target = Hitlist.targetEnemy(["any"])>>
 <<elseif _u.charmed>>
-	<<set $B.target = Hitlist.targetEnemy(["allies"])>>
+	<<set $target = Hitlist.targetEnemy(["allies"])>>
 <<elseif _u.hatred>>
-	<<set $B.target = Hitlist.targetEnemy(["enemies"])>>
+	<<set $target = Hitlist.targetEnemy(["enemies"])>>
 <</if>>
 }}}
 The puppet needs a target before they can attack, also. That's handled through the {{{Hitlist.targetEnemy}}} function (see <a class="noExternal" href="#targeting.basic">Standard Targeting</a>), with branches for specialized behavior depending on the exact effect the puppet is under. Confused puppets can target anyone, charmed puppets will only target their allies, and hateful puppets will only target their enemies. The effects will also take precedence in that order, a necessary feature if the puppet is under multiple loss-of-control effects simultaneously.
@@ -4751,13 +4751,13 @@ Let's look at how each of these features are built.
 	<<if $inbattle>>
 		<<switch $B.phase>>
 			<<case "command">>
-				<<if $B.subject !== null>>
+				<<if $subject !== null>>
 					<<set _id = "#actbtn a">>
 					<<trigger 'click' _id>>
 				<</if>>
 			<<case "actions">>
-				<<if def $B.subject.defaultAction && $B.subject.defaultAction !== null>>
-					<<set _action = $B.subject.defaultAction>>
+				<<if def $subject.defaultAction && $subject.defaultAction !== null>>
+					<<set _action = $subject.defaultAction>>
 					<<actionLink>>
 				<</if>>
 			<<case "confirm">>
@@ -4777,8 +4777,8 @@ Because we want this key to have special functionality for battles, we check for
 Our first function is: <i>Select the "Act" link for the selected character in the command phase.</i>
 {{{
 <<case "command">>
-	<<if $B.subject !== null>>
-		<<set _id = "#act"+$puppets.indexOf($B.subject)+" a">>
+	<<if $subject !== null>>
+		<<set _id = "#act"+$puppets.indexOf($subject)+" a">>
 		<<trigger 'click' _id>>
 	<</if>>
 }}}
@@ -4786,19 +4786,19 @@ This one is pretty simple. <a class="noExternal" href="#commands">We've already 
 {{{
 <span @id="'act'+_i"><<act $puppets[_i]>></span>
 }}}
-Each character's Act button has a unique ID that contains their index in the {{{$puppets}}} array. Because the {{{$B.subject}}} variable is an object from the {{{$puppets}}} array in the command phase, we can plug it into {{{indexOf}}} to find the selected character's index, and from there, pass the correct ID to the {{{<<trigger>>}}} macro.
+Each character's Act button has a unique ID that contains their index in the {{{$puppets}}} array. Because the {{{$subject}}} variable is an object from the {{{$puppets}}} array in the command phase, we can plug it into {{{indexOf}}} to find the selected character's index, and from there, pass the correct ID to the {{{<<trigger>>}}} macro.
 
 There's just one wrinkle: We placed that ID on a {{{<span>}}} element surrounding the link, not on the link itself. If we were to just leave it at that, the {{{<<trigger>>}}} would only click that {{{<span>}}} element, which of course would do nothing. We need to provide {{{<<trigger>>}}} with one more bit of information: the specific element it needs to target. In this case, that's a link, which is an anchor {{{<a>}}} element. By appending that to the target argument (separated by a space), the {{{<<trigger>>}}} macro now knows to simulate a click on the anchor element <i>within</i> the element tagged "#act".
 
-Lastly, things are going to get weird if {{{$B.subject}}} is {{{null}}}, so just to be safe, we also have to wrap this in an {{{<<if>>}}} that checks against that.
+Lastly, things are going to get weird if {{{$subject}}} is {{{null}}}, so just to be safe, we also have to wrap this in an {{{<<if>>}}} that checks against that.
 
 That's our first function done. Our next one is: <i>Select the default action for the character in the action selection phase.</i>
 
 The setup we have to do for this function is to <i>create</i> a default action to reference in the first place. All of the default characters have one that's set in their constructors, but you can change this or even allow the player to select it themselves. (I caution against doing this with actions that can be changed or swapped out, such as Rogue's "Crossbow" and "Reload" actions, as the {{{defaultAction}}} property stores a separate copy that <b>will not be updated to reflect changes in the {{{actions}}} property</b> unless you do so manually.)
 {{{
 <<case "actions">>
-	<<if def $B.subject.defaultAction && $B.subject.defaultAction !== null>>
-		<<set _action = $B.subject.defaultAction>>
+	<<if def $subject.defaultAction && $subject.defaultAction !== null>>
+		<<set _action = $subject.defaultAction>>
 		<<actionLink>>
 	<</if>>
 }}}
@@ -4850,10 +4850,10 @@ If we did this in a standard coding engine, {{{$subject}}} would refer to the sa
 Twine, for various reasons, does not work this way. Every time the user travels to a new passage, a new copy of every object is generated, and this breaks shared object references. In our example, {{{$subject}}} would now point to a completely new object, and acting on it would not affect our {{{$puppets[1]}}} object.
 {{{
 <<widget "chain">>
-<<if $B.target !== null>>
+<<if $target !== null>>
 <<run getActor("target")>>
 <</if>>
-<<if $B.subject !== null>>
+<<if $subject !== null>>
 <<run getActor("subject")>>
 <</if>>
 <<if $B.actor !== null>>
@@ -4866,8 +4866,8 @@ window.getActor = function getActor(x) {
 	var id;
 	var actor;
 	switch(x) {
-		case "target": id = V().B.target.id; break;
-		case "subject": id = V().B.subject.id; break;
+		case "target": id = V().target.id; break;
+		case "subject": id = V().subject.id; break;
 		case "actor": id = V().B.actor.id; break;
 		default: console.log("ERROR in getActor: invalid argument");
 	}
@@ -4878,8 +4878,8 @@ window.getActor = function getActor(x) {
     }
     actor = targets.find(function(t) { return t && t.id === id; });
 	switch(x) {
-		case "target": V().B.target = actor; break;
-		case "subject": V().B.subject = actor; break;
+		case "target": V().target = actor; break;
+		case "subject": V().subject = actor; break;
 		case "actor": V().B.actor = actor; break;
 		default: console.log("ERROR in getActor: invalid argument");
 	}
@@ -4896,7 +4896,7 @@ One additional wrinkle is that we need to know the correct array to search -- {{
 	<<chain>>
 <</if>>
 }}}
-{{{<<chain>>}}} is then added to PassageReady, a special passage that runs at the beginning of every passage. This lets {{{$B.subject}}}, {{{$B.target}}}, and {{{$B.actor}}} retain their object links through passages, which greatly simplifies many widgets.
+{{{<<chain>>}}} is then added to PassageReady, a special passage that runs at the beginning of every passage. This lets {{{$subject}}}, {{{$target}}}, and {{{$B.actor}}} retain their object links through passages, which greatly simplifies many widgets.
 
 <h3 id="refreshPuppets">{{{<<refreshPuppets>>}}}</h3>
 {{{
@@ -4932,7 +4932,7 @@ One additional wrinkle is that we need to know the correct array to search -- {{
 	<</if>>
 	<<set _x = _puppet.actions.find(function (a) { return a && a.name == "Reload" })>>
 	<<if def _x>>
-		<<set $B.subject = _puppet; _x.act()>>
+		<<set $subject = _puppet; _x.act()>>
 	<</if>>
 <</for>>
 <</widget>>
@@ -5003,7 +5003,7 @@ This widget applies the "dead" tag to defeated characters, and adds their names 
 }}}
 The first thing is a check for characters with special death messages. You might want certain enemies to have a full passage's worth of description when they're defeated, such as if they're a climactic villain. If you set their {{{specialdeath}}} attribute to {{{true}}}, the player will be directed to the passage with a name matching their {{{deathMessage}}}. (To prevent possible stacking of these passages, which can occur if this code is triggered multiple times at once, such as from multi-hit attacks, there is also a check that their special death isn't in the queue already.)
 
-Otherwise, as long as the target isn't flagged as immortal, the normal death message will be displayed and the target will be flagged as dead. (Note that this requires the target be set correctly! Usually this won't be a problem, as the damage widgets require a target as well. However, you'll need to update the {{{$B.target}}} value or pass an argument any time a character could be damaged, such as from damage-over-time effects.) If the target <i>is</i> immortal, only their death message is displayed.
+Otherwise, as long as the target isn't flagged as immortal, the normal death message will be displayed and the target will be flagged as dead. (Note that this requires the target be set correctly! Usually this won't be a problem, as the damage widgets require a target as well. However, you'll need to update the {{{$target}}} value or pass an argument any time a character could be damaged, such as from damage-over-time effects.) If the target <i>is</i> immortal, only their death message is displayed.
 {{{
 <<if _targ instanceof Enemy>>
 	<<run $B.kills.push(_targ)>>
@@ -5108,10 +5108,10 @@ By default, the only thing in "custom end of battle" is a call to the {{{<<resto
 <h3 id="backbtn">{{{<<backbtn>>}}}</h3>
 {{{
 <<widget "backbtn">>
-<span class="btn back right" id="battlebackbtn">[[Back [R]|Battle!][$B.phase = "command"; $B.targeting = null; $action = null; $B.target = null; $B.subject = null; $removed_effects = [];]]</span>
+<span class="btn back right" id="battlebackbtn">[[Back [R]|Battle!][$B.phase = "command"; $B.targeting = null; $action = null; $target = null; $subject = null; $removed_effects = [];]]</span>
 <</widget>>
 }}}
-The {{{<<backbtn>>}}} widget (an abbreviation for "back button") is the gray "BACK" button you see in battle. It's just a link back to the battle hub, plus a whole host of variable assignments to reset any flags triggered while selecting actions, such as {{{$B.target}}}. If this wasn't done, flags might be able to "bleed over" into other actions when they weren't supposed to -- enabling you to select characters to attack outside of the targeting phase, for instance.
+The {{{<<backbtn>>}}} widget (an abbreviation for "back button") is the gray "BACK" button you see in battle. It's just a link back to the battle hub, plus a whole host of variable assignments to reset any flags triggered while selecting actions, such as {{{$target}}}. If this wasn't done, flags might be able to "bleed over" into other actions when they weren't supposed to -- enabling you to select characters to attack outside of the targeting phase, for instance.
 
 <h3 id="victorycheck">{{{<<victorycheck>>}}}</h3>
 {{{

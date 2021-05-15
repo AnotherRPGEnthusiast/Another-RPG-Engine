@@ -75,9 +75,9 @@ Then you'd want to use the code in the "Initiative Model: Ranked Order" passage,
 (You should write an error message here.)
 <<else>>
 	<<if _subj[0] == $actors.indexOf($puppets)>>
-		<<set $B.subject = [$puppets[_j],"$puppets["+_j+"]"]>>
+		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
 	<<elseif _subj[0] == $actors.indexOf($enemies)>>
-		<<set $B.subject = [$enemies[_j],"$enemies["+_j+"]"]>>
+		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
 		<<set $B.turn = "enemy">>
 	<<else>>
 		(You should write an error message here.)
@@ -167,14 +167,14 @@ We then use a modified form of our code from <a class="noExternal" href="#flow.1
 (You should write an error message here.)
 <<else>>
 	<<if _subj[0] == $actors.indexOf($puppets)>>
-		<<set $B.subject = [$puppets[_j],"$puppets["+_j+"]"]>>
+		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
 	<<elseif _subj[0] == $actors.indexOf($enemies)>>
-		<<set $B.subject = [$enemies[_j],"$enemies["+_j+"]"]>>
+		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
 		<<set $B.turn = "enemy">>
 	<<else>>
 		(You should write an error message here.)
 	<</if>>
-	<<set $B.subject[0].initiative = 0>>
+	<<set $subject[0].initiative = 0>>
 <</if>>
 }}}
 This assumes every character's "initiative" attribute is set to 0 at the start of battle.
@@ -316,14 +316,14 @@ If you're interested in more accurately modeling the version seen in <i>Final Fa
 (You should write an error message here.)
 <<else>>
 	<<if _subj[0] == $actors.indexOf($puppets)>>
-		<<set $B.subject = [$puppets[_j],"$puppets["+_j+"]"]>>
+		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
 	<<elseif _subj[0] == $actors.indexOf($enemies)>>
-		<<set $B.subject = [$enemies[_j],"$enemies["+_j+"]"]>>
+		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
 		<<set $B.turn = "enemy">>
 	<<else>>
 		(You should write an error message here.)
 	<</if>>
-	<<set $B.subject[0].initiative -= $ACTION_THRESHOLD>>
+	<<set $subject[0].initiative -= $ACTION_THRESHOLD>>
 <</if>>
 }}}
 To show an example of what this would look like, we'll use the fastest enemy in <i>Bonfire</i>, the Bladewolf, which has 70 Speed; the fastest hero in <i>Bonfire</i>, Assassin, who starts with 40 Speed; and the slowest hero in <i>Bonfire</i>, Knight, who starts with 15 Speed.
@@ -781,9 +781,9 @@ You can see here (in {{{actorlist enemies}}}) that this function is used in the 
 <<widget "guardCheck">>
 <<set _index = _party.indexOf(target())>>
 <<if _index >= setup.ROW_SIZE && _party[_index-setup.ROW_SIZE] !== null && !_party[_index-setup.ROW_SIZE].dead>>
-	<<set $B.target = _party[_index-setup.ROW_SIZE]>>
+	<<set $target = _party[_index-setup.ROW_SIZE]>>
 <<elseif _index >= setup.ROW_SIZE * 2>>
-	<<set $B.target = _party[_index-setup.ROW_SIZE]>>
+	<<set $target = _party[_index-setup.ROW_SIZE]>>
 	<<guardCheck>> /* Run again to test if the new mid-row target is in turn guarded by a front row character */
 <</if>>
 <</widget>>
@@ -794,8 +794,8 @@ We run analagous code in the targeting widget. The difference here is that the c
 	<<if $B.phase == "move">>
 	<div style="display: flex;  justify-content: center;  align-items: center; height: -webkit-fill-available">
 	<<link "[MOVE]">>
-		<<set _m = $puppets.indexOf($B.subject)>>
-		<<set $puppets[_i] = $B.subject; $puppets[_m] = _puppet>>
+		<<set _m = $puppets.indexOf($subject)>>
+		<<set $puppets[_i] = $subject; $puppets[_m] = _puppet>>
 		<<replace "#puppets">><<include "actorlist puppets">><</replace>>
 	<</link>>
 	</div>

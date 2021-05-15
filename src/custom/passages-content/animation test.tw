@@ -1,9 +1,9 @@
 :: Anim Test [nobr]
 <<set $scenario = "gf1">>
 <<include "Preparation">>
-<<set $B.subject = $puppets[0]>>
-<<set $B.subject.en = 10>>
-<<set $B.target = $enemies[1]>>
+<<set $subject = $puppets[0]>>
+<<set $subject.en = 10>>
+<<set $target = $enemies[1]>>
 <<if $subtest.includes("dark")>>
 	<<set $B.style = "dark">>
 	<<addclass "html" "dark">>
@@ -11,7 +11,7 @@
 <<if $subtest == "Antidote" || $subtest == "Grenade">>
 	<<set _action = new ItemAction($subtest)>>
 	<<run $puppets[0].addEffect("Poisoned",{power: 1, weight: 1, noPopup: true})>>
-	<<set $B.target = $puppets[0]>>
+	<<set $target = $puppets[0]>>
 <<elseif $subtest == "block">>
 	<<set $enemies[1].addEffect("Bubble",{power: 1, noPopup: true})>>
 	<<set _action = new Action("Flurry")>>

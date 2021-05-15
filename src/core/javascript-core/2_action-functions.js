@@ -18,7 +18,7 @@ function findTarget (selector) {
 		} else if (subject() instanceof Enemy) {
 			party = "$puppets";
 		}
-		target = "$B.target";
+		target = "$target";
 		mass = true;
 	} else if (selector == 'a' || selector == 'allies') {
 		if (subject() instanceof Puppet) {
@@ -26,14 +26,14 @@ function findTarget (selector) {
 		} else if (subject() instanceof Enemy) {
 			party = "$enemies";
 		}
-		target = "$B.target";
+		target = "$target";
 		mass = true;
 	} else if (selector == 'all') {
 		party = "$B.actors"
-		target = "$B.target";
+		target = "$target";
 		mass = true;
 	} else if (selector == 's'){
-		target = "$B.subject";
+		target = "$subject";
 		if (State.getVar(target) !== null) {
 			switch (State.getVar(target).id.charAt(0)) {
 				case 'p':
@@ -45,7 +45,7 @@ function findTarget (selector) {
 			}
 		}
 	} else if (selector === undefined || selector == 't'){
-		target = "$B.target";
+		target = "$target";
 		if (State.getVar(target) !== null) {
 			switch (State.getVar(target).id.charAt(0)) {
 				case 'p':
@@ -87,21 +87,17 @@ var justdmg = function justdmg (extension,mods) {
 var heal = function heal (test,extension = "") {
 //	test = Boolean; set true to have the function return only the healing value. Useful if you just want to quickly calculate the result of the healing formula.
 
-	if (extension instanceof Function){
-		extension = "<br/>" + extension();
-	}
-	var gain;
-	gain = "$action.special"; // you may implement your own formula here
-	if (test === true) {
-		return gain;
-	}
-	else {
-		return `<<if setup.ANIMATIONS === true && _queue instanceof Set>>\
+	return function () {
+		if (extension instanceof Function){
+			extension = "<br/>" + extension();
+		}
+		return `<<healCalc>>\
+		<<if setup.ANIMATIONS === true && _queue instanceof Set>>\
 			<<set _queue.add(target())>>\
-			<<set target().battleMsg.push({type: "healing", content: ${gain}})>>\
+			<<set target().battleMsg.push({type: "healing", content: $heal})>>\
 		<</if>>\
-		<<run target().hp += ${gain}>>\
-		${target().name} recovers ${gain} HP!`+extension;
+		<<run target().hp += $heal>>\
+		${target().name} recovers $heal HP!`+extension;
 	}
 };
 
@@ -169,7 +165,7 @@ var multihitCustom = function multihitCustom (args = {content: `<<echoDamage>>`}
 		for (let i = 1; i < args.hits; i++){
 			subloop = `<<set _keepGoing = true>>\
 					<<for _keepGoing>>\
-						<<set $B.target = Hitlist.targetEnemy($action.targetMods)>>\
+						<<set $target = Hitlist.targetEnemy($action.targetMods)>>\
 						<<if _list.includes(target().name)>>\
 							<<set _keepGoing = true>>\
 						<<else>>\
@@ -183,7 +179,7 @@ var multihitCustom = function multihitCustom (args = {content: `<<echoDamage>>`}
 		str += content;
 		for (let i = 1; i < args.hits; i++){
 			if (args.spread === true) {
-				str += `<<set $B.target = Hitlist.targetEnemy($action.targetMods)>>`;
+				str += `<<set $target = Hitlist.targetEnemy($action.targetMods)>>`;
 			}
 			str += content;
 		}
@@ -214,7 +210,7 @@ var applyEffect = function applyEffect (effects, args = {}, extension = "") {
 	}
 
 	var target;
-	target = args.self === true ? "$B.subject" : "$B.target";
+	target = args.self === true ? "$subject" : "$target";
 	var content = "";
 
 	effects.forEach(function (effect) {
@@ -290,7 +286,7 @@ var removeEffect = function (args = {target: 't'}, extension = "") {
 
 		if (mass === true) {
 			return `<<for _a range ${party}>>\
-				<<set $B.target = _a>>`+
+				<<set $target = _a>>`+
 					content+perExtension+
 			`<</for>>`+extension;
 		} else {
@@ -350,7 +346,7 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 			case 'row':
 				result += `<<for _i = (target().row - 1) * setup.ROW_SIZE; _i < (target().row * setup.ROW_SIZE); _i++>>\
 						<<if ${party}[_i] !== null && !${party}[_i].dead && !${party}[_i].guarded>>\
-							<<set $B.target = ${party}[_i]>>\
+							<<set $target = ${party}[_i]>>\
 							${content}\
 						<</if>>\
 					<</for>>`;
@@ -359,7 +355,7 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 			case 'column':
 				result += `<<for _i = (target().col - 1); _i < (setup.COLUMN_SIZE * setup.ROW_SIZE); _i += setup.ROW_SIZE>>\
 						<<if ${party}[_i] !== null && !${party}[_i].dead && !${party}[_i].guarded>>\
-							<<set $B.target = ${party}[_i]>>\
+							<<set $target = ${party}[_i]>>\
 							${content}\
 						<</if>>\
 					<</for>>`;
@@ -378,7 +374,7 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				State.temporary.hitlist = hitlist;
 				result += `<<for _t range _hitlist>>\
 						<<if ${party}[_t] !== null && !${party}[_t].dead && !${party}[_t].guarded>>\
-							<<set $B.target = ${party}[_t]>>\
+							<<set $target = ${party}[_t]>>\
 							${content}\
 						<</if>>\
 					<</for>>`;
@@ -386,7 +382,7 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 			default:
 				result += `<<for _a range ${party}>>\
 					<<if _a !== null && !_a.dead && !_a.guarded>>\
-						<<set $B.target = _a>>\
+						<<set $target = _a>>\
 						${content}\
 					<</if>>\
 				<</for>>`;
@@ -396,7 +392,7 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 	else {
 		result += `<<for _a range ${party}>>\
 					<<if _a !== null && !_a.dead && !_a.guarded>>\
-						<<set $B.target = _a>>\
+						<<set $target = _a>>\
 						${content}\
 					<</if>>\
 				<</for>>`;
@@ -429,10 +425,10 @@ var splashDamage = function splashDamage (args = {target: 't', cut: 1}, extensio
 	}
 
 	return `<<echoDamage>>\
-	<<set _temp = $B.target>>\
+	<<set _temp = $target">\
 	<<for _actor range ${party}>>\
 	<<if !_actor.dead && _actor.id != _temp.id && !_actor.guarded>>\
-	<<set $B.target = _actor>>\
+	<<set $target = _actor>>\
 	<<damageCalc>>\
 	<<set $dmg = Math.round($dmg/${args.cut})>>\
 	<<echoDamage "nocalc">>\
@@ -578,7 +574,7 @@ var Prev = {
 			if (args.revive) {
 				if (target().dead) {
 					gain = Math.round(target().maxhp * action().special);
-					return `$B.target.name will revive with ${gain} HP.`;
+					return `$target.name will revive with ${gain} HP.`;
 				} else {
 					return `${target().name} isn't defeated, so this won't do anything.`;
 				}
@@ -650,7 +646,7 @@ var Prev = {
 	},
 	stance: function () {
 		if (subject().stasis){
-			return `$B.subject.name is in Stasis, so this won't do anything.`;
+			return `$subject.name is in Stasis, so this won't do anything.`;
 		}
 		else {return "";}
 	},
@@ -686,7 +682,7 @@ var Prev = {
 		// This is necessary for the actual action to work as intended; because it also draws on this variable, when dispelCalc() is called again it would double the array and cause the action to remove the effects twice.
 		return str;
 	},
-	grenade: `<<damageCalc>>This will inflict $dmg damage to $B.target.name and half damage to other enemies.`,
+	grenade: `<<damageCalc>>This will inflict $dmg damage to $target.name and half damage to other enemies.`,
 	cure: function (type = "") {
 		return function () {
 			var str = `This will cure ${target().name} of ${type}`;
@@ -763,7 +759,7 @@ var Prev = {
 	},
 	cutAttack: function (type) {
 		return function () {
-			return `<<set _d = (setup.base + $B.subject.get("Special"))*$action.weight>>\
+			return `<<set _d = (setup.base + $subject.get("Special"))*$action.weight>>\
 			This will inflict _d base damage and ${type} status, divided across the current number of enemies.`;
 		}
 	}
@@ -778,9 +774,9 @@ var dmgandeffect = function dmgandeffect (target,type,dur) {
 				dur = "$action.dur";
 			}
 			if (target == 's'){
-				target = "$B.subject";
+				target = "$subject";
 			} else if (target == 't'){
-				target = "$B.target";
+				target = "$target";
 			}
-			return `<<echoDamage>><<addEffect ${target} "${type}" ${dur} $B.subject>>`;
+			return `<<echoDamage>><<addEffect ${target} "${type}" ${dur} $subject>>`;
 };

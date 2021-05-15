@@ -4,10 +4,10 @@
 <<if $args[0] instanceof Actor>>
 	<<set _target = $args[0]>>
 <<else>>
-	<<set _target = $B.target>>
+	<<set _target = $target>>
 <</if>>
 
-<<set _atk = ($B.subject.get("Attack") * (1 - $action.useSpecial)) + ($B.subject.get("Special") * $action.useSpecial)>>
+<<set _atk = ($subject.get("Attack") * (1 - $action.useSpecial)) + ($subject.get("Special") * $action.useSpecial)>>
 
 /* Piercing? */
 <<if $action.pierce>>
@@ -80,24 +80,42 @@
 <<set $dmg = Math.round($dmg)>>
 <</widget>>
 
+:: Widget: healCalc [widget nobr]
+<<widget "healCalc">>
+<<if $args.length > 0 && $args[0] instanceof Actor>>
+	<<if $inbattle>>
+		<<set $target = $args[0]>>
+	<<else>>
+		<<set $target = $args[0]>>
+	<</if>>
+<</if>>
+
+<<if typeof(action().special) === "number">>
+	<<set $heal = Math.round(action().special)>>
+<<else>>
+	<<set $heal = 0>>
+<</if>>
+
+<</widget>>
+
 :: Widget: echoDamage [widget nobr]
 <<widget "echoDamage">>
 <<if $args.length > 0 && $args[0] instanceof Actor>>
-	<<set $B.target = $args[0]>>
+	<<set $target = $args[0]>>
 <</if>>
-<<run console.assert($B.target instanceof Actor,"ERROR in echoDamage: invalid target")>>
+<<run console.assert($target instanceof Actor,"ERROR in echoDamage: invalid target")>>
 <<set _dmgMods = $args>>
 <<set _hit = true>>
 
 /* Protection check */
 <<if !(_dmgMods.includes("indirect") || target().dead) && subject() instanceof Puppet && target() instanceof Enemy && target().protectedBy>>
-	<<set _temp = $B.target.name>>
-	<<set $B.target = $enemies.find(function(t) { return t && t.id === $B.target.protectedBy; })>>
-	<<print $B.target.name+" took the hit for "+_temp+"!\n">>
+	<<set _temp = $target.name>>
+	<<set $target = $enemies.find(function(t) { return t && t.id === $target.protectedBy; })>>
+	<<print $target.name+" took the hit for "+_temp+"!\n">>
 <</if>>
 
 <<if _queue instanceof Set>>
-	<<set _queue.add($B.target)>>
+	<<set _queue.add($target)>>
 <</if>>
 
 <<if _dmgMods.includes("indirect")>>
@@ -126,10 +144,10 @@
 	<<if _continue>>
 		<<if def _elntmsg>><b><<print _elntmsg+" ">></b><</if>>
 		<<if $dmg < 0>>
-			$B.target.name feeds on the energy, and recovers <<print $dmg*-1>> HP.
+			$target.name feeds on the energy, and recovers <<print $dmg*-1>> HP.
 			<<set target().battleMsg.push({shake: false, type: "healing", content:$dmg*-1})>>
 		<<else>>
-			$B.target.name takes $dmg damage!
+			$target.name takes $dmg damage!
 			<<if !(_dmgMods.includes("indirect") || !(_queue instanceof Set) || setup.ANIMATIONS === false)>>
 				<<set target().battleMsg.push({shake: true, type: "damage", content:$dmg})>>
 				<<if _elntmsg == setup.elementMessages.weakpoint && typeof(setup.popupMod.weakpoint) == "string">>
@@ -148,7 +166,7 @@
 				<<include "crisis formula">>
 			<</if>>
 		<</if>><br />
-		<<set $B.target.hp -= $dmg>>
+		<<set $target.hp -= $dmg>>
 		<<if subject() instanceof Actor>>
 			<<set subject().lastDmg += $dmg>>
 		<</if>>
@@ -159,11 +177,11 @@
 			<<if target().dmgreflection && !_dmgreflecting && target() !== subject() && $dmg > 0>>
 			/* If target has defined damage reflection, they reflect the attack's damage times their damage reflection value onto their attacker. Note that this code is executed before deathcheck, meaning damage will be reflected even if the attack defeats the enemy. You can change this by moving deathcheck above this section and including a check that disallows damage reflection if the target is dead. */
 				<<set $dmg = Math.round($dmg * target().dmgreflection)>>
-				<<set _OG = {target: $B.target, subject: $B.subject}>>
-				<<set $B.target = _OG.subject; $B.subject = _OG.target>>
+				<<set _OG = {target: $target> subject: $subject}>>
+				<<set $target = _OG.subject; $subject = _OG.target>>
 				<<set _dmgreflecting = true>> /* this prevents infinite recursion if a damage reflector attacks a damage reflector; can only reflect damage once per attack */
 				<<echoDamage "nocalc">>
-				<<set $B.target = _OG.target; $B.subject = _OG.subject>>
+				<<set $target = _OG.target; $subject = _OG.subject>>
 				<<unset _OG; _dmgreflecting>>
 			<</if>> /* end dmgreflection block */
 			<<if target().onHit instanceof Array && target().onHit.length > 0 && !_dmgreflecting && target().id !== subject().id>>
@@ -245,7 +263,7 @@
 <<if $args[0] instanceof Actor>>
 	<<set _target = $args[0]>>
 <<else>>
-	<<set _target = $B.target>>
+	<<set _target = $target>>
 <</if>>
 
 <<include "accuracy formula">>

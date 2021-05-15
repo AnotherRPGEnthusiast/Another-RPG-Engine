@@ -7,10 +7,7 @@ ARG 1 = special case modifier [optional]
 
 Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot of loops, and errors can occur if they overwrite temporary variables used elsewhere. */
 
-<<if ndef $args[0]>> /* error handler */
-	<<print "ERROR: No puppet passed to actorDisplay">>
-	<<run console.log("ERROR in actorDisplay: No puppet passed")>>
-<<else>>
+<<run console.assert($args[0] instanceof Puppet,"ERROR: No puppet passed to actorDisplay")>>
 
 <<set _puppet = $args[0]>>
 <<set _displayModel = $args[1]>>
@@ -58,72 +55,57 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 	</div> /* close actor box */
 <</if>>
 
-<</if>> /* close error handler if */
-
 <</widget>>
 
 :: Widget: actorNameLink [widget nobr]
 <<widget "actorNameLink">>
 /* Switch for different functionalities tied to the character's name in actorDisplay. */
 
+<<capture _puppet>>
 <<switch _displayModel>>
 	<<case "inventory">>
 	/* On the inventory screen, characters may be displayed when EQUIPPING or USING items. In both cases, the character name is clicked to perform the relevant function. The inventory screen must be updated afterwards to reflect the change. */
 		<<switch _event>>
 			<<case "equip">>
-				<<capture _puppet>>
 					<<link _puppet.name>>
 						<<run _puppet.equip(_display)>>
 						<<unset _display>>
 						<<replace "#menu-display">><<include "inventory item display">><</replace>>
 						<<replace "#itemlist">><<include "inventory item list">><</replace>>
 					<</link>>
-				<</capture>>
 			<<case "use">>
-				<<capture _puppet>>
 					<<link _puppet.name>>
 						<<run _display.onUse(_puppet)>>
 						<<unset _display>>
 						<<replace "#menu-display">><<include "inventory item display">><</replace>>
 						<<replace "#itemlist">><<include "inventory item list">><</replace>>
 					<</link>>
-				<</capture>>
 			<<default>>
 				<<print _puppet.name>>
 		<</switch>>
 	<<case "action">>
-		<<capture _puppet>>
-			<<link _puppet.name>>
-				<<run _displayedAction.onUse(_puppet,_display)>>
-				<<unset _displayedAction>>
-				<<replace "#partydisplay">>
-					<<include "status party display">>
-				<</replace>>
-			<</link>>
-		<</capture>>
+		<<link _puppet.name>>
+			<<run $action.onUse(_puppet)>>
+			<<unset $subject, $action>>
+			<<replace "#partydisplay">>
+				<<include "status party display">>
+			<</replace>>
+		<</link>>
 	<<case "decurse">>
 	/* In the decurse menu, the name has no special functionality. Just display it normally. */
 		<<print _puppet.name>>
 	<<case "equipment">>
 	/* In the equipment menu, the character name serves two functionalities: When the full party is displayed, clicking it will select the character; if a character is selected, clicking it will deselect them and return to the full party display. */
-		<<if def _s>> /* if selector already defined, deselect and refresh screen */
+		<<if def $subject>> /* if selector already defined, deselect and refresh screen */
 			<<link _puppet.name>>
-				<<unset _s>>
+				<<unset $subject>>
 				<<replace "#puppets">><<include "equip manager puppets">><</replace>>
 				<<replace "#equipment-list">><<include "equipment list">><</replace>>
 			<</link>>
 		<<else>> /* if no one selected, select this character and refresh screen */
 			<<capture _i>>
 			<<link _puppet.name>>
-				<<if def _s>>
-					<<if _s != _i>>
-						<<set _s = _i>>
-					<<else>>
-						<<unset _s>>
-					<</if>>
-				<<else>>
-					<<set _s = _i>>
-				<</if>>
+				<<set $subject = _puppet>>
 				<<replace "#puppets">><<include "equip manager puppets">><</replace>>
 				<<replace "#equipment-list">><<include "equipment list">><</replace>>
 			<</link>>
@@ -131,27 +113,26 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 		<</if>>
 	<<default>>
 	/* In the default display, the character name serves two functionalities: When the full party is displayed, clicking it will select the character; if a character is selected, clicking it will deselect them and return to the full party display. */
-		<<if def _display>>
+		<<if def $subject>>
 		/* If _display exists, a character has already been selected. Clicking the name again will deselect the character. */
 			<span id="toggle">
 			<<link "_puppet.name">>
-				<<unset _display>>
+				<<unset $subject>>
 				<<replace "#partydisplay">><<include "status party display">><</replace>>
 			<</link>>
 			</span>
 		<<else>>
 		/* If no character is selected, clicking the name will select this character. */
 			<span @id=_i>
-			<<capture _puppet>>
 			<<link "_puppet.name">>
-				<<set _display = _puppet>>
+				<<set $subject = _puppet>>
 				<<set _stScreen = 1>>
 				<<replace "#partydisplay">><<include "status party display">><</replace>>
 			<</link>>
-			<</capture>>
 			</span>
 		<</if>>
 <</switch>>
+<</capture>>
 
 <</widget>>
 
@@ -233,7 +214,7 @@ ARG 0 = equipped item
 <<if _item === null>><span class="menuactor-equipment-name">&nbsp;</span> /* if slot empty, display blank space */
 <<else>>
 	<div class="menuactor-equipment-name">_item.name<br/>
-	<span class="actdesc">_item.info</span>
+	<span class="action-desc">_item.info</span>
 	</div>
 	<span class="unequip-button">
 	<<switch _displayModel>>
@@ -243,9 +224,9 @@ ARG 0 = equipped item
 		<<case "decurse">>
 		/* In Decurse, only display unequip if the item is sticky and player can pay the cost. Deduct the cost and refresh the shop screen after click. */
 			<<if $currency >= _decurseCost && !_puppet.lockEquipment && _item.sticky>>
-				<<capture _puppet, _slot, _subslot>>
+				<<capture _puppet, _name, _subslot>>
 				<<link "[X]">>
-					<<run _puppet.unequip(_slot,_subslot,{unsticky:true})>>
+					<<run _puppet.unequip(_name,_subslot,{unsticky:true})>>
 					<<set $currency -= _decurseCost>>
 					<<update>>
 					<<replace "#business-area" t8n>><<include "decurse-remove">><</replace>>
@@ -255,9 +236,9 @@ ARG 0 = equipped item
 		<<default>>
 		/* Default is party equipment screen. Only display unequip if the item is not sticky and the puppet does not have locked equipment. Remember to pass the subslot index too for subslot equipment. */
 			<<if !_puppet.lockEquipment && !_item.sticky>>
-				<<capture _puppet, _slot, _subslot>>
+				<<capture _puppet, _name, _subslot>>
 				<<link "[X]">>
-					<<run _puppet.unequip(_slot,_subslot)>>
+					<<run _puppet.unequip(_name,_subslot)>>
 					<<replace "#equipment-list">><<include "equipment list">><</replace>>
 					<<replace "#puppets">><<include "equip manager puppets">><</replace>>
 				<</link>>
@@ -297,9 +278,9 @@ ARG 0 = equipped item
 			<<replace _selector>>
 				<<link "_action.name">>
 					<<if _action.instantUse === true>>
-						<<run _action.onUse()>>
+						<<run $action = _action; $action.onUse()>>
 					<<else>>
-						<<set _displayedAction = _action>>
+						<<set $action = _action>>
 						<<replace "#partydisplay">>
 							<<include "action use puppets">>
 						<</replace>>
@@ -328,7 +309,7 @@ ARG 0 = equipped item
 
 :: action use puppets [nobr]
 <div id="menu-display">
-	<<print _displayedAction>>
+	<<print $action>>
 </div>
 <div id="puppets">
 <<set _HPmeters = []>>
@@ -436,7 +417,7 @@ ARG 0 = equipped item
 <<switch setup.STATUS_SCREENS.menu[_stScreen-1]>>
 <<case "equipment">>
 	<div style="margin-left:1em;">
-	<<for _name, _slot range _display.equipment>>
+	<<for _name, _slot range $subject.equipment>>
 		<<for _index, _item range _slot>>
 			<div class="menuactor-equipment-slot">_name</div>
 			<<if _item === null>><span class="menuactor-equipment-name">&nbsp;</span>
@@ -448,7 +429,7 @@ ARG 0 = equipped item
 	</div>
 <<case "elements">>
 	<div style="margin-left:1em; width:75%; font-weight:bold">
-	<<for _k, _v range _display.elements>>
+	<<for _k, _v range $subject.elements>>
 		<span class="statname"><<print _k>></span>
 		<span class="elementdisplay monospace"><<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:45px; text-align:right"><<res _v>></div></span>
 		<br/>
@@ -456,7 +437,7 @@ ARG 0 = equipped item
 	</div>
 <<case "ailments">>
 	<div style="margin-left:1em; width:75%; font-weight:bold">
-	<<for _k, _v range _display.tolerances>>
+	<<for _k, _v range $subject.tolerances>>
 		<<if _v.current != 0>>
 			<<print _k>>
 			<<tol _v>>
@@ -467,8 +448,8 @@ ARG 0 = equipped item
 <</switch>>
 
 :: status party display[nobr]
-<<if def _display>>
-	<<actorDisplay _display>>
+<<if def $subject>>
+	<<actorDisplay $subject>>
 	<div class="menuactor-detail">
 		<<if def setup.STATUS_SCREENS.menu && setup.STATUS_SCREENS.menu.length > 0>>
 			<<set _style = "">>
@@ -476,12 +457,12 @@ ARG 0 = equipped item
 			<<set _style = "border-right: none">>
 		<</if>>
 		<div class="menuactor-stats monospace" @style=_style>
-		<<for _k, _v range _display.stats>>
+		<<for _k, _v range $subject.stats>>
 			<<include "menu stat display">>
 		<</for>>
-		<<if def _display.HPregen && _display.HPregen !== null>>
+		<<if def $subject.HPregen && $subject.HPregen !== null>>
 			<div class="menuactor-statname">HP regen</div>
-			<div class="menuactor-statvalue"><<print _display.HPregenFlat>> / <<print _display.HPregenPercent*100>>%</div>
+			<div class="menuactor-statvalue"><<print $subject.HPregenFlat>> / <<print $subject.HPregenPercent*100>>%</div>
 		<</if>>
 		</div>
 		<<if def setup.STATUS_SCREENS.menu && setup.STATUS_SCREENS.menu.length > 0>>
@@ -492,9 +473,9 @@ ARG 0 = equipped item
 	</div>
 	<br/>
 	<div id="menuActionList">
-	<<actionListMenu _display>>
+	<<actionListMenu $subject>>
 	</div>
-<<elseif ndef _display>>
+<<elseif ndef $subject>>
 	<<set _HPmeters = []>>
 	<<set _MPmeters = []>>
 	<<for _i, _p range puppets()>>
@@ -724,9 +705,9 @@ ARG 0 = equipped item
 </span>
 
 :: equip manager puppets[nobr]
-<<if def _s>>
+<<if def $subject>>
 	<<set _i = "null">>
-	<<actorDisplay $puppets[_s] "equipment">>
+	<<actorDisplay $subject "equipment">>
 <<else>>
 <<for _i, _p range $puppets>>
 	<<actorDisplay _p "equipment">>
@@ -734,20 +715,20 @@ ARG 0 = equipped item
 <</if>>
 
 :: equipment list[nobr]
-<<if def _s && !$puppets[_s].lockEquipment>>
+<<if def $subject && !$subject.lockEquipment>>
 	<div style="line-height:1.4">
 	<<set _count = 0>>
 	<<for _k, _v range $inventory>>
 		<<if _v.equippable && _v.stock > 0>>
 			<br/>
 			<<set _count++>>
-			<<if (def _s && $puppets[_s].checkRestriction(_v)) || ndef _s>>
+			<<if (def $subject && $subject.checkRestriction(_v)) || ndef $subject>>
 				<div @id="_k">
 				<b>
-				<<if def _s>>
+				<<if def $subject>>
 					<<capture _v>>
 					<<link _v.name>>
-						<<run $puppets[_s].equip(_v)>>
+						<<run $subject.equip(_v)>>
 						<<replace "#puppets">><<include "equip manager puppets">><</replace>>
 						<<replace "#equipment-list">><<include "equipment list">><</replace>>
 					<</link>>
@@ -762,7 +743,7 @@ ARG 0 = equipped item
 					<div style="font-size:12px; font-style:italic">Restriction: <<for _char range _v.equippable.restrictedTo>><<print _char>><</for>></div>
 				<</if>>
 				<<print _v.desc>><br/>
-				<span class="actdesc"><<print _v.info>></span>
+				<span class="action-desc"><<print _v.info>></span>
 				</div>
 			<</if>>
 		<</if>>
@@ -771,7 +752,7 @@ ARG 0 = equipped item
 	You don't have any equipment.
 	<</if>>
 	</div>
-<<elseif def _s && $puppets[_s].lockEquipment>>
+<<elseif def $subject && $subject.lockEquipment>>
 	<i>This character's equipment can't be changed.</i>
 <<else>>
 	<<unequipAll>>

@@ -118,7 +118,7 @@ Actions determine what things your characters can do in battle -- attacking, cas
 	"desc": `Ah, the sword: favored weapon of heroes everywhere. In reality they're pretty impractical and hard to use, but they just look so cool!`,
 	"useText": null,
 	"actText": function () {
-		return `$B.subject.name swings their sword with perfect form.`;
+		return `$subject.name swings their sword with perfect form.`;
 	},
 	"act": justdmg
 }
@@ -127,7 +127,14 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 * {{{useText}}} is displayed in bold before the action's description in the action phase. Set this to {{{null}}} to omit that section entirely. By default, this text is {{{<user>.name uses "<action>.name".}}}, quotes included.
 * {{{actText}}} is a prose description of the action. It is entirely optional, and only for flavor. (Note that if you want to use variables such as the user's name in this description, you will need to make it a function that returns a string; if you write it as a raw string, the variable you need won't exist when the {{{Action}}} object is created!)
 * {{{act}}} is the code for what the action actually does in a gameplay sense. It is recommended to make this function return a string of SugarCube code containing your real code, as it is much easier to print text to the screen with SugarCube, and many gameplay functions are contained in SugarCube widgets. Alternatively, there are a number of generic action functions you can assign here. (See the file {{{2_action-functions.js}}} for details.)
-* {{{preview}}} is a function that provides a projection of the action's effects in the confirm phase. Set to {{{null}}} to display nothing. By default, it previews the damage of a basic attack.
+* {{{preview}}} is a function that provides a projection of the action's effects in the confirm phase. If left undefined, a default preview will be generated for damage (if the action has a {{{weight}}}) and effect application (if the action has {{{effects}}}). You can also assign a string value to customize this default preview further:
+** "multihit" will read the action's {{{hits}}} to accurately display damage calculation.
+** "spread" can be used for multi-hit attacks with random targets; since the target is unknown, damage calculation will not be done.
+** "splash" will calculate splash damage in addition to the initial hit.
+** Area effect names ("row", "column", "+", and "all") will calculate damage for every enemy in their area of effect.
+** "removeEffect" will calculate whether the effects in {{{effects}}} will be removed from the target.
+** "cleanse" is used to calculate the special functionality of the "Cleanse", "Neutralize", and "Restoration" actions.
+** {{{null}}} (the value, not the word "null") will cause no preview to display.
 * {{{info}}} provides information about the action's gameplay function to the player, and is displayed in the action's help description. (Note that if you want to reference data values of the action, you will need to make this a function, as shown in the example entry.)
 * {{{desc}}} is flavor text describing the action, and is displayed below {{{info}}} in the action's help description. Optional.
 * {{{phase}}} is a string; forwards the player to the matching battle phase passage when the action is selected. Must match a passage name EXACTLY. Defaults to "targeting phase".
@@ -135,8 +142,11 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 * {{{cost}}} is a nonnegative integer; determines how many EN points the action consumes when used.
 * {{{hpcost}}} is a nonnegative integer; determines how many hit points the action consumes when used. Defaults to 0.
 * {{{weight}}} is a number; multiplied by the user's {{{Attack}}} stat when determining the damage of an attack. (See the damage formula for a deeper explanation.)
+* {{{hits}}} is a positive integer; determines the number of attacks launched if this is a multi-hit action.
 * {{{effweight}}} is a number; determines the strength of any status effects applied by the action.
 * {{{dur}}} is an integer; determines the duration of any status effects applied by the action.
+* {{{effects}}} is a string or array; lists the effects this action applies or removes. (You can also plug this in manually in the {{{applyEffect}}} function.)
+* {{{toleranceDamage}}} is a positive integer; determines how many tolerance points the action consumes if it applies an effect. Defaults to 1.
 * {{{accuracy}}} is a nonnegative integer; equal to the percentile value of the action's chance to hit. Set to {{{true}}} to make the action always hit. Defaults to {{{true}}}.
 * {{{critRate}}} is a nonnegative integer; equal to the percentile value of the action's chance of landing a critical hit. Defaults to 0.
 * {{{critMultiplier}}} is a nonnegative number; damage is multipled by this value if the attack lands a critical hit. Defaults to 1.5.
@@ -427,7 +437,7 @@ You can see here that Finn has very simple behavior: half the time he will use a
 			V().action.effweight = 0.8;
 			V().action.dur = 4;
 			V().action.useText = null;
-			V().action.actText = `Princess Bubblegum douses $B.target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
+			V().action.actText = `Princess Bubblegum douses $target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
 			V().action.act = justeffect('t',"Poisoned");
 		}
 		this.ready = false;
@@ -474,9 +484,9 @@ You can see here that Finn has very simple behavior: half the time he will use a
 			if (target() == subject()){
 				str = "becomes";
 			} else {
-				str = "$B.target.name is";
+				str = "$target.name is";
 			}
-			return `$B.subject.name presses a button, the air around ${str} surrounded by a force field.`
+			return `$subject.name presses a button, the air around ${str} surrounded by a force field.`
 		}
 		V().act = justeffect('t',"Chi Shield");
 		this.cd.set("Chi Shield",1);
@@ -536,7 +546,7 @@ else if (this.ready) {
 		V().action.effweight = 0.8;
 		V().action.dur = 4;
 		V().action.useText = null;
-		V().action.actText = `Princess Bubblegum douses $B.target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
+		V().action.actText = `Princess Bubblegum douses $target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
 		V().action.act = justeffect('t',"Poisoned");
 	}
 	this.ready = false;
@@ -625,9 +635,9 @@ else if (this.CDcheck("Chi Shield") && act <= 75 && act > 50) {
 			if (target() == subject()){
 				str = "her becomes";
 			} else {
-				str = "$B.target.name is";
+				str = "$target.name is";
 			}
-			return `$B.subject.name presses a button, the air around ${str} surrounded by a force field.`
+			return `$subject.name presses a button, the air around ${str} surrounded by a force field.`
 		}
 		V().act = justeffect('t',"Chi Shield");
 		this.cd.set("Chi Shield",2);
@@ -812,7 +822,7 @@ Princess Bubblegum reappears in the final battle of <i>Cartoon Battle</i>, but t
 			});
 			if (hitlist.length > 0) {
 				act = random(0,hitlist.length-1);
-				V().B.target = hitlist[act];
+				V().target = hitlist[act];
 				V().action = new Action("Thaumastasis");
 				action().actText = `Bonnibel pulls a strange device out of her pocket, and points it at ${target().name}. There is an indescribable noise, and then the flow of magic around ${target().name} has frozen like amber.`;
 				this.cd.set("stasis",5);
@@ -1034,7 +1044,7 @@ if (this.CDcheck("stasis")) {
 	});
 	if (hitlist.length > 0) {
 		act = random(0,hitlist.length-1);
-		V().B.target = hitlist[act];
+		V().target = hitlist[act];
 		V().action = new Action("Thaumastasis");
 		action().actText = `Bonnibel pulls a strange device out of her pocket, and points it at ${target().name}. There is an indescribable noise, and then the flow of magic around ${target().name} has frozen like amber.`;
 		this.cd.set("stasis",5);

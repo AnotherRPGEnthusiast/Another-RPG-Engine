@@ -1,6 +1,6 @@
 :: Widget: backbtn[widget nobr]
 <<widget "backbtn">>
-<span class="btn back right" id="battlebackbtn">[[Back [R]|Battle!][$B.phase = "selection"; $B.targeting = null; $action = null; $B.target = null; $B.subject = null; $removed_effects = [];]]</span>
+<span class="btn back right" id="battlebackbtn">[[Back [R]|Battle!][$B.phase = "selection"; $B.targeting = null; $action = null; $target = null; $subject = null; $removed_effects = [];]]</span>
 <</widget>>
 
 :: Widget: endturn[widget nobr]
@@ -30,7 +30,7 @@
 <<if $args[0].down is true>>
 	<<if $args[0].en >= setup.STRUGGLE_COST>>
 		<<link "Struggle">>
-			<<set $B.subject = $args[0]; $action = new Action("struggle"); $B.target = null>>
+			<<set $subject = $args[0]; $action = new Action("struggle"); $target = null>>
 			<<replace "#phase">><<include "confirm phase">><</replace>>
 		<</link>>
 	<<else>>
@@ -38,7 +38,7 @@
 	<</if>>
 <<else>>
 	<<link "Act">>
-		<<set $B.subject = $args[0]>>
+		<<set $subject = $args[0]>>
 		<<replace "#phase">><<include "actions">><</replace>>
 	<</link>>
 <</if>>
@@ -48,7 +48,7 @@
 :: Widget: rest command[widget nobr]
 <<widget "rest">>
 <<link "Rest">>
-	<<set $B.subject = $args[0]; $action = new Action("rest"); $B.target = null>>
+	<<set $subject = $args[0]; $action = new Action("rest"); $target = null>>
 	<<replace "#phase">><<include "confirm phase">><</replace>>
 <</link>>
 <span class="hotkey monospace right">[W]</span>
@@ -63,7 +63,7 @@
 <<else>>
 	<<if ($args[0].en >= setup.ITEM_COST) || ($args[0].crafty && $args[0].en >= Math.round(setup.ITEM_COST/2))>>
 		<<link "Item">>
-			<<set $B.subject = $args[0]>>
+			<<set $subject = $args[0]>>
 			<<replace "#phase">><<include "items">><</replace>>
 		<</link>>
 	<<else>>
@@ -83,7 +83,7 @@
 :: Widget: spare command[widget nobr]
 <<widget "spare">>
 <<link "Spare">>
-	<<set $B.subject = $args[0]; $B.target = $enemy_to_spare; $action = {name: "spare", cost: 0}>>
+	<<set $subject = $args[0]; $target = $enemy_to_spare; $action = {name: "spare", cost: 0}>>
 	<<replace "#phase">><<include "confirm phase">><</replace>>
 <</link>>
 <</widget>>
@@ -208,12 +208,12 @@
 	<<else>>
 		<<set $action = clone(_action)>>
 		<<if !$action.nosave>>
-			<<set $B.subject.lastAction = $action.name>>
+			<<set $subject.lastAction = $action.name>>
 		<</if>>
 		<<set $B.targeting = _action.target>>
 		<<set $B.noself = _action.noself>>
 		<<if _action.phase is "confirm phase">>
-			<<set $B.target = null>>
+			<<set $target = null>>
 			<<set $B.targeting = null>>
 		<<elseif _action.phase is "spell phase">>
 			<<set $B.mincost = _action.cost>>
@@ -398,12 +398,13 @@
 
 <<refreshPuppets>>
 
-<<unset $B; $enemies>>
+<<unset $B; $subject; $target; $enemies>>
 <</widget>>
 
 :: Preparation
-<<set $inbattle to true>>
-<<set $B = {target: null, subject: null, actor: null, turn: "player", turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: "selection", embargo: 0, event: false, surrender: false, kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}>>
+<<set $inbattle = true>>
+<<unset $subject, $target>>
+<<set $B = {actor: null, turn: "player", turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: "selection", embargo: 0, event: false, surrender: false, kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}>>
 <<callEncounter $scenario>>
 <<for _enemy range enemies()>>
 	<<set $B.actionsThisTurn[_enemy.id] = []>>
@@ -545,7 +546,7 @@
 <</if>>
 <<if def _s>>
 	<div style="position:absolute; top:0; right:0"><<backbtn>></div>
-	<<actorBox $B.subject>>
+	<<actorBox $subject>>
 <<else>>
 	<<if setup.BATTLE_GRID === true>>
 		<<if $B.phase == "selection">>
@@ -564,8 +565,8 @@
 			<<if $B.phase == "move">>
 			<div style="display: flex;  justify-content: center;  align-items: center; height: -webkit-fill-available">
 			<<link "[MOVE]">>
-				<<set _m = $puppets.indexOf($B.subject)>>
-				<<set $puppets[_i] = $B.subject; $puppets[_m] = _puppet>>
+				<<set _m = $puppets.indexOf($subject)>>
+				<<set $puppets[_i] = $subject; $puppets[_m] = _puppet>>
 				<<replace "#puppets">><<include "actorlist puppets">><</replace>>
 			<</link>>
 			</div>
@@ -775,7 +776,7 @@
 	<<set _actionClass = "">>
 <</if>>
 <div id="actionList" @class="_actionClass">
-<<actionListBattle $B.subject "crisis">>
+<<actionListBattle $subject "crisis">>
 </div>
 
 :: items[nobr battle]
@@ -820,7 +821,7 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 <<set $B.phase = "confirm">>
 <<backbtn>>
 
-$B.subject.name will
+$subject.name will
 
 <<if $action.name is "rest">>
 	<b>rest</b> this turn.
@@ -831,7 +832,7 @@ $B.subject.name will
 <<elseif $action.name is "spare">>
 	accept the enemy's surrender.
 <<else>>
-	use <b>$action.name</b><<if $B.target isnot null>> on <b>$B.target.name</b><</if>>.
+	use <b>$action.name</b><<if $target isnot null>> on <b>$target.name</b><</if>>.
 <</if>>
  <span id="confirmLink">[[Confirm?|action phase]]</span><br />
 <span class="preview">
@@ -876,7 +877,7 @@ $B.subject.name will
 <span id="content">
 
 /* Some abilities (such as AoE attacks) don't always end with the same target as the one they started with. This saves the initial target if you want to use it for something, e.g. a reaction scene. */
-<<set _initialTarget = $B.target>>
+<<set _initialTarget = $target>>
 
 /* Saves the number of kills from before the action. By comparing this to the kills array afterwards, you can identify whether or not a kill happened during the action. */
 <<set _initialKills = $B.kills.length>>
@@ -899,7 +900,7 @@ $B.subject.name will
 
 /* Remember this action for the last action shortcut: */
 <<if !$action.nosave && !$action.passagejump && !($action.name == "struggle" || $action.name == "spare")>>
-	<<set $B.subject.lastAction = $B.subject.actions.find(function (a) { return a && a.name == $action.saveMod }).name>>
+	<<set $subject.lastAction = $subject.actions.find(function (a) { return a && a.name == $action.saveMod }).name>>
 <</if>>
 
 /* If action has limited uses, decrement that */
@@ -915,17 +916,17 @@ $B.subject.name will
 <</if>>
 
 /* If target was an enemy (i.e. an attacking skill was used), subject is marked as attacker. (This is for enemies that target the last puppet to attack them.) */
-<<if $B.target instanceof Enemy>>
-	<<set $B.attacker = $puppets.indexOf($B.subject)>>
+<<if $target instanceof Enemy>>
+	<<set $B.attacker = $puppets.indexOf($subject)>>
 <</if>>
 
 /* isDone logic; checks for confounding factors */
 <<if $action.instant>>
 	/* do nothing */
-<<elseif $B.subject.inspired>>
-	<<set $B.subject.inspired = false>>
+<<elseif $subject.inspired>>
+	<<set $subject.inspired = false>>
 <<else>>
-	<<set $B.subject.isDone = true>>
+	<<set $subject.isDone = true>>
 	<<set $B.enemyTurns++>>
 <</if>>
 
@@ -949,13 +950,13 @@ $B.subject.name will
 <<if typeof(subject().en) == "number">>
 	<<if $action instanceof ItemAction>>
 		<<set $B.item_used = true>>
-		<<if $B.subject.crafty>>
+		<<if $subject.crafty>>
 			<<set $action._cost = Math.round(setup.ITEM_COST/2)>>
 		<<else>>
 			<<set $action._cost = setup.ITEM_COST>>
 		<</if>>
 	<</if>>
-	<<set $B.subject.en -= $action.cost>>
+	<<set $subject.en -= $action.cost>>
 <</if>>
 
 <<if $action.hpcost > 0>>
@@ -1083,7 +1084,7 @@ $B.subject.name will
 <<include "custom end of action effects">>
 
 <<if def _OG>>
-	<<set $B.subject = _OG.subject; $B.target = _OG.target; $action = _OG.action>>
+	<<set $subject = _OG.subject; $target = _OG.target; $action = _OG.action>>
 	<<unset _OG>>
 <</if>>
 
@@ -1095,7 +1096,7 @@ $B.subject.name will
 You need to input a number.<br/>
 <<elseif $action.cost < $B.mincost>>
 Spell requires at least $B.mincost Energy.<br/>
-<<elseif $B.subject.en < $action.cost>>
+<<elseif $subject.en < $action.cost>>
 Not enough Energy!<br/>
 <</if>>
 
@@ -1107,7 +1108,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 
 :: spell check[nobr]
 <<run $action._cost *= 1>>
-<<if ($action.cost < $B.mincost) or ($B.subject.en < $action.cost) or isNaN($action.cost)>>
+<<if ($action.cost < $B.mincost) or ($subject.en < $action.cost) or isNaN($action.cost)>>
 <<replace "#phase">><<include "spell phase">><</replace>>
 <<else>>
 
@@ -1177,8 +1178,8 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 	/* Exception is made for enemies that are dead but have a persistent delayed action */
 	<<if _enemy instanceof Enemy>>
 	/* If first check fails, could not find a valid enemy -- all enemies have acted */
-		<<set $B.subject = _enemy>>
-		<<set $B.target = null>>
+		<<set $subject = _enemy>>
+		<<set $target = null>>
 		<<set $action = null>>
 		<<if _enemy.isFirstAction>>
 			<<newTurn `[_enemy]`>>
@@ -1207,11 +1208,11 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 					<<run _enemy.actions()>>
 				<</if>>
 				<<run $B.actionsThisTurn[_enemy.id].push($action.name)>>
-				<<if $B.target === null && $action.targetMethod instanceof Function>>
+				<<if $target === null && $action.targetMethod instanceof Function>>
 					/* If a target hasn't already been selected, use the action's targetMethod (defaults to Hitlist methods) */
-					<<set $B.target = $action.targetMethod()>>
+					<<set $target = $action.targetMethod()>>
 				<</if>>
-				<<run console.assert($B.target instanceof Actor,"ERROR in enemy phase: no target found for "+$action.name+". Check the action's targeting logic for errors, e.g. all targets in Stasis when trying to apply an effect.")>>
+				<<run console.assert($target instanceof Actor,"ERROR in enemy phase: no target found for "+$action.name+". Check the action's targeting logic for errors, e.g. all targets in Stasis when trying to apply an effect.")>>
 				<<if !_targetfail>>
 					<<include "action effects">><br/>
 				<</if>>

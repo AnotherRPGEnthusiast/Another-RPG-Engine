@@ -33,7 +33,6 @@ Actor.prototype.testEffect = function (name,mods = {}) {
   //  If the effect will go through, return true; else, return a string describing the exact point of failure.
 
   console.assert(typeof(name) == "string",`ERROR in testEffect: no effect passed`);
-  console.log(`testEffect running for ${this.name}`);
   var E = new Effect(name);
   let entry;
   if (V().bestiary instanceof Bestiary && V().bestiary.fetch(this.name) instanceof BestiaryEntry) {

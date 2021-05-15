@@ -5,13 +5,13 @@
 	<<set $dmg = 0; _noDmgFloor = true>>
 <<else>>
 
-<<if $B.subject.berserker is true>>
+<<if $subject.berserker is true>>
 	<<set $dmg *= (1+setup.BERSERK_FACTOR)>>
 <</if>>
 <<if _target.berserker is true>>
 	<<set $dmg *= (1+setup.BERSERK_FACTOR)>>
 <</if>>
-<<if $B.subject.defender is true>>
+<<if $subject.defender is true>>
 	<<set $dmg *= setup.DEFEND_FACTOR>>
 <</if>>
 <<if _target.defender is true>>

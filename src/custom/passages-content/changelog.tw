@@ -1,6 +1,7 @@
 :: Changelog[text]
 Version 3.01
 <ul>
+<li>Target and subject variables have now been decoupled from the battle controller <code>B</code>. This allows more flexible usage of functions and widgets that call for interactions between characters, but may cause problems with existing code. Report any bugs.</li>
 <li>Equipment slots are now always occupied by arrays, instead of only those with multiple subslots. This should result in no functional change, but allows me to clean up equipment functions by not having to account for branching functionalities. <b>Note that this update will generate errors with existing games that used previous versions.</b> You will need to update your characters' equipment slots to match the new standards.</li>
 <li>Default and last actions are now stored as strings rather than full Action objects. <b>This update will cause errors with existing games that store these variables as Actions.</b> Make sure to update existing savefiles if you update to this version.</li>
 <li>The widget <code>actionlist</code> has been split into <code>actionListBattle</code> and <code>actionListMenu</code>, for the different displays of actions in and out of battle.</li>
@@ -32,6 +33,7 @@ Version 3.01
 <ul><li><code>STATUS_BUTTON</code>: Text to be displayed to create the status buttons.</li>
 <li><code>SCALE_NAMES</code>: Set to <code>true</code> to scale actor names to the width of the actor boxes, as specified in <code>scaledTextDiv</code>.</li></ul>
 <li>Fixed a bug in <code>BestiaryEntry.revealAll</code>. It will now reveal tolerances correctly.</li>
+<li>Finally caught up with the modern era and made a repository for the project on GitHub. A link is now provided in the sidebar.</li>
 </ul>
 Version 3.00
 <ul>
@@ -618,7 +620,7 @@ Version 1.08.3
 Version 1.08.2
 <ul>
 <li>Equipping a new item to a filled equipment slot will now replace the last subslot rather than the first. I felt this was more intuitive.</li>
-<li>Mass status effect abilities now assign the current target to <code>$B.target</code>. This helps if you want to do something that depends on that.</li>
+<li>Mass status effect abilities now assign the current target to <code>$target</code>. This helps if you want to do something that depends on that.</li>
 <li>The action phase no longer checks to see if {{{$action.act()}}} evaluates to <code>null</code>. This was causing a problem where the <i>entire</i> function was being run in the check, not just evaluating the result. Actions were effectively run twice if they contained anything before the <code>return</code> statement. If you want the box to disappear, you will need to set the <code>act</code> property itself to <code>null</code>.</li>
 </ul>
 Version 1.08.1

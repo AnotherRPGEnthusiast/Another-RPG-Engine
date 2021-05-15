@@ -4,5 +4,5 @@
 <<set _puppet.en = 5>>
 <<set _x = _puppet.actions.find(function (a) { return a && a.name == "Reload" })>>
 <<if def _x>>
-  <<set $B.subject = _puppet; _x.act()>>
+  <<set $subject = _puppet; _x.act()>>
 <</if>>

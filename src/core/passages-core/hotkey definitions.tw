@@ -4,7 +4,7 @@
 		<<if $inbattle>>
 			<<switch $B.phase>>
 				<<case "command">>
-					<<if $B.subject !== null>>
+					<<if $subject !== null>>
 						<<set _id = "#actbtn a">>
 						<<trigger 'click' _id>>
 					<</if>>
@@ -31,7 +31,7 @@
 			<<run console.log("W handler: inbattle")>>
 			<<switch $B.phase>>
 				<<case "command">>
-					<<if $B.subject !== null>>
+					<<if $subject !== null>>
 						<<set _id = "#restbtn a">>
 						<<trigger 'click' _id>>
 					<</if>>
@@ -55,7 +55,7 @@
 		<<if $inbattle>>
 			<<switch $B.phase>>
 				<<case "command">>
-					<<if $B.subject !== null>>
+					<<if $subject !== null>>
 						<<set _id = "#itembtn a">>
 						<<trigger 'click' _id>>
 					<</if>>
@@ -78,7 +78,7 @@
 					<</if>>
 			<</switch>>
 		<<else>>
-			<<if passage() == "Menu: Status" && def _display>>
+			<<if passage() == "Menu: Status" && def $subject>>
 				<<trigger 'click' '#toggle a'>>
 			<<elseif passage() == "Menu: Equipment" && def _s>>
 				<<trigger 'click' '#toggle a'>>
@@ -92,7 +92,7 @@
 			<</if>>
 		<</if>>
 	<<which 65>> /* A pressed */
-		<<if $inbattle || passage() == "Menu: Status" && def _display>>
+		<<if $inbattle || passage() == "Menu: Status" && def $subject>>
 			<<trigger 'click' '#statusback a'>>
 		<<elseif passage() == "Menu: Bestiary" && def _display>>
 			<<trigger 'click' '#lastentry a'>>
@@ -105,7 +105,7 @@
 			<<trigger 'click' _menupos>>
 		<</if>>
 	<<which 68>> /* D pressed */
-		<<if $inbattle || passage() == "Menu: Status" && def _display>>
+		<<if $inbattle || passage() == "Menu: Status" && def $subject>>
 			<<trigger 'click' '#statusforward a'>>
 		<<elseif passage() == "Menu: Bestiary" && def _display>>
 			<<trigger 'click' '#nextentry a'>>
@@ -200,7 +200,7 @@
 				<<trigger 'click' _id>>
 			<</if>>
 	<</switch>>
-<<elseif passage() == "Menu: Status" && ndef _display>>
+<<elseif passage() == "Menu: Status" && ndef $subject>>
 	<<set _id = '#'+_n+' a'>>
 	<<trigger 'click' _id>>
 <<elseif passage() == "Menu: Equipment" && ndef _s>>

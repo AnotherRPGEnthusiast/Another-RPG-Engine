@@ -3,7 +3,7 @@
 
 /* You may wish to make separate passages for each of these, but the example will be stored here. */
 
-<<if $scenario == "su1" and $B.event == false and $B.turn == "player" and ($B.target instanceof Enemy)>>
+<<if $scenario == "su1" and $B.event == false and $B.turn == "player" and ($target instanceof Enemy)>>
 
 /* When vs. the Crystal Gems, the Gems will take hits for Steven if you try to attack him. */
 
@@ -26,7 +26,7 @@ $enemies[2].name yells, "Pick on someone your own size!" and throws herself in f
   	<<else>>
    		<<set _t to 3>> /* this is Steven's index; he is vulnerable */
   	<</if>>
-  	<<set $B.target to $enemies[_t]>>
+  	<<set $target to $enemies[_t]>>
 <<else>>
 	<<set $bully to false>> /* If you didn't target Steven, lose out on Bully achievement */
 <</if>>

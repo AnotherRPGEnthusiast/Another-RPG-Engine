@@ -15,8 +15,8 @@ window.enemies = function enemies () {
 	return V().enemies.filter(function(p) { return p !== null });
 };
 
-window.target = function target () {return State.variables.B === undefined ? null : State.variables.B.target;}
-window.subject = function subject () {return State.variables.B === undefined ? null : State.variables.B.subject;}
+window.target = function target () {return State.variables.target;}
+window.subject = function subject () {return State.variables.subject;}
 window.action = function action () {return State.variables.action;}
 
 window.getActor = function getActor(x) {
@@ -24,16 +24,16 @@ window.getActor = function getActor(x) {
 	var id;
 	var actor;
 	switch(x) {
-		case "target": id = V().B.target !== undefined ? V().B.target.id : undefined; break;
-		case "subject": id = V().B.subject !== undefined ? V().B.subject.id : undefined; break;
+		case "target": id = target() !== undefined ? target().id : undefined; break;
+		case "subject": id = subject() !== undefined ? subject().id : undefined; break;
 		case "actor": id = V().B.actor !== undefined ? V().B.actor.id : undefined; break;
 		default: console.log("ERROR in getActor: invalid argument");
 	}
 	if (id !== undefined) {
 		actor = getActorById(id);
 		switch(x) {
-			case "target": V().B.target = actor; break;
-			case "subject": V().B.subject = actor; break;
+			case "target": V().target = actor; break;
+			case "subject": V().subject = actor; break;
 			case "actor": V().B.actor = actor; break;
 			default: console.log("ERROR in getActor: invalid argument");
 		}

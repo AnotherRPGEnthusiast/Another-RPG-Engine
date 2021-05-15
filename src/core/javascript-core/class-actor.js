@@ -577,10 +577,10 @@ window.Actor = class Actor {
 
 	hasCursedItem () {
 		var result = false;
-		this.equipment.forEach(function (item,slot) {
-			item.forEach(function (subitem) {
+		this.equipment.forEach(function (slot,name) {
+			slot.forEach(function (subitem) {
 				if (subitem !== null && subitem.sticky === true) {
-					return true;
+					result = true;
 				}
 			});
 		});

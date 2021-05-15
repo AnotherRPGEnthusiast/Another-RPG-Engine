@@ -104,7 +104,7 @@
 	/* For Puppets in the selection phase, their name becomes a link that sets them as the subject and allows the player to select their commands. */
 	<<capture _idx, _actor>>
 	<<link "_actor.name">>
-		<<set $B.subject = _actor>>
+		<<set $subject = _actor>>
 		<<set _s = _idx>>
 		<<set $B.phase = "command">>
 		<<if setup.BATTLE_GRID === true>>
@@ -123,7 +123,7 @@
 		/* If valid target, turn name into a link that assigns actor to the target variable, unsets the targeting varaible, and forwards the player to the next phase. We must also assign the ID variable determined earlier to a wrapper element to facilitate hotkey targeting. */
 		<<capture _actor>>
     <<set _link = `<<link "_actor.fullname">>
-  			<<set $B.target = _actor; $B.targeting = null>>
+  			<<set $target = _actor; $B.targeting = null>>
   			<<replace "#phase">><<include "confirm phase">><</replace>>
   		<</link>>`>>
     <<if setup.SCALE_NAMES>>
@@ -140,12 +140,12 @@
       <<print _actor.fullname>>
     <</if>>
 	<</if>>
-<<elseif _actor instanceof Puppet && $B.phase == "move" && _actor != $B.subject>>
+<<elseif _actor instanceof Puppet && $B.phase == "move" && _actor != $subject>>
 	/* For Puppets in the movement phase, their name becomes a link that swaps their position with the subject (except for the subject's own name) */
 	<<capture _idx, _actor>>
   <<set _link = `<<link "_actor.fullname">>
-  		<<set _m = $puppets.indexOf($B.subject)>>
-  		<<set $puppets[_idx] = $B.subject; $puppets[_m] = _actor>>
+  		<<set _m = $puppets.indexOf($subject)>>
+  		<<set $puppets[_idx] = $subject; $puppets[_m] = _actor>>
   		<<replace "#puppets">><<include "actorlist puppets">><</replace>>
   	<</link>>`>>
   <<if setup.SCALE_NAMES>>

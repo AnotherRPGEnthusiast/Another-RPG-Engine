@@ -80,7 +80,7 @@ Object.assign(setup.actionData, {
 			return `Eldritch runes glow beneath Dipper's feet, and ${target().name} `+extension;
 		},
 		"act": function () {
-			return `<<for _effect range $B.target.effects>>\
+			return `<<for _effect range $target.effects>>\
 								<<if !_effect.buff>>\
 									<<set _effect.duration -= 1>>\
 									<<if _effect.duration == 0>>\
@@ -118,11 +118,11 @@ Object.assign(setup.actionData, {
 		"actText": function () {
 			switch (action().god) {
 				case "Chattur'gha":
-					return `Pillars of red energy burst from the ground under $B.target.name like claws, searing their flesh where they touch.`;
+					return `Pillars of red energy burst from the ground under $target.name like claws, searing their flesh where they touch.`;
 				case "Ulayoth":
-					return `Waves of blue energy pulse around $B.target.name and chill them with a numbing cold.`;
+					return `Waves of blue energy pulse around $target.name and chill them with a numbing cold.`;
 				case "Xel'lotath":
-					return `The floor under $B.target.name flashes with a sickening green energy that makes your vision swim.`;
+					return `The floor under $target.name flashes with a sickening green energy that makes your vision swim.`;
 			}
 			return `ERROR: invalid god`;
 		},
@@ -187,7 +187,7 @@ Object.assign(setup.actionData, {
 			return `Veins of indigo darkness wrap around Dipper like a caress.`;
 		},
 		"act": function () {
-			return `<<for _effect range $B.subject.effects>>\
+			return `<<for _effect range $subject.effects>>\
 								<<if !_effect.buff>>\
 									<<set _effect.duration -= 1>>\
 									<<if _effect.duration == 0>>\
@@ -207,7 +207,7 @@ Object.assign(setup.actionData, {
 			return `A deep voice intones, "Pargon Bankorok Redgemor Mantorok."`;
 		},
 		"actText": function () {
-			return `$B.target.name is crushed by a field of violet energy. Though it's only the puppet that was hit, you get a feeling like someone's walked over your grave.`;
+			return `$target.name is crushed by a field of violet energy. Though it's only the puppet that was hit, you get a feeling like someone's walked over your grave.`;
 		},
 		"act": applyEffect("Curse",{dmg: true})
 	},
@@ -266,7 +266,7 @@ Object.assign(setup.actionData, {
 		"weight": 1,
 		"dur": 3,
 		"actText": function () {
-			return `Out of nowhere, Mabel summons a dazzling, multicolored ball of sparkles and glitter. With a manic laugh she throws it at $B.target.name, and it explodes with a blinding firework of color!`;
+			return `Out of nowhere, Mabel summons a dazzling, multicolored ball of sparkles and glitter. With a manic laugh she throws it at $target.name, and it explodes with a blinding firework of color!`;
 		},
 		"act": applyEffect("Dizzy",{dmg: true})
 	},
@@ -274,7 +274,7 @@ Object.assign(setup.actionData, {
 	"Chaos Blaster": {
 		"weight": 1,
 		"actText": function () {
-			return `You blink, and Mabel is suddenly holding a massive gun absolutely drowning in glitter and unicorn decals. She triumphantly points it at $B.target.name and shouts, "CHAOS... BLASTERRR!!" A shimmering, multicolored beam erupts from the cannon before it explodes magnificently in a burst of glitter.`;
+			return `You blink, and Mabel is suddenly holding a massive gun absolutely drowning in glitter and unicorn decals. She triumphantly points it at $target.name and shouts, "CHAOS... BLASTERRR!!" A shimmering, multicolored beam erupts from the cannon before it explodes magnificently in a burst of glitter.`;
 		},
 		"act": justdmg()
 	},

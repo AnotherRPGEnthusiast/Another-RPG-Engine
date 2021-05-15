@@ -18,26 +18,26 @@
 <<widget "LevelUp">>
 /* To implement this, you will need to enable the level up code detailed in the story JavaScript. */
 
-<<set $B.subject = $args[0]>>
+<<set $subject = $args[0]>>
 <<run getActor("subject")>>
 
 <<set _num = 1>>
 
-$B.subject.name has reached Level <<print $B.subject.level>>!<br/>
+$subject.name has reached Level <<print $subject.level>>!<br/>
 
-<<for _pn, _rate range $B.subject.growthRates>>
-	<<run $B.subject.stats[_pn].base += _rate>>
-	<<print _pn>> +<<print _rate>> = <b><<print $B.subject.getBase(_pn)>></b><br/>
+<<for _pn, _rate range $subject.growthRates>>
+	<<run $subject.stats[_pn].base += _rate>>
+	<<print _pn>> +<<print _rate>> = <b><<print $subject.getBase(_pn)>></b><br/>
 <</for>>
 
 /* You could also make the growth rate a formula that changes based on level. You could calculate it through a function similar to XPtoNext. */
 
 /* Alternatively, use a stat table with unique returns for each level: */
-<<set _return = $B.subject.StatTable(subject().level)>>
+<<set _return = $subject.StatTable(subject().level)>>
 <<if typeof(_return) == 'string'>>
 	/* If only a string is returned, this assumes it is a stat name, and will increment the stat by a default amount (here, 1). */
-	<<run $B.subject.stats[_return].base += 1>>
-	<<print _return>> +1 = <<print $B.subject.getBase(_return)>>
+	<<run $subject.stats[_return].base += 1>>
+	<<print _return>> +1 = <<print $subject.getBase(_return)>>
 <<elseif _return instanceof Action>>
 	/* If an action is returned, it will be added to the character's actions. */
 	<<run subject().actions.push(_action)>>
@@ -47,16 +47,16 @@ $B.subject.name has reached Level <<print $B.subject.level>>!<br/>
 		<<if _pn.toLowerCase() == "hp">>
 			<<run subject().maxhp += _rate>>
 		<<else>>
-			<<run $B.subject.stats[_pn].base += _rate>>
+			<<run $subject.stats[_pn].base += _rate>>
 		<</if>>
-		<<print _pn>> +<<print _rate>> = <b><<print $B.subject.getBase(_pn)>></b><br/>
+		<<print _pn>> +<<print _rate>> = <b><<print $subject.getBase(_pn)>></b><br/>
 	<</for>>
 <<else>>
 	<<print "ERROR in StatTable: undefined result">>
 <</if>>
 <br/>
 
-<<if ($B.subject.level % _num) == 0>>
+<<if ($subject.level % _num) == 0>>
 /* This is a handler for if you want to provide a special bonus at certain intervals. For instance, Dungeons & Dragons provides a stat point every 4 levels. This if case will trigger every _num levels. */
 <</if>>
 <br/>

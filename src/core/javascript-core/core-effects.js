@@ -448,7 +448,7 @@ setup.effectData = {
       return `Taking hits for ${effect.target.name}. Defense boosted by ${effect.power}.`;
     },
     "addText": function (target) {
-      return `${target} is protecting $B.target.name.`;
+      return `${target} is protecting $target.name.`;
     },
     "removeText": function (target) {
       return `${target} is no longer protecting anyone.`;
@@ -726,10 +726,10 @@ setup.effectData = {
     "onHit": function (puppet) {
       return `${puppet.name}'s bubble pops like a balloon under the attack, and ${subject().name} is pricked by the thorns!
       <<if target() !== subject()>>\
-        <<set _OG = {subject: $B.subject, target: $B.target, action: $action}>>\
-        <<set $action = new Action("Thorn Counterattack"); $B.subject = _OG.target; $B.target = _OG.subject>>\
+        <<set _OG = {subject: $subject, target: $target, action: $action}>>\
+        <<set $action = new Action("Thorn Counterattack"); $subject = _OG.target; $target = _OG.subject>>\
         <<echoDamage "nocounter">>\
-        <<set $action = _OG.action; $B.subject = _OG.subject; $B.target = _OG.target>>\
+        <<set $action = _OG.action; $subject = _OG.subject; $target = _OG.target>>\
         <<unset _OG>>\
       <</if>>`;
     },

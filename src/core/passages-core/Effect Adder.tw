@@ -7,7 +7,7 @@
 <<if $args.length > 0>>
 
 <<set _target = $args[0]>> /* for clarity */
-<<set _subject = $B.subject>>
+<<set _subject = $subject>>
 
 <<print _target.addEffect($args[1],{time: $args[2], actor: $args[3]})>>
 

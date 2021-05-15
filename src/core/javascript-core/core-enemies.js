@@ -250,14 +250,14 @@ setup.enemyData = {
 //			He therefore has a higher chance of tanking than any other individual action, but will use debuff attacks most of the time. However, his attacks have long cooldowns, so on any given turn his chances might break down differently.
 
 			if (V().enemies[2].hp < (V().enemies[2].maxhp / 2) && !V().enemies[2].dead && !this.protector && act <= 30){ //If Finn is below 50% HP
-				V().B.target = V().enemies[2];
+				V().target = V().enemies[2];
 				V().action = new Action("Protector");
-				V().action._actText = `Jake wraps himself around $B.target.name like a suit of armor.`;
+				V().action._actText = `Jake wraps himself around $target.name like a suit of armor.`;
 			}
 			else if (V().enemies[1].hp < (V().enemies[1].maxhp / 2) && !V().enemies[1].dead && !this.protector && act <= 30){ //If Bubblegum is below 50% HP
-				V().B.target = V().enemies[1];
+				V().target = V().enemies[1];
 				V().action = new Action("Protector");
-				V().action._actText = `Jake wraps himself around $B.target.name like a suit of armor.`;
+				V().action._actText = `Jake wraps himself around $target.name like a suit of armor.`;
 			}
 			else if (!V().enemies[1].dead && !V().enemies[2].dead && act <= 25){
 				console.log("Martyr branch")
@@ -271,21 +271,21 @@ setup.enemyData = {
 					V().action = new Action("Something in your eye");
 					action()._targetMod = ["ignore downed"];
 					action()._useText = null;
-					action()._actText = `Jake stretches out towards $B.target.name and wraps around and around until they can't move!`;
+					action()._actText = `Jake stretches out towards $target.name and wraps around and around until they can't move!`;
 				}
 			}
 			else if (this.CDcheck("Below the Belt") && act <= 60 && act > 40){
 				console.log("Below the Belt branch")
 				V().action = new Action("Below the Belt");
 				action()._targetMod = ["debuff"];
-				action()._actText = `Jake raises his fists as if to punch $B.target.name, but instead his legs snap out to hit them right in the knees.`;
+				action()._actText = `Jake raises his fists as if to punch $target.name, but instead his legs snap out to hit them right in the knees.`;
 				this.cd.set("Below the Belt",3);
 			}
 			else if (this.CDcheck("Dead Ringer") && act <= 80 && act > 60){
 				console.log("Dead Ringer branch")
 				V().action = new Action("Dead Ringer");
 				action()._targetMod = ["debuff"];
-				action()._actText = `Jake stretches around behind $B.target.name before they can react, and whacks them hard on the back of the head.`;
+				action()._actText = `Jake stretches around behind $target.name before they can react, and whacks them hard on the back of the head.`;
 				this.cd.set("Dead Ringer",3);
 			}
 			else if (this.CDcheck("Trip") && act <= 90 && act > 80){
@@ -373,7 +373,7 @@ setup.enemyData = {
 					V().action.effweight = 0.75;
 					V().action.dur = 4;
 					V().action.useText = null;
-					V().action.actText = `Princess Bubblegum douses $B.target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
+					V().action.actText = `Princess Bubblegum douses $target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
 					V().action._act = applyEffect("Poisoned");
 				}
 				this.ready = false;
@@ -387,7 +387,7 @@ setup.enemyData = {
 				}
 				if (hitlist.length > 0) {
 					var t = random(0,hitlist.length-1);
-					V().B.target = hitlist[t];
+					V().target = hitlist[t];
 					act = random(1,3)
 					switch (act) {
 						case 1:
@@ -412,12 +412,12 @@ setup.enemyData = {
 					V().action.useText = null;
 					V().action.actText = function () {
 						var str;
-						if (V().B.target == subject()){
+						if (V().target == subject()){
 							str = "her becomes";
 						} else {
-							str = "$B.target.name is";
+							str = "$target.name is";
 						}
-						return `$B.subject.name presses a button, the air around ${str} surrounded by a force field.`
+						return `$subject.name presses a button, the air around ${str} surrounded by a force field.`
 					}
 					V().action._act = applyEffect("Chi Shield");
 					this.cd.set("Chi Shield",2);
@@ -472,7 +472,7 @@ setup.enemyData = {
 					V().action._effweight = 0.75;
 					V().action._dur = 4;
 					V().action._useText = null;
-					V().action._actText = `Princess Bubblegum douses $B.target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
+					V().action._actText = `Princess Bubblegum douses $target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
 					V().action._act = applyEffect("Poisoned");
 				}
 				this.ready = false;
@@ -482,7 +482,7 @@ setup.enemyData = {
 				V().action = new Action();
 				V().action._weight = 1;
 				V().action._useText = null;
-				V().action._actText = `Princess Bubblegum blasts $B.target.name with her ray gun.`;
+				V().action._actText = `Princess Bubblegum blasts $target.name with her ray gun.`;
 				V().action._act = justdmg();
 			}
 			else {
@@ -559,7 +559,7 @@ Gumball slips on a stray pebble, falls back, hits his head, and is instantly kno
 				V().action = new Action();
 				V().action._useText = null;
 				V().action._actText = `Gumball doesn't feel like doing anything this turn.`;
-				V().action._act = `$B.subject.name does nothing!`;
+				V().action._act = `$subject.name does nothing!`;
 			}
 			else if (act <= 10 && act > 5) {
 				console.log("Action: trip");
@@ -592,14 +592,14 @@ Gumball slips on a stray pebble, falls back, hits his head, and is instantly kno
 				V().action = new Action("Something in your eye");
 				action()._targetMod = ["ignore downed"];
 				V().action._useText = null;
-				V().action._actText = `Gumball spits in $B.target.name's eyes!`;
+				V().action._actText = `Gumball spits in $target.name's eyes!`;
 			}
 			else if (act <= 50 && act > 40) {
 
 				V().action = new Action("Below the Belt");
 				V().action._weight = 0.9;
 				V().action._useText - null;
-				V().action._actText = `Gumball kicks $B.target.name in the shins!`;
+				V().action._actText = `Gumball kicks $target.name in the shins!`;
 			}
 			else if (act <= 60 && act > 50) {
 
@@ -607,7 +607,7 @@ Gumball slips on a stray pebble, falls back, hits his head, and is instantly kno
 				V().action._weight = 0.9;
 				V().action._dur = 3;
 				V().action._useText = null;
-				V().action._actText = `Gumball rushes forward and punches $B.target.name hard in the gut, leaving them gasping.`;
+				V().action._actText = `Gumball rushes forward and punches $target.name hard in the gut, leaving them gasping.`;
 				V().action._act = dmgandeffect('t',"Winded");
 			}
 			else {
@@ -648,11 +648,11 @@ Gumball slips on a stray pebble, falls back, hits his head, and is instantly kno
 
 He screams and drops it, much to the cat's displeasure. "How did that even fit in there?! No -- wait -- good kitty -- AAAAHHHH!"`;
 					V().action._act = `<<for _enemy range enemies()>>`+
-										`<<set $B.target = _enemy>>`+
+										`<<set $target = _enemy>>`+
 										`<<echoDamage>>`+
 									`<</for>>`+
 									`<<for _puppet range puppets()>>`+
-										`<<set $B.target = _puppet>>`+
+										`<<set $target = _puppet>>`+
 										`<<echoDamage>>`+
 									`<</for>>`;
 				}
@@ -665,7 +665,7 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 
 <i>BOOM.</i>`
 					V().action._act = `<<for _puppet range puppets()>>`+
-										`<<set $B.target = _puppet>>`+
+										`<<set $target = _puppet>>`+
 										`<<echoDamage>>`+
 									`<</for>>`;
 				}
@@ -700,16 +700,16 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 			V().action = {
 				useText: null,
 				actText: ``+
-`You order $B.subject.name forward. They grasp Anais' hand, bending down to do so, and she shakes it firmly.
+`You order $subject.name forward. They grasp Anais' hand, bending down to do so, and she shakes it firmly.
 
 "That's it," Anais says. "I'm glad we could resolve this like civilized -- PSYCHE!!"
 
-Before you can react, Anais pulls out a comically large syringe and stabs it into $B.subject.name, cackling maniacally. She leaps away as they stagger back.
+Before you can react, Anais pulls out a comically large syringe and stabs it into $subject.name, cackling maniacally. She leaps away as they stagger back.
 
 "Did you REALLY think I'd just let you win after what you did to my brothers?!" she screams. "Wattersons never give up! And now, that poison will give you a heart attack in three... two... one!"
 
-Without fanfare, $B.subject.name falls to the ground like a puppet with its stings cut. Which, you suppose, is pretty accurate.`,
-				act: `<<set $B.subject.hp to 0>><<deathcheck $B.subject>><<set $anais_trap = true>>`
+Without fanfare, $subject.name falls to the ground like a puppet with its stings cut. Which, you suppose, is pretty accurate.`,
+				act: `<<set $subject.hp to 0>><<deathcheck $subject>><<set $anais_trap = true>>`
 			}
 			V().B.surrender = false;
 		},
@@ -758,7 +758,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				else if (this.CDcheck("Calamity Bomb") && act == 4){
 					V().action = new ItemAction("Calamity Bomb");
 					action()._targetMod = ["debuff"];
-					V().action._actText = `Anais pulls out a scroll that pulses with dark runes. She throws it at $B.target.name, where it explodes in a cloud of cursed magic.`;
+					V().action._actText = `Anais pulls out a scroll that pulses with dark runes. She throws it at $target.name, where it explodes in a cloud of cursed magic.`;
 					this.cd.set("Calamity Bomb",4);
 				}
 				else if (this.CDcheck("Chaff") && act == 5){
@@ -783,7 +783,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action();
 				V().action._weight = 1;
 				V().action._useText = null;
-				V().action._actText = `Anais slaps $B.target.name.`;
+				V().action._actText = `Anais slaps $target.name.`;
 				V().action._act = justdmg();
 			}
 
@@ -826,7 +826,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action();
 				V().action._weight = 1;
 				V().action._useText = null;
-				V().action._actText = `Darwin punches $B.target.name!`; //This is a purposeful contrast with Gumball's low kick
+				V().action._actText = `Darwin punches $target.name!`; //This is a purposeful contrast with Gumball's low kick
 				V().action._act = justdmg();
 			}
 			else if (!this.protector && !(V().enemies[0].dead && V().enemies[1].dead) && act <= 60 && act > 30){ //disqualified if Darwin is only one left
@@ -837,15 +837,15 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 						t = null;
 					}
 				}
-				V().B.target = V().enemies[t];
+				V().target = V().enemies[t];
 				V().action = new Action("Protector");
-				V().action._actText = `Darwin heroically leaps in front of $B.target.name, protecting $B.target.them from attacks.`;
+				V().action._actText = `Darwin heroically leaps in front of $target.name, protecting $target.them from attacks.`;
 			}
 			else if (act <= 70 && act > 60){
 				$.wiki('<<dispelTarget 1>>');
 				if (State.temporary.go){
 					V().action = new Action("Off Your High Horse");
-					V().action._actText = `Darwin leaps and attacks with a roundhouse kick that knocks off $B.target.name's magic!`;
+					V().action._actText = `Darwin leaps and attacks with a roundhouse kick that knocks off $target.name's magic!`;
 				}
 			}
 			else if (this.CDcheck("Dance") && act <= 80 && act > 70){
@@ -863,8 +863,8 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action("Dancing Strikes");
 				V().action._weight = setup.knife_weight;
 				V().action._dur = 3;
-				V().action._actText = `Darwin leaps into the fray with graceful, dancing blows, striking, retreating, and leaping over your puppet to strike again. Not every attack connects, but by the end $B.target.name has had to spin around so much they can't tell which way is up.`;
-				V().action._act = `<<multihit 2>><<addEffect $B.target "Dizzy" $action.dur>>`;
+				V().action._actText = `Darwin leaps into the fray with graceful, dancing blows, striking, retreating, and leaping over your puppet to strike again. Not every attack connects, but by the end $target.name has had to spin around so much they can't tell which way is up.`;
+				V().action._act = `<<multihit 2>><<addEffect $target "Dizzy" $action.dur>>`;
 				this.cd.set("Dizzy",2);
 			}
 			else if (this.CDcheck("Moralize") && act > 90){
@@ -921,7 +921,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					V().action = new Action("Holo-Pearl");
 					action()._targetMod = ["ignore downed"];
 					action()._dur = 1;
-					V().action._actText = `Pearl twirls and dips, projecting a holographic copy of herself from the gem on her forehead. It rushes at $B.target.name, pushing them away from the battle and locking them in combat.`;
+					V().action._actText = `Pearl twirls and dips, projecting a holographic copy of herself from the gem on her forehead. It rushes at $target.name, pushing them away from the battle and locking them in combat.`;
 					V().action._act = applyEffect(["Stunned","Off-Balance"]);
 				}
 			}
@@ -939,7 +939,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action("Comet Strike"); //Last Scenario reference!
 				V().action._weight = setup.pierce_weight;
 				V().action._pierce = true;
-				V().action._actText = `Pearl stands as still as a statue, staring at $B.target.name with robotic intensity. Then, in the span of an eyeblink, she hurls her spear with so much force the air ignites. It sails through the air with perfect accuracy, and hits $B.target.name right through a chink in their armor.`;
+				V().action._actText = `Pearl stands as still as a statue, staring at $target.name with robotic intensity. Then, in the span of an eyeblink, she hurls her spear with so much force the air ignites. It sails through the air with perfect accuracy, and hits $target.name right through a chink in their armor.`;
 				V().action._act = justdmg();
 				this.cd.set("pierce",2);
 			}
@@ -989,7 +989,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 			if (act <= 30){
 
 				V().action = new Action("Sword");
-				V().action._actText = `Garnet rushes forward and slams her gauntlet into $B.target.name!`;
+				V().action._actText = `Garnet rushes forward and slams her gauntlet into $target.name!`;
 			}
 			else if (act <= 50 && act > 30){
 				V().action = new Action("Below the Belt");
@@ -997,14 +997,14 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action._weight = 0.9;
 				V().action._dur = 3;
 				V().action._useText = null;
-				V().action._actText = `Garnet raises her fists above her head, and her gauntlets grow to twice their size. Without missing a beat, she swings forward and crushes $B.target.name under their weight.`;
+				V().action._actText = `Garnet raises her fists above her head, and her gauntlets grow to twice their size. Without missing a beat, she swings forward and crushes $target.name under their weight.`;
 			}
 			else if (this.CDcheck("grenade") && act <= 75 && act > 50){
 
 				V().action = new Action("Explosive Bolt");
 				V().action._weight = 1;
 				V().action._useText = null;
-				V().action._actText = `Garnet sticks her arm straight out, and her gauntlet detaches from her arm, rocketing towards you like a missile! It slams into $B.target.name before exploding in a wide burst.`;
+				V().action._actText = `Garnet sticks her arm straight out, and her gauntlet detaches from her arm, rocketing towards you like a missile! It slams into $target.name before exploding in a wide burst.`;
 				this.cd.set("grenade",3);
 			}
 			else if (this.CDcheck("combo") && act > 75){
@@ -1012,7 +1012,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action("Two-hit Combo");
 				V().action._weight = 0.75;
 				V().action._useText = null;
-				V().action._actText = `Garnet rushes $B.target.name with a two-hit combo!`;
+				V().action._actText = `Garnet rushes $target.name with a two-hit combo!`;
 				V().action._act = `<<multihit 2>>`;
 				this.cd.set("combo",2);
 			}
@@ -1054,13 +1054,13 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action._weight = 0.6;
 				V().action._useText = null;
 				V().action._actText = `Amethyst lashes her whip in a wide arc, striking all your puppets!`;
-				V().action._act = `<<for _puppet range puppets()>><<set $B.target = _puppet>><<echoDamage>><</for>>`;
+				V().action._act = `<<for _puppet range puppets()>><<set $target = _puppet>><<echoDamage>><</for>>`;
 			}
 			else if (this.CDcheck("debuff") && act <= 50 && act > 25){
 				V().action = new Action("A Farewell to Arms");
 				action()._targetMod = ["debuff"];
 				action()._useText = null;
-				action()._actText = `Amethyst shapeshifts into a huge, muscled wrestler. She roars and beats her chest, then slams violently into $B.target.name!`;
+				action()._actText = `Amethyst shapeshifts into a huge, muscled wrestler. She roars and beats her chest, then slams violently into $target.name!`;
 				this.cd.set("debuff",2);
 			}
 			else if (act <= 75 && act > 50){
@@ -1070,7 +1070,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action._effweight = 0.6;
 				V().action._dur = 3;
 				action()._useText = null;
-				action()._actText = `Amethyst's gem flashes, and her whip suddenly gains a strange, oily sheen. She spins it around and around and then, with a smirk, snaps it out at $B.target.name like a hornet's sting.`;
+				action()._actText = `Amethyst's gem flashes, and her whip suddenly gains a strange, oily sheen. She spins it around and around and then, with a smirk, snaps it out at $target.name like a hornet's sting.`;
 				V().action._act = dmgandeffect('t',"Poisoned");
 			}
 			else if (this.CDcheck("spin") && act > 75){
@@ -1078,7 +1078,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				action()._targetMod = ["ignore downed"];
 				action()._weight = 1.2;
 				action()._useText = null;
-				action()._actText = `Amethyst curls up against the ground, and spins her whole body like a wheel. Sparks fly as she builds up speed, then without warning, she rockets straight into $B.target.name, sending them flying!`;
+				action()._actText = `Amethyst curls up against the ground, and spins her whole body like a wheel. Sparks fly as she builds up speed, then without warning, she rockets straight into $target.name, sending them flying!`;
 				V().action._act = dmgandeffect('t',"Knocked Down");
 				this.cd.set("spin",4);
 			}
@@ -1186,16 +1186,16 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				hitlist.forEach(function(enemy,i){
 					console.log(enemy.name);
 					if (i == 0){
-						V().B.target = enemy;
-						console.log(V().B.target.name);
+						V().target = enemy;
+						console.log(V().target.name);
 					} else if (enemy.name == "Steven") {
 						//do nothing
 					} else {
 						console.log("Current subject HP: "+enemy.hp);
 						console.log("Previous subject HP: "+hitlist[i-1].hp);
 						if (enemy.hp < hitlist[i-1].hp) { //target gem with lowest health
-							V().B.target = enemy;
-							console.log(V().B.target.name);
+							V().target = enemy;
+							console.log(V().target.name);
 						}
 					}
 				});
@@ -1271,7 +1271,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action("Sweep the Leg");
 				action()._targetMod = ["ignore downed"];
 				V().action._weight = 1;
-				V().action._actText = `Nicole leaps with a flying kick, slamming her heel into $B.target.name's knee with crushing force. It strikes the perfect point to twist the joint with a sickening <i>snap</i>, sweeping their legs clean out and throwing them flat on their back with such force it knocks the breath out of them.`;
+				V().action._actText = `Nicole leaps with a flying kick, slamming her heel into $target.name's knee with crushing force. It strikes the perfect point to twist the joint with a sickening <i>snap</i>, sweeping their legs clean out and throwing them flat on their back with such force it knocks the breath out of them.`;
 				V().action._act = function () {
 					return `<<echoDamage>>\
 						<<print target().addEffect("Knocked Down",{dur: -1})>>\
@@ -1283,7 +1283,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action("Camilla Petals Dancing");
 				action()._targetMod = ["smart"];
 				V().action._weight = 0.7;
-				V().action._actText = `Nicole leans back slightly, and eyes $B.target.name with a predatory intensity. In the next instant she springs forward like lighting, descending on them with a graceful yet unstoppable flurry of fists.`;
+				V().action._actText = `Nicole leans back slightly, and eyes $target.name with a predatory intensity. In the next instant she springs forward like lighting, descending on them with a graceful yet unstoppable flurry of fists.`;
 				V().action._act = `<<multihit 3>>`;
 				this.cd.set("multihit",4);
 			}
@@ -1292,7 +1292,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				action()._targetMod = ["pierce", "ignore downed"];
 				V().action._weight = 0.95;
 				V().action._pierce = true;
-				V().action._actText = `Nicole bends her knees slightly, and eyes $B.target.name with a predatory intensity. In the next instant she leaps high into the air, and as she gathers speed you think you see her catch fire like a meteorite. She slams her entire arm down on $B.target.name with a force to shatter steel.`;
+				V().action._actText = `Nicole bends her knees slightly, and eyes $target.name with a predatory intensity. In the next instant she leaps high into the air, and as she gathers speed you think you see her catch fire like a meteorite. She slams her entire arm down on $target.name with a force to shatter steel.`;
 				V().action._act = justdmg();
 				// this.cd.set("pierce",1);
 			}
@@ -1481,7 +1481,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					if (State.temporary.go) {
 						V().action = new Action("Downfall");
 						action()._weight = 1;
-						action()._actText = `Rose gets a glint in her eye, then starts whirling her sword around like a pinwheel. She charges forward, then chains her final spin into a massive overhead cleave, bringing it crashing down on $B.target.name.`;
+						action()._actText = `Rose gets a glint in her eye, then starts whirling her sword around like a pinwheel. She charges forward, then chains her final spin into a massive overhead cleave, bringing it crashing down on $target.name.`;
 						this.cd.set("Downfall",2);
 					}
 				}
@@ -1491,7 +1491,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					V().action = new Action("Shield Bash");
 					action()._targetMod = ["ignore downed"];
 					V().action._weight = 1.15;
-					V().action._actText = `Rose rushes forward, but instead of striking with her sword, she slams her shield into $B.target.name like a battering ram.`;
+					V().action._actText = `Rose rushes forward, but instead of striking with her sword, she slams her shield into $target.name like a battering ram.`;
 					V().action._act = dmgandeffect('t',"Knocked Down",-1);
 					this.cd.set("knockdown",2);
 				}
@@ -1504,9 +1504,9 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					V().action._dur = 3;
 					V().action._actText = `Rose leads your puppets along an infuriating series of feints, dodges, and near-misses. Only the lightest of her attacks actually land -- you swear she's toying with you -- but by the end your puppets have been run ragged. She just grins at you, as hale and hearty as ever.`;
 					V().action._act = `<<for _a range puppets()>>`+
-					`<<set $B.target = _a>>`+
+					`<<set $target = _a>>`+
 					`<<echoDamage>>`+
-					`<<addEffect _a "Winded" $action.dur $B.subject>>`+
+					`<<addEffect _a "Winded" $action.dur $subject>>`+
 					`<</for>>`;
 				}
 			}
@@ -1517,9 +1517,9 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					V().action._weight = 1;
 					V().action._actText = `Rose hurls her shield like a discus. It flies unerringly to hit every one of your puppets in just the right spot to make them drop their weapons, bouncing off them like they're targets in a pinball machine. When it returns to her, she catches it perfectly.`;
 					V().action._act = `<<for _a range puppets()>>`+
-					`<<set $B.target = _a>>`+
+					`<<set $target = _a>>`+
 					`<<echoDamage>>`+
-					`<<addEffect _a "Injury" $action.dur $B.subject>>`+
+					`<<addEffect _a "Injury" $action.dur $subject>>`+
 					`<</for>>`
 					this.cd.set("injury",2);
 				}
@@ -1540,7 +1540,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				action()._weight = 1.25;
 				action()._effweight = (20/50);
 				action()._dur = 3;
-				action()._actText = `Rose brings her sword down in an overhead strike, but at the last second, swings it around to strike against the ground instead, hitting $B.target.name on the upswing. The blade vibrates with a strange, alien song, and gleams with sharpness.`;
+				action()._actText = `Rose brings her sword down in an overhead strike, but at the last second, swings it around to strike against the ground instead, hitting $target.name on the upswing. The blade vibrates with a strange, alien song, and gleams with sharpness.`;
 				action()._act = dmgandeffect('s',"ATK Boost");
 			}
 
@@ -1654,7 +1654,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action("Wild Magic");
 				V().action._weight = 0.65;
 				V().action._actText = `Bill cackles maniacally as your magic goes haywire! Every effect on your puppets bursts with unstable energy.`;
-				V().action._act = `<<for _puppet range puppets()>><<set $B.target = _puppet>><<for _effect range _puppet.effects>><<echoDamage>><</for>><</for>>`;
+				V().action._act = `<<for _puppet range puppets()>><<set $target = _puppet>><<for _effect range _puppet.effects>><<echoDamage>><</for>><</for>>`;
 				this.cd.set("Wild Magic",2);
 				return;
 			}
@@ -1680,7 +1680,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action._weight = 0.65;
 				V().action._actText = `Bill raises a gloved hand, and snaps his fingers. The noise splits through your skull like a gunshot, forcing you to clamp your hands over your ears as the air itself seems to shatter like glass. When you look up, your puppets' protections are gone.`;
 				V().action._act = `<<for _puppet range _hitlist>>`+
-				`<<set $B.target = _puppet>><<echoDamage>>`+
+				`<<set $target = _puppet>><<echoDamage>>`+
 				`<<for _k, _effect range _puppet.effects>>`+
 				`<<if _effect.name == "Chi Shield" || _effect.name == "Stasis">>`+
 				`<<print _puppet.removeEffect(_effect,{pierce: true})>>`+
@@ -1722,7 +1722,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action._effweight = 0.5;
 				V().action._dur = 3;
 				V().action._actText = `Bill raises his arms skyward and cackles. Flaming rocks fall from the sky like infernal hail, spreading like wildfire where they hit.`;
-				V().action._act = `<<for _puppet range puppets()>><<echoDamage _puppet>><<addEffect _puppet "Burning" $action.dur $B.subject>><</for>>`;
+				V().action._act = `<<for _puppet range puppets()>><<echoDamage _puppet>><<addEffect _puppet "Burning" $action.dur $subject>><</for>>`;
 				this.cd.set("Rain of Fire",2);
 				V().B.fireRainUsed = true;
 			}
@@ -1742,17 +1742,17 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 						V().action = new Action("Stone Gaze");
 						action()._targetMod = ["ignore downed"];
 						action()._dur = -1;
-						V().action._actText = `Bill turns the full force of his huge, all-consuming eye on $B.target.name. The schlera around the slitted pupil glows a sickly, ugly yellow, the color of rotting pus. You see Bill's gaze become a physical force, a cone of light that swallows $B.target.name in its entirety, and before your eyes, you see their flesh turn to stone.`;
+						V().action._actText = `Bill turns the full force of his huge, all-consuming eye on $target.name. The schlera around the slitted pupil glows a sickly, ugly yellow, the color of rotting pus. You see Bill's gaze become a physical force, a cone of light that swallows $target.name in its entirety, and before your eyes, you see their flesh turn to stone.`;
 						V().action._act = applyEffect("Petrified");
 						this.cd.set("Stone Gaze",3);
 					}
 				}
 				else if (count < 3) {
-					V().B.target = Hitlist.targetEnemy(["ignore downed"]);
+					V().target = Hitlist.targetEnemy(["ignore downed"]);
 					let g = 0;
 					while (g < 11 && (target().petrified || target().asleep)){
 						// This should HOPEFULLY never activate under conditions where the loop cannot be broken (everyone is already asleep or petrified) but we include a guardian just in case
-						V().B.target = Hitlist.targetEnemy(["ignore downed"]);
+						V().target = Hitlist.targetEnemy(["ignore downed"]);
 						g++;
 					}
 					act = random(1,3);
@@ -1784,7 +1784,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 							action()._targetMod = ["ignore downed", "ignore untargetable", "ignore protection"];
 							V().action._dur = 4;
 							action()._actText = `Bill sneers, "I think it's past your bedtime, kids!" Then with a snap of his fingers...`;
-							action()._act = `<<addEffect $B.target "Asleep" $action.dur>>\
+							action()._act = `<<addEffect $target "Asleep" $action.dur>>\
 							<<set _hitlist = []>>\
 							<<for _puppet range puppets()>>\
 								<<if !_puppet.asleep>>\
@@ -1796,8 +1796,8 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 							<</for>>\
 							<<if _hitlist.length > 0>>\
 								<<set _t = random(0,_hitlist.length-1)>>\
-								<<set $B.target = _hitlist[_t]>>\
-								<<addEffect $B.target "Asleep" $action.dur>>\
+								<<set $target = _hitlist[_t]>>\
+								<<addEffect $target "Asleep" $action.dur>>\
 							<</if>>`;
 							//Bill should not hit the same puppet twice with this attack; this WILL ALWAYS put two puppets to sleep.
 						}
@@ -1806,7 +1806,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 			}
 			else if (act <= 85 && act > 70){
 				console.log("Memento Mori rolled");
-				V().B.target = Hitlist.targetEnemy(["ignore downed"]);
+				V().target = Hitlist.targetEnemy(["ignore downed"]);
 				go = true;
 				console.log("Target already doomed? "+target().doom);
 				if (target().doom){ //Doom doesn't stack, so no point in reapplying it if target already has it
@@ -1817,14 +1817,14 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					V().action = new Action("Memento Mori");
 					action()._targetMethod = null;
 					V().action._dur = 3;
-					V().action._actText = `Bill's eye glows blood-red as he points his finger straight at $B.target.name.
+					V().action._actText = `Bill's eye glows blood-red as he points his finger straight at $target.name.
 
 					<b><i>"Die."</i></b>`;
 					V().action._act = `<<set $action.effweight = (1/3)>>\
-					<<addEffect $B.target "Doom" -1 $B.subject>>\
+					<<addEffect $target "Doom" -1 $subject>>\
 					<<set $action.effweight = 0.5>>\
-					<<addEffect $B.target "Poisoned" $action.dur $B.subject>>\
-					<<addEffect $B.target "Burning" $action.dur $B.subject>>`;
+					<<addEffect $target "Poisoned" $action.dur $subject>>\
+					<<addEffect $target "Burning" $action.dur $subject>>`;
 				}
 			}
 			else if (act <= 95 && act > 85){
@@ -1851,11 +1851,11 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action();
 				V().action._weight = 0.9;
 				V().action._useText = null;
-				V().action._actText = `Bill charges forward with a clenched fist, but stops inches away from $B.target.name. Then, almost playfully, he snaps out a finger to flick them in the face.`;
+				V().action._actText = `Bill charges forward with a clenched fist, but stops inches away from $target.name. Then, almost playfully, he snaps out a finger to flick them in the face.`;
 				action()._act = function () {
 					return `<<echoDamage>>\
 					<<set _container = []>>\
-					<<for _effect range $B.subject.effects>>\
+					<<for _effect range $subject.effects>>\
 						<<if !_effect.buff>>\
 							<<run _container.push(_effect)>>\
 						<</if>>\
@@ -1945,7 +1945,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 						action()._pierce = true;
 						action()._useText = null;
 						action()._actText = `<<set _p = $puppets.find(function (p) { return p && p.name === "Mage"})>>\
-						<<set $B.target = _p>>\
+						<<set $target = _p>>\
 						Marceline sinks her teeth into <<print _p.name>>'s neck, sucking out their blood! She sighs with satisfaction, then tosses them to the ground like garbage.
 
 						"Aw, too slow! Guess you're not much of a hero after all."`;
@@ -1973,7 +1973,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 						action()._pierce = true;
 						action()._useText = null;
 						action()._actText = `<<set _p = $puppets.find(function (p) { return p && p.name === "Rogue"})>>\
-						<<set $B.target = _p>>\
+						<<set $target = _p>>\
 						Marceline sinks her teeth into <<print _p.name>>'s neck, sucking out their blood! She sighs with satisfaction, then tosses them to the ground like garbage.
 
 						"Aw, too slow! Guess you're not much of a hero after all."`;
@@ -1987,7 +1987,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 						V().action = new Action("advance");
 						action()._useText = null;
 						action()._actText = `<<set $B.Fighter_Route++>>\
-						<<set $B.target = $puppets.find(function (p) { return p && p.name === "Rogue"})>>\
+						<<set $target = $puppets.find(function (p) { return p && p.name === "Rogue"})>>\
 						Marceline touches down and begins advancing with heavy, thundering steps, her body stretching longer and taller as she raises her claws above her head. "That's it! It's <i>my</i> turn to give you everything I've got! Your puny shield can't stand against my claws! You blood is mine! <i>Bluh!</i>" But though her tone sounds angry, she's grinning wider than ever.`;
 						action()._act = null;
 						return;
@@ -2015,12 +2015,12 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 						action()._pierce = true;
 						action()._useText = null;
 						action()._actText = `<<set $B.Fighter_Route = 0>>\
-						<<set $B.target = $puppets.find(function (p) { return p && p.name === "Fighter"})>>\
+						<<set $target = $puppets.find(function (p) { return p && p.name === "Fighter"})>>\
 						All of a sudden, Fighter is lifted into the air by an unseen force. Their arms are pinned to their sides as their helmet is lifted off their head, exposing the flesh of their neck. There is a familiar laugh, and then two bright red puncture wounds appear in their neck. After a noisy slurping sound, they shudder, and fall limply to the ground.
 
 						Marceline reappears in her normal position across the stage, and licks her lips with satisfaction. "Aw, don't feel too bad. It's not your fault you can't see through invisibility. It just means you're a boring dumb fakey hero who's boring and dumb."`;
 						action()._act = `<<echoDamage>>\
-						<<run $B.subject.removeEffect("Invisible")>>`;
+						<<run $subject.removeEffect("Invisible")>>`;
 						return;
 					default:
 						console.log("Fighter Route switch triggered, default case.");
@@ -2060,7 +2060,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					V().action = new Action("fakeout");
 					action()._useText = null;
 					action()._actText = function () {
-						return `Marceline swings at $B.target.name with her sharp claws, but misses by a hair! She just keeps laughing, seemingly unbothered.`;
+						return `Marceline swings at $target.name with her sharp claws, but misses by a hair! She just keeps laughing, seemingly unbothered.`;
 					}
 					action()._act = `<<set $dmg = 0>><<echoDamage "nocalc">>`; // This can still knock over someone off-balance
 				}
@@ -2185,7 +2185,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 							t = null;
 						}
 					}
-					V().B.target = V().enemies[t];
+					V().target = V().enemies[t];
 					V().action = new Action("Protector");
 					action()._targetMethod = null;
 					V().action._actText = `A suit of armor near the wall breaks into its component parts, then rearranges into a protective casing around another piece of furniture.`;
@@ -2195,7 +2195,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					action()._targetMod = ["ignore downed"];
 					action()._dur = 3;
 					action()._useText = null;
-					action()._actText = `A suit of armor springs to life and starts flying towards $B.target.name. Just before it hits, it breaks apart, reforming again around them. $B.target.name struggles against the armor, but it holds them fast.`;
+					action()._actText = `A suit of armor springs to life and starts flying towards $target.name. Just before it hits, it breaks apart, reforming again around them. $target.name struggles against the armor, but it holds them fast.`;
 					action()._act = `<<print target().addEffect("Encased")>><<print subject().addEffect("Encased")>>`;
 				}
 				else {
@@ -2376,7 +2376,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					});
 					if (hitlist.length > 0) {
 						act = random(0,hitlist.length-1);
-						V().B.target = hitlist[act];
+						V().target = hitlist[act];
 						V().action = new Action("Thaumastasis");
 						action().actText = `Bonnibel pulls a strange device out of her pocket, and points it at ${target().name}. There is an indescribable noise, and then the flow of magic around ${target().name} has frozen like amber.`;
 						this.cd.set("stasis",5);
@@ -2577,7 +2577,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				}
 				else {
 					var t = random(0,hitlist.length-1);
-					V().B.target = hitlist[t];
+					V().target = hitlist[t];
 					V().action = new Action("First Aid");
 					action().actText = `Dipper takes out a pack of bandages and medicine and gives ${target().name} a quick treatment for their ailments.`;
 					action().act = `<<print target().removeEffect(target().effects[target().effects.length-1])>>`;
@@ -2622,7 +2622,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					action().weight = 1;
 					V().action.actText = `Dipper pulls something from his pocket and taps at it. A burst of strange energy washes over ${target().name}, stripping them of their magic.`;
 					if (this.ready) {
-						action().act = `<<echoDamage>><<for _effect range $B.target.effects>>\
+						action().act = `<<echoDamage>><<for _effect range $target.effects>>\
 						<<if _effect.buff && !_effect.sticky>>\
 							<<print target().removeEffect(_effect)>>\
 							<<break>>\
@@ -2631,7 +2631,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 						this.ready = false;
 					} else {
 						V().action.act = `<<echoDamage>>`+
-					`<<for _effect range $B.target.effects>>\
+					`<<for _effect range $target.effects>>\
 						<<if _effect.buff && !_effect.sticky>>\
 							<<print target().removeEffect(_effect)>>\
 						<</if>>\
@@ -2653,13 +2653,13 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 					action().useText = null;
 				}
 				action().actText = `Dipper extends his arm like a wizard casting a grand spell, and shouts, "CHAOS THUNDER!" Lightning splits the air, leaving a wave of multicolored stars around the hapless puppet it fries.`
-				action().act = justdmg(`<<set $B.subject.ready = false>><<if $B.gumball_spell_event != "done">><<set $B.gumball_spell_event = "active">><</if>>`);
+				action().act = justdmg(`<<set $subject.ready = false>><<if $B.gumball_spell_event != "done">><<set $B.gumball_spell_event = "active">><</if>>`);
 			}
 			else if (!this.ready) {
 				V().action = new Action("prepare");
 				action().useText = null;
 				action().actText = `Dipper pauses to look up something in his journal. He suddenly smirks with satisfaction, and writes down a note.`;
-				action().act = `Dipper's next attack will be stronger.<<set $B.subject.ready = true>>`;
+				action().act = `Dipper's next attack will be stronger.<<set $subject.ready = true>>`;
 			}
 
 			} //end loop
@@ -2717,14 +2717,14 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action = new Action("Something in your eye");
 				action()._targetMod = ["ignore downed"];
 				V().action.useText = null;
-				V().action.actText = `Gumball spits in $B.target.name's eyes!`;
+				V().action.actText = `Gumball spits in $target.name's eyes!`;
 			}
 			else if (act <= 45 && act > 25) {
 
 				V().action = new Action("Below the Belt");
 				V().action.weight = 0.9;
 				V().action.useText - null;
-				V().action.actText = `Gumball kicks $B.target.name in the shins!`;
+				V().action.actText = `Gumball kicks $target.name in the shins!`;
 			}
 			else if (act <= 65 && act > 45) {
 
@@ -2732,7 +2732,7 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 				V().action.weight = 0.9;
 				V().action.dur = 3;
 				V().action.useText = null;
-				V().action.actText = `Gumball rushes forward and punches $B.target.name hard in the gut, leaving them gasping.`;
+				V().action.actText = `Gumball rushes forward and punches $target.name hard in the gut, leaving them gasping.`;
 				V().action.act = dmgandeffect('t',"Winded");
 			}
 			else {
@@ -2773,11 +2773,11 @@ Without fanfare, $B.subject.name falls to the ground like a puppet with its stin
 
 He screams and drops it, much to the cat's displeasure. "How did that even fit in there?! No -- wait -- good kitty -- AAAAHHHH!"`;
 					V().action.act = `<<for _enemy range enemies()>>`+
-										`<<set $B.target = _enemy>>`+
+										`<<set $target = _enemy>>`+
 										`<<echoDamage>>`+
 									`<</for>>`+
 									`<<for _puppet range puppets()>>`+
-										`<<set $B.target = _puppet>>`+
+										`<<set $target = _puppet>>`+
 										`<<echoDamage>>`+
 									`<</for>>`;
 				}
@@ -2790,7 +2790,7 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 
 <i>BOOM.</i>`
 					V().action.act = `<<for _puppet range puppets()>>`+
-										`<<set $B.target = _puppet>>`+
+										`<<set $target = _puppet>>`+
 										`<<echoDamage>>`+
 									`<</for>>`;
 				}
@@ -2895,14 +2895,14 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 						if (i != 0) {
 							enemy.chance += hitlist[i-1].chance;
 							if (chance <= enemy.chance && chance > hitlist[i-1].chance) {
-								V().B.target = enemy.target;
+								V().target = enemy.target;
 							}
 						}
 						else if (chance <= enemy.chance) {
-							V().B.target = enemy.target;
+							V().target = enemy.target;
 						}
 					});
-					if (V().B.target !== null) {
+					if (V().target !== null) {
 						V().action = new Action("Protector");
 						V().action.actText = `Stevonnie leaps fearlessly to ${target().name}'s side, raising their shield to protect ${target().them} from all harm.`;
 					}

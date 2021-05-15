@@ -104,7 +104,7 @@
 <<set setup.PRAGMATIC_CUTOFF = 0.5>> /* proportion of HP a character must lose to be excluded from pragmatic targeting */
 <<set setup.RUTHLESS_FACTOR = 3>> /* multiplied by remaining HP proportion when calculating targeting for "ruthless" attacks */
 
-<<set setup.MISS_MESSAGE = "$B.subject.name misses!">>
+<<set setup.MISS_MESSAGE = "$subject.name misses!">>
 <<set setup.CRIT_MESSAGE = "<b>Critical hit!</b>">>
 
 <<set setup.STATUS_BUTTON = "[*]">> /* Text used for the appearance of the status button */

@@ -8,6 +8,23 @@ setup.STD_BUFF = (20/45);
 
 setup.actionData = {
 
+	"Heal": {
+		"cost": 1,
+		"special": 50,
+		"target": "ally",
+		"info": function (action) { return `Heals ${action.special} HP.`},
+		"desc": "Art heals.",
+		"onUse": function (puppet) {
+			temporary().targ = puppet;
+			$.wiki('<<healCalc _targ>>');
+			puppet.hp += V().heal;
+			subject().en -= this.cost;
+			return;
+		},
+		"act": heal(),
+		"preview": "heal"
+	},
+
 	// MISC
 
 	"rest": {
@@ -40,7 +57,7 @@ setup.actionData = {
 	// Debug action used to quickly test death effects.
 		"cost": 0,
 		"act": function () {
-			return `<<set $B.target.hp to 0>>`+
+			return `<<set $target.hp to 0>>`+
 		`<<deathcheck>>`;
 		}
 	},
@@ -50,7 +67,7 @@ setup.actionData = {
 		"fullround": true,
 		"useText": null,
 		"actText": function () {
-			return `${subject().name} waits for a better time to act.<<set $B.target.isDone = false; $B.enemyTurns++>>`;
+			return `${subject().name} waits for a better time to act.<<set $target.isDone = false; $B.enemyTurns++>>`;
 		},
 		"act": null
 	},
@@ -147,7 +164,7 @@ setup.actionData = {
 		"info": function (action) {return `Inflicts damage with an attack weight of ${action.weight}, but makes Fighter <b>Winded</b>.`},
 		"desc": `Rush the enemy with an all-out attack!`,
 		"actText": function () {
-			return `${subject().name} lets out a primal roar before descending on $B.target.name, swinging ${subject().their} weapon in a series of heavy, brutal swings. At the end, ${subject().theyare} left panting.`;
+			return `${subject().name} lets out a primal roar before descending on $target.name, swinging ${subject().their} weapon in a series of heavy, brutal swings. At the end, ${subject().theyare} left panting.`;
 		},
 		"act": function () {
 			return `<<echoDamage>>\
@@ -196,10 +213,10 @@ setup.actionData = {
 						`<<set $B.heal_used = true>>`)),
 		"preview": function () {
 			if (subject().stasis) {
-				return `$B.subject.name <b>is in Stasis, so this won't do anything.</b>`;
+				return `$subject.name <b>is in Stasis, so this won't do anything.</b>`;
 			}
 			else {
-				return `$B.subject.name will be cured of all ailments and gain <b>Chi Shield</b>.`;
+				return `$subject.name will be cured of all ailments and gain <b>Chi Shield</b>.`;
 			}
 		},
 		"desc": `The indignities of the world quail before Fighter's indomitable spirit. When that spirit is focused, all their troubles will fade away like dust in the wind.`
@@ -217,7 +234,7 @@ setup.actionData = {
 			return `Without hesitation ${subject().name} jumps in front of ${subject().their} charge, shielding them from all harm.`;
 		},
 		"act": applyEffect("Protector",{self:true}),
-		"preview": `$B.subject.name will protect $B.target.name and gain a bonus to Defense.`,
+		"preview": `$subject.name will protect $target.name and gain a bonus to Defense.`,
 		"desc":		`Leap to another puppet's defense! Fighter will put themselves in the way of any attack, deflecting it with their mighty shield. But they can't be everywhere at once, so beware of area attacks...`
 	},
 
@@ -277,7 +294,7 @@ setup.actionData = {
 		"saveMod": "Crossbow",
 		"info":	function (action) {return 	`Reload crossbow.`},
 		"desc":		`...Of course, crossbows also take an age and a half to reload.`,
-		"preview": "",
+		"preview": null,
 		"act": function () {
 			var x = subject().actions.find(function(a) { return a && a.name == "Reload" });
 			subject().actions[subject().actions.indexOf(x)] = new Action("Crossbow");
@@ -305,7 +322,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and inflict Poisoned for ${action.dur} rounds.`},
 		"desc":		`The tiny knife may barely break the skin, but the poison it's coated in ensures they'll be feeling it for a while to come.`,
 		"actText": function () {
-			return `$B.subject.name feints to the side, then with blinding speed draws a tiny concealed knife, stabbing it into the enemy like a needle. The skin around it breaks into welts and sickly purple splotches.`;
+			return `$subject.name feints to the side, then with blinding speed draws a tiny concealed knife, stabbing it into the enemy like a needle. The skin around it breaks into welts and sickly purple splotches.`;
 		},
 		"act": applyEffect("Poisoned",{dmg: true})
 	},
@@ -316,10 +333,10 @@ setup.actionData = {
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and remove the target's most recent buff.`},
 		"desc":		`A special technique that cuts through flesh and magic alike, bringing those haughty enchanted foes back down to earth.`,
 		"actText": function () {
-			return `$B.subject.name leaps forward, twirling ${subject().their} knife in a strange pattern before slicing it across the enemy. Glimmering lines of energy trail after it like strands of cobweb, then wink out of existence.`;
+			return `$subject.name leaps forward, twirling ${subject().their} knife in a strange pattern before slicing it across the enemy. Glimmering lines of energy trail after it like strands of cobweb, then wink out of existence.`;
 		},
 		"act": justdmg(removeLastEffect()),
-		"preview": "cleanse"
+		"preview": ["cleanse","lastEffect"]
 	},
 
 	"A Farewell to Arms": {
@@ -331,7 +348,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and inflict Injury for ${action.dur} rounds.`},
 		"desc":		`A savage laceration of the arm muscles that leaves the enemy crippled.`,
 		"actText": function () {
-			return `$B.subject.name pauses, their eyes flicking over their opponent. They raise their knife level with their eyes, and the next instant lunge forward with a crippling stab to the arm joints.`;
+			return `$subject.name pauses, their eyes flicking over their opponent. They raise their knife level with their eyes, and the next instant lunge forward with a crippling stab to the arm joints.`;
 		},
 		"act": applyEffect("Injury", {dmg: true})
 	},
@@ -345,7 +362,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and inflict Pain for ${action.dur} rounds.`},
 		"desc":		`A nasty kick to the joints and other painful regions that leaves the enemy too distracted by pain to defend themselves.`,
 		"actText": function () {
-			return `$B.subject.name pauses, their eyes flicking over their opponent. Suddenly they strike out like a viper, ramming a sharp kick into an exposed weak point.`;
+			return `$subject.name pauses, their eyes flicking over their opponent. Suddenly they strike out like a viper, ramming a sharp kick into an exposed weak point.`;
 		},
 		"act": applyEffect("Pain", {dmg: true})
 	},
@@ -359,7 +376,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Attack with a weight of ${action.weight} and inflict Headache for ${action.dur} rounds.`},
 		"desc":		`An unsporting blow to the temple that leaves the enemy's head ringing.`,
 		"actText": function () {
-			return `$B.subject.name kicks dust into their opponent's eyes, disorienting ${target().them} just long enough for them to ram their dagger's pommel straight into ${target().their} temple.`;
+			return `$subject.name kicks dust into their opponent's eyes, disorienting ${target().them} just long enough for them to ram their dagger's pommel straight into ${target().their} temple.`;
 		},
 		"act": applyEffect("Headache", {dmg: true})
 	},
@@ -373,7 +390,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Attack thrice with a weight of ${action.weight} and inflict Off-Balance.`},
 		"desc":		`Descend on the enemy in a whirlwind of strikes! The sudden ferocity will make them lose their footing, leaving them open to another puppet's attack.`,
 		"actText": function () {
-			return `With uncharacteristic unsubtlety, $B.subject.name charges forward, swinging their blades in a whirlwind of flashing steel. Not every swing connects, but it doesn't need to. The enemy stumbles and sways from the pressing assault, looking like they could be knocked over by a light breeze. $B.subject.name grins and leaps away, their job done.`;
+			return `With uncharacteristic unsubtlety, $subject.name charges forward, swinging their blades in a whirlwind of flashing steel. Not every swing connects, but it doesn't need to. The enemy stumbles and sways from the pressing assault, looking like they could be knocked over by a light breeze. $subject.name grins and leaps away, their job done.`;
 		},
 		"act": multihit({hits: 3},applyEffect("Off-Balance")),
 		"preview": "multihit"
@@ -387,7 +404,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Become untargetable for ${action.dur} rounds.`},
 		"desc":		`Become one with the shadows.`,
 		"actText": function () {
-			return `The arena should be well-lit, but as $B.subject.name presses themselves against the wall, their surroundings suddenly become dimmer. You blink, and suddenly you can't tell where they end and the shadows begin.`;
+			return `The arena should be well-lit, but as $subject.name presses themselves against the wall, their surroundings suddenly become dimmer. You blink, and suddenly you can't tell where they end and the shadows begin.`;
 		},
 		"act": applyEffect("Hidden",{self:true})
 	},
@@ -413,10 +430,10 @@ setup.actionData = {
 			return `${subject().name} holds out a hand. The motion is calm and easy, like trailing a hand through a forest stream. Glimmering motes of multicolored light settle on it like dew, trickling into the center of ${subject().their} palm before vanishing with a soft glow.`;
 		},
 		"act": function () {
-			return `<<set $B.subject.en += action().special>>\
-			$B.subject.name gains ${action().special} Energy!`;
+			return `<<set $subject.en += action().special>>\
+			$subject.name gains ${action().special} Energy!`;
 		},
-		"preview": `$B.subject.name will gain <<print $action.special - $action.cost>> net Energy.`
+		"preview": `$subject.name will gain <<print $action.special - $action.cost>> net Energy.`
 	},
 
 	"Sacrifice": {
@@ -435,9 +452,9 @@ setup.actionData = {
 		"act": function () {
 			return `Mage loses $action.hpcost HP.
 			Mage gains $action.special Energy!\
-			<<set $B.subject.en += $action.special>>`;
+			<<set $subject.en += $action.special>>`;
 		},
-		"preview": `$B.subject.name will lose $action.hpcost HP and gain $action.special Energy.`
+		"preview": `$subject.name will lose $action.hpcost HP and gain $action.special Energy.`
 	},
 
 	"Blast": {
@@ -460,17 +477,17 @@ setup.actionData = {
 		"actText": function () {
 			switch (V().action.cost) {
 				case 3:
-					return `$B.subject.name raises a hand, and an orb of glowing blue-white energy shoots out of ${subject().their} palm.`;
+					return `$subject.name raises a hand, and an orb of glowing blue-white energy shoots out of ${subject().their} palm.`;
 				case 4:
-					return `$B.subject.name raises a hand, and a missile of glowing blue-white energy shoots out of ${subject().their} palm, showering shimmering motes like snow.`;
+					return `$subject.name raises a hand, and a missile of glowing blue-white energy shoots out of ${subject().their} palm, showering shimmering motes like snow.`;
 				case 5:
 				case 6:
-					return `$B.subject.name raises a hand, and blue-white energy erupts from it like a geyser, blasting into the enemy.`;
+					return `$subject.name raises a hand, and blue-white energy erupts from it like a geyser, blasting into the enemy.`;
 				case 7:
 				case 8:
-					return `$B.subject.name raises both of ${subject().their} hands, and blue-white energy erupts in front of ${subject().them} in a chaotic blast, glowing tendrils arcing against the air and ground as the enemy is eveloped in waves of destruction.`;
+					return `$subject.name raises both of ${subject().their} hands, and blue-white energy erupts in front of ${subject().them} in a chaotic blast, glowing tendrils arcing against the air and ground as the enemy is eveloped in waves of destruction.`;
 				case 9:
-					return `$B.subject.name raises both of ${subject().their} hands, glowing with power. Countless rays of blue-white energy spread out in all directions before curving in and condensing into a huge, powerful beam.`;
+					return `$subject.name raises both of ${subject().their} hands, glowing with power. Countless rays of blue-white energy spread out in all directions before curving in and condensing into a huge, powerful beam.`;
 			}
 		},
 		"act": justdmg()
@@ -482,7 +499,7 @@ setup.actionData = {
 		"saveMod": "Blast",
 		"effects": ["Knocked Down"],
 		"actText": function () {
-			return `$B.subject.name calmly steps forward, and raises a hand to the heavens. In an instant, the sky is suddenly ablaze with wrathful fire. Fire and lightning rain down from the inferno to strike the earth, blasting the enemy in a terrifying and beautiful display of utter destruction.`;
+			return `$subject.name calmly steps forward, and raises a hand to the heavens. In an instant, the sky is suddenly ablaze with wrathful fire. Fire and lightning rain down from the inferno to strike the earth, blasting the enemy in a terrifying and beautiful display of utter destruction.`;
 		},
 		"act": function () {
 			return `<<echoDamage>>\
@@ -514,15 +531,15 @@ setup.actionData = {
 		"actText": function () {
 			switch (action().cost) {
 				case 4:
-					return `$B.subject.name waves a hand, and a ball of orange flame bursts into existence to fly towards the enemy, igniting in an impressive display of fire that clings to the enemy's skin.`;
+					return `$subject.name waves a hand, and a ball of orange flame bursts into existence to fly towards the enemy, igniting in an impressive display of fire that clings to the enemy's skin.`;
 				case 5:
-					return `$B.subject.name waves a hand, and a ball of yellow flame bursts into existence to fly towards the enemy, igniting in a magnificent display of fire that clings to the enemy's skin.`;
+					return `$subject.name waves a hand, and a ball of yellow flame bursts into existence to fly towards the enemy, igniting in a magnificent display of fire that clings to the enemy's skin.`;
 				case 6:
 				case 7:
 				case 8:
-					return `$B.subject.name throws out their hand as if throwing a punch. A jet of flame shoots out like a comet, swallowing the enemy in fire.`;
+					return `$subject.name throws out their hand as if throwing a punch. A jet of flame shoots out like a comet, swallowing the enemy in fire.`;
 				case 9:
-					return `$B.subject.name points a finger at the enemy, and a perfect sphere of orange-red flame shoots out like a missile. When it connects it lights up like a firework, exploding in a brilliant inferno.`;
+					return `$subject.name points a finger at the enemy, and a perfect sphere of orange-red flame shoots out like a missile. When it connects it lights up like a firework, exploding in a brilliant inferno.`;
 			}
 		},
 		"act": applyEffect("Burning", {dmg: true})
@@ -535,7 +552,7 @@ setup.actionData = {
 		"effects": ["Perdition"],
 		"saveMod": "Fireball",
 		"actText": function () {
-			return `$B.subject.name raises their palms as if lifting a great weight, and $B.target.name is suddenly enveloped in a pillar of screaming white fire. The ember, lodged in $B.target.their heart, is unquenchable.`;
+			return `$subject.name raises their palms as if lifting a great weight, and $target.name is suddenly enveloped in a pillar of screaming white fire. The ember, lodged in $target.their heart, is unquenchable.`;
 		},
 		"act": applyEffect("Perdition", {dmg: true}),
 		"preview": `<<damageCalc>>\
@@ -558,18 +575,18 @@ setup.actionData = {
 		"info":	function (action) {return 	`Lend Energy to an ally.`},
 		"desc":		`Magic blurs the boundaries of the natural world, and the boundaries between individuals. Mage can allow another to use their energy as if it was their own.`,
 		"actText": function () {
-			return `$B.subject.name clasps one hand over their heart, and extends another towards $B.target.name. Glowing blue energy flows between them.`;
+			return `$subject.name clasps one hand over their heart, and extends another towards $target.name. Glowing blue energy flows between them.`;
 		},
 		"act": function () {
-			return `$B.target.name gains $action.cost Energy!`+
-			`<<set $B.target.en += $action.cost>>`;
+			return `$target.name gains $action.cost Energy!`+
+			`<<set $target.en += $action.cost>>`;
 		},
 		"preview": function () {
 			var note = "";
 			if ((target().en + V().action.cost) > target().maxen) {
-				note = ` ...but they already have $B.target.en Energy, so some of it will be wasted.`;
+				note = ` ...but they already have $target.en Energy, so some of it will be wasted.`;
 			}
-			return `$B.subject.name will transfer $action.cost Energy to $B.target.name.`+note;
+			return `$subject.name will transfer $action.cost Energy to $target.name.`+note;
 		}
 	},
 
@@ -579,7 +596,7 @@ setup.actionData = {
 		"noself":	true,
 		"saveMod": "Favor",
 		"actText": function () {
-			return `$B.subject.name places their palm flat below their mouth. They close their eyes, and blow out a breath towards $B.target.name. It glows with a strange energy, wrapping around $B.target.name. They look ready for anything.`;
+			return `$subject.name places their palm flat below their mouth. They close their eyes, and blow out a breath towards $target.name. It glows with a strange energy, wrapping around $target.name. They look ready for anything.`;
 		},
 		"act": function () {
 			target().en += action().cost;
@@ -588,9 +605,9 @@ setup.actionData = {
 			} else {
 				target().inspired = true;
 			}
-			return `$B.target.name gains $action.cost Energy and an additional action!`;
+			return `$target.name gains $action.cost Energy and an additional action!`;
 		},
-		"preview": `The breath of life. Mage will transfer $action.cost Energy to $B.target.name and grant them an additional action.`
+		"preview": `The breath of life. Mage will transfer $action.cost Energy to $target.name and grant them an additional action.`
 	},
 
 	"Restoration": {
@@ -600,7 +617,7 @@ setup.actionData = {
 			switch (action().cost) {
 				case 10:
 					V().action = new Action("Salvation"),
-					V().B.target = null;
+					V().target = null;
 					break;
 				default:
 					this.removedEffects = 1+(action().cost-V().B.mincost);
@@ -610,7 +627,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Cure an ally of their most recent status ailment, plus one ailment per Energy invested.`},
 		"desc":		`People have always turned to mystics for cures to the world's ills and pains. To be blighted by an enemy you cannot see is terrifying and transcendent -- so surely, one must seek out a person that is the same. And so Mage gained the power of healing.`,
 		"actText": function () {
-			return `$B.subject.name waves their hands in smooth, wide motions, as if polishing a surface. When they're finished they stretch their hands out imperiously, and positive energy washes over $B.target.name in a bright burst.`;
+			return `$subject.name waves their hands in smooth, wide motions, as if polishing a surface. When they're finished they stretch their hands out imperiously, and positive energy washes over $target.name in a bright burst.`;
 		},
 		"act": removeEffect(),
 		"preview": "cleanse"
@@ -622,7 +639,7 @@ setup.actionData = {
 		"phase":	"confirm phase",
 		"saveMod": "Restoration",
 		"actText": function () {
-			return `$B.subject.name spreads their hands wide, exultant. The curses afflicting your puppets condense into balls of dark energy before bursting in brilliant showers of light. The glow swirls around them, enveloping them in protective energy.`;
+			return `$subject.name spreads their hands wide, exultant. The curses afflicting your puppets condense into balls of dark energy before bursting in brilliant showers of light. The glow swirls around them, enveloping them in protective energy.`;
 		},
 		"act": removeEffect(
 			{target: "allies", type: "all", cure: true, unsticky: true,
@@ -640,7 +657,7 @@ setup.actionData = {
 			switch (action().cost) {
 				case 10:
 					V().action = new Action("Annulment");
-					V().B.target = null;
+					V().target = null;
 					break;
 				default:
 					this.removedEffects = 1+(action().cost-V().B.mincost);
@@ -649,7 +666,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Strip an enemy of their most recent buff, plus one buff per Energy invested.`},
 		"desc": 	`To make magic, one must first know how to break it. Your enemies think themselves safe, shining and untouchable with all those enchantments? With a whisper, Mage can remind them just how mortal they really are.`,
 		"actText": function () {
-			return `$B.subject.name waves their hands in contracted, sprialling motions, as if gathering up dust. When they're finished, they swipe a hand sharply to the side as if in dismissal. You see $B.target.name's magic flash and sputter, fading away like mist.`;
+			return `$subject.name waves their hands in contracted, sprialling motions, as if gathering up dust. When they're finished, they swipe a hand sharply to the side as if in dismissal. You see $target.name's magic flash and sputter, fading away like mist.`;
 		},
 		"act": removeEffect(),
 		"preview": "cleanse"
@@ -661,7 +678,7 @@ setup.actionData = {
 		"phase":	"confirm phase",
 		"saveMod": "Neutralize",
 		"actText": function () {
-			return `$B.subject.name places their hand out, palm up. With violent suddenness they close it into a fist. You suddenly see the enchantments aiding the enemy clear as day, little balls of energy orbiting them like little planets -- before they all shatter at once like a galaxy of dying stars.`;
+			return `$subject.name places their hand out, palm up. With violent suddenness they close it into a fist. You suddenly see the enchantments aiding the enemy clear as day, little balls of energy orbiting them like little planets -- before they all shatter at once like a galaxy of dying stars.`;
 		},
 		"act": function () {
 			var cut = 0;
@@ -672,7 +689,7 @@ setup.actionData = {
 			});
 			return `<<for _enemy range $enemies>>\
 								<<if !_enemy.dead && !_enemy.guarded>>\
-									<<set $B.target = _enemy>>\
+									<<set $target = _enemy>>\
 									<<damageCalc>>\
 									<<set $dmg = Math.round($dmg/${cut})>>\
 									<<echoDamage "nocalc">>\
@@ -684,7 +701,7 @@ setup.actionData = {
 								<</if>>\
 			<</for>>`;
 		},
-		"preview": `<<set _d = (setup.base + $B.subject.get("Attack"))*$action.weight>>\
+		"preview": `<<set _d = (setup.base + $subject.get("Attack"))*$action.weight>>\
 			A judgment upon those who would defy you. This will inflict _d base damage and strip all buffs from every enemy.`
 	},
 
@@ -697,7 +714,7 @@ setup.actionData = {
 			switch (action().cost){
 				case 10:
 					V().action = new Action("Ascension"),
-					V().B.target = null;
+					V().target = null;
 					break;
 				default:
 					// duration
@@ -730,7 +747,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Bestow a Blessing, which will boost all stats for ${action.dur} rounds. Additional Energy points will alternate improvements in duration and effect.`},
 		"desc": 	`Grant us strength that we may strike true. Grant us protection that we may endure. Grant us wisdom that we may see the way through the darkness.`,
 		"actText": function () {
-			return `$B.subject.name raises their arms skyward, then clasps their hands together as if in prayer. They suddenly let go, and wave their hands over $B.target.name with a flourish. Motes of light fall over ${target().them}, making ${target().them} glow with a strange aura.`;
+			return `$subject.name raises their arms skyward, then clasps their hands together as if in prayer. They suddenly let go, and wave their hands over $target.name with a flourish. Motes of light fall over ${target().them}, making ${target().them} glow with a strange aura.`;
 		},
 		"act": applyEffect("Blessing")
 	},
@@ -742,7 +759,7 @@ setup.actionData = {
 		"phase":	"confirm phase",
 		"saveMod": "Blessing",
 		"actText": function () {
-			return `$B.subject.name raises their arms skyward. Their muscles strain and their fists suddenly clench, as if they are trying to grasp the Sun itself. Perhaps they succeed: their hands are suddenly effulgent with light, which they push down into the earth. The ground glows and your puppets are bathed in geysers of light, exultant.`;
+			return `$subject.name raises their arms skyward. Their muscles strain and their fists suddenly clench, as if they are trying to grasp the Sun itself. Perhaps they succeed: their hands are suddenly effulgent with light, which they push down into the earth. The ground glows and your puppets are bathed in geysers of light, exultant.`;
 		},
 		"act": massAttack({target: "allies", content: applyEffect("Blessing")}),
 		"preview": function () {
@@ -790,10 +807,9 @@ setup.actionData = {
 		"info":	function (action) {return 	`Inflict a Curse, which will weaken all stats for ${action.dur} rounds. Additional Energy points will alternate improvements in duration and effect.`},
 		"desc":		`May their flesh sag and rot. May their bones crumble like parchment. May their thoughts slow like treacle.`,
 		"actText": function () {
-			return `$B.subject.name stares intently, then calmly points a single finger at the enemy. $B.target.name sways, and the air around $B.target.them suddenly looks dingier.`;
+			return `$subject.name stares intently, then calmly points a single finger at the enemy. $target.name sways, and the air around $target.them suddenly looks dingier.`;
 		},
-		"act": applyEffect("Curse"),
-		"preview": Prev.effect("Curse")
+		"act": applyEffect("Curse")
 	},
 
 	"Forsaken": {
@@ -803,7 +819,7 @@ setup.actionData = {
 		"effects": ["Forsaken"],
 		"saveMod": "Curse",
 		"actText": function () {
-			return `$B.subject.name does not even move. They only spare $B.target.name a look, and <<print target().theyare>> suddenly drowned in darkness.`;
+			return `$subject.name does not even move. They only spare $target.name a look, and <<print target().theyare>> suddenly drowned in darkness.`;
 		},
 		"act": applyEffect("Forsaken"),
 		"preview": `A terrible judgment that denies all mercy. This will inflict <b>Forsaken</b> status, which will sharply reduce Defense, even into the negatives.`
@@ -849,7 +865,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Inflict damage with an attack weight of ${action.weight} + 0.25 per Energy invested.`},
 		"desc":		`Bard knows all about the destructive power of words, though it's a bit more literal than usual in this case. With a little magic, boosted by their own mythological resonance with the domain of sound, Bard can turn their voice into an oddly melodic sonic attack.`,
 		"actText": function () {
-			return `$B.subject.name projects ${subject().their} voice into a wave of crushing force.`;
+			return `$subject.name projects ${subject().their} voice into a wave of crushing force.`;
 		},
 		"act": justdmg()
 	},
@@ -863,7 +879,7 @@ setup.actionData = {
 		"desc":		`"This statement is false!" Sometimes you need to do the thing they least expect. It'll throw them off-kilter, especially after you follow it with a sucker punch.`,
 		"useText": null,
 		"actText": function () {
-			return `$B.subject.name says something so random the enemy has to stop to process it. While they're doing that, $B.subject.name socks them in the face.`;
+			return `$subject.name says something so random the enemy has to stop to process it. While they're doing that, $subject.name socks them in the face.`;
 		},
 		"act": applyEffect("Off-Balance",{dmg: true})
 	},
@@ -877,7 +893,7 @@ setup.actionData = {
 		"desc":		`"You fight like a cow!" Any bard worth their salt knows exactly what wicked wordplay will leave their victims a laughingstock. The injury inflicted is only emotional, but really, isn't that worse?`,
 		"useText": null,
 		"actText": function () {
-			return `$B.subject.name insults the opponent's fighting style so wickedly they are crushed by despair.`;
+			return `$subject.name insults the opponent's fighting style so wickedly they are crushed by despair.`;
 		},
 		"act": applyEffect("Injury")
 	},
@@ -891,7 +907,7 @@ setup.actionData = {
 		"desc":		`Bard can make jokes so bad they cause physical pain. Bard assures us they're doing it ironically. You think that makes worse.`,
 		"useText": null,
 		"actText": function () {
-			return `$B.subject.name makes a painfully bad joke.`;
+			return `$subject.name makes a painfully bad joke.`;
 		},
 		"act": applyEffect("Pain")
 	},
@@ -905,7 +921,7 @@ setup.actionData = {
 		"desc":		`"Oh, I believe that <b>you</b> believe, but have you considered..." Also known as "playing devil's advocate" or, more colloquially, "trolling". Bard is a master.`,
 		"useText": null,
 		"actText": function () {
-			return `$B.subject.name leads the enemy on a meandering and nonsensical argument. It's irritating to everyone, but $B.target.name gets the worst of it.`;
+			return `$subject.name leads the enemy on a meandering and nonsensical argument. It's irritating to everyone, but $target.name gets the worst of it.`;
 		},
 		"act": applyEffect("Headache")
 	},
@@ -917,7 +933,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Remove all effects (positive and negative) from a target.`},
 		"desc":		`Don't like the story? Then change it! It's the tales that are remembered, and in a way isn't that more real than what actually happened?`,
 		"actText": function () {
-			return `$B.subject.name crafts a personal narrative so compelling it overwrites $B.target.name's state of being. All the forces acting upon ${target().them} vanish like they were never even there.`;
+			return `$subject.name crafts a personal narrative so compelling it overwrites $target.name's state of being. All the forces acting upon ${target().them} vanish like they were never even there.`;
 		},
 		"act": removeEffect({target:'t'},`<<set $B.heal_used = true>>`)
 	},
@@ -930,7 +946,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Draw all direct attacks for this round.`},
 		"desc":		`A bard thrives in the spotlight. This one knows just how to get it.`,
 		"actText": function () {
-			return `$B.subject.name runs around like a headless chicken while insulting everyone's parentage.`;
+			return `$subject.name runs around like a headless chicken while insulting everyone's parentage.`;
 		},
 		"act": function () {
 			return `<<print subject().addEffect("Martyr")>>`;
@@ -980,9 +996,9 @@ setup.actionData = {
 		"useText": null,
 		"actText": function () {
 			if (V().action.cost == 10) {
-				return `${V().B.subject.name} nocks what looks to be the Platonic ideal of an arrow. The shaft is perfectly balanced, the point, so razor-sharp you cannot even see the edge. This is the arrow that always finds its mark, the weapon from which there is no refuge.
+				return `${V().subject.name} nocks what looks to be the Platonic ideal of an arrow. The shaft is perfectly balanced, the point, so razor-sharp you cannot even see the edge. This is the arrow that always finds its mark, the weapon from which there is no refuge.
 
-				${V().B.subject.name} lets it fly.`;
+				${V().subject.name} lets it fly.`;
 			} else {
 				return `${subject().name} fires the ghost of an arrow.`;
 			}
@@ -1017,12 +1033,12 @@ setup.actionData = {
 		"act": function () {
 			return `<<set _markActive = true>>\
 			<<for _enemy range enemies().filter(function (e) { return e.marked && !e.dead })>>\
-				<<set $B.target = _enemy>>\
+				<<set $target = _enemy>>\
 				<<echoDamage "nocounter">>\
 				<<set subject().en -= $action.cost>>\
 				<<if subject().en <= 0>>\
 					${subject().name} has run out of arrows!
-					<<addEffect $B.subject "Winded" 3>>\
+					<<addEffect $subject "Winded" 3>>\
 					<<for _enemy range enemies()>>\
 						<<run _enemy.removeEffect("Marked",{pierce: true})>>\
 					<</for>>\
@@ -1077,7 +1093,7 @@ setup.actionData = {
 			return `${subject().name} straps a sizzling bomb to an arrow and lets it fly.`;
 		},
 		"act": splashDamage({target:'t', cut:2}),
-		"preview": "splash"
+		"preview": ["splash","mass"]
 	},
 
 	"Mark": {
@@ -1088,7 +1104,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Paint a target on an enemy. Every time another puppet attacks, Archer will follow up with a 1-point Shot on every Marked enemy. (Archer will become Winded if their Energy is exhausted in this manner.)`},
 		"desc":		`Archer never lets up once an enemy is in their sights.`,
 		"actText": function () {
-			return `$B.subject.name stares with burning intensity, and if you squint, you think you can see a target over $B.target.name.`;
+			return `$subject.name stares with burning intensity, and if you squint, you think you can see a target over $target.name.`;
 		},
 		"act": applyEffect("Marked")
 	},
@@ -1118,14 +1134,14 @@ setup.actionData = {
 	"Call to Arms": {
 		"cost":		7,
 		"effweight":	(1/2),
-		"phase":		"confirm phase",
+		"target": "ally",
 		"dur":		3,
 		"effects": ["ATK Boost"],
 		"info":	function (action) {return 	`Bestow an ATK Boost to all puppets for ${action.dur} rounds.`},
 		"desc":		`Let slip the dogs of war.`,
 		"actText": null,
 		"act": massAttack({target: "allies", content: applyEffect("ATK Boost")}),
-		"preview": `All puppets will gain an ATK Boost, provided they are not in Stasis.`
+		"preview": "mass"
 	},
 
 	// CLERIC
@@ -1167,7 +1183,7 @@ setup.actionData = {
 		"info": function (action) {return `Right an ally who has been Knocked Down.`},
 		"desc": `Being knocked prone is a terrible thing to happen during a battle. Normally a person can only be righted with magic or personal struggle, but you can also just... pull them back up. Cleric is the only puppet who'd bother.`,
 		"actText": function () {
-			return `$B.subject.name helps $B.target.name back to $B.target.their feet.`;
+			return `$subject.name helps $target.name back to $target.their feet.`;
 		},
 		"act": removeEffect({pierce: true}),
 		"preview": "removeEffect"
@@ -1181,7 +1197,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Bestows a Shield to a puppet for ${action.dur} rounds, reducing incoming damage by ${setup.SHIELD_FACTOR*100}%.`},
 		"desc":		`Don't worry. You're safe now.`,
 		"actText": function () {
-			return `$B.subject.name places a hand over $B.target.name like a benediction.`;
+			return `$subject.name places a hand over $target.name like a benediction.`;
 		},
 		"act": applyEffect("Shield")
 	},
@@ -1195,10 +1211,10 @@ setup.actionData = {
 		"info":	function (action) {return 	`Give ${action.hpcost} HP to another puppet.`},
 		"desc": 	`Life is a limited resource. We have only what we were given. But, if our life is ours, is it not up to us what we do with it?`,
 		"actText": function () {
-			return `$B.subject.name cradles $B.target.name in a comforting embrace. Vibrant green energy flows into ${target().their} wounds, and the broken flesh knits back together.`;
+			return `$subject.name cradles $target.name in a comforting embrace. Vibrant green energy flows into ${target().their} wounds, and the broken flesh knits back together.`;
 		},
 		"act": function () {
-			return `$B.subject.name gives ${action().hpcost} HP to $B.target.name!\
+			return `$subject.name gives ${action().hpcost} HP to $target.name!\
 							<<if $ANIMATIONS === true && _queue instanceof Set>>\
 								<<run target().addPopup({type: "healing", content: action().hpcost})>>\
 							<<else>>\
@@ -1206,7 +1222,7 @@ setup.actionData = {
 							<</if>>`
 		},
 		"preview": function () {
-			var str = `$B.subject.name will give action().hpcost HP to $B.target.name.`;
+			var str = `$subject.name will give action().hpcost HP to $target.name.`;
 			if ((target().hp + action().hpcost) > target().maxhp){
 				str += " ...but some of it will be wasted.";
 			}
@@ -1232,7 +1248,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Inflict damage with a weight of ${action.weight} + ${action.special} for every buff empowering the enemy, removing them in the process.`},
 		"desc":		`Pride goeth before a fall. Cleric can turn the enemy's hubris against them, reminding them that even the strongest warrior can be brought low by the smallest among us.`,
 		"actText": function () {
-			return `$B.subject.name plants their feet firmly. They swing their staff around in wide, twirling motions, building up momentum before charging $B.target.name head-on and bringing it down like a judgment from the heavens.`;
+			return `$subject.name plants their feet firmly. They swing their staff around in wide, twirling motions, building up momentum before charging $target.name head-on and bringing it down like a judgment from the heavens.`;
 		},
 		"act": function () {
 			return `<<echoDamage>>\
@@ -1249,14 +1265,14 @@ setup.actionData = {
 	"Walled City": {
 		"cost":		7,
 		"effweight":	(1/2),
-		"phase":		"confirm phase",
+		"target": "ally",
 		"dur":		3,
 		"effects": ["DEF Boost"],
 		"info":	function (action) {return 	`Bestow a DEF Boost to all puppets for ${action.dur} rounds.`},
 		"desc":		`A line, to separate us from them. A shield to repel all.`,
 		"actText": null,
 		"act": massAttack({target: "allies", content: applyEffect("DEF Boost")}),
-		"preview": `All puppets will gain a DEF Boost, provided they are not in Stasis.`
+		"preview": "mass"
 	},
 
 	// WITCH
@@ -1271,7 +1287,7 @@ setup.actionData = {
 		"info":		function (action) {return `Inflict damage with a weight of ${action.weight} and inflict Pain for ${action.dur} rounds.`},
 		"desc":		`Witches are feared for their power over the unseen and unknowable. Cross them and they will strike you with an attack you can't even see: a terrible sickness of sores and blisters, unbearable in their pain.`,
 		"actText": function () {
-			return `$B.subject.name points a finger at ${target().name}, and ${target().their} skin instantly breaks out in boils that swell and burst. It looks pretty painful.`;
+			return `$subject.name points a finger at ${target().name}, and ${target().their} skin instantly breaks out in boils that swell and burst. It looks pretty painful.`;
 		},
 		"act": applyEffect("Pain", {dmg: true})
 	},
@@ -1283,7 +1299,7 @@ setup.actionData = {
 			switch (action().cost) {
 				case 10:
 					V().action = new Action("Miracle");
-					V().B.target = null;
+					V().target = null;
 					break;
 				default:
 			}
@@ -1294,18 +1310,18 @@ setup.actionData = {
 		"info":		`Lend Energy to an ally.`,
 		"desc":		`The mages may speak of "equivalent exchange", of sacrifice. Witch understands the world is not so simple. Our lives are a renewable resource, a rich pattern of ups and downs, flourishing anew every day with new choices and ideas. So this is a gift, freely given: do with it what you will.`,
 		"actText": function () {
-			return `$B.subject.name exchanges a meaningful look with $B.target.name, and gives them a slight nod.`;
+			return `$subject.name exchanges a meaningful look with $target.name, and gives them a slight nod.`;
 		},
 		"act": function () {
-			return `$B.target.name gains $action.cost Energy!`+
-			`<<set $B.target.en += $action.cost>>`;
+			return `$target.name gains $action.cost Energy!`+
+			`<<set $target.en += $action.cost>>`;
 		},
 		"preview": function () {
 			var note = "";
 			if ((target().en + V().action.cost) > 10) {
-				note = ` ...but they already have $B.target.en Energy, so some of it will be wasted.`;
+				note = ` ...but they already have $target.en Energy, so some of it will be wasted.`;
 			}
-			return `$B.subject.name will transfer $action.cost Energy to $B.target.name.`+note;
+			return `$subject.name will transfer $action.cost Energy to $target.name.`+note;
 		}
 	},
 
@@ -1315,7 +1331,7 @@ setup.actionData = {
 		"phase": "confirm phase",
 		"saveMod": "Gift",
 		"actText": function () {
-			return `$B.subject.name kneels down, spreading their hand over the earth, and whispers something you can't hear. There is a pause, and then shoots of green break through the ground. They grow and grow, joined by more and more as you watch. They burst into beautiful blooms of every possible color, vines and branches stretching out to gently rest against your puppets' shoulders like a motherly hand. Something in your vision shifts and the image suddenly disappears -- but the vibrancy of life remains. Your puppets are glowing with energy.`;
+			return `$subject.name kneels down, spreading their hand over the earth, and whispers something you can't hear. There is a pause, and then shoots of green break through the ground. They grow and grow, joined by more and more as you watch. They burst into beautiful blooms of every possible color, vines and branches stretching out to gently rest against your puppets' shoulders like a motherly hand. Something in your vision shifts and the image suddenly disappears -- but the vibrancy of life remains. Your puppets are glowing with energy.`;
 		},
 		"act": function () {
 			return `<<for _puppet range puppets()>>\
@@ -1333,7 +1349,7 @@ setup.actionData = {
 			switch (action().cost){
 				case 10:
 					V().action = new Action("Renewal"),
-					V().B.target = null;
+					V().target = null;
 					break;
 				default:
 					this.removedEffects = 1+(action().cost-V().B.mincost);
@@ -1344,7 +1360,7 @@ setup.actionData = {
 		"info":		`Removes the most recent ailment from an ally or the most recent buff from an enemy, plus 1 effect for every Energy point invested.`,
 		"desc":		`Wizards heal by forcing their will upon the world, demanding that it change for them. But there is an easier way, if you are willing to work with the currents of the world instead of against them. <b>Let</b> the magic depart, like water flowing downhill.`,
 		"actText": function () {
-			return `$B.subject.name calmly waves a hand, and the magic passes like a dream.`;
+			return `$subject.name calmly waves a hand, and the magic passes like a dream.`;
 		},
 		"act": removeEffect(),
 		"preview": "cleanse"
@@ -1355,7 +1371,7 @@ setup.actionData = {
 		"phase": "confirm phase",
 		"saveMod": "Cleanse",
 		"actText": function () {
-			return `$B.subject.name lifts their hands to the sky, palms up. There is an expectant, yearning silence in the air, and then you hear it: the crashing of waves. From out of nowhere comes an unstoppable tide of crystal-clear water, flowing over the whole arena. With every fighter it passes, you see motes of glowing magic dissolve into it, until the world before you looks like the clear night sky, bedazzled with lights. Then the flood passes, and the arena is back to normal. Everyone is completely dry.`;
+			return `$subject.name lifts their hands to the sky, palms up. There is an expectant, yearning silence in the air, and then you hear it: the crashing of waves. From out of nowhere comes an unstoppable tide of crystal-clear water, flowing over the whole arena. With every fighter it passes, you see motes of glowing magic dissolve into it, until the world before you looks like the clear night sky, bedazzled with lights. Then the flood passes, and the arena is back to normal. Everyone is completely dry.`;
 		},
 		"act": function () {
 			return `<<for _enemy range $enemies>>\
@@ -1387,7 +1403,7 @@ setup.actionData = {
 		"info":		`Stun an enemy.`,
 		"desc":		`There's no need to go through your opponent when you can go around them instead. A simple touch on the mind, and they'll lose all memory of what they were doing.`,
 		"actText": function () {
-			return `$B.subject.name slowly waves a hand over $B.target.name's eyes.`;
+			return `$subject.name slowly waves a hand over $target.name's eyes.`;
 		},
 		"act": applyEffect("Stunned")
 	},
@@ -1401,7 +1417,7 @@ setup.actionData = {
 		"info":		function (action) {return `Greatly boost Attack, but cut Defense by half the amount. Lasts ${action.dur} rounds.`},
 		"desc":		`Power like no other, at the expense of all else. Witch can give it to you, if you are prepared to accept it.`,
 		"actText": function () {
-			return `$B.subject.name bites their thumb, and smears the blood over $B.target.name's face in a strange pattern. Their eyes narrow into slits.`;
+			return `$subject.name bites their thumb, and smears the blood over $target.name's face in a strange pattern. Their eyes narrow into slits.`;
 		},
 		"act": applyEffect("Frenzy")
 	},
@@ -1415,7 +1431,7 @@ setup.actionData = {
 		"info":		function (action) {return `Place a puppet in Stasis, preventing any change to their effects for ${action.dur} rounds.`},
 		"desc":		`Being one with nature sounds all well and good right up until you're getting chased by a bear while suffering from some new and exciting disease and starving from the recent drought. Sometimes, nature needs a kick in the teeth. Witch can forcefully stop the flow of magic completely, forcing every one of an individual's effects to stay exactly as they are.`,
 		"actText": function () {
-			return `$B.subject.name snaps their fingers. The air around $B.target.name seems to freeze for a moment, then returns to normal.`;
+			return `$subject.name snaps their fingers. The air around $target.name seems to freeze for a moment, then returns to normal.`;
 		},
 		"act": applyEffect("Stasis")
 	},
@@ -1424,13 +1440,13 @@ setup.actionData = {
 		"cost":		7,
 		"effweight":	(1/2),
 		"effects": ["SPC Boost"],
-		"phase":	"confirm phase",
+		"target": "ally",
 		"dur":		3,
 		"info":		function (action) {return `Bestow a SPC Boost to all puppets for ${action.dur} rounds.`},
 		"desc":		`To hoard one's knowledge is inevitably to lose it. Let it free, so that it can live.`,
 		"actText": null,
 		"act": massAttack({target: "allies", content: applyEffect("SPC Boost")}),
-		"preview": `All puppets will gain a SPC Boost, provided they are not in Stasis.`
+		"preview": "mass"
 	},
 
 	// ARTIST
@@ -1641,7 +1657,7 @@ setup.actionData = {
 	"Desperate Attack": {
 		"crisis": true,
 		"weight": 3.5,
-		"act": justdmg,
+		"act": justdmg(),
 		"actText": null,
 		"info": function (action) {return `Inflicts damage with a weight of ${action.weight}.`;},
 		"desc": null
@@ -1651,6 +1667,7 @@ setup.actionData = {
 		"crisis": true,
 		"dur": 3,
 		"effects": ["Invincible"],
+		"phase": "confirm phase",
 		"act": applyEffect("Invincible",{self:true}),
 		"actText": null,
 		"info": function (action) {return `User becomes immune to all damage for ${action.dur} rounds.`;},
@@ -1661,6 +1678,7 @@ setup.actionData = {
 		"crisis": true,
 		"dur": -1,
 		"act": massAttack({target: "allies", content: applyEffect("Divine Protection")}),
+		"target": "ally",
 		"actText": null,
 		"info": function (action) {return `All allies will gain complete protection from the next two attacks.`;},
 		"desc": null
@@ -1745,7 +1763,7 @@ setup.actionData = {
 	"Canned Air": {
 		"target": "ally",
 		"effects": ["Winded"],
-		"act": removeEffect({type: "Winded"},`<<set $B.target.en += 1>>`),
+		"act": removeEffect({type: "Winded"},`<<set $target.en += 1>>`),
 		"preview": "removeEffect"
 	},
 
@@ -1782,7 +1800,7 @@ setup.actionData = {
 		"dur": 4,
 		"effects": ["ATK Boost"],
 		"target": "ally",
-		"actText": `$B.subject.name injects a shot of adrenaline.`,
+		"actText": `$subject.name injects a shot of adrenaline.`,
 		"act": applyEffect("ATK Boost")
 	},
 
@@ -1791,7 +1809,7 @@ setup.actionData = {
 		"dur": 4,
 		"effects": ["DEF Boost"],
 		"target": "ally",
-		"actText": `$B.subject.name uses some Stoneskin formula.`,
+		"actText": `$subject.name uses some Stoneskin formula.`,
 		"act": applyEffect("DEF Boost")
 	},
 
@@ -1806,15 +1824,15 @@ setup.actionData = {
 	"Stimulant": {
 		"target": "ally",
 		"act": function () {
-			return 		 `<<set $B.target.en += 5>>\
-			$B.target.name gains 5 Energy!`;
+			return 		 `<<set $target.en += 5>>\
+			$target.name gains 5 Energy!`;
 		},
 		"preview": function () {
 			var note = "";
 			if ((target().en + 5) > 10) {
-				note = ` ...but they already have $B.target.en Energy, so some of it will be wasted.`;
+				note = ` ...but they already have $target.en Energy, so some of it will be wasted.`;
 			}
-			return `$B.target.name will gain 5 Energy.`+note;
+			return `$target.name will gain 5 Energy.`+note;
 		}
 	},
 
@@ -1827,15 +1845,15 @@ setup.actionData = {
 		"weight": 1,
 		"dur":	1,
 		"effects": ["Stunned"],
-		"actText": `$B.subject.name throws powdered glass in your enemy's eyes. Ouch!`,
+		"actText": `$subject.name throws powdered glass in your enemy's eyes. Ouch!`,
 		"act": applyEffect("Stunned",{dmg: true})
 	},
 
 	"Grenade": {
 		"weight": 1.5,
-		"actText": `$B.subject.name chucks a grenade.`,
+		"actText": `$subject.name chucks a grenade.`,
 		"act": splashDamage({target:'t',cut:2}),
-		"preview": "splash"
+		"preview": ["splash","mass"]
 	},
 
 	"Flamethrower": {
@@ -1843,7 +1861,7 @@ setup.actionData = {
 		"effweight": 0.6,
 		"dur": 5,
 		"phase": "confirm phase",
-		"actText": `$B.subject.name bathes your enemies in flame.`,
+		"actText": `$subject.name bathes your enemies in flame.`,
 		"act": massAttack({target:'enemies', cut:true, content: applyEffect("Burning")}),
 		"preview": Prev.cutAttack("Burning")
 	},
@@ -1853,7 +1871,7 @@ setup.actionData = {
 		"effweight": 0.6,
 		"dur": 5,
 		"phase": "confirm phase",
-		"actText": `$B.subject.name throws a bomb filled with noxious gas.`,
+		"actText": `$subject.name throws a bomb filled with noxious gas.`,
 		"act": massAttack({target:'enemies', cut:true, content: applyEffect("Poisoned")}),
 		"preview": Prev.cutAttack("Poisoned")
 	},
@@ -1861,7 +1879,7 @@ setup.actionData = {
 	"Flashbang": {
 		"phase": "confirm phase",
 		"act": massAttack({target: "enemies", content: applyEffect("Stunned")}),
-		"preview": "This will inflict Stunned status on all enemies, provided they are not Alert enough to block their eyes."
+		"preview": "mass"
 	},
 
 	"Calamity Bomb": {
@@ -1869,7 +1887,7 @@ setup.actionData = {
 		"effweight": 0.6,
 		"dur": 3,
 		"effects": ["Injury","Pain","Headache"],
-		"actText": `$B.subject.name throws a calamity bomb.`,
+		"actText": `$subject.name throws a calamity bomb.`,
 		"act": applyEffect(["Injury","Pain","Headache"],{dmg: true})
 	}
 

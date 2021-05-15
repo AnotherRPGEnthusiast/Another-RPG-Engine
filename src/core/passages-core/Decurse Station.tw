@@ -28,7 +28,7 @@ That price is <<print _decurseCost>> <<print setup.CURRENCY_NAME>>.
 <</if>>
 
 :: decurse-appraise[nobr]
-<<set _x = Array.from($inventory.values()).filter(function (item) { return item && (item.sticky === true && !item.known); })>>
+<<set _x = Array.from(inv().values()).filter(function (item) { return item && (item.sticky === true && !item.known); })>>
 <<if _x.length > 0>>
 <<link "Try a different service...">>
   <<replace "#business-area" t8n>><<include "decurse options">><</replace>>

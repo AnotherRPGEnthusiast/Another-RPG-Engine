@@ -5,7 +5,7 @@
 <<set _martyrTest = _party.find(function (p) { return p && p.martyr === true })>>
 /* Note that this assumes only one Martyr can be active at a time. If multiple are active, this will only find the first in the array. */
 <<if _martyrTest>>
-	<<set $B.target = _martyrTest>>
+	<<set $target = _martyrTest>>
 	<<set _continue to false>>
 <</if>>
 <</widget>>
@@ -13,9 +13,9 @@
 :: Widget: protectionCheck [widget nobr]
 <<widget "protectionCheck">>
 /* Checks if target is protected by someone with the Protector effect */
-<<if $B.target !== null && $B.target.protectedBy>>
-	<<set _temp = $B.target.name>>
-	<<switch $B.target.id.charAt(0)>>
+<<if $target !== null && $target.protectedBy>>
+	<<set _temp = $target.name>>
+	<<switch $target.id.charAt(0)>>
 		<<case "p">>
 			<<set _party = $puppets>>
 		<<case "e">>
@@ -23,8 +23,8 @@
 		<<default>>
 			<<set _party = $puppets; console.log("ERROR in protectionCheck: invalid ID type")>>
 	<</switch>>
-	<<set $B.target = _party.find(function(t) { return t && t.id === $B.target.protectedBy; })>>
-	<<set _targetingMsg = $B.target.name+" took the hit for "+_temp+"!\n">>
+	<<set $target = _party.find(function(t) { return t && t.id === $target.protectedBy; })>>
+	<<set _targetingMsg = $target.name+" took the hit for "+_temp+"!\n">>
 <</if>>
 <</widget>>
 
@@ -33,9 +33,9 @@
 /* Checks if target is blocked by another character (battle map style only) */
 <<set _index = _party.indexOf(target())>>
 <<if _index >= setup.ROW_SIZE && _party[_index-setup.ROW_SIZE] !== null && !_party[_index-setup.ROW_SIZE].dead>>
-	<<set $B.target = _party[_index-setup.ROW_SIZE]>>
+	<<set $target = _party[_index-setup.ROW_SIZE]>>
 <<elseif _index >= setup.ROW_SIZE * 2>>
-	<<set $B.target = _party[_index-setup.ROW_SIZE]>>
+	<<set $target = _party[_index-setup.ROW_SIZE]>>
 	<<guardCheck>> /* Run again to test if the new mid-row target is in turn guarded by a front row character */
 <</if>>
 <</widget>>
@@ -44,11 +44,11 @@
 <<widget "threatTarget">>
 <<if _modifiers.includes("random")>>
 	/* truly random selection, ignores threat */
-	<<set $B.target = null>>
+	<<set $target = null>>
 	<<for target() === null>>
 		<<set _rand = random(0,puppets().length-1)>>
 		<<if !puppets()[_rand].dead && (_modifiers.includes("ignore untargetable") || !puppets()[_rand].untargetable)>>
-			<<set $B.target = puppets()[_rand]>>
+			<<set $target = puppets()[_rand]>>
 		<</if>>
 	<</for>>
 	<<set _continue = false>>
@@ -71,10 +71,10 @@
 			<<if _i != 0>>
 				<<set _target.threat += _hitlist[_i-1].threat>>
 				<<if _rand <= _target.threat && _rand > _hitlist[_i-1].threat>>
-					<<set $B.target = _target.target>>
+					<<set $target = _target.target>>
 				<</if>>
 			<<elseif _rand <= _target.threat>>
-				<<set $B.target = _target.target>>
+				<<set $target = _target.target>>
 			<</if>>
 		<</for>>
 	<<else>> /* everyone's dead, flag targetfail */
@@ -137,9 +137,9 @@
 <<if _continue>>
 
 /* Priority 2: aggro enemies bypass normal targeting */
-<<if $B.subject.aggro && def $attacker>>
-	<<set $B.target = $puppets[$attacker]>> /* always targets the puppet that attacked last */
-	<<if !$B.target.dead>>
+<<if $subject.aggro && def $attacker>>
+	<<set $target = $puppets[$attacker]>> /* always targets the puppet that attacked last */
+	<<if !$target.dead>>
 		<<set _continue = false>>
 	<</if>>
 	/* Note that this bypasses untargetable as well */
@@ -159,11 +159,11 @@
 
 /* If subject is a Puppet, target will be selected completely randomly. By default, it is possible for a charmed or confused puppet to attack themselves. */
 <<if subject() instanceof Puppet>>
-	<<set $B.target = null>>
+	<<set $target = null>>
 	<<for target() === null>>
 		<<set _rand = random(0,_party.length-1)>>
 		<<if !_party[_rand].dead && (_modifiers.includes("ignore untargetable") || !_party[_rand].untargetable)>>
-			<<set $B.target = _party[_rand]>>
+			<<set $target = _party[_rand]>>
 		<</if>>
 	<</for>>
 
@@ -176,12 +176,12 @@
 <<else>>
 
 /* mercy setting */
-<<if $B.subject.mercy < 1 or _modifiers.includes("smart")>>
+<<if $subject.mercy < 1 or _modifiers.includes("smart")>>
 /* if enemy's mercy is below 1, they will always use smart targeting */
 	<<set _mercy = 2>>
 <<else>>
 /* 1 in (mercy) chance of random targeting, to give players a break */
-	<<set _mercy = random(1,$B.subject.mercy)>>
+	<<set _mercy = random(1,$subject.mercy)>>
 <</if>>
 
 /* smart targeting */
@@ -259,7 +259,7 @@
 		<<run _hitlist.push(_t)>>
 	<</for>>
 	<<set _n = random(0,_hitlist.length-1)>>
- 	<<set $B.target = _hitlist[_n]>>
+ 	<<set $target = _hitlist[_n]>>
 <<else>>
 	/* no target found, flag this to avoid errors elsewhere */
 	<<set _targetfail = true>>
@@ -302,7 +302,7 @@
 <</for>>
 <<if _hitlist.length > 0>>
 	<<set _n = random(0,_hitlist.length-1)>>
-	<<set $B.target = _hitlist[_n]>>
+	<<set $target = _hitlist[_n]>>
 	<<unset _hitlist>>
 <</if>>
 <</widget>>
@@ -328,7 +328,7 @@
 			<</if>>
 	  	<</for>>
 		<<if _temp >= _threshold>>
-			<<set $B.target = _martyrTest>>
+			<<set $target = _martyrTest>>
 			<<set _continue = false>>
 			<<set _go = true>>
 		<<else>>
@@ -368,7 +368,7 @@
 	<<set _go = true>>
 	<<if !$args.includes("mass")>> /* mass dispel doesn't need to pick a target */
 		<<set _n = random(0,(_hitlist.length-1))>>
-		<<set $B.target = _hitlist[_n]>>
+		<<set $target = _hitlist[_n]>>
 
 	/* Protection check. Comment this out if you do not want Protectors to protect against dispels. */
 	<<if !$args.includes("ignore protection")>>

@@ -106,10 +106,10 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 	<</if>>
 <</for>>
 */
-<<if $B.target !== null>>
+<<if $target !== null>>
 <<run getActor("target")>>
 <</if>>
-<<if $B.subject !== null>>
+<<if $subject !== null>>
 <<run getActor("subject")>>
 <</if>>
 <<if $B.actor !== null>>
@@ -255,23 +255,23 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 /* Determines effects to be removed by Neutralize and Restoration. */
 /* Because these actions are so similar, the same widget can be used for both. */
 
-<<if $B.target.stasis isnot true>>
+<<if $target.stasis isnot true>>
 /* Stasis blocks any effect changes, so it blocks this too. */
-<<set _effects to $B.target.effects>> /* This is done just so you don't have to write out the longer name */
+<<set _effects to $target.effects>> /* This is done just so you don't have to write out the longer name */
 <<for _i = (_effects.length-1); _i >= 0; _i-->>
 /* Loop runs over the effects array starting from the END and working backwards. This is why we can't use a "range" loop, because that only goes forwards. */
 	<<if $effects_to_remove <= 0>>
 		<<break>>
 /* The number of effects removed by Neutralize/Restoration varies depending on energy invested. If there are more effects than the spell can remove, we end the function here. Otherwise the spell would clear all effects regardless of strength! */
 	<</if>>
-	<<if $B.target instanceof Puppet is true>>
+	<<if $target instanceof Puppet is true>>
 		<<if _effects[_i].buff isnot true and _effects[_i].sticky isnot true>>
 /* Because there are fewer buffs than debuffs, a single "buff" flag is used to distinguish them. We only want Restoration to remove debuffs, so it will only trigger the removal code if the effect's buff flag is NOT true. */
 /* You may also want some effects to be irremovable. This is the purpose of the "sticky" flag, which is set in the story JavaScript. */
 			<<run $removed_effects.push(_effects[_i])>>
 			<<set $effects_to_remove -= 1>>
 		<</if>>
-	<<elseif $B.target instanceof Enemy is true>>
+	<<elseif $target instanceof Enemy is true>>
 		<<if _effects[_i].buff is true and _effects[_i].sticky isnot true>>
 			<<run $removed_effects.push(_effects[_i])>>
 			<<set $effects_to_remove -= 1>>
