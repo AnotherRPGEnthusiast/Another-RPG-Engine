@@ -1,4 +1,28 @@
+/* popover.min.css, by chapel; for use with popover.js; v1.0.0 */
+#ui-dialog-body.popover{background:0 0;border:0;padding:0}.popover #ui-dialog-titlebar{background:0 0}.popover #ui-dialog-title{display:none}.popover #ui-dialog-close{position:fixed;display:block;top:0;right:0;height:3em}.popover #ui-dialog-close:hover{background-color:transparent;border-color:transparent;color:#c22}#ui-overlay.popover.opaque{opacity:1}#ui-overlay.popover.transparent{opacity:0}#ui-overlay.popover.invert{background-color:#f8f8f8}#ui-dialog-body.popover.invert{color:#111}
+/* end popover.min.css */
 /* speech.min.css, by chapel; for use with speech.js */
 .say{border:1px solid #eee;overflow:auto}.say img{max-width:20%;float:left;margin-right:1em}.say p:first-of-type{font-weight:700;margin:.2em 0;border-bottom:1px solid #eee}.say p:last-of-type{padding:.5em;margin:0}
 /* notify.min.css, by chapel; for use with notify.js; v1.0.0 */
-#notify{position:fixed;display:block;width:16em;right:-20em;top:2em;padding:.5em;background-color:#fff;color:#000;-webkit-transition:right .3s;-moz-transition:right .3s;-o-transition:right .3s;transition:right .3s}#notify.open{right:0}
+/*
+#notify {
+  position:fixed;
+  display:block;
+  width:16em;
+  right:-20em;
+  top:2em;
+  padding:.5em;
+  background-color:#fff;
+  color:#000;
+  -webkit-transition:right .3s;
+  -moz-transition:right .3s;
+  -o-transition:right .3s;
+  transition:right .3s
+}
+*/
+/*
+#notify.open {
+  right:0
+}
+*/
+/* end notify.min.css */

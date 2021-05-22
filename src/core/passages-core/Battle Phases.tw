@@ -985,6 +985,25 @@ $subject.name will
 
 <div style="display:flex; flex-direction:column"> /* container for action display components */
 
+/* Gameplay effect of the action. This will be displayed last (see actions.css), but must be run first because later portions depend on the results. */
+<<if $action.act !== null>>
+<div id="actEffect">
+
+<<if def _targetingMsg>>
+/* This section covers text that has to be generated elsewhere for various reasons, such as the alert for a Protector covering another character. */
+<<print _targetingMsg>>
+<<unset _targetingMsg>>
+<</if>>
+
+<<if $action.act instanceof Function>>
+<<print $action.act()>>
+<<else>>
+<<print $action.act>>
+<</if>>
+
+</div> /* close action effects div */
+<</if>>
+
 /* Flavor text relating to the action. It is a div element, making it a separate block from the gameplay effects. By default, it has a bottom margin of 1em to create a separator between flavor text and gameplay text. */
 
 <div id="actFlavor">
@@ -1010,7 +1029,7 @@ $subject.name will
 /* Set actText to null to bypass this element. This is useful if you only want one of the two areas to display. */
 <div id="actText">
 <<if $action.actText instanceof Function>>
-	<<print $action.actText()>>
+	<<print $action.actText(_hit)>>
 <<else>>
 	<<print $action.actText>>
 <</if>>
@@ -1018,25 +1037,6 @@ $subject.name will
 <</if>>
 
 </div> /* close flavor text div */
-
-/* Then effects. */
-<<if $action.act !== null>>
-<div id="actEffect">
-
-<<if def _targetingMsg>>
-/* This section covers text that has to be generated elsewhere for various reasons, such as the alert for a Protector covering another character. */
-<<print _targetingMsg>>
-<<unset _targetingMsg>>
-<</if>>
-
-<<if $action.act instanceof Function>>
-<<print $action.act()>>
-<<else>>
-<<print $action.act>>
-<</if>>
-
-</div> /* close action effects div */
-<</if>>
 
 <<if setup.ANIMATIONS === true && _queue.size > 0>>
 <div class="actors animationContainer">

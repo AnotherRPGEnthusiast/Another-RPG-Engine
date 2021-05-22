@@ -52,13 +52,6 @@
 	color:#111;
 }
 
-.actor.menu {
-	margin-bottom: 10px;
-	min-width: 90%;
-	border-radius: 0px;
-	height: auto;
-}
-
 .actor.full {
   width: 100%;
   text-align: center;

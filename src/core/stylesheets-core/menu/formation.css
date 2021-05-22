@@ -1,0 +1,78 @@
+.actors.menu {
+	grid-template-columns: auto 1fr 1fr 1fr;
+}
+
+.formation-label {
+	padding-right: 1em;
+	justify-self: start;
+}
+
+.leaderlabel {
+	grid-column: 1;
+	grid-row: 1;
+	font-weight: bold;
+}
+
+.frontrowlabel {
+	grid-column: 1;
+	grid-row: 2;
+	font-weight: bold;
+}
+
+.backrowlabel {
+	grid-column: 1;
+	grid-row: 3;
+	font-weight: bold;
+}
+
+.front1.menu {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.front2.menu {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.front3.menu {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.mid1.menu {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.mid2.menu {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.mid3.menu {
+  grid-column: 4;
+  grid-row: 2;
+}
+
+.back1.menu {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.back2.menu {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.back3.menu {
+  grid-column: 4;
+  grid-row: 3;
+}
+
+.formation-labels {
+	display: inline-grid;
+	grid-template: repeat(3,1fr) / 1fr;
+	row-gap: 1em;
+	height: 100%;
+}

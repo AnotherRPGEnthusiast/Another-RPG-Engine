@@ -87,3 +87,15 @@ html.redLinks a:hover {
 	background-color: silver;
 	border-radius: 4px;
 }
+
+.relative {
+	position: relative;
+}
+
+.relative > .centered {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 100%;
+	text-align: center;
+}

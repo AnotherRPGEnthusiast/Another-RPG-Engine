@@ -1,4 +1,14 @@
 :: Changelog[text]
+Version 3.02
+<ul>
+<li>The gameplay effects of an action are now calculated before the text description is rendered. This allows you to customize the text based on variable results of the action, e.g. whether or not the attack missed. The <code>_hit</code> variable is now passed to <code>actText</code> to facilitate this.</li>
+<li>The item display box in the menu now has a fixed height; item descriptions that exceed the height will generate a scrollbar. This will prevent UI elements from jumping around.</li>
+<li>Using items or actions from the menu will now generate a brief notification informing the player of the results. This notification is taken from the return value of the <code>onUse</code> function.</li>
+<li>Stylesheet files for the party menu and for battle layout have been split into separate files and grouped into a single folder each.</li>
+<li>The code for individual screens of the party menu have been split off into their own twee files.</li>
+<li>The "Example" enemy will no longer accidentally be given a bestiary entry.</li>
+<li>You can now filter character actions to only usable ones in the menu.</li>
+</ul>
 Version 3.01
 <ul>
 <li>Target and subject variables have now been decoupled from the battle controller <code>B</code>. This allows more flexible usage of functions and widgets that call for interactions between characters, but may cause problems with existing code. Report any bugs.</li>

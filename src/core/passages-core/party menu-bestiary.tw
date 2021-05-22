@@ -10,7 +10,7 @@
 BESTIARY<br/>
 <span class="smalltext">Click an enemy name to see detailed information.</span>
 </div>
-<div class="bestiary-container">
+<div class="bestiary-grid">
 <<for _i, _enemy range $bestiary>>
 	/* if even (no remainder from modulo 2), go on right side (column 3), else go on left side (column 1) */
 	<<if (_i+1) % 2 === 0>>

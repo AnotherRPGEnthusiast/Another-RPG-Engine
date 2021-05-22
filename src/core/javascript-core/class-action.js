@@ -153,7 +153,7 @@ window.Action = class Action {
 						}
 					}
 				} else if (val.includes("heal")) {
-					result += `<<healCalc>><b>${target().name}</b> will recover <b>$heal</b> damage`;
+					result += `<<healCalc>><b>${target().name}</b> will recover <b>$heal</b> health`;
 				} else {
 					if (this.weight > 0) {
 						if (hits < 1) {

@@ -1,6 +1,6 @@
 Object.assign(setup.enemyData,{
   "Example": {
-    "bestiaryNo": 0,
+    "bestiaryNo": false,
     "gender": 'N',
     "hp": 0,
     "stats": {
@@ -29,5 +29,5 @@ Object.assign(setup.enemyData,{
       return;
     }
   },
-  
+
 });

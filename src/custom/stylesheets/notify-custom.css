@@ -1,0 +1,23 @@
+#notify {
+  position:fixed;
+  display:block;
+  opacity: 0;
+  width:26em;
+  top: -1em;
+  right: 530px;
+  padding:1em;
+  background-color:#fff;
+  color:#000;
+  font-size: 100%;
+  border: 2px solid;
+  border-radius: 1em;
+  -webkit-transition: top .3s, opacity .3s;
+  -moz-transition:top .3s, opacity .3s;
+  -o-transition:top .3s, opacity .3s;
+  transition:top .3s, opacity .3s;
+}
+
+#notify.open {
+  opacity: 1;
+  top: 4em;
+}
