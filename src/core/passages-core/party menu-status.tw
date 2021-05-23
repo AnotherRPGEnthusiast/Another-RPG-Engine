@@ -208,6 +208,17 @@
 :: action use puppets [nobr]
 <div id="menu-display" class="action">
 	<<print $action>>
+	<div class="item-buttons">
+		<div id="button1">
+			<span id="cancelbutton">
+			<<button "CANCEL">>
+				<<unset $subject, $action>>
+				<<replace "#partydisplay">><<include "status party display">><</replace>>
+			<</button>>
+			</span>
+			<span class="monospace" style="font-size:85%">[R]</span>
+		</div>
+	</div>
 </div>
 <div id="puppets">
 <<set _HPmeters = []>>

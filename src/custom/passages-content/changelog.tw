@@ -8,6 +8,8 @@ Version 3.02
 <li>The code for individual screens of the party menu have been split off into their own twee files.</li>
 <li>The "Example" enemy will no longer accidentally be given a bestiary entry.</li>
 <li>You can now filter character actions to only usable ones in the menu.</li>
+<li>Puppets will now display their HP/MP values instead of their equipment when being selected for an in-menu action.</li>
+<li>Fixed a bug where pressing R while using an action from the menu would cause the action to be performed on the first puppet in the party. There is now a cancel button included in the action display, and pressing R will trigger it.</li>
 </ul>
 Version 3.01
 <ul>

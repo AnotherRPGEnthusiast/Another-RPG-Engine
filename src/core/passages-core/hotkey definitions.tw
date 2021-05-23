@@ -79,7 +79,12 @@
 			<</switch>>
 		<<else>>
 			<<if passage() == "Menu: Status" && def $subject>>
-				<<trigger 'click' '#toggle a'>>
+				<<if document.getElementById("cancelbutton")>>
+					<<set _id = '#cancelbutton button'>>
+					<<trigger 'click' _id>>
+				<<else>>
+					<<trigger 'click' '#toggle a'>>
+				<</if>>
 			<<elseif passage() == "Menu: Equipment" && def _s>>
 				<<trigger 'click' '#toggle a'>>
 			<<elseif passage() == "Menu: Inventory" && document.getElementById("cancelbutton")>>

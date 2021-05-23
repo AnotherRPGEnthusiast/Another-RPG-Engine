@@ -39,7 +39,7 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 				<<actorNameLink>>
 			</div> /* close name display */
 			<<switch _displayModel>>
-				<<case "inventory" "decurse" "equipment">>
+				<<case "action" "inventory" "decurse" "equipment">>
 				/* In these menus, the character's stats are displayed below their name. */
 					<div @class="'menuactor-stats monospace'+_classMod">
 					<<for _k, _v range _puppet.stats>>
@@ -140,7 +140,7 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 <<widget "actorRightDisplay">>
 /* Branch for determining what is displayed on the right-hand side of the actor display. */
 
-<<if (_displayModel == "inventory" && _event == "use") || (ndef _displayModel || _displayModel == "standard")>>
+<<if (_displayModel == "inventory" && _event == "use") || (ndef _displayModel || _displayModel == "standard" || _displayModel == "action")>>
 /* By default or if we're using an item on the inventory screen, we want to display HP and MP on the right-hand side. */
 	<<set _id = 'hp'+_i>>
 	<<run _HPmeters.push(_id)>>

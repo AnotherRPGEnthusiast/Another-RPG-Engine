@@ -4429,7 +4429,124 @@ html.redLinks a:hover {
 */  right: 20px;
   top: 15px;
 }
-/* twine-user-stylesheet #5: "battle display.css" */
+/* twine-user-stylesheet #5: "battle grid.css" */
+.actors.grid {
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  row-gap: 1em;
+  width: 100%;
+  height: auto;
+/*  grid-template-columns: repeat(auto-fit,1fr); */
+  /*
+  By default, this will result in rows of size 4.
+  For shorter rows, put a defined number in place of auto-fit or the space specification.
+  For longer rows, you must expand the width of #content and/or adjust the width of .actor.grid.
+  */
+}
+
+.actors.grid.large {
+	grid-template: repeat(2,1fr) / repeat(3,1fr);
+}
+
+.actor.grid {
+  position: relative;
+  width: 140px; /* 4 per row at default #content width */
+  min-height: 96px;
+}
+
+.actor.large {
+	grid-column: 1 / 4;
+	grid-row: 1 / 3;
+	width: 100%;
+	height: 192px;	/* 2 actor boxes */
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	text-align: center;
+	justify-content: center;
+	align-items: center;
+}
+
+.actor.large .actorname {
+	font-size: 24pt;
+}
+
+.front1 {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.front2 {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.front3 {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.mid1 {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.mid2 {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.mid3 {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.back1 {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.back2 {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.back3 {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.enemy.front1 {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.enemy.front2 {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.enemy.front3 {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.enemy.back1 {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.enemy.back2 {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.enemy.back3 {
+  grid-column: 3;
+  grid-row: 1;
+}
+/* twine-user-stylesheet #6: "battle layout.css" */
 .invisible {
 	display: none;
 }
@@ -4482,13 +4599,6 @@ html.redLinks a:hover {
 	margin-bottom: 1em;
 	background-color:#fff;
 	color:#111;
-}
-
-.actor.menu {
-	margin-bottom: 10px;
-	min-width: 90%;
-	border-radius: 0px;
-	height: auto;
 }
 
 .actor.full {
@@ -4621,242 +4731,7 @@ button {
 	right: 1em;
 	bottom: 0;
 }
-/* twine-user-stylesheet #6: "battle grid.css" */
-.actors.grid {
-  display: grid;
-  justify-items: center;
-  align-items: center;
-  row-gap: 1em;
-  width: 100%;
-  height: auto;
-/*  grid-template-columns: repeat(auto-fit,1fr); */
-  /*
-  By default, this will result in rows of size 4.
-  For shorter rows, put a defined number in place of auto-fit or the space specification.
-  For longer rows, you must expand the width of #content and/or adjust the width of .actor.grid.
-  */
-}
-
-.actors.grid.large {
-	grid-template: repeat(2,1fr) / repeat(3,1fr);
-}
-
-.actor.grid {
-  position: relative;
-  width: 140px; /* 4 per row at default #content width */
-  min-height: 96px;
-}
-
-.actor.large {
-	grid-column: 1 / 4;
-	grid-row: 1 / 3;
-	width: 100%;
-	height: 192px;	/* 2 actor boxes */
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	text-align: center;
-	justify-content: center;
-	align-items: center;
-}
-
-.actor.large .actorname {
-	font-size: 24pt;
-}
-
-.front1 {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.front2 {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.front3 {
-  grid-column: 3;
-  grid-row: 1;
-}
-
-.mid1 {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.mid2 {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.mid3 {
-  grid-column: 3;
-  grid-row: 2;
-}
-
-.back1 {
-  grid-column: 1;
-  grid-row: 3;
-}
-
-.back2 {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.back3 {
-  grid-column: 3;
-  grid-row: 3;
-}
-
-.enemy.front1 {
-  grid-column: 1;
-  grid-row: 3;
-}
-
-.enemy.front2 {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.enemy.front3 {
-  grid-column: 3;
-  grid-row: 3;
-}
-
-.enemy.back1 {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.enemy.back2 {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.enemy.back3 {
-  grid-column: 3;
-  grid-row: 1;
-}
-/* twine-user-stylesheet #7: "bleached style.css" */
-body, tw-story
-{
-  background-color:#fff;
-  color:#111;
-}
-
-a {
-	color: #35c;
-}
-
-a:hover {
-  color: #6691ff;
-}
-
-input, select, textarea {
-  color: #444;
-}
-
-input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):focus, select:not(:disabled):hover, textarea:not(:disabled):focus, textarea:not(:disabled):hover {
-    background-color: #fff;
-    border-color: #444;
-}
-
-#title, #story-caption {
-	color:#fff;
-}
-
-/* Default dialog styling */
-#ui-overlay {
-	background-color: #777;
-}
-#ui-dialog-titlebar {
-	background-color: #ccc;
-}
-#ui-dialog-close:hover {
-	background-color: #b44;
-	border-color: #a33;
-}
-#ui-dialog-body {
-	background-color: #fff;
-	border-color: #ccc;
-	color:#111;
-}
-#ui-dialog-body hr {
-	background-color: #ccc;
-}
-
-/* List-based dialog styling */
-#ui-dialog-body.list li:not(:first-child) {
-	border-top-color: #ccc;
-}
-#ui-dialog-body.list li a {
-	color: #111;
-}
-#ui-dialog-body.list li a:hover {
-	background-color: #ddd;
-	border-color: #111;
-}
-
-/* Saves dialog styling */
-#ui-dialog-body.saves > *:not(:first-child),
-#ui-dialog-body.saves tr:not(:first-child) {
-	border-top-color: #ccc;
-}
-#ui-dialog-body.saves .empty {
-	color: #777;
-}
-
-/* Settings dialog styling */
-#ui-dialog-body.settings button[id|="setting-control"] {
-	color: #111;
-	border-color: #ccc;
-}
-#ui-dialog-body.settings button[id|="setting-control"]:hover {
-	background-color: #ddd;
-	border-color: #111;
-}
-#ui-dialog-body.settings button[id|="setting-control"].enabled {
-	background-color: #9e9;
-	border-color: #7c7;
-}
-#ui-dialog-body.settings button[id|="setting-control"].enabled:hover {
-	background-color: #7c7;
-	border-color: #5a5;
-}
-/* twine-user-stylesheet #8: "colors.css" */
-.stat-raised, .blue {
-	color: blue;
-}
-
-.stat-lowered, .red {
-	color: red;
-}
-
-.green {
-	color: lime;
-}
-
-.truegreen {
-	color: green;
-}
-
-.gray {
-  color: gray;
-}
-
-.maroon {
-  color: maroon;
-}
-
-.gold {
-  color: gold;
-}
-
-.orange {
-  color: orange;
-}
-/* twine-user-stylesheet #9: "custom animations.css" */
+/* twine-user-stylesheet #7: "custom animations.css" */
 @-webkit-keyframes headShake {
   0% {
     -webkit-transform: translateX(0);
@@ -5039,7 +4914,152 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
   -webkit-animation-name: slideOutDown;
   animation-name: slideOutDown;
 }
-/* twine-user-stylesheet #10: "fonts.css" */
+/* twine-user-stylesheet #8: "status-pane.css" */
+.statusname {
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.statname {
+  display: inline-block;
+  min-width: 6em;
+  text-transform: uppercase;
+}
+
+.stat {
+	display: inline-block;
+	min-width: 4em;
+	text-align: right;
+}
+
+.effectdesc {
+  font-weight: normal;
+}
+
+.duration, .tolerance {
+  color: gray;
+  font-style: italic;
+  float: right;
+}
+/* twine-user-stylesheet #9: "bleached style.css" */
+body, tw-story
+{
+  background-color:#fff;
+  color:#111;
+}
+
+a {
+	color: #35c;
+}
+
+a:hover {
+  color: #6691ff;
+}
+
+input, select, textarea {
+  color: #444;
+}
+
+input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):focus, select:not(:disabled):hover, textarea:not(:disabled):focus, textarea:not(:disabled):hover {
+    background-color: #fff;
+    border-color: #444;
+}
+
+#title, #story-caption {
+	color:#fff;
+}
+
+/* Default dialog styling */
+#ui-overlay {
+	background-color: #777;
+}
+#ui-dialog-titlebar {
+	background-color: #ccc;
+}
+#ui-dialog-close:hover {
+	background-color: #b44;
+	border-color: #a33;
+}
+#ui-dialog-body {
+	background-color: #fff;
+	border-color: #ccc;
+	color:#111;
+}
+#ui-dialog-body hr {
+	background-color: #ccc;
+}
+
+/* List-based dialog styling */
+#ui-dialog-body.list li:not(:first-child) {
+	border-top-color: #ccc;
+}
+#ui-dialog-body.list li a {
+	color: #111;
+}
+#ui-dialog-body.list li a:hover {
+	background-color: #ddd;
+	border-color: #111;
+}
+
+/* Saves dialog styling */
+#ui-dialog-body.saves > *:not(:first-child),
+#ui-dialog-body.saves tr:not(:first-child) {
+	border-top-color: #ccc;
+}
+#ui-dialog-body.saves .empty {
+	color: #777;
+}
+
+/* Settings dialog styling */
+#ui-dialog-body.settings button[id|="setting-control"] {
+	color: #111;
+	border-color: #ccc;
+}
+#ui-dialog-body.settings button[id|="setting-control"]:hover {
+	background-color: #ddd;
+	border-color: #111;
+}
+#ui-dialog-body.settings button[id|="setting-control"].enabled {
+	background-color: #9e9;
+	border-color: #7c7;
+}
+#ui-dialog-body.settings button[id|="setting-control"].enabled:hover {
+	background-color: #7c7;
+	border-color: #5a5;
+}
+/* twine-user-stylesheet #10: "colors.css" */
+.stat-raised, .blue {
+	color: blue;
+}
+
+.stat-lowered, .red {
+	color: red;
+}
+
+.green {
+	color: lime;
+}
+
+.truegreen {
+	color: green;
+}
+
+.gray {
+  color: gray;
+}
+
+.maroon {
+  color: maroon;
+}
+
+.gold {
+  color: gold;
+}
+
+.orange {
+  color: orange;
+}
+/* twine-user-stylesheet #11: "fonts.css" */
 @font-face {
   font-family: 'OpenDyslexic';
   src: url("fonts/OpenDyslexic-Regular.otf") format("otf"),
@@ -5051,7 +5071,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
   src: url("fonts/OpenDyslexicMono-Regular.otf") format("otf"),
   url("fonts/OpenDyslexicMono-Regular.woff") format("woff");
 }
-/* twine-user-stylesheet #11: "marquee.css" */
+/* twine-user-stylesheet #12: "marquee.css" */
 .marqueeWrapper {
     position: relative;
     display: flex;
@@ -5080,7 +5100,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
         left: -100%;
     }
 }
-/* twine-user-stylesheet #12: "bestiary.css" */
+/* twine-user-stylesheet #13: "bestiary.css" */
 .bestiary-header {
 	font-size: 200%;
 	font-weight: bold;
@@ -5177,7 +5197,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 .bestiary-entry {
 	border-bottom: 1px solid;
 }
-/* twine-user-stylesheet #13: "equipment.css" */
+/* twine-user-stylesheet #14: "equipment.css" */
 #equipment-list {
 	overflow-y: auto;
 	padding-right: 1em;
@@ -5204,7 +5224,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	font-style: italic;
 	font-size: 12px;
 }
-/* twine-user-stylesheet #14: "formation.css" */
+/* twine-user-stylesheet #15: "formation.css" */
 .actors.menu {
 	grid-template-columns: auto 1fr 1fr 1fr;
 }
@@ -5283,7 +5303,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	row-gap: 1em;
 	height: 100%;
 }
-/* twine-user-stylesheet #15: "inventory.css" */
+/* twine-user-stylesheet #16: "inventory.css" */
 .itemcontainer {
 	display: grid;
 	width: 100%;
@@ -5313,7 +5333,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	justify-content: space-evenly;
 	margin-top: 0.5em;
 }
-/* twine-user-stylesheet #16: "shared.css" */
+/* twine-user-stylesheet #17: "shared.css" */
 #content.menu {
 	padding-top: 0;
 	border: none;
@@ -5394,13 +5414,20 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	font-weight: bold !important;
 	background-color: lightgreen !important;
 }
-/* twine-user-stylesheet #17: "status.css" */
+/* twine-user-stylesheet #18: "status.css" */
 .menuactor {
   position: relative;
   min-height: 96px;
   border: 1px solid;
   line-height: 1.2;
   margin-bottom: 0;
+}
+
+.actor.menu {
+	margin-bottom: 10px;
+	min-width: 90%;
+	border-radius: 0px;
+	height: auto;
 }
 
 .menuactor.small-display {
@@ -5555,33 +5582,6 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 
 #menu-display.action {
   height: auto;
-}
-/* twine-user-stylesheet #18: "status-pane.css" */
-.statusname {
-  text-transform: uppercase;
-  text-align: center;
-}
-
-.statname {
-  display: inline-block;
-  min-width: 6em;
-  text-transform: uppercase;
-}
-
-.stat {
-	display: inline-block;
-	min-width: 4em;
-	text-align: right;
-}
-
-.effectdesc {
-  font-weight: normal;
-}
-
-.duration, .tolerance {
-  color: gray;
-  font-style: italic;
-  float: right;
 }
 /* twine-user-stylesheet #19: "tooltips.css" */
 .tooltip {
@@ -22732,7 +22732,12 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 			&lt;&lt;/switch&gt;&gt;
 		&lt;&lt;else&gt;&gt;
 			&lt;&lt;if passage() == &quot;Menu: Status&quot; &amp;&amp; def $subject&gt;&gt;
-				&lt;&lt;trigger &#39;click&#39; &#39;#toggle a&#39;&gt;&gt;
+				&lt;&lt;if document.getElementById(&quot;cancelbutton&quot;)&gt;&gt;
+					&lt;&lt;set _id = &#39;#cancelbutton button&#39;&gt;&gt;
+					&lt;&lt;trigger &#39;click&#39; _id&gt;&gt;
+				&lt;&lt;else&gt;&gt;
+					&lt;&lt;trigger &#39;click&#39; &#39;#toggle a&#39;&gt;&gt;
+				&lt;&lt;/if&gt;&gt;
 			&lt;&lt;elseif passage() == &quot;Menu: Equipment&quot; &amp;&amp; def _s&gt;&gt;
 				&lt;&lt;trigger &#39;click&#39; &#39;#toggle a&#39;&gt;&gt;
 			&lt;&lt;elseif passage() == &quot;Menu: Inventory&quot; &amp;&amp; document.getElementById(&quot;cancelbutton&quot;)&gt;&gt;
@@ -23579,14 +23584,77 @@ BESTIARY&lt;br/&gt;
 		&lt;&lt;/if&gt;&gt;
 	&lt;&lt;/for&gt;&gt;
 	&lt;/div&gt;
-&lt;&lt;/switch&gt;&gt;</tw-passagedata><tw-passagedata pid="122" name="Menu: Formation" tags="menu battle noreturn" position="225,1600" size="100,100">&lt;div id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
+&lt;&lt;/switch&gt;&gt;</tw-passagedata><tw-passagedata pid="122" name="Widget: unequipAll" tags="widget nobr" position="225,1600" size="100,100">&lt;&lt;widget &quot;unequipAll&quot;&gt;&gt;
+&lt;&lt;link &quot;Unequip All&quot;&gt;&gt;
+	&lt;&lt;for _puppet range puppets().concat($Reserve_Puppets).filter(function(p){ return !p.lockEquipment; })&gt;&gt;
+		&lt;&lt;run _puppet.unequipAll()&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;&lt;goto `passage()`&gt;&gt;
+&lt;&lt;/link&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="123" name="Menu: Equipment" tags="menu battle noreturn" position="350,1600" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
+&lt;div id=&quot;puppets&quot;&gt;
+&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;div id=&quot;equipment-list&quot;&gt;
+&lt;&lt;include &quot;equipment list&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;/nobr&gt;&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="124" name="equip manager puppets" tags="nobr" position="475,1600" size="100,100">&lt;&lt;if def $subject&gt;&gt;
+	&lt;&lt;set _i = &quot;null&quot;&gt;&gt;
+	&lt;&lt;actorDisplay $subject &quot;equipment&quot;&gt;&gt;
+&lt;&lt;else&gt;&gt;
+&lt;&lt;for _i, _p range $puppets&gt;&gt;
+	&lt;&lt;actorDisplay _p &quot;equipment&quot;&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="125" name="equipment list" tags="nobr" position="600,1600" size="100,100">&lt;&lt;if def $subject &amp;&amp; !$subject.lockEquipment&gt;&gt;
+	&lt;div style=&quot;line-height:1.4&quot;&gt;
+	&lt;&lt;set _count = 0&gt;&gt;
+	&lt;&lt;for _k, _v range $inventory&gt;&gt;
+		&lt;&lt;if _v.equippable &amp;&amp; _v.stock &gt; 0&gt;&gt;
+			&lt;br/&gt;
+			&lt;&lt;set _count++&gt;&gt;
+			&lt;&lt;if (def $subject &amp;&amp; $subject.checkRestriction(_v)) || ndef $subject&gt;&gt;
+				&lt;div @id=&quot;_k&quot;&gt;
+				&lt;b&gt;
+				&lt;&lt;if def $subject&gt;&gt;
+					&lt;&lt;capture _v&gt;&gt;
+					&lt;&lt;link _v.name&gt;&gt;
+						&lt;&lt;run $subject.equip(_v)&gt;&gt;
+						&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+						&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+					&lt;&lt;/link&gt;&gt;
+					&lt;&lt;/capture&gt;&gt;
+				&lt;&lt;else&gt;&gt;
+					&lt;&lt;print _k&gt;&gt;
+				&lt;&lt;/if&gt;&gt;
+				&lt;/b&gt;
+				&lt;span style=&quot;float:right&quot;&gt;(_v.stock)&lt;/span&gt;&lt;br/&gt;
+				&lt;i style=&quot;font-size:12px&quot;&gt;&lt;&lt;print _v.equippable.slot&gt;&gt;&lt;/i&gt;&lt;br/&gt;
+				&lt;&lt;if _v.equippable.restrictedTo.length &gt; 0&gt;&gt;
+					&lt;div style=&quot;font-size:12px; font-style:italic&quot;&gt;Restriction: &lt;&lt;for _char range _v.equippable.restrictedTo&gt;&gt;&lt;&lt;print _char&gt;&gt;&lt;&lt;/for&gt;&gt;&lt;/div&gt;
+				&lt;&lt;/if&gt;&gt;
+				&lt;&lt;print _v.desc&gt;&gt;&lt;br/&gt;
+				&lt;span class=&quot;action-desc&quot;&gt;&lt;&lt;print _v.info&gt;&gt;&lt;/span&gt;
+				&lt;/div&gt;
+			&lt;&lt;/if&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;&lt;if _count == 0&gt;&gt;
+	You don&#39;t have any equipment.
+	&lt;&lt;/if&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;elseif def $subject &amp;&amp; $subject.lockEquipment&gt;&gt;
+	&lt;i&gt;This character&#39;s equipment can&#39;t be changed.&lt;/i&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;unequipAll&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="126" name="Menu: Formation" tags="menu battle noreturn" position="725,1600" size="100,100">&lt;div id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
 &lt;div id=&quot;puppets&quot; class=&quot;actors grid&quot;&gt;
 &lt;&lt;include &quot;formation puppets&quot;&gt;&gt;
 &lt;/div&gt;
 &lt;&lt;/nobr&gt;&gt;
 
 Click on a character to select them, then click on another space to move or swap.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="123" name="formation puppets" tags="nobr" position="350,1600" size="100,100">&lt;div class=&quot;leaderlabel formation-label&quot;&gt;Front Row&lt;/div&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="127" name="formation puppets" tags="nobr" position="850,1600" size="100,100">&lt;div class=&quot;leaderlabel formation-label&quot;&gt;Front Row&lt;/div&gt;
 &lt;div class=&quot;frontrowlabel formation-label&quot;&gt;Middle Row&lt;/div&gt;
 &lt;div class=&quot;backrowlabel formation-label&quot;&gt;Back Row&lt;/div&gt;
 	&lt;&lt;for _i, _puppet range $puppets&gt;&gt;
@@ -23637,7 +23705,399 @@ Click on a character to select them, then click on another space to move or swap
 	  &quot;grid-template-columns&quot;: `auto repeat(${setup.ROW_SIZE},1fr)`
 	});
 	&lt;&lt;/script&gt;&gt;
-&lt;&lt;/timed&gt;&gt;</tw-passagedata><tw-passagedata pid="124" name="Widget: actorDisplay" tags="widget nobr" position="475,1600" size="100,100">&lt;&lt;widget &quot;actorDisplay&quot;&gt;&gt;
+&lt;&lt;/timed&gt;&gt;</tw-passagedata><tw-passagedata pid="128" name="Menu: Inventory" tags="menu battle noreturn" position="975,1600" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
+&lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
+&lt;div id=&quot;menu-display&quot; class=&quot;relative&quot;&gt;
+&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;div id=&quot;itemlist&quot;&gt;
+&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;/nobr&gt;&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="129" name="inventory item list" tags="nobr" position="1100,1600" size="100,100">&lt;div style=&quot;display:flex; justify-content:space-evenly;&quot;&gt;
+&lt;&lt;if _filter == &quot;all&quot;&gt;&gt;
+	&lt;b&gt;All&lt;/b&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;link &quot;All&quot;&gt;&gt;
+		&lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
+		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;&lt;if _filter == &quot;usable&quot;&gt;&gt;
+	&lt;b&gt;Usable&lt;/b&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;link &quot;Usable&quot;&gt;&gt;
+		&lt;&lt;set _filter = &quot;usable&quot;&gt;&gt;
+		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;&lt;if _filter == &quot;equipment&quot;&gt;&gt;
+	&lt;b&gt;Equipment&lt;/b&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;link &quot;Equipment&quot;&gt;&gt;
+		&lt;&lt;set _filter = &quot;equipment&quot;&gt;&gt;
+		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;/div&gt;
+&lt;br/&gt;
+&lt;div class=&quot;itemcontainer&quot;&gt;
+&lt;&lt;set _p = 2&gt;&gt;
+&lt;&lt;for _name, _item range $inventory&gt;&gt;
+	&lt;&lt;if _filter == &quot;all&quot; || (_filter == &quot;usable&quot; &amp;&amp; _item.usable.includes(&quot;inmenu&quot;)) || (_filter == &quot;equipment&quot; &amp;&amp; _item.equippable)&gt;&gt;
+	&lt;&lt;if _p == 1&gt;&gt;
+		&lt;&lt;set _p = 2&gt;&gt;
+	&lt;&lt;elseif _p == 2&gt;&gt;
+		&lt;&lt;set _p = 1&gt;&gt;
+	&lt;&lt;/if&gt;&gt;
+	&lt;div @class=&quot;&#39;item&#39;+_p&quot;&gt;
+	&lt;b&gt;
+	&lt;&lt;capture _item&gt;&gt;
+	&lt;&lt;link _item.name&gt;&gt;
+		&lt;&lt;set _display = _item&gt;&gt;
+		&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+	&lt;&lt;/capture&gt;&gt;
+	&lt;/b&gt; &lt;span class=&quot;itemstock&quot;&gt;(_item.stock)&lt;/span&gt;
+	&lt;/div&gt;
+	&lt;&lt;/if&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="130" name="inventory item display" tags="nobr" position="1225,1600" size="100,100">&lt;&lt;if ndef _display || _display === null&gt;&gt;
+	&lt;div class=&quot;centered&quot; style=&quot;color: gray&quot;&gt;Click on an item to see info&lt;/div&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;print _display&gt;&gt;
+	&lt;&lt;if _display.usable.includes(&#39;inmenu&#39;) || _display.equippable&gt;&gt;
+	&lt;div class=&quot;item-buttons&quot;&gt;
+		&lt;&lt;set _b = 0&gt;&gt;
+		&lt;&lt;if _display.usable.includes(&#39;inmenu&#39;) &amp;&amp; _display.stock &gt; 0&gt;&gt;
+			&lt;&lt;set _b++&gt;&gt;
+			&lt;span @id=&quot;&#39;button&#39;+_b&quot;&gt;
+				&lt;span id=&quot;usebutton&quot;&gt;
+				&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;
+				&lt;/span&gt;
+			&lt;/span&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;&lt;if _display.equippable &amp;&amp; _display.stock &gt; 0&gt;&gt;
+			&lt;&lt;set _b++&gt;&gt;
+			&lt;span @id=&quot;&#39;button&#39;+_b&quot;&gt;
+				&lt;span id=&quot;equipbutton&quot;&gt;
+				&lt;&lt;include &quot;equip button&quot;&gt;&gt;
+				&lt;/span&gt;
+			&lt;/span&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;/div&gt;
+	&lt;&lt;/if&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="131" name="equip button" tags="nobr" position="100,1725" size="100,100">&lt;&lt;button &quot;EQUIP&quot;&gt;&gt;
+	&lt;&lt;set _event = &quot;equip&quot;&gt;&gt;
+	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/button&gt;&gt;
+&lt;&lt;if _b == 1&gt;&gt;
+&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;
+&lt;&lt;elseif _b == 2&gt;&gt;
+&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[W]&lt;/span&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="132" name="inventory use button" tags="nobr" position="225,1725" size="100,100">&lt;&lt;button &quot;USE&quot;&gt;&gt;
+	&lt;&lt;if _display.instantUse === true&gt;&gt;
+		&lt;&lt;run _display.onUse()&gt;&gt;
+	&lt;&lt;else&gt;&gt;
+		&lt;&lt;set _event = &quot;use&quot;&gt;&gt;
+		&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+		&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/if&gt;&gt;
+&lt;&lt;/button&gt;&gt;
+&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="133" name="inventory cancel button" tags="nobr" position="350,1725" size="100,100">&lt;span id=&quot;cancelbutton&quot;&gt;
+&lt;&lt;button &quot;CANCEL&quot;&gt;&gt;
+	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/button&gt;&gt;
+&lt;/span&gt;
+&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[R]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="134" name="inventory puppets" tags="nobr" position="475,1725" size="100,100">&lt;&lt;set _HPmeters = []&gt;&gt;
+&lt;&lt;set _MPmeters = []&gt;&gt;
+&lt;&lt;for _i, _p range puppets().filter(function(p) { return temporary().event != &quot;equip&quot; || (!p.lockEquipment &amp;&amp; p.checkRestriction(temporary().display)); })&gt;&gt;
+	&lt;&lt;actorDisplay _p &quot;inventory&quot;&gt;&gt;
+&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="135" name="Menu: Party" tags="menu battle noreturn" position="600,1725" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;center style=&quot;font-weight:bold&quot;&gt;ACTIVE PUPPETS&lt;/center&gt;
+&lt;&lt;nobr&gt;&gt;
+&lt;div class=&quot;actors&quot; id=&quot;puppets&quot;&gt;
+&lt;&lt;include &quot;party manager puppets&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;/nobr&gt;&gt;
+&lt;center style=&quot;font-weight:bold&quot;&gt;RESERVE PUPPETS&lt;/center&gt;
+&lt;&lt;nobr&gt;&gt;
+&lt;div class=&quot;actors&quot; id=&quot;reserve&quot;&gt;
+&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;/nobr&gt;&gt;
+
+&lt;&lt;unequipAll&gt;&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="136" name="party manager puppets" tags="nobr" position="725,1725" size="100,100">&lt;&lt;for _i, _puppet range $puppets&gt;&gt;
+	&lt;&lt;if _puppet !== null&gt;&gt;
+	&lt;div class=&quot;actor&quot; @id=&quot;_i&quot; style=&quot;min-width:150px&quot;&gt;
+	&lt;center&gt;
+	&lt;&lt;capture _i&gt;&gt;
+	&lt;&lt;link _puppet.name&gt;&gt;
+		&lt;&lt;if def _s&gt;&gt;
+			&lt;&lt;run $(&#39;#&#39; + _s).removeClass(&quot;selected&quot;)&gt;&gt;
+			&lt;&lt;if _s != _i&gt;&gt;
+				&lt;&lt;set _s = _i&gt;&gt;
+				&lt;&lt;run $(&#39;#&#39; + _s).addClass(&quot;selected&quot;)&gt;&gt;
+			&lt;&lt;else&gt;&gt;
+				&lt;&lt;unset _s&gt;&gt;
+			&lt;&lt;/if&gt;&gt;
+		&lt;&lt;else&gt;&gt;
+			&lt;&lt;set _s = _i&gt;&gt;
+			&lt;&lt;run $(&#39;#&#39; + _i).addClass(&quot;selected&quot;)&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;&lt;run console.log(&quot;i = &quot;+_i); console.log(&quot;s = &quot;+_s)&gt;&gt;
+		&lt;&lt;replace &quot;#reserve&quot;&gt;&gt;&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+	&lt;&lt;/capture&gt;&gt;
+	&lt;/center&gt;&lt;br/&gt;
+	&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
+		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
+		&lt;&lt;statOOB _k _puppet&gt;&gt;
+		&lt;br/&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;/div&gt;
+	&lt;&lt;/if&gt;&gt;
+&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="137" name="party manager reserve" tags="nobr" position="850,1725" size="100,100">&lt;&lt;for _j, _puppet range $Reserve_Puppets&gt;&gt;
+	&lt;div class=&quot;actor&quot; style=&quot;min-width:150px&quot;&gt;
+	&lt;center&gt;
+	&lt;&lt;if def _s&gt;&gt;
+		&lt;&lt;capture _puppet, _j&gt;&gt;
+		&lt;&lt;link _puppet.name&gt;&gt;
+			&lt;&lt;run $Reserve_Puppets[_j] = $puppets[_s]&gt;&gt;
+			&lt;&lt;set $puppets[_s] = _puppet&gt;&gt;
+			&lt;&lt;unset _s&gt;&gt;
+			&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;party manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+			&lt;&lt;replace &quot;#reserve&quot;&gt;&gt;&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/link&gt;&gt;
+		&lt;&lt;/capture&gt;&gt;
+	&lt;&lt;else&gt;&gt;
+		_puppet.name
+	&lt;&lt;/if&gt;&gt;
+	&lt;/center&gt;&lt;br/&gt;
+	&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
+		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
+		&lt;&lt;statOOB _k _puppet&gt;&gt;
+		&lt;br/&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="138" name="Menu: Status" tags="menu battle noreturn" position="975,1725" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
+&lt;div id=&quot;partydisplay&quot;&gt;
+&lt;&lt;include &quot;status party display&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;/nobr&gt;&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="139" name="menu stat display" tags="nobr" position="1100,1725" size="100,100">&lt;&lt;if !setup.hiddenStats.includes(_k)&gt;&gt;
+	&lt;&lt;if def setup.statInfo[_k]&gt;&gt;
+		&lt;&lt;set _class = &quot;tooltip&quot;&gt;&gt;
+	&lt;&lt;else&gt;&gt;
+		&lt;&lt;set _class = &quot;&quot;&gt;&gt;
+	&lt;&lt;/if&gt;&gt;
+	&lt;div class=&quot;menuactor-statname&quot;&gt;&lt;span @class=_class&gt;_k&lt;&lt;if def setup.statInfo[_k]&gt;&gt;&lt;span class=&quot;tooltiptext&quot;&gt;&lt;&lt;print setup.statInfo[_k]&gt;&gt;&lt;/span&gt;&lt;&lt;/if&gt;&gt;&lt;/span&gt;&lt;/div&gt;
+	&lt;div class=&quot;menuactor-statvalue&quot;&gt;_v.base&lt;/div&gt;
+	&lt;&lt;if _v.bonus != 0&gt;&gt;
+		&lt;div class=&quot;menuactor-statmod&quot;&gt;
+		&lt;&lt;if _v.bonus &gt; 0&gt;&gt;
+			@@.green;&lt;&lt;print &quot;\+&quot;+_v.bonus&gt;&gt;@@
+		&lt;&lt;elseif _v.bonus &lt; 0&gt;&gt;
+			@@.stat-lowered;&lt;&lt;print &quot;-&quot;+_v.bonus&gt;&gt;@@
+		&lt;&lt;/if&gt;&gt;
+		&lt;/div&gt;
+	&lt;&lt;/if&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="140" name="status special detail" tags="nobr" position="1225,1725" size="100,100">&lt;div style=&quot;position:relative&quot;&gt;
+	&lt;&lt;switch setup.STATUS_SCREENS.menu[_stScreen-1]&gt;&gt;
+		&lt;&lt;case &quot;elements&quot;&gt;&gt;
+			&lt;&lt;set _title = &quot;elemental affinities&quot;&gt;&gt;
+		&lt;&lt;case &quot;ailments&quot;&gt;&gt;
+			&lt;&lt;set _title = &quot;ailment tolerances&quot;&gt;&gt;
+		&lt;&lt;default&gt;&gt;
+			&lt;&lt;set _title = setup.STATUS_SCREENS.menu[_stScreen-1]&gt;&gt;
+	&lt;&lt;/switch&gt;&gt;
+	&lt;div class=&quot;menuactor-special-title&quot;&gt;_title&lt;/div&gt;
+	&lt;&lt;if setup.STATUS_SCREENS.menu.length &gt; 1&gt;&gt;
+	&lt;div class=&quot;cyclebuttons&quot;&gt;
+		&lt;span id=&quot;statusback&quot;&gt;
+		&lt;&lt;link &quot;&lt;&quot;&gt;&gt;
+			&lt;&lt;set _stScreen--&gt;&gt;
+			&lt;&lt;if _stScreen &lt; 1&gt;&gt;
+				&lt;&lt;set _stScreen = setup.STATUS_SCREENS.menu.length&gt;&gt;
+			&lt;&lt;/if&gt;&gt;
+			&lt;&lt;replace &quot;#menuactor-special&quot;&gt;&gt;&lt;&lt;include &quot;status special detail&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/link&gt;&gt;
+		&lt;/span&gt;
+		&lt;span id=&quot;statusforward&quot;&gt;
+		&lt;&lt;link &quot;&gt;&quot;&gt;&gt;
+			&lt;&lt;set _stScreen++&gt;&gt;
+			&lt;&lt;if _stScreen &gt; setup.STATUS_SCREENS.menu.length&gt;&gt;
+				&lt;&lt;set _stScreen = 1&gt;&gt;
+			&lt;&lt;/if&gt;&gt;
+			&lt;&lt;replace &quot;#menuactor-special&quot;&gt;&gt;&lt;&lt;include &quot;status special detail&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/link&gt;&gt;
+		&lt;/span&gt;
+	&lt;/div&gt;
+	&lt;&lt;/if&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;switch setup.STATUS_SCREENS.menu[_stScreen-1]&gt;&gt;
+&lt;&lt;case &quot;equipment&quot;&gt;&gt;
+	&lt;div style=&quot;margin-left:1em;&quot;&gt;
+	&lt;&lt;for _name, _slot range $subject.equipment&gt;&gt;
+		&lt;&lt;for _index, _item range _slot&gt;&gt;
+			&lt;div class=&quot;menuactor-equipment-slot&quot;&gt;_name&lt;/div&gt;
+			&lt;&lt;if _item === null&gt;&gt;&lt;span class=&quot;menuactor-equipment-name&quot;&gt;&amp;nbsp;&lt;/span&gt;
+			&lt;&lt;else&gt;&gt;
+				&lt;div class=&quot;menuactor-equipment-name&quot;&gt;_item.name&lt;/div&gt;
+			&lt;&lt;/if&gt;&gt;
+		&lt;&lt;/for&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;case &quot;elements&quot;&gt;&gt;
+	&lt;div style=&quot;margin-left:1em; width:75%; font-weight:bold&quot;&gt;
+	&lt;&lt;for _k, _v range $subject.elements&gt;&gt;
+		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;&lt;/span&gt;
+		&lt;span class=&quot;elementdisplay monospace&quot;&gt;&lt;&lt;if setup.SOAK&gt;&gt;&lt;&lt;soak _v&gt;&gt; /&lt;&lt;/if&gt;&gt;&lt;div style=&quot;display: inline-block; min-width:45px; text-align:right&quot;&gt;&lt;&lt;res _v&gt;&gt;&lt;/div&gt;&lt;/span&gt;
+		&lt;br/&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;case &quot;ailments&quot;&gt;&gt;
+	&lt;div style=&quot;margin-left:1em; width:75%; font-weight:bold&quot;&gt;
+	&lt;&lt;for _k, _v range $subject.tolerances&gt;&gt;
+		&lt;&lt;if _v.current != 0&gt;&gt;
+			&lt;&lt;print _k&gt;&gt;
+			&lt;&lt;tol _v&gt;&gt;
+			&lt;br/&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;/switch&gt;&gt;</tw-passagedata><tw-passagedata pid="141" name="status party display" tags="nobr" position="100,1850" size="100,100">&lt;&lt;if def $subject&gt;&gt;
+	&lt;&lt;actorDisplay $subject&gt;&gt;
+	&lt;div class=&quot;menuactor-detail&quot;&gt;
+		&lt;&lt;if def setup.STATUS_SCREENS.menu &amp;&amp; setup.STATUS_SCREENS.menu.length &gt; 0&gt;&gt;
+			&lt;&lt;set _style = &quot;&quot;&gt;&gt;
+		&lt;&lt;else&gt;&gt;
+			&lt;&lt;set _style = &quot;border-right: none&quot;&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;div class=&quot;menuactor-stats monospace&quot; @style=_style&gt;
+		&lt;&lt;for _k, _v range $subject.stats&gt;&gt;
+			&lt;&lt;include &quot;menu stat display&quot;&gt;&gt;
+		&lt;&lt;/for&gt;&gt;
+		&lt;&lt;if def $subject.HPregen &amp;&amp; $subject.HPregen !== null&gt;&gt;
+			&lt;div class=&quot;menuactor-statname&quot;&gt;HP regen&lt;/div&gt;
+			&lt;div class=&quot;menuactor-statvalue&quot;&gt;&lt;&lt;print $subject.HPregenFlat&gt;&gt; / &lt;&lt;print $subject.HPregenPercent*100&gt;&gt;%&lt;/div&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;/div&gt;
+		&lt;&lt;if def setup.STATUS_SCREENS.menu &amp;&amp; setup.STATUS_SCREENS.menu.length &gt; 0&gt;&gt;
+		&lt;div id=&quot;menuactor-special&quot;&gt;
+			&lt;&lt;include &quot;status special detail&quot;&gt;&gt;
+		&lt;/div&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;/div&gt;
+	&lt;br/&gt;
+	&lt;div id=&quot;menuActionList&quot;&gt;
+	&lt;&lt;actionListMenu $subject&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;elseif ndef $subject&gt;&gt;
+	&lt;&lt;set _HPmeters = []&gt;&gt;
+	&lt;&lt;set _MPmeters = []&gt;&gt;
+	&lt;&lt;for _i, _p range puppets()&gt;&gt;
+		&lt;&lt;actorDisplay _p&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="142" name="Widget: actionListMenu" tags="widget nobr" position="225,1850" size="100,100">&lt;&lt;widget &quot;actionListMenu&quot;&gt;&gt;
+/* Widget for display of player actions in the menu. */
+
+&lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Puppet),&quot;ERROR in actionListMenu: no Puppet&quot;)&gt;&gt;
+&lt;&lt;set _char = $args[0]; _actions = _char.actions&gt;&gt;
+&lt;&lt;if _char.crisis instanceof Array&gt;&gt;
+	&lt;div class=&quot;abilities-header&quot;&gt;CRISIS&lt;/div&gt;
+	&lt;&lt;for _action range _char.crisis&gt;&gt;
+		&lt;&lt;print _action&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;br/&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;div class=&quot;abilities-header&quot;&gt;ABILITIES&lt;/div&gt;
+&lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
+&lt;&lt;liveblock&gt;&gt;
+&lt;div style=&quot;display:flex; justify-content:space-evenly;&quot;&gt;
+&lt;&lt;if _filter == &quot;all&quot;&gt;&gt;
+	&lt;b&gt;All&lt;/b&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;link &quot;All&quot;&gt;&gt;
+		&lt;&lt;set _filter = &quot;all&quot;; _actions = _char.actions&gt;&gt;
+		&lt;&lt;update&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;&lt;if _filter == &quot;usable&quot;&gt;&gt;
+	&lt;b&gt;Usable&lt;/b&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;link &quot;Usable&quot;&gt;&gt;
+		&lt;&lt;set _filter = &quot;usable&quot;; _actions = _char.actions.filter(function (act) { return act &amp;&amp; act.onUse })&gt;&gt;
+		&lt;&lt;update&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;/div&gt;
+&lt;br/&gt;
+&lt;&lt;for _action range _actions&gt;&gt;
+&lt;&lt;if !_action.invisible&gt;&gt;
+	&lt;&lt;set _actionID = &quot;action&quot;+_actions.indexOf(_action)&gt;&gt;
+	&lt;div @id=&quot;_actionID&quot; class=&quot;actionDisplay&quot;&gt;
+		&lt;&lt;print _action&gt;&gt;
+		&lt;&lt;capture _action, _actionID&gt;&gt;
+		&lt;&lt;timed 0s&gt;&gt;
+		&lt;&lt;if _action.onUse &amp;&amp; !_action.check(_display)&gt;&gt;
+			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-name&quot;&gt;&gt;
+			&lt;&lt;replace _selector&gt;&gt;
+				&lt;&lt;link &quot;_action.name&quot;&gt;&gt;
+					&lt;&lt;if _action.instantUse === true&gt;&gt;
+						&lt;&lt;run $action = _action; $action.onUse()&gt;&gt;
+					&lt;&lt;else&gt;&gt;
+						&lt;&lt;set $action = _action&gt;&gt;
+						&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;
+							&lt;&lt;include &quot;action use puppets&quot;&gt;&gt;
+						&lt;&lt;/replace&gt;&gt;
+					&lt;&lt;/if&gt;&gt;
+				&lt;&lt;/link&gt;&gt;
+			&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;&lt;if !_action.noDefault &amp;&amp; _char.defaultAction !== _action.name&gt;&gt;
+			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-tags&quot;&gt;&gt;
+			&lt;&lt;set $(_selector).after($(`&lt;div class=&quot;default-link&quot;&gt;`))&gt;&gt;
+			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .default-link&quot;&gt;&gt;
+			&lt;&lt;replace _selector&gt;&gt;
+				&lt;&lt;link &quot;[Set as default]&quot;&gt;&gt;
+					&lt;&lt;set _char.defaultAction = _action.name&gt;&gt;
+					&lt;&lt;update&gt;&gt;
+				&lt;&lt;/link&gt;&gt;
+			&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;&lt;/timed&gt;&gt;
+		&lt;&lt;/capture&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;&lt;/liveblock&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="143" name="action use puppets" tags="nobr" position="350,1850" size="100,100">&lt;div id=&quot;menu-display&quot; class=&quot;action&quot;&gt;
+	&lt;&lt;print $action&gt;&gt;
+	&lt;div class=&quot;item-buttons&quot;&gt;
+		&lt;div id=&quot;button1&quot;&gt;
+			&lt;span id=&quot;cancelbutton&quot;&gt;
+			&lt;&lt;button &quot;CANCEL&quot;&gt;&gt;
+				&lt;&lt;unset $subject, $action&gt;&gt;
+				&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;&lt;&lt;include &quot;status party display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+			&lt;&lt;/button&gt;&gt;
+			&lt;/span&gt;
+			&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[R]&lt;/span&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;puppets&quot;&gt;
+&lt;&lt;set _HPmeters = []&gt;&gt;
+&lt;&lt;set _MPmeters = []&gt;&gt;
+&lt;&lt;for _i, _p range puppets()&gt;&gt;
+	&lt;&lt;actorDisplay _p &quot;action&quot;&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="144" name="Widget: actorDisplay" tags="widget nobr" position="475,1850" size="100,100">&lt;&lt;widget &quot;actorDisplay&quot;&gt;&gt;
 /* Standard display code for a single character. By default, shows their name and stats on the left, and their equipment on the right. Modifiers can be used to change specific parts.
 
 ARG 0 = character to be displayed
@@ -23677,7 +24137,7 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 				&lt;&lt;actorNameLink&gt;&gt;
 			&lt;/div&gt; /* close name display */
 			&lt;&lt;switch _displayModel&gt;&gt;
-				&lt;&lt;case &quot;inventory&quot; &quot;decurse&quot; &quot;equipment&quot;&gt;&gt;
+				&lt;&lt;case &quot;action&quot; &quot;inventory&quot; &quot;decurse&quot; &quot;equipment&quot;&gt;&gt;
 				/* In these menus, the character&#39;s stats are displayed below their name. */
 					&lt;div @class=&quot;&#39;menuactor-stats monospace&#39;+_classMod&quot;&gt;
 					&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
@@ -23693,7 +24153,7 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 	&lt;/div&gt; /* close actor box */
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="125" name="Widget: actorNameLink" tags="widget nobr" position="600,1600" size="100,100">&lt;&lt;widget &quot;actorNameLink&quot;&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="145" name="Widget: actorNameLink" tags="widget nobr" position="600,1850" size="100,100">&lt;&lt;widget &quot;actorNameLink&quot;&gt;&gt;
 /* Switch for different functionalities tied to the character&#39;s name in actorDisplay. */
 
 &lt;&lt;capture _puppet&gt;&gt;
@@ -23769,10 +24229,10 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 &lt;&lt;/switch&gt;&gt;
 &lt;&lt;/capture&gt;&gt;
 
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="126" name="Widget: actorRightDisplay" tags="widget nobr" position="725,1600" size="100,100">&lt;&lt;widget &quot;actorRightDisplay&quot;&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="146" name="Widget: actorRightDisplay" tags="widget nobr" position="725,1850" size="100,100">&lt;&lt;widget &quot;actorRightDisplay&quot;&gt;&gt;
 /* Branch for determining what is displayed on the right-hand side of the actor display. */
 
-&lt;&lt;if (_displayModel == &quot;inventory&quot; &amp;&amp; _event == &quot;use&quot;) || (ndef _displayModel || _displayModel == &quot;standard&quot;)&gt;&gt;
+&lt;&lt;if (_displayModel == &quot;inventory&quot; &amp;&amp; _event == &quot;use&quot;) || (ndef _displayModel || _displayModel == &quot;standard&quot; || _displayModel == &quot;action&quot;)&gt;&gt;
 /* By default or if we&#39;re using an item on the inventory screen, we want to display HP and MP on the right-hand side. */
 	&lt;&lt;set _id = &#39;hp&#39;+_i&gt;&gt;
 	&lt;&lt;run _HPmeters.push(_id)&gt;&gt;
@@ -23827,7 +24287,7 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 	&lt;/div&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="127" name="Widget: equipSlotDisplay" tags="widget nobr" position="850,1600" size="100,100">&lt;&lt;widget &quot;equipSlotDisplay&quot;&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="147" name="Widget: equipSlotDisplay" tags="widget nobr" position="850,1850" size="100,100">&lt;&lt;widget &quot;equipSlotDisplay&quot;&gt;&gt;
 /* Standardized display for a single instance of character equipment. By default, this displays below the slot name itself. Assume called within actorDisplay, and uses _displayModel for modular functionality.
 
 ARG 0 = equipped item
@@ -23878,96 +24338,7 @@ ARG 0 = equipped item
 &lt;&lt;/if&gt;&gt;
 
 &lt;&lt;/if&gt;&gt; /* end error handler if */
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="128" name="Widget: actionListMenu" tags="widget nobr" position="975,1600" size="100,100">&lt;&lt;widget &quot;actionListMenu&quot;&gt;&gt;
-/* Widget for display of player actions in the menu. */
-
-&lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Puppet),&quot;ERROR in actionListMenu: no Puppet&quot;)&gt;&gt;
-&lt;&lt;set _char = $args[0]; _actions = _char.actions&gt;&gt;
-&lt;&lt;if _char.crisis instanceof Array&gt;&gt;
-	&lt;div class=&quot;abilities-header&quot;&gt;CRISIS&lt;/div&gt;
-	&lt;&lt;for _action range _char.crisis&gt;&gt;
-		&lt;&lt;print _action&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;br/&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;div class=&quot;abilities-header&quot;&gt;ABILITIES&lt;/div&gt;
-&lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
-&lt;&lt;liveblock&gt;&gt;
-&lt;div style=&quot;display:flex; justify-content:space-evenly;&quot;&gt;
-&lt;&lt;if _filter == &quot;all&quot;&gt;&gt;
-	&lt;b&gt;All&lt;/b&gt;
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;link &quot;All&quot;&gt;&gt;
-		&lt;&lt;set _filter = &quot;all&quot;; _actions = _char.actions&gt;&gt;
-		&lt;&lt;update&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;if _filter == &quot;usable&quot;&gt;&gt;
-	&lt;b&gt;Usable&lt;/b&gt;
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;link &quot;Usable&quot;&gt;&gt;
-		&lt;&lt;set _filter = &quot;usable&quot;; _actions = _char.actions.filter(function (act) { return act &amp;&amp; act.onUse })&gt;&gt;
-		&lt;&lt;update&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;/div&gt;
-&lt;br/&gt;
-&lt;&lt;for _action range _actions&gt;&gt;
-&lt;&lt;if !_action.invisible&gt;&gt;
-	&lt;&lt;set _actionID = &quot;action&quot;+_actions.indexOf(_action)&gt;&gt;
-	&lt;div @id=&quot;_actionID&quot; class=&quot;actionDisplay&quot;&gt;
-		&lt;&lt;print _action&gt;&gt;
-		&lt;&lt;capture _action, _actionID&gt;&gt;
-		&lt;&lt;timed 0s&gt;&gt;
-		&lt;&lt;if _action.onUse &amp;&amp; !_action.check(_display)&gt;&gt;
-			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-name&quot;&gt;&gt;
-			&lt;&lt;replace _selector&gt;&gt;
-				&lt;&lt;link &quot;_action.name&quot;&gt;&gt;
-					&lt;&lt;if _action.instantUse === true&gt;&gt;
-						&lt;&lt;run $action = _action; $action.onUse()&gt;&gt;
-					&lt;&lt;else&gt;&gt;
-						&lt;&lt;set $action = _action&gt;&gt;
-						&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;
-							&lt;&lt;include &quot;action use puppets&quot;&gt;&gt;
-						&lt;&lt;/replace&gt;&gt;
-					&lt;&lt;/if&gt;&gt;
-				&lt;&lt;/link&gt;&gt;
-			&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-		&lt;&lt;if !_action.noDefault &amp;&amp; _char.defaultAction !== _action.name&gt;&gt;
-			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-tags&quot;&gt;&gt;
-			&lt;&lt;set $(_selector).after($(`&lt;div class=&quot;default-link&quot;&gt;`))&gt;&gt;
-			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .default-link&quot;&gt;&gt;
-			&lt;&lt;replace _selector&gt;&gt;
-				&lt;&lt;link &quot;[Set as default]&quot;&gt;&gt;
-					&lt;&lt;set _char.defaultAction = _action.name&gt;&gt;
-					&lt;&lt;update&gt;&gt;
-				&lt;&lt;/link&gt;&gt;
-			&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/timed&gt;&gt;
-		&lt;&lt;/capture&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-&lt;&lt;/liveblock&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="129" name="action use puppets" tags="nobr" position="1100,1600" size="100,100">&lt;div id=&quot;menu-display&quot; class=&quot;action&quot;&gt;
-	&lt;&lt;print $action&gt;&gt;
-&lt;/div&gt;
-&lt;div id=&quot;puppets&quot;&gt;
-&lt;&lt;set _HPmeters = []&gt;&gt;
-&lt;&lt;set _MPmeters = []&gt;&gt;
-&lt;&lt;for _i, _p range puppets()&gt;&gt;
-	&lt;&lt;actorDisplay _p &quot;action&quot;&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="130" name="Widget: unequipAll" tags="widget nobr" position="1225,1600" size="100,100">&lt;&lt;widget &quot;unequipAll&quot;&gt;&gt;
-&lt;&lt;link &quot;Unequip All&quot;&gt;&gt;
-	&lt;&lt;for _puppet range puppets().concat($Reserve_Puppets).filter(function(p){ return !p.lockEquipment; })&gt;&gt;
-		&lt;&lt;run _puppet.unequipAll()&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;&lt;goto `passage()`&gt;&gt;
-&lt;&lt;/link&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="131" name="menubar" tags="nobr" position="100,1725" size="100,100">&lt;span id=&quot;status&quot;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="148" name="menubar" tags="nobr" position="975,1850" size="100,100">&lt;span id=&quot;status&quot;&gt;
 &lt;span class=&quot;menunav monospace&quot;&gt;
 [A] ↑&lt;br/&gt;
 [D] ↓
@@ -23987,362 +24358,7 @@ ARG 0 = equipped item
 &lt;&lt;/for&gt;&gt;
 &lt;span id=&quot;menu-return&quot;&gt;&lt;&lt;longreturn&gt;&gt;&lt;/span&gt;
 &lt;div class=&quot;GPdisplay monospace&quot;&gt;&lt;&lt;print setup.CURRENCY_NAME&gt;&gt;: $currency&lt;/div&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="132" name="Menu: Status" tags="menu battle noreturn" position="225,1725" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
-&lt;div id=&quot;partydisplay&quot;&gt;
-&lt;&lt;include &quot;status party display&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/nobr&gt;&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="133" name="menu stat display" tags="nobr" position="350,1725" size="100,100">&lt;&lt;if !setup.hiddenStats.includes(_k)&gt;&gt;
-	&lt;&lt;if def setup.statInfo[_k]&gt;&gt;
-		&lt;&lt;set _class = &quot;tooltip&quot;&gt;&gt;
-	&lt;&lt;else&gt;&gt;
-		&lt;&lt;set _class = &quot;&quot;&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;div class=&quot;menuactor-statname&quot;&gt;&lt;span @class=_class&gt;_k&lt;&lt;if def setup.statInfo[_k]&gt;&gt;&lt;span class=&quot;tooltiptext&quot;&gt;&lt;&lt;print setup.statInfo[_k]&gt;&gt;&lt;/span&gt;&lt;&lt;/if&gt;&gt;&lt;/span&gt;&lt;/div&gt;
-	&lt;div class=&quot;menuactor-statvalue&quot;&gt;_v.base&lt;/div&gt;
-	&lt;&lt;if _v.bonus != 0&gt;&gt;
-		&lt;div class=&quot;menuactor-statmod&quot;&gt;
-		&lt;&lt;if _v.bonus &gt; 0&gt;&gt;
-			@@.green;&lt;&lt;print &quot;\+&quot;+_v.bonus&gt;&gt;@@
-		&lt;&lt;elseif _v.bonus &lt; 0&gt;&gt;
-			@@.stat-lowered;&lt;&lt;print &quot;-&quot;+_v.bonus&gt;&gt;@@
-		&lt;&lt;/if&gt;&gt;
-		&lt;/div&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="134" name="status special detail" tags="nobr" position="475,1725" size="100,100">&lt;div style=&quot;position:relative&quot;&gt;
-	&lt;&lt;switch setup.STATUS_SCREENS.menu[_stScreen-1]&gt;&gt;
-		&lt;&lt;case &quot;elements&quot;&gt;&gt;
-			&lt;&lt;set _title = &quot;elemental affinities&quot;&gt;&gt;
-		&lt;&lt;case &quot;ailments&quot;&gt;&gt;
-			&lt;&lt;set _title = &quot;ailment tolerances&quot;&gt;&gt;
-		&lt;&lt;default&gt;&gt;
-			&lt;&lt;set _title = setup.STATUS_SCREENS.menu[_stScreen-1]&gt;&gt;
-	&lt;&lt;/switch&gt;&gt;
-	&lt;div class=&quot;menuactor-special-title&quot;&gt;_title&lt;/div&gt;
-	&lt;&lt;if setup.STATUS_SCREENS.menu.length &gt; 1&gt;&gt;
-	&lt;div class=&quot;cyclebuttons&quot;&gt;
-		&lt;span id=&quot;statusback&quot;&gt;
-		&lt;&lt;link &quot;&lt;&quot;&gt;&gt;
-			&lt;&lt;set _stScreen--&gt;&gt;
-			&lt;&lt;if _stScreen &lt; 1&gt;&gt;
-				&lt;&lt;set _stScreen = setup.STATUS_SCREENS.menu.length&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-			&lt;&lt;replace &quot;#menuactor-special&quot;&gt;&gt;&lt;&lt;include &quot;status special detail&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/link&gt;&gt;
-		&lt;/span&gt;
-		&lt;span id=&quot;statusforward&quot;&gt;
-		&lt;&lt;link &quot;&gt;&quot;&gt;&gt;
-			&lt;&lt;set _stScreen++&gt;&gt;
-			&lt;&lt;if _stScreen &gt; setup.STATUS_SCREENS.menu.length&gt;&gt;
-				&lt;&lt;set _stScreen = 1&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-			&lt;&lt;replace &quot;#menuactor-special&quot;&gt;&gt;&lt;&lt;include &quot;status special detail&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/link&gt;&gt;
-		&lt;/span&gt;
-	&lt;/div&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;switch setup.STATUS_SCREENS.menu[_stScreen-1]&gt;&gt;
-&lt;&lt;case &quot;equipment&quot;&gt;&gt;
-	&lt;div style=&quot;margin-left:1em;&quot;&gt;
-	&lt;&lt;for _name, _slot range $subject.equipment&gt;&gt;
-		&lt;&lt;for _index, _item range _slot&gt;&gt;
-			&lt;div class=&quot;menuactor-equipment-slot&quot;&gt;_name&lt;/div&gt;
-			&lt;&lt;if _item === null&gt;&gt;&lt;span class=&quot;menuactor-equipment-name&quot;&gt;&amp;nbsp;&lt;/span&gt;
-			&lt;&lt;else&gt;&gt;
-				&lt;div class=&quot;menuactor-equipment-name&quot;&gt;_item.name&lt;/div&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/for&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;case &quot;elements&quot;&gt;&gt;
-	&lt;div style=&quot;margin-left:1em; width:75%; font-weight:bold&quot;&gt;
-	&lt;&lt;for _k, _v range $subject.elements&gt;&gt;
-		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;&lt;/span&gt;
-		&lt;span class=&quot;elementdisplay monospace&quot;&gt;&lt;&lt;if setup.SOAK&gt;&gt;&lt;&lt;soak _v&gt;&gt; /&lt;&lt;/if&gt;&gt;&lt;div style=&quot;display: inline-block; min-width:45px; text-align:right&quot;&gt;&lt;&lt;res _v&gt;&gt;&lt;/div&gt;&lt;/span&gt;
-		&lt;br/&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;case &quot;ailments&quot;&gt;&gt;
-	&lt;div style=&quot;margin-left:1em; width:75%; font-weight:bold&quot;&gt;
-	&lt;&lt;for _k, _v range $subject.tolerances&gt;&gt;
-		&lt;&lt;if _v.current != 0&gt;&gt;
-			&lt;&lt;print _k&gt;&gt;
-			&lt;&lt;tol _v&gt;&gt;
-			&lt;br/&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;/switch&gt;&gt;</tw-passagedata><tw-passagedata pid="135" name="status party display" tags="nobr" position="600,1725" size="100,100">&lt;&lt;if def $subject&gt;&gt;
-	&lt;&lt;actorDisplay $subject&gt;&gt;
-	&lt;div class=&quot;menuactor-detail&quot;&gt;
-		&lt;&lt;if def setup.STATUS_SCREENS.menu &amp;&amp; setup.STATUS_SCREENS.menu.length &gt; 0&gt;&gt;
-			&lt;&lt;set _style = &quot;&quot;&gt;&gt;
-		&lt;&lt;else&gt;&gt;
-			&lt;&lt;set _style = &quot;border-right: none&quot;&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-		&lt;div class=&quot;menuactor-stats monospace&quot; @style=_style&gt;
-		&lt;&lt;for _k, _v range $subject.stats&gt;&gt;
-			&lt;&lt;include &quot;menu stat display&quot;&gt;&gt;
-		&lt;&lt;/for&gt;&gt;
-		&lt;&lt;if def $subject.HPregen &amp;&amp; $subject.HPregen !== null&gt;&gt;
-			&lt;div class=&quot;menuactor-statname&quot;&gt;HP regen&lt;/div&gt;
-			&lt;div class=&quot;menuactor-statvalue&quot;&gt;&lt;&lt;print $subject.HPregenFlat&gt;&gt; / &lt;&lt;print $subject.HPregenPercent*100&gt;&gt;%&lt;/div&gt;
-		&lt;&lt;/if&gt;&gt;
-		&lt;/div&gt;
-		&lt;&lt;if def setup.STATUS_SCREENS.menu &amp;&amp; setup.STATUS_SCREENS.menu.length &gt; 0&gt;&gt;
-		&lt;div id=&quot;menuactor-special&quot;&gt;
-			&lt;&lt;include &quot;status special detail&quot;&gt;&gt;
-		&lt;/div&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;/div&gt;
-	&lt;br/&gt;
-	&lt;div id=&quot;menuActionList&quot;&gt;
-	&lt;&lt;actionListMenu $subject&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;elseif ndef $subject&gt;&gt;
-	&lt;&lt;set _HPmeters = []&gt;&gt;
-	&lt;&lt;set _MPmeters = []&gt;&gt;
-	&lt;&lt;for _i, _p range puppets()&gt;&gt;
-		&lt;&lt;actorDisplay _p&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="136" name="Menu: Inventory" tags="menu battle noreturn" position="725,1725" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
-&lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
-&lt;div id=&quot;menu-display&quot; class=&quot;relative&quot;&gt;
-&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;div id=&quot;itemlist&quot;&gt;
-&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/nobr&gt;&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="137" name="inventory item list" tags="nobr" position="850,1725" size="100,100">&lt;div style=&quot;display:flex; justify-content:space-evenly;&quot;&gt;
-&lt;&lt;if _filter == &quot;all&quot;&gt;&gt;
-	&lt;b&gt;All&lt;/b&gt;
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;link &quot;All&quot;&gt;&gt;
-		&lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
-		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;if _filter == &quot;usable&quot;&gt;&gt;
-	&lt;b&gt;Usable&lt;/b&gt;
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;link &quot;Usable&quot;&gt;&gt;
-		&lt;&lt;set _filter = &quot;usable&quot;&gt;&gt;
-		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;if _filter == &quot;equipment&quot;&gt;&gt;
-	&lt;b&gt;Equipment&lt;/b&gt;
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;link &quot;Equipment&quot;&gt;&gt;
-		&lt;&lt;set _filter = &quot;equipment&quot;&gt;&gt;
-		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;/div&gt;
-&lt;br/&gt;
-&lt;div class=&quot;itemcontainer&quot;&gt;
-&lt;&lt;set _p = 2&gt;&gt;
-&lt;&lt;for _name, _item range $inventory&gt;&gt;
-	&lt;&lt;if _filter == &quot;all&quot; || (_filter == &quot;usable&quot; &amp;&amp; _item.usable.includes(&quot;inmenu&quot;)) || (_filter == &quot;equipment&quot; &amp;&amp; _item.equippable)&gt;&gt;
-	&lt;&lt;if _p == 1&gt;&gt;
-		&lt;&lt;set _p = 2&gt;&gt;
-	&lt;&lt;elseif _p == 2&gt;&gt;
-		&lt;&lt;set _p = 1&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;div @class=&quot;&#39;item&#39;+_p&quot;&gt;
-	&lt;b&gt;
-	&lt;&lt;capture _item&gt;&gt;
-	&lt;&lt;link _item.name&gt;&gt;
-		&lt;&lt;set _display = _item&gt;&gt;
-		&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-	&lt;&lt;/capture&gt;&gt;
-	&lt;/b&gt; &lt;span class=&quot;itemstock&quot;&gt;(_item.stock)&lt;/span&gt;
-	&lt;/div&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="138" name="inventory item display" tags="nobr" position="975,1725" size="100,100">&lt;&lt;if ndef _display || _display === null&gt;&gt;
-	&lt;div class=&quot;centered&quot; style=&quot;color: gray&quot;&gt;Click on an item to see info&lt;/div&gt;
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;print _display&gt;&gt;
-	&lt;&lt;if _display.usable.includes(&#39;inmenu&#39;) || _display.equippable&gt;&gt;
-	&lt;div class=&quot;item-buttons&quot;&gt;
-		&lt;&lt;set _b = 0&gt;&gt;
-		&lt;&lt;if _display.usable.includes(&#39;inmenu&#39;) &amp;&amp; _display.stock &gt; 0&gt;&gt;
-			&lt;&lt;set _b++&gt;&gt;
-			&lt;span @id=&quot;&#39;button&#39;+_b&quot;&gt;
-				&lt;span id=&quot;usebutton&quot;&gt;
-				&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;
-				&lt;/span&gt;
-			&lt;/span&gt;
-		&lt;&lt;/if&gt;&gt;
-		&lt;&lt;if _display.equippable &amp;&amp; _display.stock &gt; 0&gt;&gt;
-			&lt;&lt;set _b++&gt;&gt;
-			&lt;span @id=&quot;&#39;button&#39;+_b&quot;&gt;
-				&lt;span id=&quot;equipbutton&quot;&gt;
-				&lt;&lt;include &quot;equip button&quot;&gt;&gt;
-				&lt;/span&gt;
-			&lt;/span&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;/div&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="139" name="equip button" tags="nobr" position="1100,1725" size="100,100">&lt;&lt;button &quot;EQUIP&quot;&gt;&gt;
-	&lt;&lt;set _event = &quot;equip&quot;&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-&lt;&lt;/button&gt;&gt;
-&lt;&lt;if _b == 1&gt;&gt;
-&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;
-&lt;&lt;elseif _b == 2&gt;&gt;
-&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[W]&lt;/span&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="140" name="inventory use button" tags="nobr" position="1225,1725" size="100,100">&lt;&lt;button &quot;USE&quot;&gt;&gt;
-	&lt;&lt;if _display.instantUse === true&gt;&gt;
-		&lt;&lt;run _display.onUse()&gt;&gt;
-	&lt;&lt;else&gt;&gt;
-		&lt;&lt;set _event = &quot;use&quot;&gt;&gt;
-		&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-		&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/button&gt;&gt;
-&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="141" name="inventory cancel button" tags="nobr" position="100,1850" size="100,100">&lt;span id=&quot;cancelbutton&quot;&gt;
-&lt;&lt;button &quot;CANCEL&quot;&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-&lt;&lt;/button&gt;&gt;
-&lt;/span&gt;
-&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[R]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="142" name="inventory puppets" tags="nobr" position="225,1850" size="100,100">&lt;&lt;set _HPmeters = []&gt;&gt;
-&lt;&lt;set _MPmeters = []&gt;&gt;
-&lt;&lt;for _i, _p range puppets().filter(function(p) { return temporary().event != &quot;equip&quot; || (!p.lockEquipment &amp;&amp; p.checkRestriction(temporary().display)); })&gt;&gt;
-	&lt;&lt;actorDisplay _p &quot;inventory&quot;&gt;&gt;
-&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="143" name="Menu: Party" tags="menu battle noreturn" position="350,1850" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;center style=&quot;font-weight:bold&quot;&gt;ACTIVE PUPPETS&lt;/center&gt;
-&lt;&lt;nobr&gt;&gt;
-&lt;div class=&quot;actors&quot; id=&quot;puppets&quot;&gt;
-&lt;&lt;include &quot;party manager puppets&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/nobr&gt;&gt;
-&lt;center style=&quot;font-weight:bold&quot;&gt;RESERVE PUPPETS&lt;/center&gt;
-&lt;&lt;nobr&gt;&gt;
-&lt;div class=&quot;actors&quot; id=&quot;reserve&quot;&gt;
-&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/nobr&gt;&gt;
-
-&lt;&lt;unequipAll&gt;&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="144" name="party manager puppets" tags="nobr" position="475,1850" size="100,100">&lt;&lt;for _i, _puppet range $puppets&gt;&gt;
-	&lt;&lt;if _puppet !== null&gt;&gt;
-	&lt;div class=&quot;actor&quot; @id=&quot;_i&quot; style=&quot;min-width:150px&quot;&gt;
-	&lt;center&gt;
-	&lt;&lt;capture _i&gt;&gt;
-	&lt;&lt;link _puppet.name&gt;&gt;
-		&lt;&lt;if def _s&gt;&gt;
-			&lt;&lt;run $(&#39;#&#39; + _s).removeClass(&quot;selected&quot;)&gt;&gt;
-			&lt;&lt;if _s != _i&gt;&gt;
-				&lt;&lt;set _s = _i&gt;&gt;
-				&lt;&lt;run $(&#39;#&#39; + _s).addClass(&quot;selected&quot;)&gt;&gt;
-			&lt;&lt;else&gt;&gt;
-				&lt;&lt;unset _s&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;else&gt;&gt;
-			&lt;&lt;set _s = _i&gt;&gt;
-			&lt;&lt;run $(&#39;#&#39; + _i).addClass(&quot;selected&quot;)&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-		&lt;&lt;run console.log(&quot;i = &quot;+_i); console.log(&quot;s = &quot;+_s)&gt;&gt;
-		&lt;&lt;replace &quot;#reserve&quot;&gt;&gt;&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-	&lt;&lt;/capture&gt;&gt;
-	&lt;/center&gt;&lt;br/&gt;
-	&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
-		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
-		&lt;&lt;statOOB _k _puppet&gt;&gt;
-		&lt;br/&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;/div&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="145" name="party manager reserve" tags="nobr" position="600,1850" size="100,100">&lt;&lt;for _j, _puppet range $Reserve_Puppets&gt;&gt;
-	&lt;div class=&quot;actor&quot; style=&quot;min-width:150px&quot;&gt;
-	&lt;center&gt;
-	&lt;&lt;if def _s&gt;&gt;
-		&lt;&lt;capture _puppet, _j&gt;&gt;
-		&lt;&lt;link _puppet.name&gt;&gt;
-			&lt;&lt;run $Reserve_Puppets[_j] = $puppets[_s]&gt;&gt;
-			&lt;&lt;set $puppets[_s] = _puppet&gt;&gt;
-			&lt;&lt;unset _s&gt;&gt;
-			&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;party manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-			&lt;&lt;replace &quot;#reserve&quot;&gt;&gt;&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/link&gt;&gt;
-		&lt;&lt;/capture&gt;&gt;
-	&lt;&lt;else&gt;&gt;
-		_puppet.name
-	&lt;&lt;/if&gt;&gt;
-	&lt;/center&gt;&lt;br/&gt;
-	&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
-		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
-		&lt;&lt;statOOB _k _puppet&gt;&gt;
-		&lt;br/&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="146" name="Menu: Equipment" tags="menu battle noreturn" position="725,1850" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
-&lt;div id=&quot;puppets&quot;&gt;
-&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;div id=&quot;equipment-list&quot;&gt;
-&lt;&lt;include &quot;equipment list&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/nobr&gt;&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="147" name="equip manager puppets" tags="nobr" position="850,1850" size="100,100">&lt;&lt;if def $subject&gt;&gt;
-	&lt;&lt;set _i = &quot;null&quot;&gt;&gt;
-	&lt;&lt;actorDisplay $subject &quot;equipment&quot;&gt;&gt;
-&lt;&lt;else&gt;&gt;
-&lt;&lt;for _i, _p range $puppets&gt;&gt;
-	&lt;&lt;actorDisplay _p &quot;equipment&quot;&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="148" name="equipment list" tags="nobr" position="975,1850" size="100,100">&lt;&lt;if def $subject &amp;&amp; !$subject.lockEquipment&gt;&gt;
-	&lt;div style=&quot;line-height:1.4&quot;&gt;
-	&lt;&lt;set _count = 0&gt;&gt;
-	&lt;&lt;for _k, _v range $inventory&gt;&gt;
-		&lt;&lt;if _v.equippable &amp;&amp; _v.stock &gt; 0&gt;&gt;
-			&lt;br/&gt;
-			&lt;&lt;set _count++&gt;&gt;
-			&lt;&lt;if (def $subject &amp;&amp; $subject.checkRestriction(_v)) || ndef $subject&gt;&gt;
-				&lt;div @id=&quot;_k&quot;&gt;
-				&lt;b&gt;
-				&lt;&lt;if def $subject&gt;&gt;
-					&lt;&lt;capture _v&gt;&gt;
-					&lt;&lt;link _v.name&gt;&gt;
-						&lt;&lt;run $subject.equip(_v)&gt;&gt;
-						&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-						&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-					&lt;&lt;/link&gt;&gt;
-					&lt;&lt;/capture&gt;&gt;
-				&lt;&lt;else&gt;&gt;
-					&lt;&lt;print _k&gt;&gt;
-				&lt;&lt;/if&gt;&gt;
-				&lt;/b&gt;
-				&lt;span style=&quot;float:right&quot;&gt;(_v.stock)&lt;/span&gt;&lt;br/&gt;
-				&lt;i style=&quot;font-size:12px&quot;&gt;&lt;&lt;print _v.equippable.slot&gt;&gt;&lt;/i&gt;&lt;br/&gt;
-				&lt;&lt;if _v.equippable.restrictedTo.length &gt; 0&gt;&gt;
-					&lt;div style=&quot;font-size:12px; font-style:italic&quot;&gt;Restriction: &lt;&lt;for _char range _v.equippable.restrictedTo&gt;&gt;&lt;&lt;print _char&gt;&gt;&lt;&lt;/for&gt;&gt;&lt;/div&gt;
-				&lt;&lt;/if&gt;&gt;
-				&lt;&lt;print _v.desc&gt;&gt;&lt;br/&gt;
-				&lt;span class=&quot;action-desc&quot;&gt;&lt;&lt;print _v.info&gt;&gt;&lt;/span&gt;
-				&lt;/div&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;&lt;if _count == 0&gt;&gt;
-	You don&#39;t have any equipment.
-	&lt;&lt;/if&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;elseif def $subject &amp;&amp; $subject.lockEquipment&gt;&gt;
-	&lt;i&gt;This character&#39;s equipment can&#39;t be changed.&lt;/i&gt;
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;unequipAll&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="149" name="procure" tags="nobr battle" position="1100,1850" size="100,100">/* Old passage for the &quot;Procure&quot; skill, which allowed Rogue and Witch to expend Energy to buy items in battle. It was dummied out before the JavaScript overhaul, so it is unlikely to work in the current version without tweaking.
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="149" name="procure" tags="nobr battle" position="1100,1850" size="100,100">/* Old passage for the &quot;Procure&quot; skill, which allowed Rogue and Witch to expend Energy to buy items in battle. It was dummied out before the JavaScript overhaul, so it is unlikely to work in the current version without tweaking.
 
 /* Procure costs use the &quot;cost&quot; attribute of Item objects, defined in the database JS. */
 
@@ -25739,8 +25755,10 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;The gameplay effects of an action are now calculated before the text description is rendered. This allows you to customize the text based on variable results of the action, e.g. whether or not the attack missed. The &lt;code&gt;_hit&lt;/code&gt; variable is now passed to &lt;code&gt;actText&lt;/code&gt; to facilitate this.&lt;/li&gt;
 &lt;li&gt;The item display box in the menu now has a fixed height; item descriptions that exceed the height will generate a scrollbar. This will prevent UI elements from jumping around.&lt;/li&gt;
 &lt;li&gt;Using items or actions from the menu will now generate a brief notification informing the player of the results. This notification is taken from the return value of the &lt;code&gt;onUse&lt;/code&gt; function.&lt;/li&gt;
-&lt;li&gt;Stylesheet files for the party menu have been split into separate files by submenu and grouped into a single &lt;code&gt;menu&lt;/code&gt; folder.&lt;/li&gt;
+&lt;li&gt;Stylesheet files for the party menu and for battle layout have been split into separate files and grouped into a single folder each.&lt;/li&gt;
+&lt;li&gt;The code for individual screens of the party menu have been split off into their own twee files.&lt;/li&gt;
 &lt;li&gt;The &quot;Example&quot; enemy will no longer accidentally be given a bestiary entry.&lt;/li&gt;
+&lt;li&gt;You can now filter character actions to only usable ones in the menu.&lt;/li&gt;
 &lt;/ul&gt;
 Version 3.01
 &lt;ul&gt;
