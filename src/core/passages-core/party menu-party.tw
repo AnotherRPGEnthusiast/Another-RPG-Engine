@@ -1,0 +1,75 @@
+:: Menu: Party[menu battle noreturn]
+<span id="content" class="menu"><center style="font-weight:bold">ACTIVE PUPPETS</center>
+<<nobr>>
+<div class="actors" id="puppets">
+<<include "party manager puppets">>
+</div>
+<</nobr>>
+<center style="font-weight:bold">RESERVE PUPPETS</center>
+<<nobr>>
+<div class="actors" id="reserve">
+<<include "party manager reserve">>
+</div>
+<</nobr>>
+
+<<unequipAll>>
+</span>
+
+:: party manager puppets[nobr]
+<<for _i, _puppet range $puppets>>
+	<<if _puppet !== null>>
+	<div class="actor" @id="_i" style="min-width:150px">
+	<center>
+	<<capture _i>>
+	<<link _puppet.name>>
+		<<if def _s>>
+			<<run $('#' + _s).removeClass("selected")>>
+			<<if _s != _i>>
+				<<set _s = _i>>
+				<<run $('#' + _s).addClass("selected")>>
+			<<else>>
+				<<unset _s>>
+			<</if>>
+		<<else>>
+			<<set _s = _i>>
+			<<run $('#' + _i).addClass("selected")>>
+		<</if>>
+		<<run console.log("i = "+_i); console.log("s = "+_s)>>
+		<<replace "#reserve">><<include "party manager reserve">><</replace>>
+	<</link>>
+	<</capture>>
+	</center><br/>
+	<<for _k, _v range _puppet.stats>>
+		<span class="statname"><<print _k>>:</span>
+		<<statOOB _k _puppet>>
+		<br/>
+	<</for>>
+	</div>
+	<</if>>
+<</for>>
+
+:: party manager reserve[nobr]
+<<for _j, _puppet range $Reserve_Puppets>>
+	<div class="actor" style="min-width:150px">
+	<center>
+	<<if def _s>>
+		<<capture _puppet, _j>>
+		<<link _puppet.name>>
+			<<run $Reserve_Puppets[_j] = $puppets[_s]>>
+			<<set $puppets[_s] = _puppet>>
+			<<unset _s>>
+			<<replace "#puppets">><<include "party manager puppets">><</replace>>
+			<<replace "#reserve">><<include "party manager reserve">><</replace>>
+		<</link>>
+		<</capture>>
+	<<else>>
+		_puppet.name
+	<</if>>
+	</center><br/>
+	<<for _k, _v range _puppet.stats>>
+		<span class="statname"><<print _k>>:</span>
+		<<statOOB _k _puppet>>
+		<br/>
+	<</for>>
+	</div>
+<</for>>

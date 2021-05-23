@@ -1,0 +1,229 @@
+:: Menu: Status[menu battle noreturn]
+<span id="content" class="menu"><<nobr>>
+<div id="partydisplay">
+<<include "status party display">>
+</div>
+<</nobr>>
+</span>
+
+:: menu stat display[nobr]
+<<if !setup.hiddenStats.includes(_k)>>
+	<<if def setup.statInfo[_k]>>
+		<<set _class = "tooltip">>
+	<<else>>
+		<<set _class = "">>
+	<</if>>
+	<div class="menuactor-statname"><span @class=_class>_k<<if def setup.statInfo[_k]>><span class="tooltiptext"><<print setup.statInfo[_k]>></span><</if>></span></div>
+	<div class="menuactor-statvalue">_v.base</div>
+	<<if _v.bonus != 0>>
+		<div class="menuactor-statmod">
+		<<if _v.bonus > 0>>
+			@@.green;<<print "\+"+_v.bonus>>@@
+		<<elseif _v.bonus < 0>>
+			@@.stat-lowered;<<print "-"+_v.bonus>>@@
+		<</if>>
+		</div>
+	<</if>>
+<</if>>
+
+:: status special detail[nobr]
+<div style="position:relative">
+	<<switch setup.STATUS_SCREENS.menu[_stScreen-1]>>
+		<<case "elements">>
+			<<set _title = "elemental affinities">>
+		<<case "ailments">>
+			<<set _title = "ailment tolerances">>
+		<<default>>
+			<<set _title = setup.STATUS_SCREENS.menu[_stScreen-1]>>
+	<</switch>>
+	<div class="menuactor-special-title">_title</div>
+	<<if setup.STATUS_SCREENS.menu.length > 1>>
+	<div class="cyclebuttons">
+		<span id="statusback">
+		<<link "<">>
+			<<set _stScreen-->>
+			<<if _stScreen < 1>>
+				<<set _stScreen = setup.STATUS_SCREENS.menu.length>>
+			<</if>>
+			<<replace "#menuactor-special">><<include "status special detail">><</replace>>
+		<</link>>
+		</span>
+		<span id="statusforward">
+		<<link ">">>
+			<<set _stScreen++>>
+			<<if _stScreen > setup.STATUS_SCREENS.menu.length>>
+				<<set _stScreen = 1>>
+			<</if>>
+			<<replace "#menuactor-special">><<include "status special detail">><</replace>>
+		<</link>>
+		</span>
+	</div>
+	<</if>>
+</div>
+<<switch setup.STATUS_SCREENS.menu[_stScreen-1]>>
+<<case "equipment">>
+	<div style="margin-left:1em;">
+	<<for _name, _slot range $subject.equipment>>
+		<<for _index, _item range _slot>>
+			<div class="menuactor-equipment-slot">_name</div>
+			<<if _item === null>><span class="menuactor-equipment-name">&nbsp;</span>
+			<<else>>
+				<div class="menuactor-equipment-name">_item.name</div>
+			<</if>>
+		<</for>>
+	<</for>>
+	</div>
+<<case "elements">>
+	<div style="margin-left:1em; width:75%; font-weight:bold">
+	<<for _k, _v range $subject.elements>>
+		<span class="statname"><<print _k>></span>
+		<span class="elementdisplay monospace"><<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:45px; text-align:right"><<res _v>></div></span>
+		<br/>
+	<</for>>
+	</div>
+<<case "ailments">>
+	<div style="margin-left:1em; width:75%; font-weight:bold">
+	<<for _k, _v range $subject.tolerances>>
+		<<if _v.current != 0>>
+			<<print _k>>
+			<<tol _v>>
+			<br/>
+		<</if>>
+	<</for>>
+	</div>
+<</switch>>
+
+:: status party display[nobr]
+<<if def $subject>>
+	<<actorDisplay $subject>>
+	<div class="menuactor-detail">
+		<<if def setup.STATUS_SCREENS.menu && setup.STATUS_SCREENS.menu.length > 0>>
+			<<set _style = "">>
+		<<else>>
+			<<set _style = "border-right: none">>
+		<</if>>
+		<div class="menuactor-stats monospace" @style=_style>
+		<<for _k, _v range $subject.stats>>
+			<<include "menu stat display">>
+		<</for>>
+		<<if def $subject.HPregen && $subject.HPregen !== null>>
+			<div class="menuactor-statname">HP regen</div>
+			<div class="menuactor-statvalue"><<print $subject.HPregenFlat>> / <<print $subject.HPregenPercent*100>>%</div>
+		<</if>>
+		</div>
+		<<if def setup.STATUS_SCREENS.menu && setup.STATUS_SCREENS.menu.length > 0>>
+		<div id="menuactor-special">
+			<<include "status special detail">>
+		</div>
+		<</if>>
+	</div>
+	<br/>
+	<div id="menuActionList">
+	<<actionListMenu $subject>>
+	</div>
+<<elseif ndef $subject>>
+	<<set _HPmeters = []>>
+	<<set _MPmeters = []>>
+	<<for _i, _p range puppets()>>
+		<<actorDisplay _p>>
+	<</for>>
+<</if>>
+
+:: Widget: actionListMenu [widget nobr]
+<<widget "actionListMenu">>
+/* Widget for display of player actions in the menu. */
+
+<<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionListMenu: no Puppet")>>
+<<set _char = $args[0]; _actions = _char.actions>>
+<<if _char.crisis instanceof Array>>
+	<div class="abilities-header">CRISIS</div>
+	<<for _action range _char.crisis>>
+		<<print _action>>
+	<</for>>
+	<br/>
+<</if>>
+<div class="abilities-header">ABILITIES</div>
+<<set _filter = "all">>
+<<liveblock>>
+<div style="display:flex; justify-content:space-evenly;">
+<<if _filter == "all">>
+	<b>All</b>
+<<else>>
+	<<link "All">>
+		<<set _filter = "all"; _actions = _char.actions>>
+		<<update>>
+	<</link>>
+<</if>>
+<<if _filter == "usable">>
+	<b>Usable</b>
+<<else>>
+	<<link "Usable">>
+		<<set _filter = "usable"; _actions = _char.actions.filter(function (act) { return act && act.onUse })>>
+		<<update>>
+	<</link>>
+<</if>>
+</div>
+<br/>
+<<for _action range _actions>>
+<<if !_action.invisible>>
+	<<set _actionID = "action"+_actions.indexOf(_action)>>
+	<div @id="_actionID" class="actionDisplay">
+		<<print _action>>
+		<<capture _action, _actionID>>
+		<<timed 0s>>
+		<<if _action.onUse && !_action.check(_display)>>
+			<<set _selector = "#"+_actionID+" .action-name">>
+			<<replace _selector>>
+				<<link "_action.name">>
+					<<if _action.instantUse === true>>
+						<<run $action = _action; $action.onUse()>>
+					<<else>>
+						<<set $action = _action>>
+						<<replace "#partydisplay">>
+							<<include "action use puppets">>
+						<</replace>>
+					<</if>>
+				<</link>>
+			<</replace>>
+		<</if>>
+		<<if !_action.noDefault && _char.defaultAction !== _action.name>>
+			<<set _selector = "#"+_actionID+" .action-tags">>
+			<<set $(_selector).after($(`<div class="default-link">`))>>
+			<<set _selector = "#"+_actionID+" .default-link">>
+			<<replace _selector>>
+				<<link "[Set as default]">>
+					<<set _char.defaultAction = _action.name>>
+					<<update>>
+				<</link>>
+			<</replace>>
+		<</if>>
+		<</timed>>
+		<</capture>>
+	</div>
+<</if>>
+<</for>>
+<</liveblock>>
+<</widget>>
+
+:: action use puppets [nobr]
+<div id="menu-display" class="action">
+	<<print $action>>
+	<div class="item-buttons">
+		<div id="button1">
+			<span id="cancelbutton">
+			<<button "CANCEL">>
+				<<unset $subject, $action>>
+				<<replace "#partydisplay">><<include "status party display">><</replace>>
+			<</button>>
+			</span>
+			<span class="monospace" style="font-size:85%">[R]</span>
+		</div>
+	</div>
+</div>
+<div id="puppets">
+<<set _HPmeters = []>>
+<<set _MPmeters = []>>
+<<for _i, _p range puppets()>>
+	<<actorDisplay _p "action">>
+<</for>>
+</div>

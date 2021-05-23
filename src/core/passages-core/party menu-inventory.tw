@@ -1,0 +1,133 @@
+:: Menu: Inventory[menu battle noreturn]
+<span id="content" class="menu"><<nobr>>
+<<set _filter = "all">>
+<div id="menu-display" class="relative">
+<<include "inventory item display">>
+</div>
+<div id="itemlist">
+<<include "inventory item list">>
+</div>
+<</nobr>>
+</span>
+
+:: inventory item list[nobr]
+<div style="display:flex; justify-content:space-evenly;">
+<<if _filter == "all">>
+	<b>All</b>
+<<else>>
+	<<link "All">>
+		<<set _filter = "all">>
+		<<replace "#itemlist">><<include "inventory item list">><</replace>>
+	<</link>>
+<</if>>
+<<if _filter == "usable">>
+	<b>Usable</b>
+<<else>>
+	<<link "Usable">>
+		<<set _filter = "usable">>
+		<<replace "#itemlist">><<include "inventory item list">><</replace>>
+	<</link>>
+<</if>>
+<<if _filter == "equipment">>
+	<b>Equipment</b>
+<<else>>
+	<<link "Equipment">>
+		<<set _filter = "equipment">>
+		<<replace "#itemlist">><<include "inventory item list">><</replace>>
+	<</link>>
+<</if>>
+</div>
+<br/>
+<div class="itemcontainer">
+<<set _p = 2>>
+<<for _name, _item range $inventory>>
+	<<if _filter == "all" || (_filter == "usable" && _item.usable.includes("inmenu")) || (_filter == "equipment" && _item.equippable)>>
+	<<if _p == 1>>
+		<<set _p = 2>>
+	<<elseif _p == 2>>
+		<<set _p = 1>>
+	<</if>>
+	<div @class="'item'+_p">
+	<b>
+	<<capture _item>>
+	<<link _item.name>>
+		<<set _display = _item>>
+		<<replace "#menu-display">><<include "inventory item display">><</replace>>
+	<</link>>
+	<</capture>>
+	</b> <span class="itemstock">(_item.stock)</span>
+	</div>
+	<</if>>
+<</for>>
+</div>
+
+:: inventory item display[nobr]
+<<if ndef _display || _display === null>>
+	<div class="centered" style="color: gray">Click on an item to see info</div>
+<<else>>
+	<<print _display>>
+	<<if _display.usable.includes('inmenu') || _display.equippable>>
+	<div class="item-buttons">
+		<<set _b = 0>>
+		<<if _display.usable.includes('inmenu') && _display.stock > 0>>
+			<<set _b++>>
+			<span @id="'button'+_b">
+				<span id="usebutton">
+				<<include "inventory use button">>
+				</span>
+			</span>
+		<</if>>
+		<<if _display.equippable && _display.stock > 0>>
+			<<set _b++>>
+			<span @id="'button'+_b">
+				<span id="equipbutton">
+				<<include "equip button">>
+				</span>
+			</span>
+		<</if>>
+	</div>
+	<</if>>
+<</if>>
+
+:: equip button[nobr]
+<<button "EQUIP">>
+	<<set _event = "equip">>
+	<<if document.getElementById("usebutton")>><<replace "#usebutton">><<include "inventory use button">><</replace>><</if>>
+	<<if document.getElementById("equipbutton")>><<replace "#equipbutton">><<include "inventory cancel button">><</replace>><</if>>
+	<<replace "#itemlist">><<include "inventory puppets">><</replace>>
+<</button>>
+<<if _b == 1>>
+<span class="monospace" style="font-size:85%">[Q]</span>
+<<elseif _b == 2>>
+<span class="monospace" style="font-size:85%">[W]</span>
+<</if>>
+
+:: inventory use button[nobr]
+<<button "USE">>
+	<<if _display.instantUse === true>>
+		<<run _display.onUse()>>
+	<<else>>
+		<<set _event = "use">>
+		<<if document.getElementById("usebutton")>><<replace "#usebutton">><<include "inventory cancel button">><</replace>><</if>>
+		<<if document.getElementById("equipbutton")>><<replace "#equipbutton">><<include "equip button">><</replace>><</if>>
+		<<replace "#itemlist">><<include "inventory puppets">><</replace>>
+	<</if>>
+<</button>>
+<span class="monospace" style="font-size:85%">[Q]</span>
+
+:: inventory cancel button[nobr]
+<span id="cancelbutton">
+<<button "CANCEL">>
+	<<if document.getElementById("usebutton")>><<replace "#usebutton">><<include "inventory use button">><</replace>><</if>>
+	<<if document.getElementById("equipbutton")>><<replace "#equipbutton">><<include "equip button">><</replace>><</if>>
+	<<replace "#itemlist">><<include "inventory item list">><</replace>>
+<</button>>
+</span>
+<span class="monospace" style="font-size:85%">[R]</span>
+
+:: inventory puppets[nobr]
+<<set _HPmeters = []>>
+<<set _MPmeters = []>>
+<<for _i, _p range puppets().filter(function(p) { return temporary().event != "equip" || (!p.lockEquipment && p.checkRestriction(temporary().display)); })>>
+	<<actorDisplay _p "inventory">>
+<</for>>

@@ -1,0 +1,168 @@
+.menuactor {
+  position: relative;
+  min-height: 96px;
+  border: 1px solid;
+  line-height: 1.2;
+  margin-bottom: 0;
+}
+
+.actor.menu {
+	margin-bottom: 10px;
+	min-width: 90%;
+	border-radius: 0px;
+	height: auto;
+}
+
+.menuactor.small-display {
+	display: grid;
+	grid-template-columns: 33% 1fr;
+	margin-bottom: 0.5em;
+}
+
+.portrait {
+	display: inline-block;
+	text-align: center;
+	height: 96px;
+	width: 96px;
+	border-right: 1px solid;
+}
+
+.menuactor-nameblock {
+	position:absolute;
+	margin-left: 14px;
+	padding-top: 5px;
+}
+
+.menuactor-nameblock.small-display {
+	position: static;
+	padding-bottom: 0.5em;
+	grid-row: 1;
+	grid-column: 1;
+	border-right: 1px solid;
+}
+
+.menuactor-name {
+	font-weight:bold;
+	font-size:20px;
+}
+
+.menuactor-level {
+	font-weight:bold;
+	font-size:16px;
+	position:relative;
+	top:0.7em;
+}
+
+.menuactor-hpmpblock {
+	position:absolute;
+	left:240px;
+	top:0;
+	width: 200px;
+}
+
+.menuactor-hpmpblock.small-display {
+	top: 0.75em;
+	width: 260px;
+}
+
+.hpmp {
+	font-weight:bold;
+	font-size:20px;
+	font-family: monospace;
+	display:inline-block;
+	width:100%;
+	position:relative;
+	top:5px;
+}
+
+.hpmpvalue {
+	display:inline-block;
+	text-align:right;
+	min-width:2.3em;
+}
+
+.menuactor-xpblock {
+	position: absolute;
+	left: 480px;
+	top: 0.5em;
+	min-width: 110px;
+	line-height: 1.15;
+}
+
+.menuactor-detail {
+	display: grid;
+  grid-template-columns: 50% 50%;
+  height:auto;
+  border:1px solid;
+}
+
+.menuactor-stats {
+	grid-row: 1;
+  grid-column: 1;
+  display: grid;
+  font-weight: bold;
+  font-size: 12pt;
+  grid-auto-rows: max-content;
+  grid-template-columns: 50% 6em 4em;
+  border-right: 1px solid;
+  padding-top: 1em;
+  padding-bottom: 0.4em;
+}
+
+.menuactor-stats.small-display, .menuactor-stats.inventory-display {
+	grid-row: unset;
+	grid-column: unset;
+	grid-template-columns: 40% 3em 4em;
+	border-right: none;
+}
+
+.menuactor-statname {
+	grid-column: 1;
+    margin-left:1em;
+    margin-bottom:0;
+    font-weight:bold;
+    text-transform:uppercase;
+}
+
+.menuactor-statvalue {
+	grid-column: 2;
+    text-align:right;
+}
+
+.menuactor-statmod {
+	grid-column:3;
+    margin-left:1em;
+}
+
+#menuactor-special {
+	grid-row: 1;
+    grid-column: 2;
+    padding-bottom: 1em;
+}
+
+.menuactor-special-title {
+	text-transform:uppercase;
+	font-weight:bold;
+	text-align:center;
+	margin-bottom:0.5em;
+}
+
+.abilities-header {
+	font-weight: bold;
+	border-bottom: 1px solid;
+	text-transform: uppercase;
+	margin-bottom: 1em;
+}
+
+.menuactor-equipment.small-display, .menuactor-equipment.inventory-display {
+	grid-row: 1;
+	grid-column: 2;
+	margin-left: 1em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	margin-right: 1em;
+}
+
+#menu-display.action {
+  height: auto;
+}

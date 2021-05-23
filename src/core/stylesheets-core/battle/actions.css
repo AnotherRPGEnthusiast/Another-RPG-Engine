@@ -10,7 +10,7 @@
   font-weight: bold;
 }
 
-#actEffect {
+#actEffect, .actEffect {
   color: gray;
   font-style: italic;
   border: solid;

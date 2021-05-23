@@ -19,7 +19,7 @@ setup.actionData = {
 			$.wiki('<<healCalc _targ>>');
 			puppet.hp += V().heal;
 			subject().en -= this.cost;
-			return;
+			return `${puppet.name} recovers <<print $heal>> HP!`;
 		},
 		"act": heal(),
 		"preview": "heal"

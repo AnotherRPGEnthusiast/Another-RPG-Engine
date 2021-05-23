@@ -1,0 +1,73 @@
+:: Widget: unequipAll [widget nobr]
+<<widget "unequipAll">>
+<<link "Unequip All">>
+	<<for _puppet range puppets().concat($Reserve_Puppets).filter(function(p){ return !p.lockEquipment; })>>
+		<<run _puppet.unequipAll()>>
+	<</for>>
+	<<goto `passage()`>>
+<</link>>
+<</widget>>
+:: Menu: Equipment[menu battle noreturn]
+<span id="content" class="menu"><<nobr>>
+<div id="puppets">
+<<include "equip manager puppets">>
+</div>
+<div id="equipment-list">
+<<include "equipment list">>
+</div>
+<</nobr>>
+</span>
+
+:: equip manager puppets[nobr]
+<<if def $subject>>
+	<<set _i = "null">>
+	<<actorDisplay $subject "equipment">>
+<<else>>
+<<for _i, _p range $puppets>>
+	<<actorDisplay _p "equipment">>
+<</for>>
+<</if>>
+
+:: equipment list[nobr]
+<<if def $subject && !$subject.lockEquipment>>
+	<div style="line-height:1.4">
+	<<set _count = 0>>
+	<<for _k, _v range $inventory>>
+		<<if _v.equippable && _v.stock > 0>>
+			<br/>
+			<<set _count++>>
+			<<if (def $subject && $subject.checkRestriction(_v)) || ndef $subject>>
+				<div @id="_k">
+				<b>
+				<<if def $subject>>
+					<<capture _v>>
+					<<link _v.name>>
+						<<run $subject.equip(_v)>>
+						<<replace "#puppets">><<include "equip manager puppets">><</replace>>
+						<<replace "#equipment-list">><<include "equipment list">><</replace>>
+					<</link>>
+					<</capture>>
+				<<else>>
+					<<print _k>>
+				<</if>>
+				</b>
+				<span style="float:right">(_v.stock)</span><br/>
+				<i style="font-size:12px"><<print _v.equippable.slot>></i><br/>
+				<<if _v.equippable.restrictedTo.length > 0>>
+					<div style="font-size:12px; font-style:italic">Restriction: <<for _char range _v.equippable.restrictedTo>><<print _char>><</for>></div>
+				<</if>>
+				<<print _v.desc>><br/>
+				<span class="action-desc"><<print _v.info>></span>
+				</div>
+			<</if>>
+		<</if>>
+	<</for>>
+	<<if _count == 0>>
+	You don't have any equipment.
+	<</if>>
+	</div>
+<<elseif def $subject && $subject.lockEquipment>>
+	<i>This character's equipment can't be changed.</i>
+<<else>>
+	<<unequipAll>>
+<</if>>

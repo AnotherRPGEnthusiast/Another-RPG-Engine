@@ -182,7 +182,7 @@ setup.itemData = {
 		"onUse": function (puppet) {
 			puppet.maxhp += 100;
 			inv().decItem(this.name);
-			return;
+			return `${puppet.name} gains 100 max HP!`;
 		},
 		"info": "Permanently increases max HP by 100.",
 		"desc": `The apple Adam and Eve didn't eat. It's lost much of its power, this far from the Garden, but it'll still make a puppet a little more vivacious than usual.`

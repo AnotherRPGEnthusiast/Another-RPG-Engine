@@ -47,21 +47,6 @@ Object.assign(setup.actionData, {
 		"dur": 3,
 		"target": "ally",
 		"useText": function () {
-			let rand = random(1,3);
-			switch (rand) {
-				case 1:
-					action().god = "Chattur'gha";
-					action()._special = "DEF";
-					break;
-				case 2:
-					action().god = "Ulayoth";
-					action()._special = "ATK";
-					break;
-				case 3:
-					action().god = "Xel'lotath";
-					action()._special = "SPC";
-					break;
-			}
 			return `Dipper frantically flips through his journal before yelling, "Narokath Santak ${action().god}!"`;
 		},
 		"actText": function () {
@@ -80,6 +65,21 @@ Object.assign(setup.actionData, {
 			return `Eldritch runes glow beneath Dipper's feet, and ${target().name} `+extension;
 		},
 		"act": function () {
+			let rand = random(1,3);
+			switch (rand) {
+				case 1:
+					action().god = "Chattur'gha";
+					action()._special = "DEF";
+					break;
+				case 2:
+					action().god = "Ulayoth";
+					action()._special = "ATK";
+					break;
+				case 3:
+					action().god = "Xel'lotath";
+					action()._special = "SPC";
+					break;
+			}
 			return `<<for _effect range $target.effects>>\
 								<<if !_effect.buff>>\
 									<<set _effect.duration -= 1>>\
@@ -98,6 +98,20 @@ Object.assign(setup.actionData, {
 		"effweight": setup.STD_DEBUFF,
 		"dur": 3,
 		"useText": function () {
+			return `Dipper frantically flips through his journal before yelling, "Bankorok Redgemor ${action().god}!"`;
+		},
+		"actText": function () {
+			switch (action().god) {
+				case "Chattur'gha":
+					return `Pillars of red energy burst from the ground under $target.name like claws, searing their flesh where they touch.`;
+				case "Ulayoth":
+					return `Waves of blue energy pulse around $target.name and chill them with a numbing cold.`;
+				case "Xel'lotath":
+					return `The floor under $target.name flashes with a sickening green energy that makes your vision swim.`;
+			}
+			return `ERROR: invalid god`;
+		},
+		"act": function () {
 			let rand = random(1,3);
 			switch (rand) {
 				case 1:
@@ -113,20 +127,6 @@ Object.assign(setup.actionData, {
 					action()._special = "Headache";
 					break;
 			}
-			return `Dipper frantically flips through his journal before yelling, "Bankorok Redgemor ${action().god}!"`;
-		},
-		"actText": function () {
-			switch (action().god) {
-				case "Chattur'gha":
-					return `Pillars of red energy burst from the ground under $target.name like claws, searing their flesh where they touch.`;
-				case "Ulayoth":
-					return `Waves of blue energy pulse around $target.name and chill them with a numbing cold.`;
-				case "Xel'lotath":
-					return `The floor under $target.name flashes with a sickening green energy that makes your vision swim.`;
-			}
-			return `ERROR: invalid god`;
-		},
-		"act": function () {
 			return `<<echoDamage>>\
 				<<print target().addEffect("${action().special}")>>`;
 		}

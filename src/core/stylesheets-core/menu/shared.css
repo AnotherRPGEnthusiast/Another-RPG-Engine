@@ -1,0 +1,80 @@
+#content.menu {
+	padding-top: 0;
+	border: none;
+}
+
+.menunav {
+	display: inline-block;
+	line-height: 1.2;
+	float: right;
+}
+
+#menu-display {
+	border: 2px solid;
+	border-radius: 1em;
+	height: 120px;
+	padding: 1em;
+	margin-bottom: 0.5em;
+}
+
+#display-content {
+	height: 3.5em;
+	overflow-Y: auto;
+}
+
+.elementdisplay {
+	float: right;
+	text-align: right;
+}
+
+.shop-button {
+	display: inline-block;
+	float: right;
+}
+
+.cyclebuttons {
+	position:absolute;
+	top:0;
+	right:1em;
+}
+
+#button1 button {
+	padding:0.1em;
+	color: #35c;
+	background-color:unset;
+	border-width:medium;
+}
+
+#button2 button {
+	padding:0.1em;
+	color: #35c;
+	background-color: unset;
+	border-width: medium;
+}
+
+.GPdisplay {
+	font-weight: bold;
+	margin-top: 3em;
+}
+
+.itembox {
+	background-color:#fff;
+	color:#111;
+	width: 50%;
+	border: solid;
+	border-radius: 8px;
+	padding: 1em;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	text-align: left;
+}
+
+.smalltext {
+	font-size:12px;
+	font-weight:normal;
+}
+
+#notify.menu {
+	font-weight: bold !important;
+	background-color: lightgreen !important;
+}

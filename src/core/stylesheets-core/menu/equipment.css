@@ -1,0 +1,26 @@
+#equipment-list {
+	overflow-y: auto;
+	padding-right: 1em;
+	max-height: 60vh;
+}
+.menuactor-equipment-slot {
+	font-weight:bold;
+	color:gray;
+	line-height:1;
+}
+
+.menuactor-equipment-name {
+	position:relative;
+	left:1.5em;
+	display:inline-block;
+	margin-bottom:0.5em;
+}
+
+.unequip-button {
+	float: right;
+}
+
+.item-equippable {
+	font-style: italic;
+	font-size: 12px;
+}

@@ -188,6 +188,18 @@ html.redLinks a:hover {
 	background-color: silver;
 	border-radius: 4px;
 }
+
+.relative {
+	position: relative;
+}
+
+.relative > .centered {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 100%;
+	text-align: center;
+}
 /* twine-user-stylesheet #2: "actions.css" */
 #actFlavor {
   border: solid;
@@ -201,7 +213,7 @@ html.redLinks a:hover {
   font-weight: bold;
 }
 
-#actEffect {
+#actEffect, .actEffect {
   color: gray;
   font-style: italic;
   border: solid;
@@ -4417,7 +4429,124 @@ html.redLinks a:hover {
 */  right: 20px;
   top: 15px;
 }
-/* twine-user-stylesheet #5: "battle display.css" */
+/* twine-user-stylesheet #5: "battle grid.css" */
+.actors.grid {
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  row-gap: 1em;
+  width: 100%;
+  height: auto;
+/*  grid-template-columns: repeat(auto-fit,1fr); */
+  /*
+  By default, this will result in rows of size 4.
+  For shorter rows, put a defined number in place of auto-fit or the space specification.
+  For longer rows, you must expand the width of #content and/or adjust the width of .actor.grid.
+  */
+}
+
+.actors.grid.large {
+	grid-template: repeat(2,1fr) / repeat(3,1fr);
+}
+
+.actor.grid {
+  position: relative;
+  width: 140px; /* 4 per row at default #content width */
+  min-height: 96px;
+}
+
+.actor.large {
+	grid-column: 1 / 4;
+	grid-row: 1 / 3;
+	width: 100%;
+	height: 192px;	/* 2 actor boxes */
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	text-align: center;
+	justify-content: center;
+	align-items: center;
+}
+
+.actor.large .actorname {
+	font-size: 24pt;
+}
+
+.front1 {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.front2 {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.front3 {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.mid1 {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.mid2 {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.mid3 {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.back1 {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.back2 {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.back3 {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.enemy.front1 {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.enemy.front2 {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.enemy.front3 {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.enemy.back1 {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.enemy.back2 {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.enemy.back3 {
+  grid-column: 3;
+  grid-row: 1;
+}
+/* twine-user-stylesheet #6: "battle layout.css" */
 .invisible {
 	display: none;
 }
@@ -4470,13 +4599,6 @@ html.redLinks a:hover {
 	margin-bottom: 1em;
 	background-color:#fff;
 	color:#111;
-}
-
-.actor.menu {
-	margin-bottom: 10px;
-	min-width: 90%;
-	border-radius: 0px;
-	height: auto;
 }
 
 .actor.full {
@@ -4609,242 +4731,7 @@ button {
 	right: 1em;
 	bottom: 0;
 }
-/* twine-user-stylesheet #6: "battle grid.css" */
-.actors.grid {
-  display: grid;
-  justify-items: center;
-  align-items: center;
-  row-gap: 1em;
-  width: 100%;
-  height: auto;
-/*  grid-template-columns: repeat(auto-fit,1fr); */
-  /*
-  By default, this will result in rows of size 4.
-  For shorter rows, put a defined number in place of auto-fit or the space specification.
-  For longer rows, you must expand the width of #content and/or adjust the width of .actor.grid.
-  */
-}
-
-.actors.grid.large {
-	grid-template: repeat(2,1fr) / repeat(3,1fr);
-}
-
-.actor.grid {
-  position: relative;
-  width: 140px; /* 4 per row at default #content width */
-  min-height: 96px;
-}
-
-.actor.large {
-	grid-column: 1 / 4;
-	grid-row: 1 / 3;
-	width: 100%;
-	height: 192px;	/* 2 actor boxes */
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	text-align: center;
-	justify-content: center;
-	align-items: center;
-}
-
-.actor.large .actorname {
-	font-size: 24pt;
-}
-
-.front1 {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.front2 {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.front3 {
-  grid-column: 3;
-  grid-row: 1;
-}
-
-.mid1 {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.mid2 {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.mid3 {
-  grid-column: 3;
-  grid-row: 2;
-}
-
-.back1 {
-  grid-column: 1;
-  grid-row: 3;
-}
-
-.back2 {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.back3 {
-  grid-column: 3;
-  grid-row: 3;
-}
-
-.enemy.front1 {
-  grid-column: 1;
-  grid-row: 3;
-}
-
-.enemy.front2 {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.enemy.front3 {
-  grid-column: 3;
-  grid-row: 3;
-}
-
-.enemy.back1 {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.enemy.back2 {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.enemy.back3 {
-  grid-column: 3;
-  grid-row: 1;
-}
-/* twine-user-stylesheet #7: "bleached style.css" */
-body, tw-story
-{
-  background-color:#fff;
-  color:#111;
-}
-
-a {
-	color: #35c;
-}
-
-a:hover {
-  color: #6691ff;
-}
-
-input, select, textarea {
-  color: #444;
-}
-
-input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):focus, select:not(:disabled):hover, textarea:not(:disabled):focus, textarea:not(:disabled):hover {
-    background-color: #fff;
-    border-color: #444;
-}
-
-#title, #story-caption {
-	color:#fff;
-}
-
-/* Default dialog styling */
-#ui-overlay {
-	background-color: #777;
-}
-#ui-dialog-titlebar {
-	background-color: #ccc;
-}
-#ui-dialog-close:hover {
-	background-color: #b44;
-	border-color: #a33;
-}
-#ui-dialog-body {
-	background-color: #fff;
-	border-color: #ccc;
-	color:#111;
-}
-#ui-dialog-body hr {
-	background-color: #ccc;
-}
-
-/* List-based dialog styling */
-#ui-dialog-body.list li:not(:first-child) {
-	border-top-color: #ccc;
-}
-#ui-dialog-body.list li a {
-	color: #111;
-}
-#ui-dialog-body.list li a:hover {
-	background-color: #ddd;
-	border-color: #111;
-}
-
-/* Saves dialog styling */
-#ui-dialog-body.saves > *:not(:first-child),
-#ui-dialog-body.saves tr:not(:first-child) {
-	border-top-color: #ccc;
-}
-#ui-dialog-body.saves .empty {
-	color: #777;
-}
-
-/* Settings dialog styling */
-#ui-dialog-body.settings button[id|="setting-control"] {
-	color: #111;
-	border-color: #ccc;
-}
-#ui-dialog-body.settings button[id|="setting-control"]:hover {
-	background-color: #ddd;
-	border-color: #111;
-}
-#ui-dialog-body.settings button[id|="setting-control"].enabled {
-	background-color: #9e9;
-	border-color: #7c7;
-}
-#ui-dialog-body.settings button[id|="setting-control"].enabled:hover {
-	background-color: #7c7;
-	border-color: #5a5;
-}
-/* twine-user-stylesheet #8: "colors.css" */
-.stat-raised, .blue {
-	color: blue;
-}
-
-.stat-lowered, .red {
-	color: red;
-}
-
-.green {
-	color: lime;
-}
-
-.truegreen {
-	color: green;
-}
-
-.gray {
-  color: gray;
-}
-
-.maroon {
-  color: maroon;
-}
-
-.gold {
-  color: gold;
-}
-
-.orange {
-  color: orange;
-}
-/* twine-user-stylesheet #9: "custom animations.css" */
+/* twine-user-stylesheet #7: "custom animations.css" */
 @-webkit-keyframes headShake {
   0% {
     -webkit-transform: translateX(0);
@@ -5027,7 +4914,152 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
   -webkit-animation-name: slideOutDown;
   animation-name: slideOutDown;
 }
-/* twine-user-stylesheet #10: "fonts.css" */
+/* twine-user-stylesheet #8: "status-pane.css" */
+.statusname {
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.statname {
+  display: inline-block;
+  min-width: 6em;
+  text-transform: uppercase;
+}
+
+.stat {
+	display: inline-block;
+	min-width: 4em;
+	text-align: right;
+}
+
+.effectdesc {
+  font-weight: normal;
+}
+
+.duration, .tolerance {
+  color: gray;
+  font-style: italic;
+  float: right;
+}
+/* twine-user-stylesheet #9: "bleached style.css" */
+body, tw-story
+{
+  background-color:#fff;
+  color:#111;
+}
+
+a {
+	color: #35c;
+}
+
+a:hover {
+  color: #6691ff;
+}
+
+input, select, textarea {
+  color: #444;
+}
+
+input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):focus, select:not(:disabled):hover, textarea:not(:disabled):focus, textarea:not(:disabled):hover {
+    background-color: #fff;
+    border-color: #444;
+}
+
+#title, #story-caption {
+	color:#fff;
+}
+
+/* Default dialog styling */
+#ui-overlay {
+	background-color: #777;
+}
+#ui-dialog-titlebar {
+	background-color: #ccc;
+}
+#ui-dialog-close:hover {
+	background-color: #b44;
+	border-color: #a33;
+}
+#ui-dialog-body {
+	background-color: #fff;
+	border-color: #ccc;
+	color:#111;
+}
+#ui-dialog-body hr {
+	background-color: #ccc;
+}
+
+/* List-based dialog styling */
+#ui-dialog-body.list li:not(:first-child) {
+	border-top-color: #ccc;
+}
+#ui-dialog-body.list li a {
+	color: #111;
+}
+#ui-dialog-body.list li a:hover {
+	background-color: #ddd;
+	border-color: #111;
+}
+
+/* Saves dialog styling */
+#ui-dialog-body.saves > *:not(:first-child),
+#ui-dialog-body.saves tr:not(:first-child) {
+	border-top-color: #ccc;
+}
+#ui-dialog-body.saves .empty {
+	color: #777;
+}
+
+/* Settings dialog styling */
+#ui-dialog-body.settings button[id|="setting-control"] {
+	color: #111;
+	border-color: #ccc;
+}
+#ui-dialog-body.settings button[id|="setting-control"]:hover {
+	background-color: #ddd;
+	border-color: #111;
+}
+#ui-dialog-body.settings button[id|="setting-control"].enabled {
+	background-color: #9e9;
+	border-color: #7c7;
+}
+#ui-dialog-body.settings button[id|="setting-control"].enabled:hover {
+	background-color: #7c7;
+	border-color: #5a5;
+}
+/* twine-user-stylesheet #10: "colors.css" */
+.stat-raised, .blue {
+	color: blue;
+}
+
+.stat-lowered, .red {
+	color: red;
+}
+
+.green {
+	color: lime;
+}
+
+.truegreen {
+	color: green;
+}
+
+.gray {
+  color: gray;
+}
+
+.maroon {
+  color: maroon;
+}
+
+.gold {
+  color: gold;
+}
+
+.orange {
+  color: orange;
+}
+/* twine-user-stylesheet #11: "fonts.css" */
 @font-face {
   font-family: 'OpenDyslexic';
   src: url("fonts/OpenDyslexic-Regular.otf") format("otf"),
@@ -5039,7 +5071,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
   src: url("fonts/OpenDyslexicMono-Regular.otf") format("otf"),
   url("fonts/OpenDyslexicMono-Regular.woff") format("woff");
 }
-/* twine-user-stylesheet #11: "marquee.css" */
+/* twine-user-stylesheet #12: "marquee.css" */
 .marqueeWrapper {
     position: relative;
     display: flex;
@@ -5068,18 +5100,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
         left: -100%;
     }
 }
-/* twine-user-stylesheet #12: "menu.css" */
-#content.menu {
-	padding-top: 0;
-	border: none;
-}
-
-.menunav {
-	display: inline-block;
-	line-height: 1.2;
-	float: right;
-}
-
+/* twine-user-stylesheet #13: "bestiary.css" */
 .bestiary-header {
 	font-size: 200%;
 	font-weight: bold;
@@ -5087,6 +5108,18 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	line-height: 1;
 	padding-bottom: 10px;
 	margin-bottom: 10px;
+}
+
+.bestiary-grid {
+	display: grid;
+	width: 100%;
+	grid-auto-rows: auto;
+	grid-template-columns: 25px 1fr 25px 1fr;
+	grid-column-gap: 20px;
+	overflow-y: auto;
+	padding-right: 1em;
+	max-height: 60vh;
+	font-weight: bold;
 }
 
 .bestiary-display {
@@ -5151,27 +5184,6 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	margin-right:15px;
 }
 
-.elementdisplay {
-	float: right;
-	text-align: right;
-}
-
-.itemcontainer, .bestiary-container {
-	display: grid;
-	width: 100%;
-	grid-auto-rows: auto;
-	grid-template-columns: 1fr 2em 1fr;
-	overflow-y: auto;
-	padding-right: 1em;
-	max-height: 60vh;
-}
-
-.bestiary-container {
-	grid-template-columns: 25px 1fr 25px 1fr;
-	grid-column-gap: 20px;
-	font-weight: bold;
-}
-
 .bestiary-detail-container {
 	display: grid;
 	grid-template-columns: 50% 50%;
@@ -5185,13 +5197,122 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 .bestiary-entry {
 	border-bottom: 1px solid;
 }
-
+/* twine-user-stylesheet #14: "equipment.css" */
 #equipment-list {
 	overflow-y: auto;
 	padding-right: 1em;
 	max-height: 60vh;
 }
+.menuactor-equipment-slot {
+	font-weight:bold;
+	color:gray;
+	line-height:1;
+}
 
+.menuactor-equipment-name {
+	position:relative;
+	left:1.5em;
+	display:inline-block;
+	margin-bottom:0.5em;
+}
+
+.unequip-button {
+	float: right;
+}
+
+.item-equippable {
+	font-style: italic;
+	font-size: 12px;
+}
+/* twine-user-stylesheet #15: "formation.css" */
+.actors.menu {
+	grid-template-columns: auto 1fr 1fr 1fr;
+}
+
+.formation-label {
+	padding-right: 1em;
+	justify-self: start;
+}
+
+.leaderlabel {
+	grid-column: 1;
+	grid-row: 1;
+	font-weight: bold;
+}
+
+.frontrowlabel {
+	grid-column: 1;
+	grid-row: 2;
+	font-weight: bold;
+}
+
+.backrowlabel {
+	grid-column: 1;
+	grid-row: 3;
+	font-weight: bold;
+}
+
+.front1.menu {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.front2.menu {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.front3.menu {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.mid1.menu {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.mid2.menu {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.mid3.menu {
+  grid-column: 4;
+  grid-row: 2;
+}
+
+.back1.menu {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.back2.menu {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.back3.menu {
+  grid-column: 4;
+  grid-row: 3;
+}
+
+.formation-labels {
+	display: inline-grid;
+	grid-template: repeat(3,1fr) / 1fr;
+	row-gap: 1em;
+	height: 100%;
+}
+/* twine-user-stylesheet #16: "inventory.css" */
+.itemcontainer {
+	display: grid;
+	width: 100%;
+	grid-auto-rows: auto;
+	grid-template-columns: 1fr 2em 1fr;
+	overflow-y: auto;
+	padding-right: 1em;
+	max-height: 60vh;
+}
 .item1 {
 	grid-column: 1;
 }
@@ -5207,12 +5328,39 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	float: right;
 }
 
+.item-buttons {
+	display: flex;
+	justify-content: space-evenly;
+	margin-top: 0.5em;
+}
+/* twine-user-stylesheet #17: "shared.css" */
+#content.menu {
+	padding-top: 0;
+	border: none;
+}
+
+.menunav {
+	display: inline-block;
+	line-height: 1.2;
+	float: right;
+}
+
 #menu-display {
 	border: 2px solid;
 	border-radius: 1em;
-	min-height: 5em;
+	height: 120px;
 	padding: 1em;
 	margin-bottom: 0.5em;
+}
+
+#display-content {
+	height: 3.5em;
+	overflow-Y: auto;
+}
+
+.elementdisplay {
+	float: right;
+	text-align: right;
 }
 
 .shop-button {
@@ -5220,12 +5368,66 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	float: right;
 }
 
+.cyclebuttons {
+	position:absolute;
+	top:0;
+	right:1em;
+}
+
+#button1 button {
+	padding:0.1em;
+	color: #35c;
+	background-color:unset;
+	border-width:medium;
+}
+
+#button2 button {
+	padding:0.1em;
+	color: #35c;
+	background-color: unset;
+	border-width: medium;
+}
+
+.GPdisplay {
+	font-weight: bold;
+	margin-top: 3em;
+}
+
+.itembox {
+	background-color:#fff;
+	color:#111;
+	width: 50%;
+	border: solid;
+	border-radius: 8px;
+	padding: 1em;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	text-align: left;
+}
+
+.smalltext {
+	font-size:12px;
+	font-weight:normal;
+}
+
+#notify.menu {
+	font-weight: bold !important;
+	background-color: lightgreen !important;
+}
+/* twine-user-stylesheet #18: "status.css" */
 .menuactor {
   position: relative;
   min-height: 96px;
   border: 1px solid;
   line-height: 1.2;
   margin-bottom: 0;
+}
+
+.actor.menu {
+	margin-bottom: 10px;
+	min-width: 90%;
+	border-radius: 0px;
+	height: auto;
 }
 
 .menuactor.small-display {
@@ -5378,176 +5580,10 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	margin-right: 1em;
 }
 
-.menuactor-equipment-slot {
-	font-weight:bold;
-	color:gray;
-	line-height:1;
+#menu-display.action {
+  height: auto;
 }
-
-.menuactor-equipment-name {
-	position:relative;
-	left:1.5em;
-	display:inline-block;
-	margin-bottom:0.5em;
-}
-
-.unequip-button {
-	float: right;
-}
-
-.cyclebuttons {
-	position:absolute;
-	top:0;
-	right:1em;
-}
-
-#button1 button {
-	padding:0.1em;
-	color: #35c;
-	background-color:unset;
-	border-width:medium;
-}
-
-#button2 button {
-	padding:0.1em;
-	color: #35c;
-	background-color: unset;
-	border-width: medium;
-}
-
-.GPdisplay {
-	font-weight: bold;
-	margin-top: 3em;
-}
-
-.itembox {
-	background-color:#fff;
-	color:#111;
-	width: 50%;
-	border: solid;
-	border-radius: 8px;
-	padding: 1em;
-	margin-top: 1em;
-	margin-bottom: 1em;
-	text-align: left;
-}
-
-.actors.menu {
-	grid-template-columns: auto 1fr 1fr 1fr;
-}
-
-.formation-label {
-	padding-right: 1em;
-	justify-self: start;
-}
-
-.leaderlabel {
-	grid-column: 1;
-	grid-row: 1;
-	font-weight: bold;
-}
-
-.frontrowlabel {
-	grid-column: 1;
-	grid-row: 2;
-	font-weight: bold;
-}
-
-.backrowlabel {
-	grid-column: 1;
-	grid-row: 3;
-	font-weight: bold;
-}
-
-.front1.menu {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.front2.menu {
-  grid-column: 3;
-  grid-row: 1;
-}
-
-.front3.menu {
-  grid-column: 4;
-  grid-row: 1;
-}
-
-.mid1.menu {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.mid2.menu {
-  grid-column: 3;
-  grid-row: 2;
-}
-
-.mid3.menu {
-  grid-column: 4;
-  grid-row: 2;
-}
-
-.back1.menu {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.back2.menu {
-  grid-column: 3;
-  grid-row: 3;
-}
-
-.back3.menu {
-  grid-column: 4;
-  grid-row: 3;
-}
-
-.formation-labels {
-	display: inline-grid;
-	grid-template: repeat(3,1fr) / 1fr;
-	row-gap: 1em;
-	height: 100%;
-}
-
-.smalltext {
-	font-size:12px;
-	font-weight:normal;
-}
-
-.item-equippable {
-	font-style: italic;
-	font-size: 12px;
-}
-/* twine-user-stylesheet #13: "status.css" */
-.statusname {
-  text-transform: uppercase;
-  text-align: center;
-}
-
-.statname {
-  display: inline-block;
-  min-width: 6em;
-  text-transform: uppercase;
-}
-
-.stat {
-	display: inline-block;
-	min-width: 4em;
-	text-align: right;
-}
-
-.effectdesc {
-  font-weight: normal;
-}
-
-.duration, .tolerance {
-  color: gray;
-  font-style: italic;
-  float: right;
-}
-/* twine-user-stylesheet #14: "tooltips.css" */
+/* twine-user-stylesheet #19: "tooltips.css" */
 .tooltip {
   position: relative;
   display: inline-block;
@@ -5578,7 +5614,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 html.dyslexic .tooltiptext {
   font-family: 'OpenDyslexic';
 }
-/* twine-user-stylesheet #15: "miscellaneous.css" */
+/* twine-user-stylesheet #20: "miscellaneous.css" */
 /* Styles relating to the display of the help file. You will likely wish to delete or override this for your own stories. */
 
 blockquote a.link-external::after, a.noExternal.link-external::after {
@@ -5620,7 +5656,31 @@ pre > code {
   margin-left: 1em;
   margin-right: 1em;
 }
-/* twine-user-stylesheet #16: "saves desc.css" */
+/* twine-user-stylesheet #21: "notify-custom.css" */
+#notify {
+  position:fixed;
+  display:block;
+  opacity: 0;
+  width:26em;
+  top: -1em;
+  right: 530px;
+  padding:1em;
+  background-color:#fff;
+  color:#000;
+  font-size: 100%;
+  border: 2px solid;
+  border-radius: 1em;
+  -webkit-transition: top .3s, opacity .3s;
+  -moz-transition:top .3s, opacity .3s;
+  -o-transition:top .3s, opacity .3s;
+  transition:top .3s, opacity .3s;
+}
+
+#notify.open {
+  opacity: 1;
+  top: 4em;
+}
+/* twine-user-stylesheet #22: "saves desc.css" */
 #ui-dialog-body.saves {
   min-width: 600px;
 }
@@ -5676,18 +5736,42 @@ pre > code {
 	font-weight: bold;
 	overflow: hidden;
 }
-/* twine-user-stylesheet #17: "special formats.css" */
+/* twine-user-stylesheet #23: "special formats.css" */
 html.dark body, body.dark
 {
   background-color:#111;
   color:#fff;
 }
-/* twine-user-stylesheet #18: "bundle.css" */
+/* twine-user-stylesheet #24: "bundle.css" */
+/* popover.min.css, by chapel; for use with popover.js; v1.0.0 */
+#ui-dialog-body.popover{background:0 0;border:0;padding:0}.popover #ui-dialog-titlebar{background:0 0}.popover #ui-dialog-title{display:none}.popover #ui-dialog-close{position:fixed;display:block;top:0;right:0;height:3em}.popover #ui-dialog-close:hover{background-color:transparent;border-color:transparent;color:#c22}#ui-overlay.popover.opaque{opacity:1}#ui-overlay.popover.transparent{opacity:0}#ui-overlay.popover.invert{background-color:#f8f8f8}#ui-dialog-body.popover.invert{color:#111}
+/* end popover.min.css */
 /* speech.min.css, by chapel; for use with speech.js */
 .say{border:1px solid #eee;overflow:auto}.say img{max-width:20%;float:left;margin-right:1em}.say p:first-of-type{font-weight:700;margin:.2em 0;border-bottom:1px solid #eee}.say p:last-of-type{padding:.5em;margin:0}
 /* notify.min.css, by chapel; for use with notify.js; v1.0.0 */
-#notify{position:fixed;display:block;width:16em;right:-20em;top:2em;padding:.5em;background-color:#fff;color:#000;-webkit-transition:right .3s;-moz-transition:right .3s;-o-transition:right .3s;transition:right .3s}#notify.open{right:0}
-/* twine-user-stylesheet #19: "ctp.css" */
+/*
+#notify {
+  position:fixed;
+  display:block;
+  width:16em;
+  right:-20em;
+  top:2em;
+  padding:.5em;
+  background-color:#fff;
+  color:#000;
+  -webkit-transition:right .3s;
+  -moz-transition:right .3s;
+  -o-transition:right .3s;
+  transition:right .3s
+}
+*/
+/*
+#notify.open {
+  right:0
+}
+*/
+/* end notify.min.css */
+/* twine-user-stylesheet #25: "ctp.css" */
 .macro-ctp-entry-t8n {
   opacity: 1;
   animation: macro-ctp-fade-in 0.25s ease;
@@ -5698,7 +5782,7 @@ html.dark body, body.dark
     opacity: 0;
   }
 }
-/* twine-user-stylesheet #20: "linkdropdown.css" */
+/* twine-user-stylesheet #26: "linkdropdown.css" */
 /*
     Copyright Kronwiz.
     This file is part of https://github.com/kronwiz/twineworks repository.
@@ -5738,7 +5822,7 @@ a.linkdropdown-anchor {
 a.linkdropdown-anchor.open {
   background: yellow;
 }
-/* twine-user-stylesheet #21: "numberpool-macro-set.css" */
+/* twine-user-stylesheet #27: "numberpool-macro-set.css" */
 /*! <<numberpool>> macro set for SugarCube v2 */
 div[id|="numberinput-body"] {
 	display: inline-block;
@@ -5850,7 +5934,7 @@ div[id|="numberslider-body"] input::-ms-thumb {
 	height: 16px;
 	width: 33px;
 }
-/* twine-user-stylesheet #22: "shake-macro-set.css" */
+/* twine-user-stylesheet #28: "shake-macro-set.css" */
 /*! <<shake>> macro set for SugarCube 2.x */
 @-webkit-keyframes shakeanim {
 	0% { -webkit-transform: translate(2px, 1px) rotate(0deg); }
@@ -7245,7 +7329,7 @@ window.Action = class Action {
 						}
 					}
 				} else if (val.includes("heal")) {
-					result += `<<healCalc>><b>${target().name}</b> will recover <b>$heal</b> damage`;
+					result += `<<healCalc>><b>${target().name}</b> will recover <b>$heal</b> health`;
 				} else {
 					if (this.weight > 0) {
 						if (hits < 1) {
@@ -10161,8 +10245,10 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 	toString () {
 		var text = `<span class="item-name">${this.name}</span>`;
 		if (this.equippable) text += `<div class="item-equippable">${this.equippable.slot}</div>`;
+		text += `<div id="display-content">`;
 		text += `<div class="action-info">${this.info}</div>`;
 		text += `<div class="action-desc">${this.desc}</div>`;
+		text += `</div>`;
 		return text;
 	}
 
@@ -10658,7 +10744,7 @@ setup.actionData = {
 			$.wiki('<<healCalc _targ>>');
 			puppet.hp += V().heal;
 			subject().en -= this.cost;
-			return;
+			return `${puppet.name} recovers <<print $heal>> HP!`;
 		},
 		"act": heal(),
 		"preview": "heal"
@@ -17282,7 +17368,7 @@ Config.saves.isAllowed = function () {
 };
 // This will disallow saving in battle. This is probably a good idea, but make sure you keep track of your inbattle variable so you don't accidentally prevent people from saving in the main story.
 
-setup.version = "3.01";
+setup.version = "3.02";
 
 Config.saves.version = 0;
 // Records a version number for saves. Update this when you update your version. This is helpful for updating saves from older versions.
@@ -17424,7 +17510,7 @@ Object.assign(setup.effectData, {
 /* twine-user-script #20: "database-enemies.js" */
 Object.assign(setup.enemyData,{
   "Example": {
-    "bestiaryNo": 0,
+    "bestiaryNo": false,
     "gender": 'N',
     "hp": 0,
     "stats": {
@@ -17453,7 +17539,7 @@ Object.assign(setup.enemyData,{
       return;
     }
   },
-  
+
 });
 /* twine-user-script #21: "database-items.js" */
 setup.itemData = {
@@ -17640,7 +17726,7 @@ setup.itemData = {
 		"onUse": function (puppet) {
 			puppet.maxhp += 100;
 			inv().decItem(this.name);
-			return;
+			return `${puppet.name} gains 100 max HP!`;
 		},
 		"info": "Permanently increases max HP by 100.",
 		"desc": `The apple Adam and Eve didn't eat. It's lost much of its power, this far from the Garden, but it'll still make a puppet a little more vivacious than usual.`
@@ -18063,21 +18149,6 @@ Object.assign(setup.actionData, {
 		"dur": 3,
 		"target": "ally",
 		"useText": function () {
-			let rand = random(1,3);
-			switch (rand) {
-				case 1:
-					action().god = "Chattur'gha";
-					action()._special = "DEF";
-					break;
-				case 2:
-					action().god = "Ulayoth";
-					action()._special = "ATK";
-					break;
-				case 3:
-					action().god = "Xel'lotath";
-					action()._special = "SPC";
-					break;
-			}
 			return `Dipper frantically flips through his journal before yelling, "Narokath Santak ${action().god}!"`;
 		},
 		"actText": function () {
@@ -18096,6 +18167,21 @@ Object.assign(setup.actionData, {
 			return `Eldritch runes glow beneath Dipper's feet, and ${target().name} `+extension;
 		},
 		"act": function () {
+			let rand = random(1,3);
+			switch (rand) {
+				case 1:
+					action().god = "Chattur'gha";
+					action()._special = "DEF";
+					break;
+				case 2:
+					action().god = "Ulayoth";
+					action()._special = "ATK";
+					break;
+				case 3:
+					action().god = "Xel'lotath";
+					action()._special = "SPC";
+					break;
+			}
 			return `<<for _effect range $target.effects>>\
 								<<if !_effect.buff>>\
 									<<set _effect.duration -= 1>>\
@@ -18114,6 +18200,20 @@ Object.assign(setup.actionData, {
 		"effweight": setup.STD_DEBUFF,
 		"dur": 3,
 		"useText": function () {
+			return `Dipper frantically flips through his journal before yelling, "Bankorok Redgemor ${action().god}!"`;
+		},
+		"actText": function () {
+			switch (action().god) {
+				case "Chattur'gha":
+					return `Pillars of red energy burst from the ground under $target.name like claws, searing their flesh where they touch.`;
+				case "Ulayoth":
+					return `Waves of blue energy pulse around $target.name and chill them with a numbing cold.`;
+				case "Xel'lotath":
+					return `The floor under $target.name flashes with a sickening green energy that makes your vision swim.`;
+			}
+			return `ERROR: invalid god`;
+		},
+		"act": function () {
 			let rand = random(1,3);
 			switch (rand) {
 				case 1:
@@ -18129,20 +18229,6 @@ Object.assign(setup.actionData, {
 					action()._special = "Headache";
 					break;
 			}
-			return `Dipper frantically flips through his journal before yelling, "Bankorok Redgemor ${action().god}!"`;
-		},
-		"actText": function () {
-			switch (action().god) {
-				case "Chattur'gha":
-					return `Pillars of red energy burst from the ground under $target.name like claws, searing their flesh where they touch.`;
-				case "Ulayoth":
-					return `Waves of blue energy pulse around $target.name and chill them with a numbing cold.`;
-				case "Xel'lotath":
-					return `The floor under $target.name flashes with a sickening green energy that makes your vision swim.`;
-			}
-			return `ERROR: invalid god`;
-		},
-		"act": function () {
 			return `<<echoDamage>>\
 				<<print target().addEffect("${action().special}")>>`;
 		}
@@ -18712,60 +18798,102 @@ Setting.addToggle("dyslexic", {
 	onChange: settingFunctions.dyslexicToggle
 });
 /* twine-user-script #29: "bundle.js" */
-// ui-macro.min.js, for SugarCube 2, by Chapel
-;!function(){var a={update:UIBar.setStoryElements,stow:UIBar.stow,unstow:UIBar.unstow,toggle:function(){$("#ui-bar").hasClass("stowed")?UIBar.unstow():UIBar.stow()},hide:function(){$("#ui-bar").css("display","none")},show:function(){$("#ui-bar").css("display","block")},kill:function(){$("#ui-bar").css("display","none"),$("#story").css("margin-left","2.5em")},restore:function(){$("#ui-bar").css("display","block"),$("#story").css("margin-left","20em")},jump:UI.jumpto,saves:UI.saves,restart:UI.restart,settings:UI.settings,share:UI.share,aliases:{refresh:"update",reload:"update",destroy:"kill",revive:"restore",jumpto:"jump",save:"saves",load:"saves",setting:"settings",sharing:"share"}},e=Object.keys(a);function t(s){return s&&"string"==typeof s?(s=s.toLowerCase().trim(),t=s,e.includes(t)||(r=s,s=a.aliases[r]||null)?(a[s](),!1):'Command "'+s+'" is not a valid command.'):"Command is not a string.";var r,t}Macro.add("ui",{handler:function(){Array.isArray(this.args)&&this.args.length||this.error("No commands passed to macro.");var s,r=function(s){if(!Array.isArray(s))return"Command list error.";var r=[];return s.forEach(function(s){r.push(t(s))}),r}(this.args.flatten());s=(r=r.filter(function(s){return"string"==typeof s})).join(" "),r.length&&s&&this.error(s)}})}();
-// end ui-macro.min.js
-// css-macro.min.js, for SugarCube 2, by Chapel
-;!function(){"use strict";function r(){try{var t,r=[].slice.call(arguments).flatten(),e=r.shift();return"string"==typeof r[0]?t=function(e){if(e.length%2!=0)return"Style rules should be a list of key/value pairs; you've passed an odd number.";var n={};return e.forEach(function(t,r){r%2==0&&(n[t]=e[r+1])}),n}(r):"object"==typeof r[0]&&(t=clone(r[0])),function(t,r){try{return"string"==typeof r?r:(t instanceof jQuery||(t=$(t)),t.css(r))}catch(t){return t.message}}(e,t)}catch(t){return t.message}}Macro.add("css",{handler:function(){var t=r(this.args);if("string"==typeof t)return this.error(t)}})}();
-// end css-macro.min.js
+// mouseover.min.js, for SugarCube 2, by Chapel
+// v1.0.1, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;Macro.add("mouseover",{tags:["onhover","onmouseover","onmousein","onmouseenter","onmouseout"],skipArgs:!0,handler:function(){if(this.payload.length<2)return this.error("No event tag used.");var e={mouseover:[],mousein:[],mouseout:[]},o=$(document.createElement("span")).addClass("macro-"+this.name).wiki(this.payload[0].contents).appendTo(this.output);this.payload.forEach((function(o){switch(o.name){case"onhover":case"onmouseover":e.mouseover.push(o.contents);break;case"onmousein":case"onmouseenter":e.mousein.push(o.contents);break;case"onmouseout":e.mouseout.push(o.contents);break;default:return}})),e.mouseover.length&&o.on("mouseover",this.createShadowWrapper((function(o){$.wiki(e.mouseover.join(" "))}))),e.mousein.length&&o.on("mouseenter",this.createShadowWrapper((function(o){$.wiki(e.mousein.join(" "))}))),e.mouseout.length&&o.on("mouseout",this.createShadowWrapper((function(o){$.wiki(e.mouseout.join(" "))})))}});
+// end mouseover.min.js
 // dialog-api-macro-set.min.js, for SugarCube 2, by Chapel
-;Macro.add("dialog",{tags:["onopen","onclose"],handler:function(){var n="",o=null,e=null,t=0<this.args.length?this.args[0]:"",s=1<this.args.length?this.args.slice(1).flatten():[];this.payload.forEach(function(t,s){0===s?n=t.contents:"onopen"===t.name?o=o?o+t.contents:t.contents:e=e?e+t.contents:t.contents}),s.push("macro-"+this.name),Dialog.setup(t,s.join(" ")),Dialog.wiki(n),o&&"string"==typeof o&&o.trim()&&$(document).one(":dialogopened",function(){$.wiki(o)}),e&&"string"==typeof e&&e.trim()&&$(document).one(":dialogclosed",function(){$.wiki(e)}),Dialog.open()}}),Macro.add("popup",{handler:function(){if(this.args.length<1)return this.error("need at least one argument; the passage to display");if(!Story.has(this.args[0]))return this.error("the passage "+this.args[0]+"does not exist");var t=this.args[0],s=1<this.args.length?this.args[1]:"",n=2<this.args.length?this.args.slice(2).flatten():[];n.push("macro-"+this.name),Dialog.setup(s,n.join(" ")),Dialog.wiki(Story.get(t).processText()),Dialog.open()}}),Macro.add("dialogclose",{skipArgs:!0,handler:function(){Dialog.close()}});
+// v1.3.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;Macro.add("dialog",{tags:["onopen","onclose"],handler:function(){var t="",s=null,n=null,o=this.args.length>0?this.args[0]:"",e=this.args.length>1?this.args.slice(1).flatten():[];this.payload.forEach((function(o,e){0===e?t=o.contents:"onopen"===o.name?s=s?s+o.contents:o.contents:n=n?n+o.contents:o.contents})),e.push("macro-"+this.name),Dialog.setup(o,e.join(" ")),Dialog.wiki(t),s&&"string"==typeof s&&s.trim()&&$(document).one(":dialogopened",(function(){$.wiki(s)})),n&&"string"==typeof n&&n.trim()&&$(document).one(":dialogclosed",(function(){$.wiki(n)})),Dialog.open()}}),Macro.add("popup",{handler:function(){if(this.args.length<1)return this.error("need at least one argument; the passage to display");if(!Story.has(this.args[0]))return this.error("the passage "+this.args[0]+"does not exist");var t=this.args[0],s=this.args.length>1?this.args[1]:"",n=this.args.length>2?this.args.slice(2).flatten():[];n.push("macro-"+this.name),Dialog.setup(s,n.join(" ")),Dialog.wiki(Story.get(t).processText()),Dialog.open()}}),Macro.add("dialogclose",{skipArgs:!0,handler:function(){Dialog.close()}});
 // end dialog-api-macro-set.min.js
 // events.min.js, for SugarCube 2, by Chapel
-;Macro.add("trigger",{handler:function(){var t;return 2<this.args.length||0===this.args.length?this.error("incorrect number of arguments"):"string"!=typeof this.args[0]?this.error("first argument should be a string and a valid event type"):(t=this.args[0],void(1===this.args.length||this.args[1]&&"string"==typeof this.args[1]&&"document"===this.args[1].toLowerCase().trim()?$(document):$(this.args[1])).trigger(t))}}),Macro.add("event",{tags:["which"],handler:function(){var t,r,s=this.payload,e="",i="";return 2<this.args.length||0===this.args.length?this.error("incorrect number of arguments"):"string"!=typeof this.args[0]?this.error("first argument should be a string and a valid event type"):(2===this.args.length&&"string"==typeof this.args[1]&&(e=this.args[1]),t=this.args[0],void $(document).on(t,e,function(t){if(i=s[0].contents,1<s.length)for(r=1;r<s.length;r++)s[r].args.includes(t.which)&&(i+=s[r].contents);new Wikifier(null,i)}))}});
+// v2.0.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;setup.eventMacroNamespace="macro-event",Macro.add("trigger",{handler:function(){var t;return this.args.length>2||0===this.args.length?this.error("incorrect number of arguments"):"string"!=typeof this.args[0]?this.error("first argument should be a string and a valid event type"):(t=this.args[0],void(1===this.args.length||this.args[1]&&"string"==typeof this.args[1]&&"document"===this.args[1].toLowerCase().trim()?$(document):$(this.args[1])).trigger(t))}}),Macro.add(["event","on","one"],{tags:["which"],handler:function(){var t,r,s=this.payload,e="on",n="",a="";return this.args.length>3||0===this.args.length?this.error("incorrect number of arguments"):"string"!=typeof this.args[0]?this.error("first argument should be a string and a valid event type"):(2===this.args.length&&"string"==typeof this.args[1]&&"once"!==this.args[1]&&(n=this.args[1]),(this.args.includes("once")||"one"===this.name)&&(e="one"),t=this.args[0],void $(document)[e](t+"."+setup.eventMacroNamespace,n,(function(t){if(a=s[0].contents,s.length>1)for(r=1;r<s.length;r++)s[r].args.includes(t.which)&&(a+=s[r].contents);new Wikifier(null,a)})))}}),Macro.add("off",{handler:function(){var t;return this.args.length>2||0===this.args.length?this.error("incorrect number of arguments"):"string"!=typeof this.args[0]?this.error("first argument should be a string and a valid event type or namespace"):(t=this.args[0],void(1===this.args.length||this.args[1]&&"string"==typeof this.args[1]&&"document"===this.args[1].toLowerCase().trim()?$(document):$(this.args[1])).off(t))}});
 // end events.min.js
+// simple-inventory.min.js, for SugarCube 2, by Chapel
+// v2.3.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";var r={tryGlobal:!0,defaultStrings:{empty:"The inventory is empty...",listDrop:"Discard",separator:"\n"}};function i(r,i,t,n){$(document).trigger({type:"initialized"===n?":inventory-init":":inventory-update",instance:r,receiving:i,moved:t,context:n})}function t(r){if(r=r?(r=[].slice.call(arguments)).flatten():[],!(this instanceof t))return new t(r);this.inv=r,i(this,null,r=r.length?r:null,"initialized")}Object.assign(t,{is:function(r){return r instanceof t},log:function(r){return t.is(r)?"Inventory.log() -> "+r.toArray().join(" - "):"Inventory.log() -> object is not an inventory..."},removeDuplicates:function(r){if(t.is(r)){var i,n=r.toArray();return i=[],n.forEach((function(r){i.includes(r)||i.push(r)})),i}}}),Object.assign(t.prototype,{transfer:function(r){if(arguments.length<2)return this;if(!t.is(r))return this;for(var n=[].slice.call(arguments),e=[],s=0,a=(n=n.slice(1).flatten()).length;s<a;s++)this.inv.includes(n[s])&&(this.inv.delete(n[s]),e.push(n[s]));return e.length?(r.inv=r.inv.concat(e),i(this,r,e,"transfer"),this):this},has:function(){var r=[].slice.call(arguments).flatten();return!(!r||!r.length)&&this.inv.includesAny(r)},hasAll:function(){var r=[].slice.call(arguments).flatten();return!(!r||!r.length)&&this.inv.includesAll(r)},pickUp:function(r){var t=[].slice.call(arguments).flatten(),n=this;return t&&t.length&&("unique"!==r&&"unique"!==t[0]||(t=function(r){var i=[];return r.forEach((function(r){n.inv.includes(r)||i.includes(r)||i.push(r)})),i}(t=t.splice(1))),this.inv=this.inv.concat(t),i(this,null,t,"pickup")),this},drop:function(){var r,t=[].slice.call(arguments).flatten(),n=this;if(t&&t.length){var e=[];t.forEach((function(i){n.has(i)&&(e.push(i),r=n.inv.indexOf(i),n.inv.deleteAt(r))})),i(this,null,e,"drop")}return this},sort:function(){return this.inv=this.inv.sort(),i(this,null,null,"sort"),this},show:function(i){return i&&"string"==typeof i||(i=r.defaultStrings.separator),this.inv.length?this.inv.join(i):r.defaultStrings.empty},empty:function(){var r=clone(this.inv);return this.inv=[],i(this,null,r,"drop"),this},toArray:function(){return this.inv},count:function(r){if(r&&"string"==typeof r){var i=0;return this.toArray().forEach((function(t){t===r&&i++})),i}return this.toArray().length},isEmpty:function(){return 0===this.toArray().length},linkedList:function(i,n){i&&t.is(i)||(i=!1);var e=this.toArray(),s=this,a=$(document.createElement("span"));return e&&e.length?(e.forEach((function(t,e,o){var l=$(document.createElement("span")),u=$(document.createElement("a")),h=n||r.defaultStrings.drop,c=function(r,i){var t=Math.random().toString(36).substring(7);return arguments.length<2&&(r=Math.random().toString(36).substring(7),i=random(99)),"simple-inv-"+i+"-"+Date.now()+"-"+r.replace(/[^A-Za-z0-9]/g,"")+"-"+t}(t,e);u.wiki(h).addClass("simple-inv drop-link"),u.ariaClick((function(){i?s.transfer(i,t):s.drop(t),$("#"+c).empty()})),l.attr("id",c).addClass("simple-inv link-listing").wiki(t+" ").append(u),e<o.length-1&&l.wiki("<br />"),a.append(l)})),a):(a.wiki(r.defaultStrings.empty),a)},constructor:t,toJSON:function(){return JSON.reviveWrapper("new setup.Inventory("+JSON.stringify(this.inv)+")")},clone:function(){return new t(this.inv)}}),setup.Inventory=t,setup.simpleInv={inventory:t},r.tryGlobal&&(window.Inventory=window.Inventory||t),Macro.add("newinventory",{handler:function(){if(this.args.length<1)return this.error("incorrect number of arguments");var r=this.args[0].trim();if("$"!==r[0]&&"_"!==r[0])return this.error('variable name "'+this.args[0]+'" is missing its sigil ($ or _)');Wikifier.setValue(r,new t(this.args.slice(1).flatten()))}}),Macro.add("pickup",{handler:function(){if(this.args.length<2)return this.error("incorrect number of arguments");var r=this.args[0].trim();if("$"!==r[0]&&"_"!==r[0])return this.error('variable name "'+this.args[0]+'" is missing its sigil ($ or _)');var i=Wikifier.getValue(r);if(!t.is(i))return this.error("variable "+r+" is not an inventory!");i.pickUp(this.args.slice(1).flatten())}}),Macro.add("drop",{handler:function(){if(this.args.length<2)return this.error("incorrect number of arguments");var r=this.args[0].trim();if("$"!==r[0]&&"_"!==r[0])return this.error('variable name "'+this.args[0]+'" is missing its sigil ($ or _)');var i=Wikifier.getValue(r);if(!t.is(i))return this.error("variable "+r+" is not an inventory!");i.drop(this.args.slice(1).flatten())}}),Macro.add("transfer",{handler:function(){if(this.args.length<3)return this.error("incorrect number of arguments");var r=this.args[0].trim();if("$"!==r[0]&&"_"!==r[0])return this.error('variable name "'+this.args[0]+'" is missing its sigil ($ or _)');var i=Wikifier.getValue(r);if(!t.is(i))return this.error("variable "+r+" is not an inventory!");var n=this.args[1].trim();if("$"!==n[0]&&"_"!==n[0])return this.error('variable name "'+this.args[1]+'" is missing its sigil ($ or _)');var e=Wikifier.getValue(n);if(!t.is(e))return this.error("variable "+n+" is not an inventory!");i.transfer(e,this.args.slice(2).flatten())}}),Macro.add("dropall",{handler:function(){if(1!==this.args.length)return this.error("incorrect number of arguments");var r=this.args[0].trim();if("$"!==r[0]&&"_"!==r[0])return this.error('variable name "'+this.args[0]+'" is missing its sigil ($ or _)');var i=Wikifier.getValue(r);if(!t.is(i))return this.error("variable "+r+" is not an inventory!");i.empty()}}),Macro.add("clear","dropall",!1),Macro.add("sort",{handler:function(){if(1!==this.args.length)return this.error("incorrect number of arguments");var r=this.args[0].trim();if("$"!==r[0]&&"_"!==r[0])return this.error('variable name "'+this.args[0]+'" is missing its sigil ($ or _)');var i=Wikifier.getValue(r);if(!t.is(i))return this.error("variable "+r+" is not an inventory!");i.sort()}}),Macro.add("inventory",{handler:function(){if(this.args.length<1||this.args.length>2)return this.error("incorrect number of arguments");var r=this.args[0].trim();if("$"!==r[0]&&"_"!==r[0])return this.error('variable name "'+this.args[0]+'" is missing its sigil ($ or _)');var i=Wikifier.getValue(r);if(!t.is(i))return this.error("variable "+r+" is not an inventory!");var n=$(document.createElement("span")),e=!!this.args[1]&&this.args[1];n.wiki(i.show(e)).addClass("macro-"+this.name).appendTo(this.output)}}),Macro.add("linkedinventory",{handler:function(){if(this.args.length<2||this.args.length>3)return this.error("incorrect number of arguments");var r=!1,i="",n=this.args[1].trim(),e="string"==typeof this.args[0]&&this.args[0];if(!e)return this.error("first argument should be the link text");if("$"!==n[0]&&"_"!==n[0])return this.error('variable name "'+this.args[1]+'" is missing its sigil ($ or _)');var s=Util.slugify(n);s=this.name+"-"+s;var a=Wikifier.getValue(n);if(!t.is(a))return this.error("variable "+n+" is not an inventory!");if(this.args.length>2){if("$"!==(i=this.args[2].trim())[0]&&"_"!==i[0])return this.error('variable name "'+this.args[2]+'" is missing its sigil ($ or _)');if(r=Wikifier.getValue(i),!t.is(r))return this.error("variable "+i+" is not an inventory!")}a.linkedList(r,e).attr({id:s,"data-rec":i,"data-self":n,"data-action":e}).addClass("macro-"+this.name).appendTo(this.output)}})}();
+// end simple-inventory.min.js
+// css-macro.min.js, for SugarCube 2, by Chapel
+// v1.0.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";function t(t){if(t.length%2!=0)return"Style rules should be a list of key/value pairs; you've passed an odd number.";var r={};return t.forEach((function(e,n){n%2==0&&(r[e]=t[n+1])})),r}function r(t,r){try{return"string"==typeof r?r:(t instanceof jQuery||(t=$(t)),t.css(r))}catch(t){return t.message}}Macro.add("css",{handler:function(){var e=function(){try{var e,n=[].slice.call(arguments).flatten(),s=n.shift();return"string"==typeof n[0]?e=t(n):"object"==typeof n[0]&&(e=clone(n[0])),r(s,e)}catch(t){return t.message}}(this.args);if("string"==typeof e)return this.error(e)}})}();
+// end css-macro.min.js
+// pronouns.min.js, for SugarCube 2, by Chapel
+// v1.1.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";if(Template&&Template.add&&"function"==typeof Template.add){var e={name:"gender",showSetting:!0,label:"Gender",desc:"",storyVar:"%%gender",default:"female"},t="#setting-control-"+e.name,r={subjective:["she","he","they"],objective:["her","him","them"],possessive:["hers","his","theirs"],determiner:["her","his","their"],reflexive:["herself","himself","themself"],noun:["woman","man","person"]};e.showSetting&&(Setting.addToggle(e.name,{label:e.label,desc:e.desc&&"string"==typeof e.desc&&e.desc.trim()?e.desc.trim():void 0}),$(document).on(":dialogopen :dialogopened",(function(){$("#ui-dialog-body").hasClass("settings")&&$(t).parent("div").empty().append($(document.createElement("button")).append("Configure...").ariaClick((function(){h()})))})));var a=/^is$/i,n=/^was$/i,s=/^has$/i,i=/oes$/i,o=/^[dl]ies$/i,l=/ies$/i,u=/sses$/i,c=/hes$/i,d=/s$/i,p=/they/i;Template.add(["he","she","they","He","She","They"],(function(){return S(this.name,g().subjective)})),Template.add(["him","her","them","Him","Her","Them"],(function(){return S(this.name,g().objective)})),Template.add(["his","hers","theirs","His","Hers","Theirs"],(function(){return S(this.name,g().possessive)})),Template.add(["his_","her_","their","His_","Her_","Their"],(function(){return S(this.name,g().determiner)})),Template.add(["himself","herself","themself","Himself","Herself","Themself"],(function(){return S(this.name,g().reflexive)})),Template.add(["man","woman","person","Man","Woman","Person"],(function(){return S(this.name,g().noun)})),Template.add(["he-s","she-s","they-re","He-s","She-s","They-re"],(function(){return S(this.name,g().subjective+T("&apos;s","&apos;re",y()))})),Macro.add("pronouns",{skipArgs:!0,handler:function(){h()}}),Macro.add("verb",{handler:function(){var e=y();if(this.args.length<1)return this.error("Please pass at least a singular third person pronoun to this macro.");this.args.includes("plural")&&(e=!0),this.output.append(T(String(this.args[0]),this.args[1]?String(this.args[1]):null,!!e))}}),setup.gender={pronouns:g,setPronouns:function(t){return"string"==typeof t?v(t):"object"==typeof t?function(t){if("object"==typeof t)return State.variables[e.storyVar]=v("male"===e.default?1:0),Object.assign(State.variables[e.storyVar],t)}(t):void 0},dialog:h,pluralize:b},window.gender=window.gender||setup.gender}else alert("Warning, this version of SugarCube does not include the Template API. Please upgrade to v2.29.0 or higher.");function m(){var t=$(document.createElement("div"));var a=Object.keys(r).map((function(t){var a=2;"male"===e.default?a=1:"female"===e.default&&(a=0);var n=State.variables,s=r[t][a];return n[e.storyVar]&&n[e.storyVar][t]&&(s=n[e.storyVar][t]),function(e,t,r){return $(document.createElement("label")).append(e).css("display","block").append($(document.createElement("input")).attr({type:"text",name:t}).css({float:"right","margin-left":"0.2em"}).val(r))}(t.toUpperFirst()+": ","gender-"+t,s)})),n=function(e,t,r){var a=$(document.createElement("select")).attr("name",t).css("float","right");return r.forEach((function(e,t){console.log(t),$(document.createElement("option")).attr("value",String(t)).append(e).appendTo(a)})),$(document.createElement("label")).css("display","block").append(e,a)}("Presets: ","gender-preset",["She/Her","He/Him","They/Them"]).on("change",(function(){var e=Number($(this).find("select").val());Number.isNaN(e)||a.forEach((function(t){var a=t.find("input"),n=a.attr("name").split("-")[1];a.val(r[n][e])}))})),s=n.find("select");State.variables[e.storyVar]?s.val(""):"male"===e.default?s.val("1"):"female"===e.default?s.val("0"):s.val("2");var i,o=$(document.createElement("button")).wiki("Confirm").addClass("gender-confirm").ariaClick({label:"Confirm pronoun selection."},(function(){var t=State.variables;t[e.storyVar]={},a.forEach((function(r){var a=r.find("input"),n=a.attr("name").split("-")[1];t[e.storyVar][n]=a.val().trim().toLowerCase()})),$("#ui-dialog-body").hasClass("reopen")&&UI.settings(),Dialog.close()})),l=(i=[n,"<br>"],a.forEach((function(e){i.push(e),i.push("<br>")})),i.push(o),i);return t.append(l)}function h(){var e,t,r,a;e="Customize Gender",t=m(),r="custom-gender",a=!1,Dialog.isOpen()&&$("#ui-dialog-body").hasClass("settings")&&(a=!0),Dialog.close(),Dialog.setup(e,a?r+" reopen":r),Dialog.append(t),Dialog.open()}function f(e){("number"!=typeof e||Number.isNaN(e)||e>2||e<0)&&(e=0);var t={};return Object.keys(r).forEach((function(a){t[a]=r[a][e]})),t}function g(){return State.variables[e.storyVar]&&State.variables[e.storyVar].subjective?State.variables[e.storyVar]:f("male"===e.default?1:0)}function v(t){var r;switch(t){case"female":r=f(0);break;case"male":r=f(1);break;default:r=f(2)}return State.variables[e.storyVar]=clone(r),r}function b(e){return e&&"string"==typeof e?(e=e.trim(),a.test(e)?e.replace(a,"are"):n.test(e)?e.replace(n,"were"):s.test(e)?e.replace(s,"have"):i.test(e)?e.replace(i,"o"):o.test(e)?e.replace(l,"ie"):l.test(e)?e.replace(l,"y"):u.test(e)?e.replace(u,"ss"):c.test(e)?e.replace(c,"h"):d.test(e)?e.replace(d,""):e):e}function y(){return p.test(g().subjective.trim())}function T(e,t,r){return r?t&&"string"==typeof t?t:b(e):e}function S(e,t){return e.first()===e.first().toUpperCase()?t.toUpperFirst():t}}();
+// end pronouns.min.js
 // articles.min.js, for SugarCube 2, by Chapel
-;!function(){"use strict";var n=new Map,u=["eunuch","eucalyptus","eugenics","eulogy","euphemism","euphony","euphoria","eureka","european","euphemistic","euphonic","euphoric","euphemistically","euphonically","euphorically","heir","heiress","herb","homage","honesty","honor","honour","hour","honest","honorous","honestly","hourly","one","ouija","once","ubiquitous","ugandan","ukrainian","unanimous","unicameral","unified","unique","unisex","universal","urinal","urological","useful","useless","usurious","usurped","utilitarian","utopic","ubiquitously","unanimously","unicamerally","uniquely","universally","urologically","usefully","uselessly","usuriously"],a=["a","an"],s=/[aeiou8]/i,o=/[A-Z]+$/,l=/[UFHLMNRSX]/,i=/[.,\/#!$%\^&\*;:{}=\-_`~()]/g;function c(e){return"a"===e?"an":"a"}function r(e,r,i){var t;return 0<State.length?(t="cannot add article override -> needs to be run in StoryInit special passage or earlier",console.error(t),t):r&&"string"==typeof r?(e&&"string"==typeof e&&(e=e.toLowerCase().trim()),a.includes(e)?(r=r.trim(),void(i?n.set(r,{article:e,caseSensitive:!!i}):n.set(r.toLowerCase(),{article:e,caseSensitive:!!i}))):(t='cannot add article override -> invalid article, must be "a" or "an"',console.error(t),t)):(t="cannot add article override -> invalid word",console.error(t),t)}function t(e){var r,i,t,n,a;return r=s.test(e.first())?"an":"a",n=e,a=r,!!u.includes(n.toLowerCase())&&c(a)||(i=e,t=r,!(!o.test(i)||!l.test(i.first()))&&c(t))||r}function h(e){if(e&&"string"==typeof e){var r=e.trim().split(" ")[0].trim();return function(e){var r=(e=e.trim()).toLowerCase();if(n.has(r)||n.has(e)){var i=n.get(r)||n.get(e);return i.caseSensitive&&!n.has(e)?null:i.article}return null}(r=r.replace(i,""))||t(r)}}function p(e,r){if(!e||"string"!=typeof e)return e;var i=h(e);return(r?i.toUpperFirst():i)+" "+e}setup.articles={find:h,output:p,override:r},Macro.add("setarticle",{handler:function(){var e=r(this.args[0],this.args[1],this.args[2]);e&&"string"==typeof e&&this.error(e)}}),Macro.add(["a","an","A","An"],{handler:function(){var e=this.name.first()===this.name.first().toUpperCase();this.output.append(p(String(this.args[0]),e))}})}();
+// v1.0.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";var e=new Map,r=["eunuch","eucalyptus","eugenics","eulogy","euphemism","euphony","euphoria","eureka","european","euphemistic","euphonic","euphoric","euphemistically","euphonically","euphorically","heir","heiress","herb","homage","honesty","honor","honour","hour","honest","honorous","honestly","hourly","one","ouija","once","ubiquitous","ugandan","ukrainian","unanimous","unicameral","unified","unique","unisex","universal","urinal","urological","useful","useless","usurious","usurped","utilitarian","utopic","ubiquitously","unanimously","unicamerally","uniquely","universally","urologically","usefully","uselessly","usuriously"],i=["a","an"],t=/[aeiou8]/i,n=/[A-Z]+$/,u=/[UFHLMNRSX]/,a=/[.,\/#!$%\^&\*;:{}=\-_`~()]/g;function o(e){return"a"===e?"an":"a"}function s(r,t,n){var u;return State.length>0?(u="cannot add article override -> needs to be run in StoryInit special passage or earlier",console.error(u),u):t&&"string"==typeof t?(r&&"string"==typeof r&&(r=r.toLowerCase().trim()),i.includes(r)?(t=t.trim(),void(n?e.set(t,{article:r,caseSensitive:!!n}):e.set(t.toLowerCase(),{article:r,caseSensitive:!!n}))):(u='cannot add article override -> invalid article, must be "a" or "an"',console.error(u),u)):(u="cannot add article override -> invalid word",console.error(u),u)}function l(e){var i;return i=t.test(e.first())?"an":"a",function(e,i){return!!r.includes(e.toLowerCase())&&o(i)}(e,i)||function(e,r){return!(!n.test(e)||!u.test(e.first()))&&o(r)}(e,i)||i}function c(r){if(r&&"string"==typeof r){var i=r.trim().split(" ")[0].trim();return function(r){var i=(r=r.trim()).toLowerCase();if(e.has(i)||e.has(r)){var t=e.get(i)||e.get(r);return t.caseSensitive&&!e.has(r)?null:t.article}return null}(i=i.replace(a,""))||l(i)}}function h(e,r){if(!e||"string"!=typeof e)return e;var i=c(e);return(r?i.toUpperFirst():i)+" "+e}setup.articles={find:c,output:h,override:s},Macro.add("setarticle",{handler:function(){var e=s(this.args[0],this.args[1],this.args[2]);e&&"string"==typeof e&&this.error(e)}}),Macro.add(["a","an","A","An"],{handler:function(){var e=this.name.first()===this.name.first().toUpperCase();this.output.append(h(String(this.args[0]),e))}})}();
 // end articles.min.js
-// fs.min.js, for SugarCube 2, by Chapel
-;!function(){function i(t){return console.error(t),null}function n(t){try{return JSON.stringify(t)}catch(t){return i(t)}}function s(t){try{var e;if(void 0===t)return null;if(null!=(e="string"!=typeof t?n(t):t))return LZString.compressToBase64(e)}catch(t){return i(t)}}function o(t){try{return LZString.decompressFromBase64(t)}catch(t){return i(t)}}function c(e){try{return JSON.parse(e)}catch(t){try{return JSON.parse(o(e))}catch(t){return i(t)}}}function u(t,e){try{if("$"!==e[0]&&"_"!==e[0])throw new Error("Invalid stateful variable");State.setVar?State.setVar(e,clone(t)):"$"===e[0]?State.variables[e.substr(1)]=clone(t):State.temporary[e.substr(1)]=clone(t)}catch(t){return i(t)}}function l(t,e){if("string"!=typeof e&&(e=n(e)),null!=e){(t=t&&"string"==typeof t?Util.slugify(t.trim()).toLowerCase():"file.twinedata").includes(".")||(t+=".twinedata");try{saveAs(new Blob([e],{type:"text/plain;charset=UTF-8"}),t)}catch(t){return i(t)}}}function m(t){var e=t.target.files[0],r=new FileReader,a=t.storyVar||"$fileData",n=t.dataType||"text";$(r).on("load",function(t){try{var e=t.currentTarget;if(!e.result)return;var r=function(t,e){if(null==e)return null;switch(t){case"json":return c(e);case"base64":case"b64":case"64":return c(o(e));default:return e}}(n,e.result);u(r,a),$(document).trigger({type:":import-macro",success:!0,data:clone(r),raw:e.result,storyVar:a})}catch(t){return i(t)}}),r.readAsText(e)}function f(t,e,r,a,n){var i,s,o,c,u,l,f,p,d,y=(s=e,o=r,c=a,u=n,l=$(document.createElement(u?"a":"button")).wiki(s),f=$(document.createElement("label")).attr("for","file-import").addClass("upload-file").append(l),p=$(document.createElement("input")).attr({id:"file-import",type:"file","data-format":c}).css("display","none").on("change",function(t){m(Object.assign(clone(t),{storyVar:o,dataType:$(this).attr("data-format")}))}),d=$(document.createElement("span")).append(f,p),l.ariaClick(function(){f.trigger("click")}),d);i=t&&"string"==typeof t?$(t):t||"#passages",y.appendTo(i)}setup.fileSystem={config:{defaultText:"Import",renderAsLink:!1},JSON:{stringify:n,parse:c},b64:{compress:s,decompress:o},toState:u,toFile:l,fromFile:m},window.Chapel=window.Chapel||{},Chapel.fileSystem=Chapel.fileSystem||setup.fileSystem,Macro.add("import",{handler:function(){var t=this.output,e=this.args[2],r=this.args[0],a=this.args[1];if(e&&"string"==typeof e||(e=setup.fileSystem.config.defaultText),!r||"string"!=typeof r||"$"!==r[0]&&"_"!==r[0])return this.error("Invalid variable name.");f(t,e,r,a=a&&"string"==typeof a?a.trim():"text",setup.fileSystem.config.renderAsLink)}}),Macro.add("export",{handler:function(){var t=this.args[0],e=this.args[1],r=this.args[2];if(!t)return this.error("No data to save...");r=r&&"string"==typeof r?r.trim():"text",function(t,e,r){var a;switch(r){case"json":a=n(t);break;case"base64":case"b64":case"64":a=s(n(t)||t);break;default:a="string"==typeof t?t:n(t)}l(e,a)}(t,e=e&&"string"==typeof e?e.trim():"file.twinedata",r)}})}();
-// end fs.min.js
-// continue.min.js, for SugarCube 2, by Chapel
-;!function(){"use strict";var t=["a",":button",'*[role="button"]',".continue-macro-ignore","#ui-bar","#ui-dialog"],i=0;function o(){$(document).on("click.continue-macro keyup.continue-macro",t.join(", "),function(n){n.stopPropagation()})}function n(){if(0<State.length)return!1;var n=[].slice.call(arguments).flatten();return t=t.concat(n),!0}function c(n,t){var o,e=(o="."+Date.now().toString(36)+"-"+i,i++,o);if(t&&"function"==typeof t){var c="click.continue-macro"+e;n&&(c=c+" keyup.continue-macro"+e),$(document).one(c,function(){t.call(),$(document).off(e)})}}prehistory["%%continue-expiration"]=function(){i=0},$(document).one(":passagerender",function(){o()}),Macro.add("ignore",{handler:function(){if(!n(this.args))return this.error("the <<ignore>> macro should only be run from StoryInit or equivalent.")}}),Macro.add("cont",{tags:null,handler:function(){var n,t=this.args.includes("append"),o=this.args.includesAny("key","keypress","press","button"),e=this.payload[0].contents;t&&(n=$(document.createElement("span")).addClass("macro-"+this.name).appendTo(this.output)),c(o,this.createShadowWrapper(function(){t&&n&&n instanceof $?n.wiki(e):$.wiki(e)}))}}),setup.cont=c,setup.cont.ignore=n,setup.cont.reset=function(){var n=[].slice.call(arguments).flatten();t=t.concat(n),$(document).off(".continue-macro"),o()},window.cont=window.cont||setup.cont}();
-// end continue.min.js
 // operations.min.js, for SugarCube 2, by Chapel
-;!function(){"use strict";var r=r||{},e=!0,t=!0,i=[0,100];function o(r,e){var t,i=[],o=0,n=1;if("string"==typeof r)i=r.split("d");else if("number"==typeof r&&e)i=[r,e];else{if(!(Array.isArray(r)&&2<=r.length))throw new TypeError("dice(): could not process arguments...");r.length=2,i=r}if(i[0]=Number(i[0]),"string"==typeof i[1]&&"F"===i[1].trim().toUpperCase()?(i[1]=3,n=-1):i[1]=Number(i[1]),i.some(function(r){return Number.isNaN(r)}))throw new TypeError("dice(): could not process arguments...");for(t=0;t<i[0];t++){o+=Math.floor(State.random()*i[1])+n}return o}function n(r,e){if("string"!=typeof r)return o(r,e);var t,i=[(t=r.trim().replace(/\s/g,"").match(/(\d+[d][\df]d*)(.*)/i))[1],Number(t[2])];return o(i[0])+i[1]}r.dice={roll:n},e&&(window.dice=window.dice||n),Number.prototype.dice||Object.defineProperty(Number.prototype,"dice",{configurable:!0,writable:!0,value:function(r){if(0===this)return 0;if(this<0)throw new TypeError("Number.prototype.dice: cannot roll a negative number of dice!");if(("string"!=typeof r||"F"!==r.trim().toUpperCase())&&(null==r||"number"!=typeof r||r<=0||!Number.isInteger(r)))throw new TypeError("Number.prototype.dice: error in argument");if(!Number.isInteger(this))throw new TypeError("Number.prototype.dice: cannot roll partial dice!");return n(this,r)}}),Number.prototype.fairmath||Object.defineProperty(Number.prototype,"fairmath",{configurable:!0,writable:!0,value:function(r){var e=i;if(this<e[0]||this>e[1])throw new TypeError("Number.prototype.fairmath called on a number that is out of the defined range (the number was "+this+").");if(null==r||"number"!=typeof r||100<r||r<-100||arguments.length<1)throw new TypeError("Number.prototype.fairmath given incorrect argument or an argument that is out of the valid 0-100 range.");if(0===r)return Math.clamp(Math.trunc(this),e[0],e[1]);if(r<0)return r*=-1,Math.clamp(Math.trunc(this-(this-e[0])*(r/e[1])),e[0],e[1]);if(0<r)return Math.clamp(Math.trunc(this+(e[1]-this)*(r/e[1])),e[0],e[1]);throw new Error("Number.prototype.fairmath encountered an unspecified error.")}}),Math.fairmath||Object.defineProperty(Math,"fairmath",{configurable:!0,writable:!0,value:function(r,e){return r.fairmath(e)}}),t&&(Math.fm||Object.defineProperty(Math,"fm",{configurable:!0,writable:!0,value:function(r,e){return r.fairmath(e)}}),Number.prototype.fm||Object.defineProperty(Number.prototype,"fm",{configurable:!0,writable:!0,value:function(r){return this.fairmath(r)}}),Number.prototype.d||Object.defineProperty(Number.prototype,"d",{configurable:!0,writable:!0,value:function(r){return this.dice(r)}}))}();
+// v1.1.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";var e=e||{},r=!0,t=!0,n=[0,100];function o(e,r){var t,n=[],o=0,i=1;if("string"==typeof e)n=e.split("d");else if("number"==typeof e&&r)n=[e,r];else{if(!(Array.isArray(e)&&e.length>=2))throw new TypeError("dice(): could not process arguments...");e.length=2,n=e}if(n[0]=Number(n[0]),"string"==typeof n[1]&&"F"===n[1].trim().toUpperCase()?(n[1]=3,i=-1):n[1]=Number(n[1]),n.some((function(e){return Number.isNaN(e)})))throw new TypeError("dice(): could not process arguments...");for(t=0;t<n[0];t++){o+=Math.floor(State.random()*n[1])+i}return o}function i(e,r){if("string"==typeof e){var t=[(n=e.trim().replace(/\s/g,"").match(/(\d+[d][\df]\d*)(.*)/i))[1],Number(n[2])];return o(t[0])+t[1]}return o(e,r);var n}e.dice={roll:i},r&&(window.dice=window.dice||i),Number.prototype.dice||Object.defineProperty(Number.prototype,"dice",{configurable:!0,writable:!0,value:function(e){if(0===this)return 0;if(this<0)throw new TypeError("Number.prototype.dice: cannot roll a negative number of dice!");if(("string"!=typeof e||"F"!==e.trim().toUpperCase())&&(null==e||"number"!=typeof e||e<=0||!Number.isInteger(e)))throw new TypeError("Number.prototype.dice: error in argument");if(!Number.isInteger(this))throw new TypeError("Number.prototype.dice: cannot roll partial dice!");return i(this,e)}}),Number.prototype.fairmath||Object.defineProperty(Number.prototype,"fairmath",{configurable:!0,writable:!0,value:function(e){var r=n;if(this<r[0]||this>r[1])throw new TypeError("Number.prototype.fairmath called on a number that is out of the defined range (the number was "+this+").");if(null==e||"number"!=typeof e||e>100||e<-100||arguments.length<1)throw new TypeError("Number.prototype.fairmath given incorrect argument or an argument that is out of the valid 0-100 range.");if(0===e)return Math.clamp(Math.trunc(this),r[0],r[1]);if(e<0)return e*=-1,Math.clamp(Math.trunc(this-(this-r[0])*(e/r[1])),r[0],r[1]);if(e>0)return Math.clamp(Math.trunc(this+(r[1]-this)*(e/r[1])),r[0],r[1]);throw new Error("Number.prototype.fairmath encountered an unspecified error.")}}),Number.prototype.between||Object.defineProperty(Number.prototype,"between",{configurable:!0,writable:!0,value:function(e,r){if("number"!=typeof e||"number"!=typeof r)throw new TypeError("Number.between() -> both values must be numbers");var t=Number(this);if(e===r)return t===e;if(r<e){var n=r;r=e,e=n}return t>=e&&t<=r}}),Math.fairmath||Object.defineProperty(Math,"fairmath",{configurable:!0,writable:!0,value:function(e,r){return e.fairmath(r)}}),Math.between||Object.defineProperty(Math,"between",{configurable:!0,writable:!0,value:function(e,r,t){return e.between(r,t)}}),t&&(Math.fm||Object.defineProperty(Math,"fm",{configurable:!0,writable:!0,value:function(e,r){return e.fairmath(r)}}),Number.prototype.fm||Object.defineProperty(Number.prototype,"fm",{configurable:!0,writable:!0,value:function(e){return this.fairmath(e)}}),Number.prototype.d||Object.defineProperty(Number.prototype,"d",{configurable:!0,writable:!0,value:function(e){return this.dice(e)}}))}();
 // end operations.min.js
-// done.min.js, for SugarCube 2, by Chapel
-;!function(){var a=1;Macro.add("done",{skipArgs:!0,tags:null,handler:function(){var n=this.payload[0].contents.trim();""!==n&&(postdisplay[":chapel-done-macro-"+a]=function(a){delete postdisplay[a],$.wiki(n)},a++)}})}();
-// end done.min.js
-// playtime.min.js, for SugarCube 2, by Chapel
-;!function(){"use strict";var e={tryGlobal:!0,storyVar:"playtime",pauseTag:"pausetimer"};function n(){return Date.now()-State.variables[e.storyVar]}function s(t){if(t&&!(t<0)&&"number"==typeof t){var e=[];return e.push(Math.floor(t/1e3)%60),e.push(Math.floor(t/6e4)%60),e.push(Math.floor(t/36e5)),e}}State.variables[e.storyVar]=Date.now(),predisplay["start-playtime"]=function(t){delete predisplay[t],State.variables[e.storyVar]||(State.variables[e.storyVar]=Date.now())},prehistory["pause-playtime"]=function(t){tags().includes(e.pauseTag)&&(State.variables[e.storyVar]+=time())};var i=["h","hr","hrs","hour","hours"],o=["m","min","mins","minute","minutes"],u=["s","sec","secs","second","seconds"];function l(t){return function(t,e){if(t&&Array.isArray(t)&&!(t.length<3)){var a=t[2]<10?"0"+t[2]:""+t[2],r=t[1]<10?"0"+t[1]:""+t[1],n=t[0]<10?"0"+t[0]:""+t[0];return e?"<b>"+a+":"+r+"</b>:"+n:a+":"+r+":"+n}}(s(n()),t)}setup.playTime=function(t){return"string"==typeof t?(e=t,a=n(),r=s(a),i.includes(e)?r[2]:o.includes(e)?r[1]:u.includes(e)?r[0]:a):l(t);var e,a,r},e.tryGlobal&&(window.playTime=window.playTime||setup.playTime),Macro.add("playtime",{handler:function(){var t=this.args.map(function(t){return String(t).trim().toLowerCase()}),e=$(document.createElement("span")),a=l(t.includesAny(["format","f","fmt","b","bold","true"]));e.wiki(a).addClass("macro-"+this.name).appendTo(this.output)}})}();
-// end playtime.min.js
-// mouseover.min.js, for SugarCube 2, by Chapel
-;Macro.add("mouseover",{tags:["onhover","onmouseover","onmousein","onmouseenter","onmouseout"],skipArgs:!0,handler:function(){if(this.payload.length<2)return this.error("No event tag used.");var o={mouseover:[],mousein:[],mouseout:[]},e=$(document.createElement("span")).addClass("macro-"+this.name).wiki(this.payload[0].contents).appendTo(this.output);this.payload.forEach(function(e){switch(e.name){case"onhover":case"onmouseover":o.mouseover.push(e.contents);break;case"onmousein":case"onmouseenter":o.mousein.push(e.contents);break;case"onmouseout":o.mouseout.push(e.contents);break;default:return}}),o.mouseover.length&&e.on("mouseover",this.createShadowWrapper(function(e){$.wiki(o.mouseover.join(" "))})),o.mousein.length&&e.on("mouseenter",this.createShadowWrapper(function(e){$.wiki(o.mousein.join(" "))})),o.mouseout.length&&e.on("mouseout",this.createShadowWrapper(function(e){$.wiki(o.mouseout.join(" "))}))}});
-// end mouseover.min.js
-// type-sim.min.js, for SugarCube 2, by Chapel
-;Macro.add("typesim",{tags:null,handler:function(){var t=$(document.createElement("textarea")),e=$(document.createElement("div"));if(1!==this.args.length)return this.error("incorrect number of arguments");if("string"!=typeof this.args[0])return this.error("argument should be a string");var r=this.args[0],a="",n=r.length,i=0,s="typesim-output-"+r.replace(/[^A-Za-z0-9]/g,""),o="macro-"+this.name,d=this.payload[0].contents;t.wiki(a).attr({id:s,readonly:!0}).addClass(o).appendTo(this.output),$(document).on("keydown","#"+s,this.createShadowWrapper(function(t){i<n&&(a+=r.charAt(i),$("#"+s).empty().wiki(a)),i===n&&e.wiki(d).addClass(o).insertAfter("#"+s),i++}))}});
-// end type-sim.min.js
-// swap-macro-set.min.js, for SugarCube 2, by Chapel
-;!function(){"use strict";var o={tryGlobal:!0,resetButton:!0,normal:"violet",selected:"red",cls:"swappable"};setup.swap=setup.swap||{};var l=null;function i(t){function a(){return t}setup.swap.current=a,o.tryGlobal&&(window.swapCurrent=a)}function r(t,a){var e=$(document.createElement("span"));return $(document.createElement("a")).wiki(t).css("color",o.normal).attr({"data-swap-flag":"false","data-orig-content":t,"data-wiki-code":a||""}).addClass(o.cls).appendTo(e).ariaClick(function(t){t.preventDefault();var a=$(this);if("true"===a.attr("data-swap-flag"))a.attr("data-swap-flag","false").css("color",o.normal),l=null;else if(l){var e=l.text(),s=a.text(),r=l.attr("data-wiki-code"),n=a.attr("data-wiki-code");l.attr("data-swap-flag","false").css("color",o.normal).empty().wiki(s),a.attr("data-swap-flag","false").css("color",o.normal).empty().wiki(e),r&&"string"==typeof r&&r.trim()&&(i(s),$.wiki(r)),n&&"string"==typeof n&&n.trim()&&(i(e),$.wiki(n)),setup.swap.current&&"function"==typeof setup.swap.current&&delete setup.swap.current,o.tryGlobal&&window.swapCurrent&&"function"==typeof window.swapCurrent&&delete window.swapCurrent,l=null}else(l=a).attr("data-swap-flag","true").css("color",o.selected)}),e}function a(){l=null,$("a."+o.cls).each(function(){var t=$(this);t.empty().wiki(t.attr("data-orig-content")).attr("data-swap-flag","false").css("color",o.normal)})}Macro.add("swap",{tags:["onswap"],skipArgs:!0,handler:function(){var t=this.payload[0].contents,a=this.payload[1]?this.payload[1].contents:"",e=this.output,s=this.name;r(t,a).addClass("macro-"+s).appendTo(e)}}),Macro.add("resetswap",{handler:function(){var t=this.args&&this.args[0]&&"string"==typeof this.args[0]?this.args[0]:"Reset";$(document.createElement(o.resetButton?"button":"a")).wiki(t).ariaClick({label:"Reset all swappable elements."},function(t){t.preventDefault(),a()}).appendTo(this.output)}}),setup.swap.create=r,setup.swap.reset=a}();
-// end swap-macro-set.min.js
-// notify.min.js, for SugarCube 2, by Chapel
-;!function(){var n=/\d+m?s$/;function i(s,e,t){"string"==typeof s&&("number"!=typeof e&&(e=!1),$(document).trigger({type:":notify",message:s,delay:e,class:t||""}))}$(document.body).append("<div id='notify'></div>"),$(document).on(":notify",function(s){s.message&&"string"==typeof s.message&&(s.message.trim(),s.class?"string"==typeof s.class?s.class="open macro-notify "+s.class:Array.isArray(s.class)?s.class="open macro-notify "+s.class.join(" "):s.class="open macro-notify":s.class="open macro-notify",s.delay?("number"!=typeof s.delay&&(s.delay=Number(s.delay)),Number.isNaN(s.delay)&&(s.delay=2e3)):s.delay=2e3,$("#notify").empty().wiki(s.message).addClass(s.class),setTimeout(function(){$("#notify").removeClass()},s.delay))}),Macro.add("notify",{tags:null,handler:function(){var s=this.payload[0].contents,e=!1,t=!1;if(0<this.args.length){var a=n.test(this.args[0]);t="number"==typeof this.args[0]||a?(e=a?Util.fromCssTime(this.args[0]):this.args[0],1<this.args.length&&this.args.slice(1).flatten()):this.args.flatten().join(" ")}i(s,e,t)}}),setup.notify=i}();
-// end notify.min.js
+// disable.min.js, for SugarCube 2, by Chapel
+// v1.0.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";var a=["button","fieldset","input","menuitem","optgroup","option","select","textarea"];Macro.add("disable",{tags:null,handler:function(){var t,i,e,s=$(document.createElement("span")).addClass("macro-"+this.name).wiki(this.payload[0].contents);try{t=this.args.raw.trim()?!!Scripting.evalJavaScript(this.args.full):void 0}catch(a){return this.error("bad evaluation: "+a.message)}!function(a,t){a instanceof $||(a=$(a)),a.ariaDisabled(void 0===t||!!t),function(a){a.ariaIsDisabled()?a.addClass("disabled"):a.removeClass("disabled")}(a)}((i=s,e=$(i).find(a.join(",")).first(),e[0]||(e=$(i).children().eq(0))[0]?e:$(i)),t),$(this.output).append(s)}})}();
+// end disable.min.js
 // fading-macro-set.min.js, for SugarCube 2, by Chapel
-;Macro.add("fadein",{tags:null,handler:function(){var t,a,s=$(document.createElement("span")),e=this.payload[0].contents;if(0===this.args.length)return this.error("no arguments given");t=Util.fromCssTime(this.args[0]),a=1<this.args.length?Util.fromCssTime(this.args[1]):0,s.wiki(e).addClass("macro-"+this.name).appendTo(this.output).hide().delay(a).fadeIn(t)}}),Macro.add("fadeout",{tags:null,handler:function(){var t,a,s=$(document.createElement("span")),e=this.payload[0].contents;if(0===this.args.length)return this.error("no arguments given");t=Util.fromCssTime(this.args[0]),a=1<this.args.length?Util.fromCssTime(this.args[1]):0,s.wiki(e).addClass("macro-"+this.name).appendTo(this.output).delay(a).fadeOut(t)}});
+// v1.1.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;Macro.add("fadein",{tags:null,handler:function(){var t,a,s=$(document.createElement("span")),e=this.payload[0].contents;if(0===this.args.length)return this.error("no arguments given");t=Util.fromCssTime(this.args[0]),a=this.args.length>1?Util.fromCssTime(this.args[1]):0,s.wiki(e).addClass("macro-"+this.name).appendTo(this.output).hide().delay(a).fadeIn(t)}}),Macro.add("fadeout",{tags:null,handler:function(){var t,a,s=$(document.createElement("span")),e=this.payload[0].contents;if(0===this.args.length)return this.error("no arguments given");t=Util.fromCssTime(this.args[0]),a=this.args.length>1?Util.fromCssTime(this.args[1]):0,s.wiki(e).addClass("macro-"+this.name).appendTo(this.output).delay(a).fadeOut(t)}});
 // end fading-macro-set.min.js
+// ui-macro.min.js, for SugarCube 2, by Chapel
+// v1.0.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){var s={update:UIBar.setStoryElements,stow:UIBar.stow,unstow:UIBar.unstow,toggle:function(){$("#ui-bar").hasClass("stowed")?UIBar.unstow():UIBar.stow()},hide:function(){$("#ui-bar").css("display","none")},show:function(){$("#ui-bar").css("display","block")},kill:function(){$("#ui-bar").css("display","none"),$("#story").css("margin-left","2.5em")},restore:function(){$("#ui-bar").css("display","block"),$("#story").css("margin-left","20em")},jump:UI.jumpto,saves:UI.saves,restart:UI.restart,settings:UI.settings,share:UI.share,aliases:{refresh:"update",reload:"update",destroy:"kill",revive:"restore",jumpto:"jump",save:"saves",load:"saves",setting:"settings",sharing:"share"}},r=Object.keys(s);function t(t){return t&&"string"==typeof t?function(s){return r.includes(s)}(t=t.toLowerCase().trim())||(t=function(r){return s.aliases[r]||null}(t))?(s[t](),!1):'Command "'+t+'" is not a valid command.':"Command is not a string."}Macro.add("ui",{handler:function(){Array.isArray(this.args)&&this.args.length||this.error("No commands passed to macro.");var s,r=function(s){if(!Array.isArray(s))return"Command list error.";var r=[];return s.forEach((function(s){r.push(t(s))})),r}(this.args.flatten());s=(r=r.filter((function(s){return"string"==typeof s}))).join(" "),r.length&&s&&this.error(s)}})}();
+// end ui-macro.min.js
+// message-macro.min.js, for SugarCube 2, by Chapel
+// v1.0.1, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;setup.messageMacro={},setup.messageMacro.default="Help",Macro.add("message",{tags:null,handler:function(){var e=this.payload[0].contents,a=$(document.createElement("span")),s=$(document.createElement(this.args.includes("btn")?"button":"a")),t=$(document.createElement("span"));s.wiki(this.args.length>0&&"btn"!==this.args[0]?this.args[0]:setup.messageMacro.default).ariaClick(this.createShadowWrapper((function(){a.hasClass("open")?t.css("display","none").empty():t.css("display","block").wiki(e),a.toggleClass("open")}))),a.attr("id","macro-"+this.name+"-"+this.args.join("").replace(/[^A-Za-z0-9]/g,"")).addClass("message-text").append(s).append(t).appendTo(this.output)}});
+// end message-macro.min.js
+// swap-macro-set.min.js, for SugarCube 2, by Chapel
+// v1.1.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";var t=!0,a=!0,e="violet",s="red",r="swappable";setup.swap=setup.swap||{};var n=null;function i(a){var e=function(){return a};setup.swap.current=e,t&&(window.swapCurrent=e)}function o(a,o){var p=$(document.createElement("span"));return $(document.createElement("a")).wiki(a).css("color",e).attr({"data-swap-flag":"false","data-orig-content":a,"data-wiki-code":o||""}).addClass(r).appendTo(p).ariaClick((function(a){a.preventDefault();var r=$(this);if("true"===r.attr("data-swap-flag"))r.attr("data-swap-flag","false").css("color",e),n=null;else if(n){var o=n.text(),p=r.text(),l=n.attr("data-wiki-code"),c=r.attr("data-wiki-code");n.attr("data-swap-flag","false").css("color",e).empty().wiki(p),r.attr("data-swap-flag","false").css("color",e).empty().wiki(o),l&&"string"==typeof l&&l.trim()&&(i(p),$.wiki(l)),c&&"string"==typeof c&&c.trim()&&(i(o),$.wiki(c)),setup.swap.current&&"function"==typeof setup.swap.current&&delete setup.swap.current,t&&window.swapCurrent&&"function"==typeof window.swapCurrent&&delete window.swapCurrent,n=null}else n=r,r.attr("data-swap-flag","true").css("color",s)})),p}function p(){n=null,$("a."+r).each((function(){var t=$(this);t.empty().wiki(t.attr("data-orig-content")).attr("data-swap-flag","false").css("color",e)}))}Macro.add("swap",{tags:["onswap"],skipArgs:!0,handler:function(){var t=this.payload[0].contents,a=this.payload[1]?this.payload[1].contents:"",e=this.output,s=this.name;o(t,a).addClass("macro-"+s).appendTo(e)}}),Macro.add("resetswap",{handler:function(){var t=this.args&&this.args[0]&&"string"==typeof this.args[0]?this.args[0]:"Reset";$(document.createElement(a?"button":"a")).wiki(t).ariaClick({label:"Reset all swappable elements."},(function(t){t.preventDefault(),p()})).appendTo(this.output)}}),setup.swap.create=o,setup.swap.reset=p}();
+// end swap-macro-set.min.js
+// cycles.min.js, for SugarCube 2, by Chapel
+// v2.1.1, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";var e="%%cycles",t=!0,r="cycles.pause",i="cycles.pause.menu",s="cycles.postdisplay";function n(){return State.variables[e]}function a(e,t){if(!(this instanceof a))return new a(e,t);if(!e||"object"!=typeof e)throw new Error("Cycle() -> invalid definition object");if(!e.name||"string"!=typeof e.name||!e.name.trim())throw new Error("Cycle() -> invalid name");if(this.name=e.name,!e.phases||!Array.isArray(e.phases)||e.phases.length<2)throw new Error("Cycle() -> phases should be an array of at least two strings");if(!e.phases.every((function(e){return e&&"string"==typeof e&&e.trim()})))throw new Error("Cycle() -> each phase should be a valid, non-empty string");this.phases=clone(e.phases),e.period=Number(e.period),(Number.isNaN(e.period)||e.period<1)&&(e.period=1),Number.isInteger(e.period)||(e.period=Math.trunc(e.period)),this.period=e.period,e.increment=Number(e.increment),(Number.isNaN(e.increment)||e.increment<1)&&(e.increment=1),Number.isInteger(e.increment)||(e.increment=Math.trunc(e.increment)),this.increment=e.increment,this.active=void 0===e.active||!!e.active,t=Number(t),(Number.isNaN(t)||t<0)&&(t=0),Number.isInteger(t)||(t=Math.trunc(t)),this.stack=t}State.variables[e]={},Object.assign(a,{is:function(e){return e instanceof a},add:function(e,t){if(!t||"object"!=typeof t)throw new Error("Cycle.add() -> invalid definition object");if(e&&"string"==typeof e&&e.trim())t.name=e;else if(!t.name||"string"!=typeof t.name||!t.name.trim())throw new Error("Cycle.add() -> invalid name");var r=new a(t,0);return n()[t.name]=r,r},has:function(e){var t=n();return t.hasOwnProperty(e)&&a.is(t[e])},get:function(e){return a.has(e)?n()[e]:null},del:function(e){return!!a.has(e)&&(delete n()[e],!0)},check:function(e){if(a.has(e)){var t=[].slice.call(arguments).flatten().slice(1);return a.get(e).check(t)}},clear:function(e){n()},_emit:function(e,t){$(document).trigger({type:":cycle-"+t,cycle:e})},_retrieveCycles:n}),Object.assign(a.prototype,{constructor:a,revive:function(){var e={};return Object.keys(this).forEach((function(t){e[t]=clone(this[t])}),this),e},clone:function(){return new a(this.revive(),this.stack)},toJSON:function(){return JSON.reviveWrapper("new setup.Cycle("+JSON.stringify(this.revive())+", "+this.stack+")")},current:function(){return this.phases[Math.trunc(this.stack/this.period)%this.phases.length]},length:function(){return this.period*this.phases.length},turns:function(){return this.period/this.increment},turnsTotal:function(){return this.length()/this.increment},update:function(e){e=Number(e),Number.isNaN(e)&&(e=this.increment);var t=this.current();return this.stack+=e,this.stack<0&&(this.stack=0),Number.isInteger(this.stack)||(this.stack=Math.trunc(this.stack)),t!==this.current()&&a._emit(this,"change"),this},reset:function(){return this.stack=0,a._emit(this,"reset"),this.update(0)},suspend:function(){var e=this.active;return this.active=!1,e!==this.active&&a._emit(this,"suspend"),this},resume:function(){var e=this.active;return this.active=!0,e!==this.active&&a._emit(this,"resume"),this},toggle:function(){return this.active?this.suspend():this.resume(),this},isSuspended:function(){return!this.active},editIncrement:function(e){return e=Number(e),(!Number.isNaN(e)||e>0)&&(Number.isInteger(e)||(e=Math.trunc(e)),this.increment=e),this.increment},check:function(){var e=[].slice.call(arguments).flatten();return e.includes(this.current())}}),postdisplay[s]=function(){var e;tags().includes(r)||e?e=!1:tags().includes(i)?e=!0:Object.keys(n()).forEach((function(e){var t=a.get(e);t.active&&t.update()}))},setup.Cycle=a,t&&(window.Cycle=window.Cycle||a),Macro.add("newcycle",{tags:["phase"],handler:function(){if(this.args.length<1)return this.error("A cycle must at least be given a name.");if(this.payload.length<2)return this.error("A cycle must be given at least two phases.");var e=this.payload.slice(1).map((function(e){return function(e){if(e.args.length<1)return null;var t=e.args.flatten();return t.every((function(e){return"string"==typeof e}))?t:null}(e)})).flatten();if(e.includes(null))return this.error("Each `<<phase>>` tag must be given a valid name.");try{a.add(this.args[0],{phases:e,period:this.args[1],increment:this.args[2],active:this.args[3]&&"string"==typeof this.args[3]&&"suspend"!==this.args[3].trim()})}catch(e){var t=e.message&&e.message.split("->")[1];return t=!!t&&t.trim(),this.error(t||e.message)}}}),Macro.add("editcycle",{handler:function(){if(this.args.length<1||"string"!=typeof this.args[0]||!this.args[0].trim())return this.error("You must name the cycle you wish to act on.");if(this.args.length<2)return this.error("You must provide an action to perform.");var e=a.get(this.args[0]);if(null===e)return this.error('Cannot find a cycle named "'+this.args[0]+'".');if(this.args.includes("suspend")?e.suspend():this.args.includes("toggle")?e.toggle():this.args.includes("resume")&&e.resume(),this.args.includes("increment")){var t=this.args[this.args.indexOf("increment")+1];"number"==typeof t&&e.editIncrement(t)}if(this.args.includesAny("reset","clear")&&e.reset(),this.args.includes("change")){var r=this.args[this.args.indexOf("change")+1];r=Number(r),!Number.isNaN(r)&&Number.isInteger(r)&&e.update(r)}}}),Macro.add("showcycle",{handler:function(){if(this.args.length<1||"string"!=typeof this.args[0]||!this.args[0].trim())return this.error("You must name the cycle you wish to act on.");var e=a.get(this.args[0]);if(null===e)return this.error('Cannot find a cycle named "'+this.args[0]+'".');var t=e.current();this.args.includes("uppercase")?t=t.toUpperCase():this.args.includes("lowercase")?t=t.toLowerCase():this.args.includes("upperfirst")&&(t=t.toUpperFirst()),$(document.createElement("span")).addClass("macro-"+this.name).append(t).appendTo(this.output)}})}();
+// end cycles.min.js
+// continue.min.js, for SugarCube 2, by Chapel
+// v1.0.1, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";var n=["a",":button",'*[role="button"]',".continue-macro-ignore","#ui-bar","#ui-dialog"],t=0;function o(){$(document).on("click.continue-macro keyup.continue-macro",n.join(", "),(function(n){n.stopPropagation()}))}function e(){if(State.length>0)return!1;var t=[].slice.call(arguments).flatten();return n=n.concat(t),!0}function c(n,o){var e=function(){var n="."+Date.now().toString(36)+"-"+t;return t++,n}();if(o&&"function"==typeof o){var c="click.continue-macro"+e;n&&(c=c+" keyup.continue-macro"+e),$(document).one(c,(function(){o.call(),$(document).off(e)}))}}prehistory["%%continue-expiration"]=function(){t=0},$(document).one(":passagerender",(function(){o()})),Macro.add("ignore",{handler:function(){if(!e(this.args))return this.error("the <<ignore>> macro should only be run from StoryInit or equivalent.")}}),Macro.add("cont",{tags:null,handler:function(){var n,t=this.args.includes("append"),o=this.args.includesAny("key","keypress","press","button"),e=this.payload[0].contents;t&&(n=$(document.createElement("span")).addClass("macro-"+this.name).appendTo(this.output)),c(o,this.createShadowWrapper((function(){t&&n&&n instanceof $?n.wiki(e):$.wiki(e)})))}}),setup.cont=c,setup.cont.ignore=e,setup.cont.reset=function(){var t=[].slice.call(arguments).flatten();n=n.concat(t),$(document).off(".continue-macro"),o()},window.cont=window.cont||setup.cont}();
+// end continue.min.js
+// speech.min.js, for SugarCube 2, by Chapel
+// v1.1.1, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";var a=new Map;function t(t,e,r){if(void 0===r&&e&&(r=e,e=null),State.length)throw new Error("addCharacter() -> must be called before story starts");t&&r?(a.has(t)&&console.error('addCharacter() -> overwriting character "'+t+'"'),a.set(t,{displayName:e,image:r})):console.error("addCharacter() -> invalid arguments")}function e(t,e,r,s){var n=$(document.createElement("div")).addClass(Util.slugify(e)+" say"),i=a.has(e)?a.get(e).image:null,o=$(document.createElement("img")).attr("src",s||i||"");o.attr("src")&&o.attr("src").trim()&&n.append(o);var c=e.toUpperFirst();return a.has(e)&&a.get(e).displayName&&(c=a.get(e).displayName),n.append($(document.createElement("p")).wiki(c)).append($(document.createElement("p")).wiki(r)),t&&(t instanceof $||(t=$(t)),n.appendTo(t)),n}setup.say=e,setup.addCharacter=t,Macro.add("character",{handler:function(){t(this.args[0],this.args[1],this.args[2])}}),$(document).one(":passagestart",(function(){var t=Array.from(a.keys());t.push("say"),Macro.add(t,{tags:null,handler:function(){"say"!==this.name?e(this.output,this.name,this.payload[0].contents):e(this.output,this.args[0],this.payload[0].contents,this.args[1])}})}))}();
+// end speech.min.js
+// popover.min.js, for SugarCube 2, by Chapel
+// v1.0.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";function o(o,i){i=function(){return[].slice.call(arguments).flatten().filter((function(o){return o&&"string"==typeof o&&o.trim()}))||[]}(i),$("#ui-overlay, #ui-dialog").addClass("popover"),$("#ui-overlay, #ui-dialog, #ui-dialog-body").addClass(i),i.includesAny("noclick","no-click")&&$("#ui-overlay").removeClass("ui-close"),Dialog.setup("","popover"),Dialog.wiki(o),Dialog.open(),$(document).one(":dialogclosed",(function(){$("#ui-overlay").addClass("ui-close"),$("#ui-overlay, #ui-dialog").removeClass("popover"),$("#ui-overlay, #ui-dialog, #ui-dialog-body").removeClass(i)}))}Macro.add("popover",{tags:null,handler:function(){o(this.payload[0].contents,this.args)}}),Macro.add("dismisspopover",{skipArgs:!0,handler:function(){$("ui-overlay").hasClass("popover")&&Dialog.close()}}),setup.popover=o}();
+// end popover.min.js
+// type-sim.min.js, for SugarCube 2, by Chapel
+// v2.0.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";Macro.add("typesim",{tags:null,handler:function(){if(!this.args.length||!this.args[0]||"string"!=typeof this.args[0])return this.error("no text to type out was provided");var t,e=$(document.createElement("span")).addClass("macro"+this.name),n=$(document.createElement("div"));this.payload[0].contents&&this.payload[0].contents.trim()&&(t=this.payload[0].contents),function(t,e,n){if(t&&"string"==typeof t){!e||e instanceof $||(e=$(e));var i=0,s=t.split(""),a=[],o=$(document.createElement("textarea")).addClass("type-sim").on("input.type-sim",(function(){var e=$(this);i=a.push(s[i]),e.val(a.join("")),t.length===a.length&&(e.off("input.type-sim").ariaDisabled(!0),n&&"function"==typeof n&&n(a.join("")),$(document).trigger({type:":type-sim-end",message:a.join("")}))}));e&&e[0]&&e.append(o)}}(this.args[0],e,(function(){n.wiki(t)})),e.append(n).appendTo($(this.output))}})}();
+// end type-sim.min.js
 // first-macro.min.js, for SugarCube 2, by Chapel
+// v1.1.1, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
 ;Macro.add("first",{skipArgs:!0,tags:["then","finally"],handler:function(){var a,t=$(document.createElement("span")),n=this.payload[this.payload.length-1],s=visited()-1;a=s<this.payload.length?this.payload[s].contents:"finally"===n.name?n.contents:"",t.wiki(a).addClass("macro-"+this.name).appendTo(this.output)}});
 // end first-macro.min.js
-// speech.min.js, for SugarCube 2, by Chapel
-;!function(){"use strict";var c=new Map;function t(t,a){if(State.length)throw new Error("addCharacter() -> must be called before story starts");t&&a?(c.has(t)&&console.error('addCharacter() -> overwriting character "'+t+'"'),c.set(t,a)):console.error("addCharacter() -> invalid arguments")}function a(t,a,e,r){var s=$(document.createElement("div")).addClass(Util.slugify(a)+" say"),n=$(document.createElement("img")).attr("src",r||c.get(a)||"");return n.attr("src")&&n.attr("src").trim()&&s.append(n),s.append($(document.createElement("p")).wiki(a.toUpperFirst())).append($(document.createElement("p")).wiki(e)),t&&(t instanceof $||(t=$(t)),s.appendTo(t)),s}setup.say=a,setup.addCharacter=t,Macro.add("character",{handler:function(){t(this.args[0],this.args[1])}}),$(document).one(":passagestart",function(){var t=Array.from(c.keys());t.push("say"),Macro.add(t,{tags:null,handler:function(){"say"!==this.name?a(this.output,this.name,this.payload[0].contents):a(this.output,this.args[0],this.payload[0].contents,this.args[1])}})})}();
-// end speech.min.js
-// message-macro.min.js, for SugarCube 2, by Chapel
-;setup.messageMacro={},setup.messageMacro.default="Help",Macro.add("message",{tags:null,handler:function(){var e=this.payload[0].contents,a=$(document.createElement("span")),s=$(document.createElement(this.args.includes("btn")?"button":"a")),t=$(document.createElement("span"));s.wiki(0<this.args.length&&"btn"!==this.args[0]?this.args[0]:setup.messageMacro.default).ariaClick(this.createShadowWrapper(function(){a.hasClass("open")?t.css("display","none").empty():t.css("display","block").wiki(e),a.toggleClass("open")})),a.attr("id","macro-"+this.name+"-"+this.args.join("").replace(/[^A-Za-z0-9]/g,"")).addClass("message-text").append(s).append(t).appendTo(this.output)}});
-// end message-macro.min.js
+// preload.min.js, for SugarCube 2, by Chapel
+// v1.0.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";function t(t,e){var n=0,r=t.length;t.forEach((function(t){!function(t,e){var n=new Image;n.onload=e,n.onerror=e,n.src=t}(t,(function(){++n===r&&e()}))}))}function e(){return State.length<=0}function n(){var n=[].slice.call(arguments).flatten(),r=!!e()&&LoadScreen.lock();return t(n,(function(){r&&LoadScreen.unlock(r)})),r}setup.preload=n,setup.preload.force=!1,Macro.add("preload",{handler:function(){if(!e()&&!setup.preload.force)return this.error("Attempting to preload images outside of `StoryInit` or similar can cause performance issues. Set `setup.preload.force` to `true` if you want to do it anyway.");n(this.args.flatten().filter((function(t){return"string"==typeof t})))}})}();
+// end preload.min.js
+// fs.min.js, for SugarCube 2, by Chapel
+// v1.1.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){function t(t){return console.error(t),null}function e(e){try{return JSON.stringify(e)}catch(e){return t(e)}}function r(r){try{var a;if(void 0===r)return null;if(null!=(a="string"!=typeof r?e(r):r))return LZString.compressToBase64(a)}catch(e){return t(e)}}function a(e){try{return LZString.decompressFromBase64(e)}catch(e){return t(e)}}function n(e){try{return JSON.parse(e)}catch(r){try{return JSON.parse(a(e))}catch(e){return t(e)}}}function i(e,r){try{if("$"!==r[0]&&"_"!==r[0])throw new Error("Invalid stateful variable");State.setVar?State.setVar(r,clone(e)):"$"===r[0]?State.variables[r.substr(1)]=clone(e):State.temporary[r.substr(1)]=clone(e)}catch(e){return t(e)}}function s(r,a){if("string"!=typeof a&&(a=e(a)),null!=a){(r=r&&"string"==typeof r?Util.slugify(r.trim()).toLowerCase():"file.twinedata").includes(".")||(r+=".twinedata");try{saveAs(new Blob([a],{type:"text/plain;charset=UTF-8"}),r)}catch(e){return t(e)}}}function o(e){var r=e.target.files[0],s=new FileReader,o=e.storyVar||"$fileData",c=e.dataType||"text";$(s).on("load",(function(e){try{var r=e.currentTarget;if(!r.result)return;var s=function(t,e){if(null==e)return null;switch(t){case"json":return n(e);case"base64":case"b64":case"64":return n(a(e));default:return e}}(c,r.result);i(s,o),$(document).trigger({type:":import-macro",success:!0,data:clone(s),raw:r.result,storyVar:o})}catch(e){return i(null,o),$(document).trigger({type:":import-macro",success:!1,data:null,raw:null,storyVar:o}),t(e)}})),s.readAsText(r)}function c(t,e,r,a,n){var i,s=function(t,e,r,a){var n=$(document.createElement(a?"a":"button")).wiki(t),i=$(document.createElement("label")).attr("for","file-import").addClass("upload-file").append(n),s=$(document.createElement("input")).attr({id:"file-import",type:"file","data-format":r}).css("display","none").on("change",(function(t){o(Object.assign(clone(t),{storyVar:e,dataType:$(this).attr("data-format")}))})),c=$(document.createElement("span")).append(i,s);return n.ariaClick((function(){i.trigger("click")})),c}(e,r,a,n);i=t&&"string"==typeof t?$(t):t||"#passages",s.appendTo(i)}setup.fileSystem={config:{defaultText:"Import",renderAsLink:!1},JSON:{stringify:e,parse:n},b64:{compress:r,decompress:a},toState:i,toFile:s,fromFile:o},window.Chapel=window.Chapel||{},Chapel.fileSystem=Chapel.fileSystem||setup.fileSystem,Macro.add("import",{handler:function(){var t=this.output,e=this.args[2],r=this.args[0],a=this.args[1];if(e&&"string"==typeof e||(e=setup.fileSystem.config.defaultText),!r||"string"!=typeof r||"$"!==r[0]&&"_"!==r[0])return this.error("Invalid variable name.");c(t,e,r,a=a&&"string"==typeof a?a.trim():"text",setup.fileSystem.config.renderAsLink)}}),Macro.add("export",{handler:function(){var t=this.args[0],a=this.args[1],n=this.args[2];if(!t)return this.error("No data to save...");n=n&&"string"==typeof n?n.trim():"text",function(t,a,n){var i;switch(n){case"json":i=e(t);break;case"base64":case"b64":case"64":i=r(e(t)||t);break;default:i="string"==typeof t?t:e(t)}s(a,i)}(t,a=a&&"string"==typeof a?a.trim():"file.twinedata",n)}})}();
+// end fs.min.js
+// playtime.min.js, for SugarCube 2, by Chapel
+// v2.1.0, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){"use strict";var e=!0,t="playtime",a="pausetimer";function n(){return Date.now()-State.variables[t]}function r(e){if(e&&!(e<0)&&"number"==typeof e){var t=[];return t.push(Math.floor(e/1e3)%60),t.push(Math.floor(e/6e4)%60),t.push(Math.floor(e/36e5)),t}}State.variables[t]=Date.now(),predisplay["start-playtime"]=function(e){delete predisplay[e],State.variables[t]||(State.variables[t]=Date.now())},prehistory["pause-playtime"]=function(e){tags().includes(a)&&(State.variables[t]+=time())};var i=["h","hr","hrs","hour","hours"],s=["m","min","mins","minute","minutes"],u=["s","sec","secs","second","seconds"];function o(e){return function(e,t){if(e&&Array.isArray(e)&&!(e.length<3)){var a=e[2]<10?"0"+e[2]:""+e[2],n=e[1]<10?"0"+e[1]:""+e[1],r=e[0]<10?"0"+e[0]:""+e[0];return t?"<b>"+a+":"+n+"</b>:"+r:a+":"+n+":"+r}}(r(n()),e)}setup.playTime=function(e){return"string"==typeof e?function(e){var t=n(),a=r(t);return i.includes(e)?a[2]:s.includes(e)?a[1]:u.includes(e)?a[0]:t}(e):o(e)},e&&(window.playTime=window.playTime||setup.playTime),Macro.add("playtime",{handler:function(){var e=this.args.map((function(e){return String(e).trim().toLowerCase()})),t=$(document.createElement("span")),a=o(e.includesAny(["format","f","fmt","b","bold","true"]));t.wiki(a).addClass("macro-"+this.name).appendTo(this.output)}})}();
+// end playtime.min.js
+// notify.min.js, for SugarCube 2, by Chapel
+// v1.1.1, 2021-04-20, 53d1a20e9321b3782a303cf7dbe00f5c51e947db
+;!function(){var s=/\d+m?s$/;function e(s,e,t){"string"==typeof s&&("number"!=typeof e&&(e=!1),$(document).trigger({type:":notify",message:s,delay:e,class:t||""}))}$(document.body).append("<div id='notify'></div>"),$(document).on(":notify",(function(s){s.message&&"string"==typeof s.message&&(s.message.trim(),s.class?"string"==typeof s.class?s.class="open macro-notify "+s.class:Array.isArray(s.class)?s.class="open macro-notify "+s.class.join(" "):s.class="open macro-notify":s.class="open macro-notify",s.delay?("number"!=typeof s.delay&&(s.delay=Number(s.delay)),Number.isNaN(s.delay)&&(s.delay=2e3)):s.delay=2e3,$("#notify").empty().wiki(s.message).addClass(s.class),setTimeout((function(){$("#notify").removeClass()}),s.delay))})),Macro.add("notify",{tags:null,handler:function(){var t=this.payload[0].contents,a=!1,n=!1;if(this.args.length>0){var i=s.test(this.args[0]);"number"==typeof this.args[0]||i?(a=i?Util.fromCssTime(this.args[0]):this.args[0],n=this.args.length>1&&this.args.slice(1).flatten()):n=this.args.flatten().join(" ")}e(t,a,n)}}),setup.notify=e}();
+// end notify.min.js
+// done.min.js, for SugarCube 2, by Chapel
+// v1.0.1, 2021-02-25, 2fa0d5a6692222b9a5db3088b4746f12d21cf0b0
+;!function(){var a=1;Macro.add("done",{skipArgs:!0,tags:null,handler:function(){var n=this.payload[0].contents.trim();""!==n&&(postdisplay[":chapel-done-macro-"+a]=function(a){delete postdisplay[a],$.wiki(n)},a++)}})}();
+// end done.min.js
 /* twine-user-script #30: "meters.js" */
 (function () {
     'use strict';
@@ -20516,6 +20644,25 @@ $subject.name will
 
 &lt;div style=&quot;display:flex; flex-direction:column&quot;&gt; /* container for action display components */
 
+/* Gameplay effect of the action. This will be displayed last (see actions.css), but must be run first because later portions depend on the results. */
+&lt;&lt;if $action.act !== null&gt;&gt;
+&lt;div id=&quot;actEffect&quot;&gt;
+
+&lt;&lt;if def _targetingMsg&gt;&gt;
+/* This section covers text that has to be generated elsewhere for various reasons, such as the alert for a Protector covering another character. */
+&lt;&lt;print _targetingMsg&gt;&gt;
+&lt;&lt;unset _targetingMsg&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+
+&lt;&lt;if $action.act instanceof Function&gt;&gt;
+&lt;&lt;print $action.act()&gt;&gt;
+&lt;&lt;else&gt;&gt;
+&lt;&lt;print $action.act&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+
+&lt;/div&gt; /* close action effects div */
+&lt;&lt;/if&gt;&gt;
+
 /* Flavor text relating to the action. It is a div element, making it a separate block from the gameplay effects. By default, it has a bottom margin of 1em to create a separator between flavor text and gameplay text. */
 
 &lt;div id=&quot;actFlavor&quot;&gt;
@@ -20541,7 +20688,7 @@ $subject.name will
 /* Set actText to null to bypass this element. This is useful if you only want one of the two areas to display. */
 &lt;div id=&quot;actText&quot;&gt;
 &lt;&lt;if $action.actText instanceof Function&gt;&gt;
-	&lt;&lt;print $action.actText()&gt;&gt;
+	&lt;&lt;print $action.actText(_hit)&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;print $action.actText&gt;&gt;
 &lt;&lt;/if&gt;&gt;
@@ -20549,25 +20696,6 @@ $subject.name will
 &lt;&lt;/if&gt;&gt;
 
 &lt;/div&gt; /* close flavor text div */
-
-/* Then effects. */
-&lt;&lt;if $action.act !== null&gt;&gt;
-&lt;div id=&quot;actEffect&quot;&gt;
-
-&lt;&lt;if def _targetingMsg&gt;&gt;
-/* This section covers text that has to be generated elsewhere for various reasons, such as the alert for a Protector covering another character. */
-&lt;&lt;print _targetingMsg&gt;&gt;
-&lt;&lt;unset _targetingMsg&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-
-&lt;&lt;if $action.act instanceof Function&gt;&gt;
-&lt;&lt;print $action.act()&gt;&gt;
-&lt;&lt;else&gt;&gt;
-&lt;&lt;print $action.act&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-
-&lt;/div&gt; /* close action effects div */
-&lt;&lt;/if&gt;&gt;
 
 &lt;&lt;if setup.ANIMATIONS === true &amp;&amp; _queue.size &gt; 0&gt;&gt;
 &lt;div class=&quot;actors animationContainer&quot;&gt;
@@ -22604,7 +22732,12 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 			&lt;&lt;/switch&gt;&gt;
 		&lt;&lt;else&gt;&gt;
 			&lt;&lt;if passage() == &quot;Menu: Status&quot; &amp;&amp; def $subject&gt;&gt;
-				&lt;&lt;trigger &#39;click&#39; &#39;#toggle a&#39;&gt;&gt;
+				&lt;&lt;if document.getElementById(&quot;cancelbutton&quot;)&gt;&gt;
+					&lt;&lt;set _id = &#39;#cancelbutton button&#39;&gt;&gt;
+					&lt;&lt;trigger &#39;click&#39; _id&gt;&gt;
+				&lt;&lt;else&gt;&gt;
+					&lt;&lt;trigger &#39;click&#39; &#39;#toggle a&#39;&gt;&gt;
+				&lt;&lt;/if&gt;&gt;
 			&lt;&lt;elseif passage() == &quot;Menu: Equipment&quot; &amp;&amp; def _s&gt;&gt;
 				&lt;&lt;trigger &#39;click&#39; &#39;#toggle a&#39;&gt;&gt;
 			&lt;&lt;elseif passage() == &quot;Menu: Inventory&quot; &amp;&amp; document.getElementById(&quot;cancelbutton&quot;)&gt;&gt;
@@ -23259,7 +23392,7 @@ Public Domain
 BESTIARY&lt;br/&gt;
 &lt;span class=&quot;smalltext&quot;&gt;Click an enemy name to see detailed information.&lt;/span&gt;
 &lt;/div&gt;
-&lt;div class=&quot;bestiary-container&quot;&gt;
+&lt;div class=&quot;bestiary-grid&quot;&gt;
 &lt;&lt;for _i, _enemy range $bestiary&gt;&gt;
 	/* if even (no remainder from modulo 2), go on right side (column 3), else go on left side (column 1) */
 	&lt;&lt;if (_i+1) % 2 === 0&gt;&gt;
@@ -23451,14 +23584,77 @@ BESTIARY&lt;br/&gt;
 		&lt;&lt;/if&gt;&gt;
 	&lt;&lt;/for&gt;&gt;
 	&lt;/div&gt;
-&lt;&lt;/switch&gt;&gt;</tw-passagedata><tw-passagedata pid="122" name="Menu: Formation" tags="menu battle noreturn" position="225,1600" size="100,100">&lt;div id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
+&lt;&lt;/switch&gt;&gt;</tw-passagedata><tw-passagedata pid="122" name="Widget: unequipAll" tags="widget nobr" position="225,1600" size="100,100">&lt;&lt;widget &quot;unequipAll&quot;&gt;&gt;
+&lt;&lt;link &quot;Unequip All&quot;&gt;&gt;
+	&lt;&lt;for _puppet range puppets().concat($Reserve_Puppets).filter(function(p){ return !p.lockEquipment; })&gt;&gt;
+		&lt;&lt;run _puppet.unequipAll()&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;&lt;goto `passage()`&gt;&gt;
+&lt;&lt;/link&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="123" name="Menu: Equipment" tags="menu battle noreturn" position="350,1600" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
+&lt;div id=&quot;puppets&quot;&gt;
+&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;div id=&quot;equipment-list&quot;&gt;
+&lt;&lt;include &quot;equipment list&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;/nobr&gt;&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="124" name="equip manager puppets" tags="nobr" position="475,1600" size="100,100">&lt;&lt;if def $subject&gt;&gt;
+	&lt;&lt;set _i = &quot;null&quot;&gt;&gt;
+	&lt;&lt;actorDisplay $subject &quot;equipment&quot;&gt;&gt;
+&lt;&lt;else&gt;&gt;
+&lt;&lt;for _i, _p range $puppets&gt;&gt;
+	&lt;&lt;actorDisplay _p &quot;equipment&quot;&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="125" name="equipment list" tags="nobr" position="600,1600" size="100,100">&lt;&lt;if def $subject &amp;&amp; !$subject.lockEquipment&gt;&gt;
+	&lt;div style=&quot;line-height:1.4&quot;&gt;
+	&lt;&lt;set _count = 0&gt;&gt;
+	&lt;&lt;for _k, _v range $inventory&gt;&gt;
+		&lt;&lt;if _v.equippable &amp;&amp; _v.stock &gt; 0&gt;&gt;
+			&lt;br/&gt;
+			&lt;&lt;set _count++&gt;&gt;
+			&lt;&lt;if (def $subject &amp;&amp; $subject.checkRestriction(_v)) || ndef $subject&gt;&gt;
+				&lt;div @id=&quot;_k&quot;&gt;
+				&lt;b&gt;
+				&lt;&lt;if def $subject&gt;&gt;
+					&lt;&lt;capture _v&gt;&gt;
+					&lt;&lt;link _v.name&gt;&gt;
+						&lt;&lt;run $subject.equip(_v)&gt;&gt;
+						&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+						&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+					&lt;&lt;/link&gt;&gt;
+					&lt;&lt;/capture&gt;&gt;
+				&lt;&lt;else&gt;&gt;
+					&lt;&lt;print _k&gt;&gt;
+				&lt;&lt;/if&gt;&gt;
+				&lt;/b&gt;
+				&lt;span style=&quot;float:right&quot;&gt;(_v.stock)&lt;/span&gt;&lt;br/&gt;
+				&lt;i style=&quot;font-size:12px&quot;&gt;&lt;&lt;print _v.equippable.slot&gt;&gt;&lt;/i&gt;&lt;br/&gt;
+				&lt;&lt;if _v.equippable.restrictedTo.length &gt; 0&gt;&gt;
+					&lt;div style=&quot;font-size:12px; font-style:italic&quot;&gt;Restriction: &lt;&lt;for _char range _v.equippable.restrictedTo&gt;&gt;&lt;&lt;print _char&gt;&gt;&lt;&lt;/for&gt;&gt;&lt;/div&gt;
+				&lt;&lt;/if&gt;&gt;
+				&lt;&lt;print _v.desc&gt;&gt;&lt;br/&gt;
+				&lt;span class=&quot;action-desc&quot;&gt;&lt;&lt;print _v.info&gt;&gt;&lt;/span&gt;
+				&lt;/div&gt;
+			&lt;&lt;/if&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;&lt;if _count == 0&gt;&gt;
+	You don&#39;t have any equipment.
+	&lt;&lt;/if&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;elseif def $subject &amp;&amp; $subject.lockEquipment&gt;&gt;
+	&lt;i&gt;This character&#39;s equipment can&#39;t be changed.&lt;/i&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;unequipAll&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="126" name="Menu: Formation" tags="menu battle noreturn" position="725,1600" size="100,100">&lt;div id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
 &lt;div id=&quot;puppets&quot; class=&quot;actors grid&quot;&gt;
 &lt;&lt;include &quot;formation puppets&quot;&gt;&gt;
 &lt;/div&gt;
 &lt;&lt;/nobr&gt;&gt;
 
 Click on a character to select them, then click on another space to move or swap.
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="123" name="formation puppets" tags="nobr" position="350,1600" size="100,100">&lt;div class=&quot;leaderlabel formation-label&quot;&gt;Front Row&lt;/div&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="127" name="formation puppets" tags="nobr" position="850,1600" size="100,100">&lt;div class=&quot;leaderlabel formation-label&quot;&gt;Front Row&lt;/div&gt;
 &lt;div class=&quot;frontrowlabel formation-label&quot;&gt;Middle Row&lt;/div&gt;
 &lt;div class=&quot;backrowlabel formation-label&quot;&gt;Back Row&lt;/div&gt;
 	&lt;&lt;for _i, _puppet range $puppets&gt;&gt;
@@ -23509,342 +23705,192 @@ Click on a character to select them, then click on another space to move or swap
 	  &quot;grid-template-columns&quot;: `auto repeat(${setup.ROW_SIZE},1fr)`
 	});
 	&lt;&lt;/script&gt;&gt;
-&lt;&lt;/timed&gt;&gt;</tw-passagedata><tw-passagedata pid="124" name="Widget: actorDisplay" tags="widget nobr" position="475,1600" size="100,100">&lt;&lt;widget &quot;actorDisplay&quot;&gt;&gt;
-/* Standard display code for a single character. By default, shows their name and stats on the left, and their equipment on the right. Modifiers can be used to change specific parts.
-
-ARG 0 = character to be displayed
-ARG 1 = special case modifier [optional]
-
-Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot of loops, and errors can occur if they overwrite temporary variables used elsewhere. */
-
-&lt;&lt;run console.assert($args[0] instanceof Puppet,&quot;ERROR: No puppet passed to actorDisplay&quot;)&gt;&gt;
-
-&lt;&lt;set _puppet = $args[0]&gt;&gt;
-&lt;&lt;set _displayModel = $args[1]&gt;&gt;
-&lt;&lt;set _style = &quot;&quot;&gt;&gt;
-&lt;&lt;if def _displayModel &amp;&amp; _displayModel !== &quot;standard&quot;&gt;&gt;
-	&lt;&lt;set _classMod = &quot; small-display&quot;&gt;&gt;
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;set _classMod = &quot;&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;if ndef _i&gt;&gt;
-	&lt;&lt;set _i = 0&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-
-&lt;&lt;if _puppet !== null&gt;&gt;
-	&lt;div @class=&quot;&#39;menuactor&#39;+_classMod&quot; @id=&quot;_i&quot;&gt;
-	/* container for the entire actor box */
-		&lt;&lt;switch _displayModel&gt;&gt;
-			&lt;&lt;default&gt;&gt;
-			/* Default display makes room for a portrait on the left-hand side, if they&#39;re enabled. */
-				&lt;&lt;if setup.PORTRAITS === true&gt;&gt;
-					&lt;div class=&quot;portrait&quot;&gt;[img[setup.ImagePath+_p.portrait]]&lt;/div&gt;
-					&lt;&lt;set _style = &quot;left:96px&quot;&gt;&gt;
-				&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/switch&gt;&gt;
-		&lt;div @class=&quot;&#39;menuactor-nameblock&#39;+_classMod&quot; @style=_style&gt;
-		/* container for the left-hand side of the box, typically containing the puppet&#39;s name */
-			&lt;div class=&quot;menuactor-name&quot; id=&quot;toggle&quot;&gt;
-			/* Container for the puppet&#39;s name. This is a point of interaction in most menus, so there is a switch here for different menu functionalities. */
-				&lt;&lt;actorNameLink&gt;&gt;
-			&lt;/div&gt; /* close name display */
-			&lt;&lt;switch _displayModel&gt;&gt;
-				&lt;&lt;case &quot;inventory&quot; &quot;decurse&quot; &quot;equipment&quot;&gt;&gt;
-				/* In these menus, the character&#39;s stats are displayed below their name. */
-					&lt;div @class=&quot;&#39;menuactor-stats monospace&#39;+_classMod&quot;&gt;
-					&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
-						&lt;&lt;include &quot;menu stat display&quot;&gt;&gt;
-					&lt;&lt;/for&gt;&gt;
-					&lt;/div&gt;
-				&lt;&lt;default&gt;&gt;
-				/* In the default display, the character&#39;s level is displayed below their name. */
-					&lt;div class=&quot;menuactor-level&quot;&gt;LEVEL _puppet.level&lt;/div&gt;
-			&lt;&lt;/switch&gt;&gt;
-		&lt;/div&gt; /* close name block */
-			&lt;&lt;actorRightDisplay&gt;&gt;
-	&lt;/div&gt; /* close actor box */
-&lt;&lt;/if&gt;&gt;
-
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="125" name="Widget: actorNameLink" tags="widget nobr" position="600,1600" size="100,100">&lt;&lt;widget &quot;actorNameLink&quot;&gt;&gt;
-/* Switch for different functionalities tied to the character&#39;s name in actorDisplay. */
-
-&lt;&lt;capture _puppet&gt;&gt;
-&lt;&lt;switch _displayModel&gt;&gt;
-	&lt;&lt;case &quot;inventory&quot;&gt;&gt;
-	/* On the inventory screen, characters may be displayed when EQUIPPING or USING items. In both cases, the character name is clicked to perform the relevant function. The inventory screen must be updated afterwards to reflect the change. */
-		&lt;&lt;switch _event&gt;&gt;
-			&lt;&lt;case &quot;equip&quot;&gt;&gt;
-					&lt;&lt;link _puppet.name&gt;&gt;
-						&lt;&lt;run _puppet.equip(_display)&gt;&gt;
-						&lt;&lt;unset _display&gt;&gt;
-						&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-						&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-					&lt;&lt;/link&gt;&gt;
-			&lt;&lt;case &quot;use&quot;&gt;&gt;
-					&lt;&lt;link _puppet.name&gt;&gt;
-						&lt;&lt;run _display.onUse(_puppet)&gt;&gt;
-						&lt;&lt;unset _display&gt;&gt;
-						&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-						&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-					&lt;&lt;/link&gt;&gt;
-			&lt;&lt;default&gt;&gt;
-				&lt;&lt;print _puppet.name&gt;&gt;
-		&lt;&lt;/switch&gt;&gt;
-	&lt;&lt;case &quot;action&quot;&gt;&gt;
-		&lt;&lt;link _puppet.name&gt;&gt;
-			&lt;&lt;run $action.onUse(_puppet)&gt;&gt;
-			&lt;&lt;unset $subject, $action&gt;&gt;
-			&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;
-				&lt;&lt;include &quot;status party display&quot;&gt;&gt;
-			&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/link&gt;&gt;
-	&lt;&lt;case &quot;decurse&quot;&gt;&gt;
-	/* In the decurse menu, the name has no special functionality. Just display it normally. */
-		&lt;&lt;print _puppet.name&gt;&gt;
-	&lt;&lt;case &quot;equipment&quot;&gt;&gt;
-	/* In the equipment menu, the character name serves two functionalities: When the full party is displayed, clicking it will select the character; if a character is selected, clicking it will deselect them and return to the full party display. */
-		&lt;&lt;if def $subject&gt;&gt; /* if selector already defined, deselect and refresh screen */
-			&lt;&lt;link _puppet.name&gt;&gt;
-				&lt;&lt;unset $subject&gt;&gt;
-				&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-				&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-			&lt;&lt;/link&gt;&gt;
-		&lt;&lt;else&gt;&gt; /* if no one selected, select this character and refresh screen */
-			&lt;&lt;capture _i&gt;&gt;
-			&lt;&lt;link _puppet.name&gt;&gt;
-				&lt;&lt;set $subject = _puppet&gt;&gt;
-				&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-				&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-			&lt;&lt;/link&gt;&gt;
-			&lt;&lt;/capture&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;default&gt;&gt;
-	/* In the default display, the character name serves two functionalities: When the full party is displayed, clicking it will select the character; if a character is selected, clicking it will deselect them and return to the full party display. */
-		&lt;&lt;if def $subject&gt;&gt;
-		/* If _display exists, a character has already been selected. Clicking the name again will deselect the character. */
-			&lt;span id=&quot;toggle&quot;&gt;
-			&lt;&lt;link &quot;_puppet.name&quot;&gt;&gt;
-				&lt;&lt;unset $subject&gt;&gt;
-				&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;&lt;&lt;include &quot;status party display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-			&lt;&lt;/link&gt;&gt;
-			&lt;/span&gt;
-		&lt;&lt;else&gt;&gt;
-		/* If no character is selected, clicking the name will select this character. */
-			&lt;span @id=_i&gt;
-			&lt;&lt;link &quot;_puppet.name&quot;&gt;&gt;
-				&lt;&lt;set $subject = _puppet&gt;&gt;
-				&lt;&lt;set _stScreen = 1&gt;&gt;
-				&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;&lt;&lt;include &quot;status party display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-			&lt;&lt;/link&gt;&gt;
-			&lt;/span&gt;
-		&lt;&lt;/if&gt;&gt;
-&lt;&lt;/switch&gt;&gt;
-&lt;&lt;/capture&gt;&gt;
-
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="126" name="Widget: actorRightDisplay" tags="widget nobr" position="725,1600" size="100,100">&lt;&lt;widget &quot;actorRightDisplay&quot;&gt;&gt;
-/* Branch for determining what is displayed on the right-hand side of the actor display. */
-
-&lt;&lt;if (_displayModel == &quot;inventory&quot; &amp;&amp; _event == &quot;use&quot;) || (ndef _displayModel || _displayModel == &quot;standard&quot;)&gt;&gt;
-/* By default or if we&#39;re using an item on the inventory screen, we want to display HP and MP on the right-hand side. */
-	&lt;&lt;set _id = &#39;hp&#39;+_i&gt;&gt;
-	&lt;&lt;run _HPmeters.push(_id)&gt;&gt;
-	&lt;&lt;newmeter _id 1&gt;&gt;
-		&lt;&lt;colors setup.PLAYER_BAR_COLOR&gt;&gt;
-		&lt;&lt;animation false&gt;&gt;
-		&lt;&lt;sizing 100% 0.5em&gt;&gt;
-	&lt;&lt;/newmeter&gt;&gt;
-	&lt;&lt;set _id = &#39;mp&#39;+_i&gt;&gt;
-	&lt;&lt;run _MPmeters.push(_id)&gt;&gt;
-	&lt;&lt;newmeter _id 1&gt;&gt;
-		&lt;&lt;colors setup.MP_BAR_COLOR&gt;&gt;
-		&lt;&lt;animation false&gt;&gt;
-		&lt;&lt;sizing 100% 0.5em&gt;&gt;
-	&lt;&lt;/newmeter&gt;&gt;
-	&lt;div @class=&quot;&#39;menuactor-hpmpblock&#39;+_classMod&quot;&gt;
-		&lt;div class=&quot;hpmp&quot;&gt;
-			HP: &lt;span style=&quot;float:right&quot;&gt;
-				&lt;div class=&quot;hpmpvalue&quot;&gt;_puppet.hp&lt;/div&gt;/&lt;div class=&quot;hpmpvalue&quot;&gt;_puppet.maxhp&lt;/div&gt;
-				&lt;/span&gt;
-		&lt;/div&gt;
-		&lt;&lt;showmeter _HPmeters[puppets().indexOf(_puppet)] `_puppet.hp / _puppet.maxhp`&gt;&gt;
-		&lt;&lt;if setup.SHOW_MP === true&gt;&gt;
-			&lt;div class=&quot;hpmp&quot;&gt;
-				MP: &lt;span style=&quot;float:right&quot;&gt;
-					&lt;div class=&quot;hpmpvalue&quot;&gt;_puppet.en&lt;/div&gt;/&lt;div class=&quot;hpmpvalue&quot;&gt;_puppet.maxen&lt;/div&gt;
-					&lt;/span&gt;
-			&lt;/div&gt;
-			&lt;&lt;showmeter _MPmeters[puppets().indexOf(_puppet)] `_puppet.en / _puppet.maxen`&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;else&gt;&gt;
-/* In all other cases, display equipment on the right-hand side. */
-	&lt;div class=&quot;menuactor-equipment small-display&quot;&gt;
-	&lt;&lt;for _name, _slot range _puppet.equipment&gt;&gt;
-		&lt;&lt;for _subslot, _item range _slot&gt;&gt;
-			&lt;div class=&quot;menuactor-equipment-slot&quot;&gt;_name&lt;/div&gt;
-			&lt;&lt;equipSlotDisplay _item&gt;&gt;
-		&lt;&lt;/for&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;if ndef _displayModel || _displayModel == &quot;standard&quot;&gt;&gt;
-/* In the standard display, an additional XP block is displayed to the right of the previous block. */
-	&lt;div class=&quot;menuactor-xpblock&quot;&gt;
-		&lt;div style=&quot;font-weight:bold&quot;&gt;Experience&lt;/div&gt;
-		&lt;div style=&quot;float:right&quot;&gt;_puppet.xp&lt;/div&gt;
-		&lt;br/&gt;
-		&lt;div style=&quot;font-weight:bold&quot;&gt;To next level&lt;/div&gt;
-		&lt;&lt;set _toNext = _puppet.XPtoNext()&gt;&gt;
-		&lt;div style=&quot;float:right&quot;&gt;&lt;&lt;if typeof(_toNext) == &#39;number&#39;&gt;&gt;&lt;&lt;print (_toNext-_puppet.xp)&gt;&gt;&lt;&lt;else&gt;&gt;&lt;&lt;print _toNext&gt;&gt;&lt;&lt;/if&gt;&gt;&lt;/div&gt;
-	&lt;/div&gt;
-&lt;&lt;/if&gt;&gt;
-
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="127" name="Widget: equipSlotDisplay" tags="widget nobr" position="850,1600" size="100,100">&lt;&lt;widget &quot;equipSlotDisplay&quot;&gt;&gt;
-/* Standardized display for a single instance of character equipment. By default, this displays below the slot name itself. Assume called within actorDisplay, and uses _displayModel for modular functionality.
-
-ARG 0 = equipped item
-*/
-
-&lt;&lt;if ndef $args[0]&gt;&gt; /* error handler */
-	&lt;&lt;print &quot;ERROR: No item passed to equipSlotDisplay&quot;&gt;&gt;
-	&lt;&lt;run console.log(&quot;ERROR in equipSlotDisplay: no item passed&quot;)&gt;&gt;
-&lt;&lt;else&gt;&gt;
-
-&lt;&lt;set _item = $args[0]&gt;&gt;
-
-&lt;&lt;if _item === null&gt;&gt;&lt;span class=&quot;menuactor-equipment-name&quot;&gt;&amp;nbsp;&lt;/span&gt; /* if slot empty, display blank space */
-&lt;&lt;else&gt;&gt;
-	&lt;div class=&quot;menuactor-equipment-name&quot;&gt;_item.name&lt;br/&gt;
-	&lt;span class=&quot;action-desc&quot;&gt;_item.info&lt;/span&gt;
-	&lt;/div&gt;
-	&lt;span class=&quot;unequip-button&quot;&gt;
-	&lt;&lt;switch _displayModel&gt;&gt;
-	/* Unequip button displayed here. By default, this is an &quot;[X]&quot; link at the far right of the item name. */
-		&lt;&lt;case &quot;inventory&quot;&gt;&gt;
-		/* no unequip feature; display nothing */
-		&lt;&lt;case &quot;decurse&quot;&gt;&gt;
-		/* In Decurse, only display unequip if the item is sticky and player can pay the cost. Deduct the cost and refresh the shop screen after click. */
-			&lt;&lt;if $currency &gt;= _decurseCost &amp;&amp; !_puppet.lockEquipment &amp;&amp; _item.sticky&gt;&gt;
-				&lt;&lt;capture _puppet, _name, _subslot&gt;&gt;
-				&lt;&lt;link &quot;[X]&quot;&gt;&gt;
-					&lt;&lt;run _puppet.unequip(_name,_subslot,{unsticky:true})&gt;&gt;
-					&lt;&lt;set $currency -= _decurseCost&gt;&gt;
-					&lt;&lt;update&gt;&gt;
-					&lt;&lt;replace &quot;#business-area&quot; t8n&gt;&gt;&lt;&lt;include &quot;decurse-remove&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-				&lt;&lt;/link&gt;&gt;
-				&lt;&lt;/capture&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;default&gt;&gt;
-		/* Default is party equipment screen. Only display unequip if the item is not sticky and the puppet does not have locked equipment. Remember to pass the subslot index too for subslot equipment. */
-			&lt;&lt;if !_puppet.lockEquipment &amp;&amp; !_item.sticky&gt;&gt;
-				&lt;&lt;capture _puppet, _name, _subslot&gt;&gt;
-				&lt;&lt;link &quot;[X]&quot;&gt;&gt;
-					&lt;&lt;run _puppet.unequip(_name,_subslot)&gt;&gt;
-					&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-					&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-				&lt;&lt;/link&gt;&gt;
-				&lt;&lt;/capture&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/switch&gt;&gt;
-	&lt;/span&gt;
-&lt;&lt;/if&gt;&gt;
-
-&lt;&lt;/if&gt;&gt; /* end error handler if */
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="128" name="Widget: actionListMenu" tags="widget nobr" position="975,1600" size="100,100">&lt;&lt;widget &quot;actionListMenu&quot;&gt;&gt;
-/* Widget for display of player actions in the menu. */
-
-&lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Puppet),&quot;ERROR in actionListMenu: no Puppet&quot;)&gt;&gt;
-&lt;&lt;set _char = $args[0]; _actions = _char.actions&gt;&gt;
-&lt;&lt;if _char.crisis instanceof Array&gt;&gt;
-	&lt;div class=&quot;abilities-header&quot;&gt;CRISIS&lt;/div&gt;
-	&lt;&lt;for _action range _char.crisis&gt;&gt;
-		&lt;&lt;print _action&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;br/&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;div class=&quot;abilities-header&quot;&gt;ABILITIES&lt;/div&gt;
-&lt;&lt;liveblock&gt;&gt;
-&lt;&lt;for _action range _actions&gt;&gt;
-&lt;&lt;if !_action.invisible&gt;&gt;
-	&lt;&lt;set _actionID = &quot;action&quot;+_actions.indexOf(_action)&gt;&gt;
-	&lt;div @id=&quot;_actionID&quot; class=&quot;actionDisplay&quot;&gt;
-		&lt;&lt;print _action&gt;&gt;
-		&lt;&lt;capture _action, _actionID&gt;&gt;
-		&lt;&lt;timed 0s&gt;&gt;
-		&lt;&lt;if _action.onUse &amp;&amp; !_action.check(_display)&gt;&gt;
-			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-name&quot;&gt;&gt;
-			&lt;&lt;replace _selector&gt;&gt;
-				&lt;&lt;link &quot;_action.name&quot;&gt;&gt;
-					&lt;&lt;if _action.instantUse === true&gt;&gt;
-						&lt;&lt;run $action = _action; $action.onUse()&gt;&gt;
-					&lt;&lt;else&gt;&gt;
-						&lt;&lt;set $action = _action&gt;&gt;
-						&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;
-							&lt;&lt;include &quot;action use puppets&quot;&gt;&gt;
-						&lt;&lt;/replace&gt;&gt;
-					&lt;&lt;/if&gt;&gt;
-				&lt;&lt;/link&gt;&gt;
-			&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-		&lt;&lt;if !_action.noDefault &amp;&amp; _char.defaultAction !== _action.name&gt;&gt;
-			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-tags&quot;&gt;&gt;
-			&lt;&lt;set $(_selector).after($(`&lt;div class=&quot;default-link&quot;&gt;`))&gt;&gt;
-			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .default-link&quot;&gt;&gt;
-			&lt;&lt;replace _selector&gt;&gt;
-				&lt;&lt;link &quot;[Set as default]&quot;&gt;&gt;
-					&lt;&lt;set _char.defaultAction = _action.name&gt;&gt;
-					&lt;&lt;update&gt;&gt;
-				&lt;&lt;/link&gt;&gt;
-			&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/timed&gt;&gt;
-		&lt;&lt;/capture&gt;&gt;
-	&lt;/div&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-&lt;&lt;/liveblock&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="129" name="action use puppets" tags="nobr" position="1100,1600" size="100,100">&lt;div id=&quot;menu-display&quot;&gt;
-	&lt;&lt;print $action&gt;&gt;
+&lt;&lt;/timed&gt;&gt;</tw-passagedata><tw-passagedata pid="128" name="Menu: Inventory" tags="menu battle noreturn" position="975,1600" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
+&lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
+&lt;div id=&quot;menu-display&quot; class=&quot;relative&quot;&gt;
+&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;
 &lt;/div&gt;
-&lt;div id=&quot;puppets&quot;&gt;
-&lt;&lt;set _HPmeters = []&gt;&gt;
-&lt;&lt;set _MPmeters = []&gt;&gt;
-&lt;&lt;for _i, _p range puppets()&gt;&gt;
-	&lt;&lt;actorDisplay _p &quot;action&quot;&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="130" name="Widget: unequipAll" tags="widget nobr" position="1225,1600" size="100,100">&lt;&lt;widget &quot;unequipAll&quot;&gt;&gt;
-&lt;&lt;link &quot;Unequip All&quot;&gt;&gt;
-	&lt;&lt;for _puppet range puppets().concat($Reserve_Puppets).filter(function(p){ return !p.lockEquipment; })&gt;&gt;
-		&lt;&lt;run _puppet.unequipAll()&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;&lt;goto `passage()`&gt;&gt;
-&lt;&lt;/link&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="131" name="menubar" tags="nobr" position="100,1725" size="100,100">&lt;span id=&quot;status&quot;&gt;
-&lt;span class=&quot;menunav monospace&quot;&gt;
-[A] ↑&lt;br/&gt;
-[D] ↓
-&lt;/span&gt;
-&lt;&lt;for _n, _option range setup.MENU_OPTIONS&gt;&gt;
-&lt;&lt;if _n != $menu_screen&gt;&gt;
-&lt;&lt;capture _n, _option&gt;&gt;
-&lt;span @id=&quot;&#39;menu&#39;+_n&quot;&gt;
-&lt;&lt;link _option&gt;&gt;
-	&lt;&lt;set $menu_screen = _n&gt;&gt;
-	&lt;&lt;print &#39;&lt;&lt;goto \&quot;Menu: &#39;+_option+&#39;\&quot;&gt;&gt;&#39;&gt;&gt;
-&lt;&lt;/link&gt;&gt;&lt;/span&gt;&lt;&lt;/capture&gt;&gt;
+&lt;div id=&quot;itemlist&quot;&gt;
+&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;/nobr&gt;&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="129" name="inventory item list" tags="nobr" position="1100,1600" size="100,100">&lt;div style=&quot;display:flex; justify-content:space-evenly;&quot;&gt;
+&lt;&lt;if _filter == &quot;all&quot;&gt;&gt;
+	&lt;b&gt;All&lt;/b&gt;
 &lt;&lt;else&gt;&gt;
-&lt;b&gt;_option&lt;/b&gt;
+	&lt;&lt;link &quot;All&quot;&gt;&gt;
+		&lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
+		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
 &lt;&lt;/if&gt;&gt;
+&lt;&lt;if _filter == &quot;usable&quot;&gt;&gt;
+	&lt;b&gt;Usable&lt;/b&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;link &quot;Usable&quot;&gt;&gt;
+		&lt;&lt;set _filter = &quot;usable&quot;&gt;&gt;
+		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;&lt;if _filter == &quot;equipment&quot;&gt;&gt;
+	&lt;b&gt;Equipment&lt;/b&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;link &quot;Equipment&quot;&gt;&gt;
+		&lt;&lt;set _filter = &quot;equipment&quot;&gt;&gt;
+		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;/div&gt;
 &lt;br/&gt;
+&lt;div class=&quot;itemcontainer&quot;&gt;
+&lt;&lt;set _p = 2&gt;&gt;
+&lt;&lt;for _name, _item range $inventory&gt;&gt;
+	&lt;&lt;if _filter == &quot;all&quot; || (_filter == &quot;usable&quot; &amp;&amp; _item.usable.includes(&quot;inmenu&quot;)) || (_filter == &quot;equipment&quot; &amp;&amp; _item.equippable)&gt;&gt;
+	&lt;&lt;if _p == 1&gt;&gt;
+		&lt;&lt;set _p = 2&gt;&gt;
+	&lt;&lt;elseif _p == 2&gt;&gt;
+		&lt;&lt;set _p = 1&gt;&gt;
+	&lt;&lt;/if&gt;&gt;
+	&lt;div @class=&quot;&#39;item&#39;+_p&quot;&gt;
+	&lt;b&gt;
+	&lt;&lt;capture _item&gt;&gt;
+	&lt;&lt;link _item.name&gt;&gt;
+		&lt;&lt;set _display = _item&gt;&gt;
+		&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+	&lt;&lt;/capture&gt;&gt;
+	&lt;/b&gt; &lt;span class=&quot;itemstock&quot;&gt;(_item.stock)&lt;/span&gt;
+	&lt;/div&gt;
+	&lt;&lt;/if&gt;&gt;
 &lt;&lt;/for&gt;&gt;
-&lt;span id=&quot;menu-return&quot;&gt;&lt;&lt;longreturn&gt;&gt;&lt;/span&gt;
-&lt;div class=&quot;GPdisplay monospace&quot;&gt;&lt;&lt;print setup.CURRENCY_NAME&gt;&gt;: $currency&lt;/div&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="132" name="Menu: Status" tags="menu battle noreturn" position="225,1725" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="130" name="inventory item display" tags="nobr" position="1225,1600" size="100,100">&lt;&lt;if ndef _display || _display === null&gt;&gt;
+	&lt;div class=&quot;centered&quot; style=&quot;color: gray&quot;&gt;Click on an item to see info&lt;/div&gt;
+&lt;&lt;else&gt;&gt;
+	&lt;&lt;print _display&gt;&gt;
+	&lt;&lt;if _display.usable.includes(&#39;inmenu&#39;) || _display.equippable&gt;&gt;
+	&lt;div class=&quot;item-buttons&quot;&gt;
+		&lt;&lt;set _b = 0&gt;&gt;
+		&lt;&lt;if _display.usable.includes(&#39;inmenu&#39;) &amp;&amp; _display.stock &gt; 0&gt;&gt;
+			&lt;&lt;set _b++&gt;&gt;
+			&lt;span @id=&quot;&#39;button&#39;+_b&quot;&gt;
+				&lt;span id=&quot;usebutton&quot;&gt;
+				&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;
+				&lt;/span&gt;
+			&lt;/span&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;&lt;if _display.equippable &amp;&amp; _display.stock &gt; 0&gt;&gt;
+			&lt;&lt;set _b++&gt;&gt;
+			&lt;span @id=&quot;&#39;button&#39;+_b&quot;&gt;
+				&lt;span id=&quot;equipbutton&quot;&gt;
+				&lt;&lt;include &quot;equip button&quot;&gt;&gt;
+				&lt;/span&gt;
+			&lt;/span&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;/div&gt;
+	&lt;&lt;/if&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="131" name="equip button" tags="nobr" position="100,1725" size="100,100">&lt;&lt;button &quot;EQUIP&quot;&gt;&gt;
+	&lt;&lt;set _event = &quot;equip&quot;&gt;&gt;
+	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/button&gt;&gt;
+&lt;&lt;if _b == 1&gt;&gt;
+&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;
+&lt;&lt;elseif _b == 2&gt;&gt;
+&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[W]&lt;/span&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="132" name="inventory use button" tags="nobr" position="225,1725" size="100,100">&lt;&lt;button &quot;USE&quot;&gt;&gt;
+	&lt;&lt;if _display.instantUse === true&gt;&gt;
+		&lt;&lt;run _display.onUse()&gt;&gt;
+	&lt;&lt;else&gt;&gt;
+		&lt;&lt;set _event = &quot;use&quot;&gt;&gt;
+		&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+		&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/if&gt;&gt;
+&lt;&lt;/button&gt;&gt;
+&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="133" name="inventory cancel button" tags="nobr" position="350,1725" size="100,100">&lt;span id=&quot;cancelbutton&quot;&gt;
+&lt;&lt;button &quot;CANCEL&quot;&gt;&gt;
+	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/button&gt;&gt;
+&lt;/span&gt;
+&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[R]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="134" name="inventory puppets" tags="nobr" position="475,1725" size="100,100">&lt;&lt;set _HPmeters = []&gt;&gt;
+&lt;&lt;set _MPmeters = []&gt;&gt;
+&lt;&lt;for _i, _p range puppets().filter(function(p) { return temporary().event != &quot;equip&quot; || (!p.lockEquipment &amp;&amp; p.checkRestriction(temporary().display)); })&gt;&gt;
+	&lt;&lt;actorDisplay _p &quot;inventory&quot;&gt;&gt;
+&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="135" name="Menu: Party" tags="menu battle noreturn" position="600,1725" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;center style=&quot;font-weight:bold&quot;&gt;ACTIVE PUPPETS&lt;/center&gt;
+&lt;&lt;nobr&gt;&gt;
+&lt;div class=&quot;actors&quot; id=&quot;puppets&quot;&gt;
+&lt;&lt;include &quot;party manager puppets&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;/nobr&gt;&gt;
+&lt;center style=&quot;font-weight:bold&quot;&gt;RESERVE PUPPETS&lt;/center&gt;
+&lt;&lt;nobr&gt;&gt;
+&lt;div class=&quot;actors&quot; id=&quot;reserve&quot;&gt;
+&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;
+&lt;/div&gt;
+&lt;&lt;/nobr&gt;&gt;
+
+&lt;&lt;unequipAll&gt;&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="136" name="party manager puppets" tags="nobr" position="725,1725" size="100,100">&lt;&lt;for _i, _puppet range $puppets&gt;&gt;
+	&lt;&lt;if _puppet !== null&gt;&gt;
+	&lt;div class=&quot;actor&quot; @id=&quot;_i&quot; style=&quot;min-width:150px&quot;&gt;
+	&lt;center&gt;
+	&lt;&lt;capture _i&gt;&gt;
+	&lt;&lt;link _puppet.name&gt;&gt;
+		&lt;&lt;if def _s&gt;&gt;
+			&lt;&lt;run $(&#39;#&#39; + _s).removeClass(&quot;selected&quot;)&gt;&gt;
+			&lt;&lt;if _s != _i&gt;&gt;
+				&lt;&lt;set _s = _i&gt;&gt;
+				&lt;&lt;run $(&#39;#&#39; + _s).addClass(&quot;selected&quot;)&gt;&gt;
+			&lt;&lt;else&gt;&gt;
+				&lt;&lt;unset _s&gt;&gt;
+			&lt;&lt;/if&gt;&gt;
+		&lt;&lt;else&gt;&gt;
+			&lt;&lt;set _s = _i&gt;&gt;
+			&lt;&lt;run $(&#39;#&#39; + _i).addClass(&quot;selected&quot;)&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;&lt;run console.log(&quot;i = &quot;+_i); console.log(&quot;s = &quot;+_s)&gt;&gt;
+		&lt;&lt;replace &quot;#reserve&quot;&gt;&gt;&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+	&lt;&lt;/link&gt;&gt;
+	&lt;&lt;/capture&gt;&gt;
+	&lt;/center&gt;&lt;br/&gt;
+	&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
+		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
+		&lt;&lt;statOOB _k _puppet&gt;&gt;
+		&lt;br/&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;/div&gt;
+	&lt;&lt;/if&gt;&gt;
+&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="137" name="party manager reserve" tags="nobr" position="850,1725" size="100,100">&lt;&lt;for _j, _puppet range $Reserve_Puppets&gt;&gt;
+	&lt;div class=&quot;actor&quot; style=&quot;min-width:150px&quot;&gt;
+	&lt;center&gt;
+	&lt;&lt;if def _s&gt;&gt;
+		&lt;&lt;capture _puppet, _j&gt;&gt;
+		&lt;&lt;link _puppet.name&gt;&gt;
+			&lt;&lt;run $Reserve_Puppets[_j] = $puppets[_s]&gt;&gt;
+			&lt;&lt;set $puppets[_s] = _puppet&gt;&gt;
+			&lt;&lt;unset _s&gt;&gt;
+			&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;party manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+			&lt;&lt;replace &quot;#reserve&quot;&gt;&gt;&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/link&gt;&gt;
+		&lt;&lt;/capture&gt;&gt;
+	&lt;&lt;else&gt;&gt;
+		_puppet.name
+	&lt;&lt;/if&gt;&gt;
+	&lt;/center&gt;&lt;br/&gt;
+	&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
+		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
+		&lt;&lt;statOOB _k _puppet&gt;&gt;
+		&lt;br/&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="138" name="Menu: Status" tags="menu battle noreturn" position="975,1725" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
 &lt;div id=&quot;partydisplay&quot;&gt;
 &lt;&lt;include &quot;status party display&quot;&gt;&gt;
 &lt;/div&gt;
 &lt;&lt;/nobr&gt;&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="133" name="menu stat display" tags="nobr" position="350,1725" size="100,100">&lt;&lt;if !setup.hiddenStats.includes(_k)&gt;&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="139" name="menu stat display" tags="nobr" position="1100,1725" size="100,100">&lt;&lt;if !setup.hiddenStats.includes(_k)&gt;&gt;
 	&lt;&lt;if def setup.statInfo[_k]&gt;&gt;
 		&lt;&lt;set _class = &quot;tooltip&quot;&gt;&gt;
 	&lt;&lt;else&gt;&gt;
@@ -23861,7 +23907,7 @@ ARG 0 = equipped item
 		&lt;&lt;/if&gt;&gt;
 		&lt;/div&gt;
 	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="134" name="status special detail" tags="nobr" position="475,1725" size="100,100">&lt;div style=&quot;position:relative&quot;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="140" name="status special detail" tags="nobr" position="1225,1725" size="100,100">&lt;div style=&quot;position:relative&quot;&gt;
 	&lt;&lt;switch setup.STATUS_SCREENS.menu[_stScreen-1]&gt;&gt;
 		&lt;&lt;case &quot;elements&quot;&gt;&gt;
 			&lt;&lt;set _title = &quot;elemental affinities&quot;&gt;&gt;
@@ -23925,7 +23971,7 @@ ARG 0 = equipped item
 		&lt;&lt;/if&gt;&gt;
 	&lt;&lt;/for&gt;&gt;
 	&lt;/div&gt;
-&lt;&lt;/switch&gt;&gt;</tw-passagedata><tw-passagedata pid="135" name="status party display" tags="nobr" position="600,1725" size="100,100">&lt;&lt;if def $subject&gt;&gt;
+&lt;&lt;/switch&gt;&gt;</tw-passagedata><tw-passagedata pid="141" name="status party display" tags="nobr" position="100,1850" size="100,100">&lt;&lt;if def $subject&gt;&gt;
 	&lt;&lt;actorDisplay $subject&gt;&gt;
 	&lt;div class=&quot;menuactor-detail&quot;&gt;
 		&lt;&lt;if def setup.STATUS_SCREENS.menu &amp;&amp; setup.STATUS_SCREENS.menu.length &gt; 0&gt;&gt;
@@ -23958,243 +24004,361 @@ ARG 0 = equipped item
 	&lt;&lt;for _i, _p range puppets()&gt;&gt;
 		&lt;&lt;actorDisplay _p&gt;&gt;
 	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="136" name="Menu: Inventory" tags="menu battle noreturn" position="725,1725" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="142" name="Widget: actionListMenu" tags="widget nobr" position="225,1850" size="100,100">&lt;&lt;widget &quot;actionListMenu&quot;&gt;&gt;
+/* Widget for display of player actions in the menu. */
+
+&lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Puppet),&quot;ERROR in actionListMenu: no Puppet&quot;)&gt;&gt;
+&lt;&lt;set _char = $args[0]; _actions = _char.actions&gt;&gt;
+&lt;&lt;if _char.crisis instanceof Array&gt;&gt;
+	&lt;div class=&quot;abilities-header&quot;&gt;CRISIS&lt;/div&gt;
+	&lt;&lt;for _action range _char.crisis&gt;&gt;
+		&lt;&lt;print _action&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;br/&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;div class=&quot;abilities-header&quot;&gt;ABILITIES&lt;/div&gt;
 &lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
-&lt;div id=&quot;menu-display&quot;&gt;
-&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;div id=&quot;itemlist&quot;&gt;
-&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/nobr&gt;&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="137" name="inventory item list" tags="nobr" position="850,1725" size="100,100">&lt;div style=&quot;display:flex; justify-content:space-evenly;&quot;&gt;
+&lt;&lt;liveblock&gt;&gt;
+&lt;div style=&quot;display:flex; justify-content:space-evenly;&quot;&gt;
 &lt;&lt;if _filter == &quot;all&quot;&gt;&gt;
 	&lt;b&gt;All&lt;/b&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;link &quot;All&quot;&gt;&gt;
-		&lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
-		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;set _filter = &quot;all&quot;; _actions = _char.actions&gt;&gt;
+		&lt;&lt;update&gt;&gt;
 	&lt;&lt;/link&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 &lt;&lt;if _filter == &quot;usable&quot;&gt;&gt;
 	&lt;b&gt;Usable&lt;/b&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;link &quot;Usable&quot;&gt;&gt;
-		&lt;&lt;set _filter = &quot;usable&quot;&gt;&gt;
-		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;if _filter == &quot;equipment&quot;&gt;&gt;
-	&lt;b&gt;Equipment&lt;/b&gt;
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;link &quot;Equipment&quot;&gt;&gt;
-		&lt;&lt;set _filter = &quot;equipment&quot;&gt;&gt;
-		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;set _filter = &quot;usable&quot;; _actions = _char.actions.filter(function (act) { return act &amp;&amp; act.onUse })&gt;&gt;
+		&lt;&lt;update&gt;&gt;
 	&lt;&lt;/link&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 &lt;/div&gt;
 &lt;br/&gt;
-&lt;div class=&quot;itemcontainer&quot;&gt;
-&lt;&lt;set _p = 2&gt;&gt;
-&lt;&lt;for _name, _item range $inventory&gt;&gt;
-	&lt;&lt;if _filter == &quot;all&quot; || (_filter == &quot;usable&quot; &amp;&amp; _item.usable.includes(&quot;inmenu&quot;)) || (_filter == &quot;equipment&quot; &amp;&amp; _item.equippable)&gt;&gt;
-	&lt;&lt;if _p == 1&gt;&gt;
-		&lt;&lt;set _p = 2&gt;&gt;
-	&lt;&lt;elseif _p == 2&gt;&gt;
-		&lt;&lt;set _p = 1&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;div @class=&quot;&#39;item&#39;+_p&quot;&gt;
-	&lt;b&gt;
-	&lt;&lt;capture _item&gt;&gt;
-	&lt;&lt;link _item.name&gt;&gt;
-		&lt;&lt;set _display = _item&gt;&gt;
-		&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-	&lt;&lt;/capture&gt;&gt;
-	&lt;/b&gt; &lt;span class=&quot;itemstock&quot;&gt;(_item.stock)&lt;/span&gt;
-	&lt;/div&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="138" name="inventory item display" tags="nobr" position="975,1725" size="100,100">&lt;&lt;if ndef _display || _display === null&gt;&gt;
-	&lt;div style=&quot;text-align: center; line-height: 70px; color: gray&quot;&gt;Click on an item to see info&lt;/div&gt;
-&lt;&lt;else&gt;&gt;
-&lt;&lt;print _display&gt;&gt;
-&lt;&lt;if _display.usable.includes(&#39;inmenu&#39;) || _display.equippable&gt;&gt;
-&lt;div style=&quot;display: flex; justify-content: space-evenly&quot;&gt;
-	&lt;&lt;set _b = 0&gt;&gt;
-	&lt;&lt;if _display.usable.includes(&#39;inmenu&#39;) &amp;&amp; _display.stock &gt; 0&gt;&gt;
-		&lt;&lt;set _b++&gt;&gt;
-		&lt;span @id=&quot;&#39;button&#39;+_b&quot;&gt;
-			&lt;span id=&quot;usebutton&quot;&gt;
-			&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;
-			&lt;/span&gt;
-		&lt;/span&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if _display.equippable &amp;&amp; _display.stock &gt; 0&gt;&gt;
-		&lt;&lt;set _b++&gt;&gt;
-		&lt;span @id=&quot;&#39;button&#39;+_b&quot;&gt;
-			&lt;span id=&quot;equipbutton&quot;&gt;
-			&lt;&lt;include &quot;equip button&quot;&gt;&gt;
-			&lt;/span&gt;
-		&lt;/span&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="139" name="equip button" tags="nobr" position="1100,1725" size="100,100">&lt;&lt;button &quot;EQUIP&quot;&gt;&gt;
-	&lt;&lt;set _event = &quot;equip&quot;&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-&lt;&lt;/button&gt;&gt;
-&lt;&lt;if _b == 1&gt;&gt;
-&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;
-&lt;&lt;elseif _b == 2&gt;&gt;
-&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[W]&lt;/span&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="140" name="inventory use button" tags="nobr" position="1225,1725" size="100,100">&lt;&lt;button &quot;USE&quot;&gt;&gt;
-	&lt;&lt;if _display.instantUse === true&gt;&gt;
-		&lt;&lt;run _display.onUse()&gt;&gt;
-	&lt;&lt;else&gt;&gt;
-		&lt;&lt;set _event = &quot;use&quot;&gt;&gt;
-		&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-		&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/button&gt;&gt;
-&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="141" name="inventory cancel button" tags="nobr" position="100,1850" size="100,100">&lt;span id=&quot;cancelbutton&quot;&gt;
-&lt;&lt;button &quot;CANCEL&quot;&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-&lt;&lt;/button&gt;&gt;
-&lt;/span&gt;
-&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[R]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="142" name="inventory puppets" tags="nobr" position="225,1850" size="100,100">&lt;&lt;set _HPmeters = []&gt;&gt;
-&lt;&lt;set _MPmeters = []&gt;&gt;
-&lt;&lt;for _i, _p range puppets().filter(function(p) { return temporary().event != &quot;equip&quot; || (!p.lockEquipment &amp;&amp; p.checkRestriction(temporary().display)); })&gt;&gt;
-	&lt;&lt;actorDisplay _p &quot;inventory&quot;&gt;&gt;
-&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="143" name="Menu: Party" tags="menu battle noreturn" position="350,1850" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;center style=&quot;font-weight:bold&quot;&gt;ACTIVE PUPPETS&lt;/center&gt;
-&lt;&lt;nobr&gt;&gt;
-&lt;div class=&quot;actors&quot; id=&quot;puppets&quot;&gt;
-&lt;&lt;include &quot;party manager puppets&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/nobr&gt;&gt;
-&lt;center style=&quot;font-weight:bold&quot;&gt;RESERVE PUPPETS&lt;/center&gt;
-&lt;&lt;nobr&gt;&gt;
-&lt;div class=&quot;actors&quot; id=&quot;reserve&quot;&gt;
-&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/nobr&gt;&gt;
-
-&lt;&lt;unequipAll&gt;&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="144" name="party manager puppets" tags="nobr" position="475,1850" size="100,100">&lt;&lt;for _i, _puppet range $puppets&gt;&gt;
-	&lt;&lt;if _puppet !== null&gt;&gt;
-	&lt;div class=&quot;actor&quot; @id=&quot;_i&quot; style=&quot;min-width:150px&quot;&gt;
-	&lt;center&gt;
-	&lt;&lt;capture _i&gt;&gt;
-	&lt;&lt;link _puppet.name&gt;&gt;
-		&lt;&lt;if def _s&gt;&gt;
-			&lt;&lt;run $(&#39;#&#39; + _s).removeClass(&quot;selected&quot;)&gt;&gt;
-			&lt;&lt;if _s != _i&gt;&gt;
-				&lt;&lt;set _s = _i&gt;&gt;
-				&lt;&lt;run $(&#39;#&#39; + _s).addClass(&quot;selected&quot;)&gt;&gt;
-			&lt;&lt;else&gt;&gt;
-				&lt;&lt;unset _s&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;else&gt;&gt;
-			&lt;&lt;set _s = _i&gt;&gt;
-			&lt;&lt;run $(&#39;#&#39; + _i).addClass(&quot;selected&quot;)&gt;&gt;
+&lt;&lt;for _action range _actions&gt;&gt;
+&lt;&lt;if !_action.invisible&gt;&gt;
+	&lt;&lt;set _actionID = &quot;action&quot;+_actions.indexOf(_action)&gt;&gt;
+	&lt;div @id=&quot;_actionID&quot; class=&quot;actionDisplay&quot;&gt;
+		&lt;&lt;print _action&gt;&gt;
+		&lt;&lt;capture _action, _actionID&gt;&gt;
+		&lt;&lt;timed 0s&gt;&gt;
+		&lt;&lt;if _action.onUse &amp;&amp; !_action.check(_display)&gt;&gt;
+			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-name&quot;&gt;&gt;
+			&lt;&lt;replace _selector&gt;&gt;
+				&lt;&lt;link &quot;_action.name&quot;&gt;&gt;
+					&lt;&lt;if _action.instantUse === true&gt;&gt;
+						&lt;&lt;run $action = _action; $action.onUse()&gt;&gt;
+					&lt;&lt;else&gt;&gt;
+						&lt;&lt;set $action = _action&gt;&gt;
+						&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;
+							&lt;&lt;include &quot;action use puppets&quot;&gt;&gt;
+						&lt;&lt;/replace&gt;&gt;
+					&lt;&lt;/if&gt;&gt;
+				&lt;&lt;/link&gt;&gt;
+			&lt;&lt;/replace&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
-		&lt;&lt;run console.log(&quot;i = &quot;+_i); console.log(&quot;s = &quot;+_s)&gt;&gt;
-		&lt;&lt;replace &quot;#reserve&quot;&gt;&gt;&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
-	&lt;&lt;/capture&gt;&gt;
-	&lt;/center&gt;&lt;br/&gt;
-	&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
-		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
-		&lt;&lt;statOOB _k _puppet&gt;&gt;
-		&lt;br/&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;/div&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="145" name="party manager reserve" tags="nobr" position="600,1850" size="100,100">&lt;&lt;for _j, _puppet range $Reserve_Puppets&gt;&gt;
-	&lt;div class=&quot;actor&quot; style=&quot;min-width:150px&quot;&gt;
-	&lt;center&gt;
-	&lt;&lt;if def _s&gt;&gt;
-		&lt;&lt;capture _puppet, _j&gt;&gt;
-		&lt;&lt;link _puppet.name&gt;&gt;
-			&lt;&lt;run $Reserve_Puppets[_j] = $puppets[_s]&gt;&gt;
-			&lt;&lt;set $puppets[_s] = _puppet&gt;&gt;
-			&lt;&lt;unset _s&gt;&gt;
-			&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;party manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-			&lt;&lt;replace &quot;#reserve&quot;&gt;&gt;&lt;&lt;include &quot;party manager reserve&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-		&lt;&lt;/link&gt;&gt;
+		&lt;&lt;if !_action.noDefault &amp;&amp; _char.defaultAction !== _action.name&gt;&gt;
+			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .action-tags&quot;&gt;&gt;
+			&lt;&lt;set $(_selector).after($(`&lt;div class=&quot;default-link&quot;&gt;`))&gt;&gt;
+			&lt;&lt;set _selector = &quot;#&quot;+_actionID+&quot; .default-link&quot;&gt;&gt;
+			&lt;&lt;replace _selector&gt;&gt;
+				&lt;&lt;link &quot;[Set as default]&quot;&gt;&gt;
+					&lt;&lt;set _char.defaultAction = _action.name&gt;&gt;
+					&lt;&lt;update&gt;&gt;
+				&lt;&lt;/link&gt;&gt;
+			&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+		&lt;&lt;/timed&gt;&gt;
 		&lt;&lt;/capture&gt;&gt;
-	&lt;&lt;else&gt;&gt;
-		_puppet.name
-	&lt;&lt;/if&gt;&gt;
-	&lt;/center&gt;&lt;br/&gt;
-	&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
-		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
-		&lt;&lt;statOOB _k _puppet&gt;&gt;
-		&lt;br/&gt;
-	&lt;&lt;/for&gt;&gt;
 	&lt;/div&gt;
-&lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="146" name="Menu: Equipment" tags="menu battle noreturn" position="725,1850" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
-&lt;div id=&quot;puppets&quot;&gt;
-&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;div id=&quot;equipment-list&quot;&gt;
-&lt;&lt;include &quot;equipment list&quot;&gt;&gt;
-&lt;/div&gt;
-&lt;&lt;/nobr&gt;&gt;
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="147" name="equip manager puppets" tags="nobr" position="850,1850" size="100,100">&lt;&lt;if def $subject&gt;&gt;
-	&lt;&lt;set _i = &quot;null&quot;&gt;&gt;
-	&lt;&lt;actorDisplay $subject &quot;equipment&quot;&gt;&gt;
-&lt;&lt;else&gt;&gt;
-&lt;&lt;for _i, _p range $puppets&gt;&gt;
-	&lt;&lt;actorDisplay _p &quot;equipment&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;
 &lt;&lt;/for&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="148" name="equipment list" tags="nobr" position="975,1850" size="100,100">&lt;&lt;if def $subject &amp;&amp; !$subject.lockEquipment&gt;&gt;
-	&lt;div style=&quot;line-height:1.4&quot;&gt;
-	&lt;&lt;set _count = 0&gt;&gt;
-	&lt;&lt;for _k, _v range $inventory&gt;&gt;
-		&lt;&lt;if _v.equippable &amp;&amp; _v.stock &gt; 0&gt;&gt;
-			&lt;br/&gt;
-			&lt;&lt;set _count++&gt;&gt;
-			&lt;&lt;if (def $subject &amp;&amp; $subject.checkRestriction(_v)) || ndef $subject&gt;&gt;
-				&lt;div @id=&quot;_k&quot;&gt;
-				&lt;b&gt;
-				&lt;&lt;if def $subject&gt;&gt;
-					&lt;&lt;capture _v&gt;&gt;
-					&lt;&lt;link _v.name&gt;&gt;
-						&lt;&lt;run $subject.equip(_v)&gt;&gt;
-						&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-						&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-					&lt;&lt;/link&gt;&gt;
-					&lt;&lt;/capture&gt;&gt;
-				&lt;&lt;else&gt;&gt;
-					&lt;&lt;print _k&gt;&gt;
-				&lt;&lt;/if&gt;&gt;
-				&lt;/b&gt;
-				&lt;span style=&quot;float:right&quot;&gt;(_v.stock)&lt;/span&gt;&lt;br/&gt;
-				&lt;i style=&quot;font-size:12px&quot;&gt;&lt;&lt;print _v.equippable.slot&gt;&gt;&lt;/i&gt;&lt;br/&gt;
-				&lt;&lt;if _v.equippable.restrictedTo.length &gt; 0&gt;&gt;
-					&lt;div style=&quot;font-size:12px; font-style:italic&quot;&gt;Restriction: &lt;&lt;for _char range _v.equippable.restrictedTo&gt;&gt;&lt;&lt;print _char&gt;&gt;&lt;&lt;/for&gt;&gt;&lt;/div&gt;
-				&lt;&lt;/if&gt;&gt;
-				&lt;&lt;print _v.desc&gt;&gt;&lt;br/&gt;
-				&lt;span class=&quot;action-desc&quot;&gt;&lt;&lt;print _v.info&gt;&gt;&lt;/span&gt;
-				&lt;/div&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;&lt;if _count == 0&gt;&gt;
-	You don&#39;t have any equipment.
-	&lt;&lt;/if&gt;&gt;
+&lt;&lt;/liveblock&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="143" name="action use puppets" tags="nobr" position="350,1850" size="100,100">&lt;div id=&quot;menu-display&quot; class=&quot;action&quot;&gt;
+	&lt;&lt;print $action&gt;&gt;
+	&lt;div class=&quot;item-buttons&quot;&gt;
+		&lt;div id=&quot;button1&quot;&gt;
+			&lt;span id=&quot;cancelbutton&quot;&gt;
+			&lt;&lt;button &quot;CANCEL&quot;&gt;&gt;
+				&lt;&lt;unset $subject, $action&gt;&gt;
+				&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;&lt;&lt;include &quot;status party display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+			&lt;&lt;/button&gt;&gt;
+			&lt;/span&gt;
+			&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[R]&lt;/span&gt;
+		&lt;/div&gt;
 	&lt;/div&gt;
-&lt;&lt;elseif def $subject &amp;&amp; $subject.lockEquipment&gt;&gt;
-	&lt;i&gt;This character&#39;s equipment can&#39;t be changed.&lt;/i&gt;
+&lt;/div&gt;
+&lt;div id=&quot;puppets&quot;&gt;
+&lt;&lt;set _HPmeters = []&gt;&gt;
+&lt;&lt;set _MPmeters = []&gt;&gt;
+&lt;&lt;for _i, _p range puppets()&gt;&gt;
+	&lt;&lt;actorDisplay _p &quot;action&quot;&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="144" name="Widget: actorDisplay" tags="widget nobr" position="475,1850" size="100,100">&lt;&lt;widget &quot;actorDisplay&quot;&gt;&gt;
+/* Standard display code for a single character. By default, shows their name and stats on the left, and their equipment on the right. Modifiers can be used to change specific parts.
+
+ARG 0 = character to be displayed
+ARG 1 = special case modifier [optional]
+
+Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot of loops, and errors can occur if they overwrite temporary variables used elsewhere. */
+
+&lt;&lt;run console.assert($args[0] instanceof Puppet,&quot;ERROR: No puppet passed to actorDisplay&quot;)&gt;&gt;
+
+&lt;&lt;set _puppet = $args[0]&gt;&gt;
+&lt;&lt;set _displayModel = $args[1]&gt;&gt;
+&lt;&lt;set _style = &quot;&quot;&gt;&gt;
+&lt;&lt;if def _displayModel &amp;&amp; _displayModel !== &quot;standard&quot;&gt;&gt;
+	&lt;&lt;set _classMod = &quot; small-display&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
-	&lt;&lt;unequipAll&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="149" name="procure" tags="nobr battle" position="1100,1850" size="100,100">/* Old passage for the &quot;Procure&quot; skill, which allowed Rogue and Witch to expend Energy to buy items in battle. It was dummied out before the JavaScript overhaul, so it is unlikely to work in the current version without tweaking.
+	&lt;&lt;set _classMod = &quot;&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;&lt;if ndef _i&gt;&gt;
+	&lt;&lt;set _i = 0&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+
+&lt;&lt;if _puppet !== null&gt;&gt;
+	&lt;div @class=&quot;&#39;menuactor&#39;+_classMod&quot; @id=&quot;_i&quot;&gt;
+	/* container for the entire actor box */
+		&lt;&lt;switch _displayModel&gt;&gt;
+			&lt;&lt;default&gt;&gt;
+			/* Default display makes room for a portrait on the left-hand side, if they&#39;re enabled. */
+				&lt;&lt;if setup.PORTRAITS === true&gt;&gt;
+					&lt;div class=&quot;portrait&quot;&gt;[img[setup.ImagePath+_p.portrait]]&lt;/div&gt;
+					&lt;&lt;set _style = &quot;left:96px&quot;&gt;&gt;
+				&lt;&lt;/if&gt;&gt;
+		&lt;&lt;/switch&gt;&gt;
+		&lt;div @class=&quot;&#39;menuactor-nameblock&#39;+_classMod&quot; @style=_style&gt;
+		/* container for the left-hand side of the box, typically containing the puppet&#39;s name */
+			&lt;div class=&quot;menuactor-name&quot; id=&quot;toggle&quot;&gt;
+			/* Container for the puppet&#39;s name. This is a point of interaction in most menus, so there is a switch here for different menu functionalities. */
+				&lt;&lt;actorNameLink&gt;&gt;
+			&lt;/div&gt; /* close name display */
+			&lt;&lt;switch _displayModel&gt;&gt;
+				&lt;&lt;case &quot;action&quot; &quot;inventory&quot; &quot;decurse&quot; &quot;equipment&quot;&gt;&gt;
+				/* In these menus, the character&#39;s stats are displayed below their name. */
+					&lt;div @class=&quot;&#39;menuactor-stats monospace&#39;+_classMod&quot;&gt;
+					&lt;&lt;for _k, _v range _puppet.stats&gt;&gt;
+						&lt;&lt;include &quot;menu stat display&quot;&gt;&gt;
+					&lt;&lt;/for&gt;&gt;
+					&lt;/div&gt;
+				&lt;&lt;default&gt;&gt;
+				/* In the default display, the character&#39;s level is displayed below their name. */
+					&lt;div class=&quot;menuactor-level&quot;&gt;LEVEL _puppet.level&lt;/div&gt;
+			&lt;&lt;/switch&gt;&gt;
+		&lt;/div&gt; /* close name block */
+			&lt;&lt;actorRightDisplay&gt;&gt;
+	&lt;/div&gt; /* close actor box */
+&lt;&lt;/if&gt;&gt;
+
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="145" name="Widget: actorNameLink" tags="widget nobr" position="600,1850" size="100,100">&lt;&lt;widget &quot;actorNameLink&quot;&gt;&gt;
+/* Switch for different functionalities tied to the character&#39;s name in actorDisplay. */
+
+&lt;&lt;capture _puppet&gt;&gt;
+&lt;&lt;switch _displayModel&gt;&gt;
+	&lt;&lt;case &quot;inventory&quot;&gt;&gt;
+	/* On the inventory screen, characters may be displayed when EQUIPPING or USING items. In both cases, the character name is clicked to perform the relevant function. The inventory screen must be updated afterwards to reflect the change. */
+		&lt;&lt;switch _event&gt;&gt;
+			&lt;&lt;case &quot;equip&quot;&gt;&gt;
+					&lt;&lt;link _puppet.name&gt;&gt;
+						&lt;&lt;run _puppet.equip(_display)&gt;&gt;
+						&lt;&lt;unset _display&gt;&gt;
+						&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+						&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+					&lt;&lt;/link&gt;&gt;
+			&lt;&lt;case &quot;use&quot;&gt;&gt;
+					&lt;&lt;link _puppet.name&gt;&gt;
+						&lt;&lt;notify &quot;menu&quot; 3s&gt;&gt;&lt;&lt;print _display.onUse(_puppet)&gt;&gt;&lt;&lt;/notify&gt;&gt;
+						&lt;&lt;unset _display&gt;&gt;
+						&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+						&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+					&lt;&lt;/link&gt;&gt;
+			&lt;&lt;default&gt;&gt;
+				&lt;&lt;print _puppet.name&gt;&gt;
+		&lt;&lt;/switch&gt;&gt;
+	&lt;&lt;case &quot;action&quot;&gt;&gt;
+		&lt;&lt;link _puppet.name&gt;&gt;
+			&lt;&lt;notify &quot;menu&quot; 3s&gt;&gt;&lt;&lt;print $action.onUse(_puppet)&gt;&gt;&lt;&lt;/notify&gt;&gt;
+			&lt;&lt;unset $subject, $action&gt;&gt;
+			&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;
+				&lt;&lt;include &quot;status party display&quot;&gt;&gt;
+			&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/link&gt;&gt;
+	&lt;&lt;case &quot;decurse&quot;&gt;&gt;
+	/* In the decurse menu, the name has no special functionality. Just display it normally. */
+		&lt;&lt;print _puppet.name&gt;&gt;
+	&lt;&lt;case &quot;equipment&quot;&gt;&gt;
+	/* In the equipment menu, the character name serves two functionalities: When the full party is displayed, clicking it will select the character; if a character is selected, clicking it will deselect them and return to the full party display. */
+		&lt;&lt;if def $subject&gt;&gt; /* if selector already defined, deselect and refresh screen */
+			&lt;&lt;link _puppet.name&gt;&gt;
+				&lt;&lt;unset $subject&gt;&gt;
+				&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+				&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+			&lt;&lt;/link&gt;&gt;
+		&lt;&lt;else&gt;&gt; /* if no one selected, select this character and refresh screen */
+			&lt;&lt;capture _i&gt;&gt;
+			&lt;&lt;link _puppet.name&gt;&gt;
+				&lt;&lt;set $subject = _puppet&gt;&gt;
+				&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+				&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+			&lt;&lt;/link&gt;&gt;
+			&lt;&lt;/capture&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;&lt;default&gt;&gt;
+	/* In the default display, the character name serves two functionalities: When the full party is displayed, clicking it will select the character; if a character is selected, clicking it will deselect them and return to the full party display. */
+		&lt;&lt;if def $subject&gt;&gt;
+		/* If _display exists, a character has already been selected. Clicking the name again will deselect the character. */
+			&lt;span id=&quot;toggle&quot;&gt;
+			&lt;&lt;link &quot;_puppet.name&quot;&gt;&gt;
+				&lt;&lt;unset $subject&gt;&gt;
+				&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;&lt;&lt;include &quot;status party display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+			&lt;&lt;/link&gt;&gt;
+			&lt;/span&gt;
+		&lt;&lt;else&gt;&gt;
+		/* If no character is selected, clicking the name will select this character. */
+			&lt;span @id=_i&gt;
+			&lt;&lt;link &quot;_puppet.name&quot;&gt;&gt;
+				&lt;&lt;set $subject = _puppet&gt;&gt;
+				&lt;&lt;set _stScreen = 1&gt;&gt;
+				&lt;&lt;replace &quot;#partydisplay&quot;&gt;&gt;&lt;&lt;include &quot;status party display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+			&lt;&lt;/link&gt;&gt;
+			&lt;/span&gt;
+		&lt;&lt;/if&gt;&gt;
+&lt;&lt;/switch&gt;&gt;
+&lt;&lt;/capture&gt;&gt;
+
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="146" name="Widget: actorRightDisplay" tags="widget nobr" position="725,1850" size="100,100">&lt;&lt;widget &quot;actorRightDisplay&quot;&gt;&gt;
+/* Branch for determining what is displayed on the right-hand side of the actor display. */
+
+&lt;&lt;if (_displayModel == &quot;inventory&quot; &amp;&amp; _event == &quot;use&quot;) || (ndef _displayModel || _displayModel == &quot;standard&quot; || _displayModel == &quot;action&quot;)&gt;&gt;
+/* By default or if we&#39;re using an item on the inventory screen, we want to display HP and MP on the right-hand side. */
+	&lt;&lt;set _id = &#39;hp&#39;+_i&gt;&gt;
+	&lt;&lt;run _HPmeters.push(_id)&gt;&gt;
+	&lt;&lt;newmeter _id 1&gt;&gt;
+		&lt;&lt;colors setup.PLAYER_BAR_COLOR&gt;&gt;
+		&lt;&lt;animation false&gt;&gt;
+		&lt;&lt;sizing 100% 0.5em&gt;&gt;
+	&lt;&lt;/newmeter&gt;&gt;
+	&lt;&lt;set _id = &#39;mp&#39;+_i&gt;&gt;
+	&lt;&lt;run _MPmeters.push(_id)&gt;&gt;
+	&lt;&lt;newmeter _id 1&gt;&gt;
+		&lt;&lt;colors setup.MP_BAR_COLOR&gt;&gt;
+		&lt;&lt;animation false&gt;&gt;
+		&lt;&lt;sizing 100% 0.5em&gt;&gt;
+	&lt;&lt;/newmeter&gt;&gt;
+	&lt;div @class=&quot;&#39;menuactor-hpmpblock&#39;+_classMod&quot;&gt;
+		&lt;div class=&quot;hpmp&quot;&gt;
+			HP: &lt;span style=&quot;float:right&quot;&gt;
+				&lt;div class=&quot;hpmpvalue&quot;&gt;_puppet.hp&lt;/div&gt;/&lt;div class=&quot;hpmpvalue&quot;&gt;_puppet.maxhp&lt;/div&gt;
+				&lt;/span&gt;
+		&lt;/div&gt;
+		&lt;&lt;showmeter _HPmeters[puppets().indexOf(_puppet)] `_puppet.hp / _puppet.maxhp`&gt;&gt;
+		&lt;&lt;if setup.SHOW_MP === true&gt;&gt;
+			&lt;div class=&quot;hpmp&quot;&gt;
+				MP: &lt;span style=&quot;float:right&quot;&gt;
+					&lt;div class=&quot;hpmpvalue&quot;&gt;_puppet.en&lt;/div&gt;/&lt;div class=&quot;hpmpvalue&quot;&gt;_puppet.maxen&lt;/div&gt;
+					&lt;/span&gt;
+			&lt;/div&gt;
+			&lt;&lt;showmeter _MPmeters[puppets().indexOf(_puppet)] `_puppet.en / _puppet.maxen`&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;else&gt;&gt;
+/* In all other cases, display equipment on the right-hand side. */
+	&lt;div class=&quot;menuactor-equipment small-display&quot;&gt;
+	&lt;&lt;for _name, _slot range _puppet.equipment&gt;&gt;
+		&lt;&lt;for _subslot, _item range _slot&gt;&gt;
+			&lt;div class=&quot;menuactor-equipment-slot&quot;&gt;_name&lt;/div&gt;
+			&lt;&lt;equipSlotDisplay _item&gt;&gt;
+		&lt;&lt;/for&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;&lt;if ndef _displayModel || _displayModel == &quot;standard&quot;&gt;&gt;
+/* In the standard display, an additional XP block is displayed to the right of the previous block. */
+	&lt;div class=&quot;menuactor-xpblock&quot;&gt;
+		&lt;div style=&quot;font-weight:bold&quot;&gt;Experience&lt;/div&gt;
+		&lt;div style=&quot;float:right&quot;&gt;_puppet.xp&lt;/div&gt;
+		&lt;br/&gt;
+		&lt;div style=&quot;font-weight:bold&quot;&gt;To next level&lt;/div&gt;
+		&lt;&lt;set _toNext = _puppet.XPtoNext()&gt;&gt;
+		&lt;div style=&quot;float:right&quot;&gt;&lt;&lt;if typeof(_toNext) == &#39;number&#39;&gt;&gt;&lt;&lt;print (_toNext-_puppet.xp)&gt;&gt;&lt;&lt;else&gt;&gt;&lt;&lt;print _toNext&gt;&gt;&lt;&lt;/if&gt;&gt;&lt;/div&gt;
+	&lt;/div&gt;
+&lt;&lt;/if&gt;&gt;
+
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="147" name="Widget: equipSlotDisplay" tags="widget nobr" position="850,1850" size="100,100">&lt;&lt;widget &quot;equipSlotDisplay&quot;&gt;&gt;
+/* Standardized display for a single instance of character equipment. By default, this displays below the slot name itself. Assume called within actorDisplay, and uses _displayModel for modular functionality.
+
+ARG 0 = equipped item
+*/
+
+&lt;&lt;if ndef $args[0]&gt;&gt; /* error handler */
+	&lt;&lt;print &quot;ERROR: No item passed to equipSlotDisplay&quot;&gt;&gt;
+	&lt;&lt;run console.log(&quot;ERROR in equipSlotDisplay: no item passed&quot;)&gt;&gt;
+&lt;&lt;else&gt;&gt;
+
+&lt;&lt;set _item = $args[0]&gt;&gt;
+
+&lt;&lt;if _item === null&gt;&gt;&lt;span class=&quot;menuactor-equipment-name&quot;&gt;&amp;nbsp;&lt;/span&gt; /* if slot empty, display blank space */
+&lt;&lt;else&gt;&gt;
+	&lt;div class=&quot;menuactor-equipment-name&quot;&gt;_item.name&lt;br/&gt;
+	&lt;span class=&quot;action-desc&quot;&gt;_item.info&lt;/span&gt;
+	&lt;/div&gt;
+	&lt;span class=&quot;unequip-button&quot;&gt;
+	&lt;&lt;switch _displayModel&gt;&gt;
+	/* Unequip button displayed here. By default, this is an &quot;[X]&quot; link at the far right of the item name. */
+		&lt;&lt;case &quot;inventory&quot;&gt;&gt;
+		/* no unequip feature; display nothing */
+		&lt;&lt;case &quot;decurse&quot;&gt;&gt;
+		/* In Decurse, only display unequip if the item is sticky and player can pay the cost. Deduct the cost and refresh the shop screen after click. */
+			&lt;&lt;if $currency &gt;= _decurseCost &amp;&amp; !_puppet.lockEquipment &amp;&amp; _item.sticky&gt;&gt;
+				&lt;&lt;capture _puppet, _name, _subslot&gt;&gt;
+				&lt;&lt;link &quot;[X]&quot;&gt;&gt;
+					&lt;&lt;run _puppet.unequip(_name,_subslot,{unsticky:true})&gt;&gt;
+					&lt;&lt;set $currency -= _decurseCost&gt;&gt;
+					&lt;&lt;update&gt;&gt;
+					&lt;&lt;replace &quot;#business-area&quot; t8n&gt;&gt;&lt;&lt;include &quot;decurse-remove&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+				&lt;&lt;/link&gt;&gt;
+				&lt;&lt;/capture&gt;&gt;
+			&lt;&lt;/if&gt;&gt;
+		&lt;&lt;default&gt;&gt;
+		/* Default is party equipment screen. Only display unequip if the item is not sticky and the puppet does not have locked equipment. Remember to pass the subslot index too for subslot equipment. */
+			&lt;&lt;if !_puppet.lockEquipment &amp;&amp; !_item.sticky&gt;&gt;
+				&lt;&lt;capture _puppet, _name, _subslot&gt;&gt;
+				&lt;&lt;link &quot;[X]&quot;&gt;&gt;
+					&lt;&lt;run _puppet.unequip(_name,_subslot)&gt;&gt;
+					&lt;&lt;replace &quot;#equipment-list&quot;&gt;&gt;&lt;&lt;include &quot;equipment list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+					&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;equip manager puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+				&lt;&lt;/link&gt;&gt;
+				&lt;&lt;/capture&gt;&gt;
+			&lt;&lt;/if&gt;&gt;
+	&lt;&lt;/switch&gt;&gt;
+	&lt;/span&gt;
+&lt;&lt;/if&gt;&gt;
+
+&lt;&lt;/if&gt;&gt; /* end error handler if */
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="148" name="menubar" tags="nobr" position="975,1850" size="100,100">&lt;span id=&quot;status&quot;&gt;
+&lt;span class=&quot;menunav monospace&quot;&gt;
+[A] ↑&lt;br/&gt;
+[D] ↓
+&lt;/span&gt;
+&lt;&lt;for _n, _option range setup.MENU_OPTIONS&gt;&gt;
+&lt;&lt;if _n != $menu_screen&gt;&gt;
+&lt;&lt;capture _n, _option&gt;&gt;
+&lt;span @id=&quot;&#39;menu&#39;+_n&quot;&gt;
+&lt;&lt;link _option&gt;&gt;
+	&lt;&lt;set $menu_screen = _n&gt;&gt;
+	&lt;&lt;print &#39;&lt;&lt;goto \&quot;Menu: &#39;+_option+&#39;\&quot;&gt;&gt;&#39;&gt;&gt;
+&lt;&lt;/link&gt;&gt;&lt;/span&gt;&lt;&lt;/capture&gt;&gt;
+&lt;&lt;else&gt;&gt;
+&lt;b&gt;_option&lt;/b&gt;
+&lt;&lt;/if&gt;&gt;
+&lt;br/&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;span id=&quot;menu-return&quot;&gt;&lt;&lt;longreturn&gt;&gt;&lt;/span&gt;
+&lt;div class=&quot;GPdisplay monospace&quot;&gt;&lt;&lt;print setup.CURRENCY_NAME&gt;&gt;: $currency&lt;/div&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="149" name="procure" tags="nobr battle" position="1100,1850" size="100,100">/* Old passage for the &quot;Procure&quot; skill, which allowed Rogue and Witch to expend Energy to buy items in battle. It was dummied out before the JavaScript overhaul, so it is unlikely to work in the current version without tweaking.
 
 /* Procure costs use the &quot;cost&quot; attribute of Item objects, defined in the database JS. */
 
@@ -25586,7 +25750,17 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 	&lt;&lt;goto &quot;Battle!&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;include &quot;action phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="157" name="Changelog" tags="text" position="850,1975" size="100,100">Version 3.01
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="157" name="Changelog" tags="text" position="850,1975" size="100,100">Version 3.02
+&lt;ul&gt;
+&lt;li&gt;The gameplay effects of an action are now calculated before the text description is rendered. This allows you to customize the text based on variable results of the action, e.g. whether or not the attack missed. The &lt;code&gt;_hit&lt;/code&gt; variable is now passed to &lt;code&gt;actText&lt;/code&gt; to facilitate this.&lt;/li&gt;
+&lt;li&gt;The item display box in the menu now has a fixed height; item descriptions that exceed the height will generate a scrollbar. This will prevent UI elements from jumping around.&lt;/li&gt;
+&lt;li&gt;Using items or actions from the menu will now generate a brief notification informing the player of the results. This notification is taken from the return value of the &lt;code&gt;onUse&lt;/code&gt; function.&lt;/li&gt;
+&lt;li&gt;Stylesheet files for the party menu and for battle layout have been split into separate files and grouped into a single folder each.&lt;/li&gt;
+&lt;li&gt;The code for individual screens of the party menu have been split off into their own twee files.&lt;/li&gt;
+&lt;li&gt;The &quot;Example&quot; enemy will no longer accidentally be given a bestiary entry.&lt;/li&gt;
+&lt;li&gt;You can now filter character actions to only usable ones in the menu.&lt;/li&gt;
+&lt;/ul&gt;
+Version 3.01
 &lt;ul&gt;
 &lt;li&gt;Target and subject variables have now been decoupled from the battle controller &lt;code&gt;B&lt;/code&gt;. This allows more flexible usage of functions and widgets that call for interactions between characters, but may cause problems with existing code. Report any bugs.&lt;/li&gt;
 &lt;li&gt;Equipment slots are now always occupied by arrays, instead of only those with multiple subslots. This should result in no functional change, but allows me to clean up equipment functions by not having to account for branching functionalities. &lt;b&gt;Note that this update will generate errors with existing games that used previous versions.&lt;/b&gt; You will need to update your characters&#39; equipment slots to match the new standards.&lt;/li&gt;
