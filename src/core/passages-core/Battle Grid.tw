@@ -61,11 +61,11 @@
 :: grid actorlist puppets [nobr]
 <div @class="_puppetsClass">
 <<if $B.phase == "move" || $B.phase == "command">>
-  <div style="position:absolute; top:0; right:0"><<backbtn>></div>
+  <div style="position:absolute; top:-3em; right:0"><<backbtn>></div>
 <</if>>
 
 <<if $B.phase == "selection">>
-  <div id="endturn" style="position:absolute; top:0; right:0">
+  <div id="endturn" style="position:absolute; top:-3em; right:0">
   <<include "End Turn Button">>
   </div>
 <</if>>

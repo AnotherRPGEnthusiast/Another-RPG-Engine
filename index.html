@@ -4456,6 +4456,10 @@ html.redLinks a:hover {
 	grid-template: repeat(2,1fr) / repeat(3,1fr);
 }
 
+#puppets .actors.grid {
+  margin-top: 3em;
+}
+
 .actor.grid {
   position: relative;
   width: 140px; /* 4 per row at default #content width */
@@ -19886,11 +19890,11 @@ Macro.add('scrolldown', {
 	&lt;&lt;/script&gt;&gt;
 &lt;&lt;/timed&gt;&gt;</tw-passagedata><tw-passagedata pid="3" name="grid actorlist puppets" tags="nobr" position="350,100" size="100,100">&lt;div @class=&quot;_puppetsClass&quot;&gt;
 &lt;&lt;if $B.phase == &quot;move&quot; || $B.phase == &quot;command&quot;&gt;&gt;
-  &lt;div style=&quot;position:absolute; top:0; right:0&quot;&gt;&lt;&lt;backbtn&gt;&gt;&lt;/div&gt;
+  &lt;div style=&quot;position:absolute; top:-2em; right:0&quot;&gt;&lt;&lt;backbtn&gt;&gt;&lt;/div&gt;
 &lt;&lt;/if&gt;&gt;
 
 &lt;&lt;if $B.phase == &quot;selection&quot;&gt;&gt;
-  &lt;div id=&quot;endturn&quot; style=&quot;position:absolute; top:0; right:0&quot;&gt;
+  &lt;div id=&quot;endturn&quot; style=&quot;position:absolute; top:-2em; right:0&quot;&gt;
   &lt;&lt;include &quot;End Turn Button&quot;&gt;&gt;
   &lt;/div&gt;
 &lt;&lt;/if&gt;&gt;
@@ -34473,7 +34477,7 @@ divisive: (base * (a.get(&quot;Attack&quot;)/b.get(&quot;Defense&quot;))) * weig
 	&lt;&lt;set setup.STATUS_SCREENS.battle.push(&quot;aggression&quot;)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-/* &lt;&lt;set setup.BATTLE_GRID = true&gt;&gt; */
+&lt;&lt;set setup.BATTLE_GRID = true&gt;&gt;
 
 &lt;&lt;if setup.BATTLE_GRID === true&gt;&gt;
 	&lt;&lt;set setup.ROW_SIZE = 3&gt;&gt;

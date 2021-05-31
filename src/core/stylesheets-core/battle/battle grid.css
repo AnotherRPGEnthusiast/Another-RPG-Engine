@@ -17,6 +17,10 @@
 	grid-template: repeat(2,1fr) / repeat(3,1fr);
 }
 
+#puppets .actors.grid {
+  margin-top: 3em;
+}
+
 .actor.grid {
   position: relative;
   width: 140px; /* 4 per row at default #content width */
