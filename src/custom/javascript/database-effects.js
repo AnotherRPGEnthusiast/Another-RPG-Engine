@@ -14,6 +14,8 @@ Object.assign(setup.effectData, {
 		"statmod": 						false,
 		"uncontrollable": 		false,
 		"untargetable": 			false,
+		"skillLock":					false,
+		"guardBreak":					false,
 		"threat":							undefined,
 		"shock":							0,
 		// block subtype:

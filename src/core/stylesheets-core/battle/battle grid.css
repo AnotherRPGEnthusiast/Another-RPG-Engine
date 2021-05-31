@@ -40,6 +40,10 @@
 	font-size: 24pt;
 }
 
+.actor.empty {
+  border: dotted gray;
+}
+
 .front1 {
   grid-column: 1;
   grid-row: 1;

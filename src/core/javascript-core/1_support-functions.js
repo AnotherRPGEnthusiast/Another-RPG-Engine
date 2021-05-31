@@ -56,6 +56,18 @@ const getActorById = function (id) {
 };
 window.getActorById = getActorById;
 
+const chainBattleGrid = function (grid) {
+	console.assert(grid instanceof Array,`ERROR in chainBattleGrid: non-array passed`);
+	for (let row of grid) {
+		for (let cell of row) {
+			if (cell.contents instanceof Actor) {
+				cell.contents = getActorById(cell.contents.id);
+			}
+		}
+	}
+};
+window.chainBattleGrid = chainBattleGrid;
+
 window.encounters = function encounters () {
 	return V().encounters;
 }
@@ -204,8 +216,8 @@ setup.textWidth = function(text, bold, size) {
     return width;
 };
 
-setup.scaledTextDiv = function(text, width, bold, size, print) {
-    var tWidth = setup.textWidth(text, bold, size);
+setup.scaledTextDiv = function(text, width, mods = {}, print) {
+  var tWidth = setup.textWidth(text, mods.bold, mods.size);
 	if (print !== undefined) {
 		text = print;
 	}

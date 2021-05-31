@@ -622,44 +622,42 @@ window.Actor = class Actor {
 
 	// GRID FUNCTIONS
 
+	set row (num) {
+		console.assert(Number.isInteger(num),`ERROR in row setter: row must be integer`);
+		console.assert(num > 0,`ERROR in row setter: row must be positive`);
+		console.assert(num <= setup.COLUMN_SIZE,`ERROR in row setter: row cannot be greater than column size`);
+		this._row = num;
+	}
+
 	get row () {
-		if (setup.BATTLE_GRID === true) {
-			var party;
-			if (this instanceof Enemy) {
-				party = V().enemies;
-			} else if (this instanceof Puppet) {
-				party = V().puppets;
-			}
-			for (var i = 1; i <	setup.COLUMN_SIZE; i++) {
-				if (party.indexOf(this) < i * setup.ROW_SIZE) {
-					return i;
-				}
-			}
-			console.log("ERROR in row getter: could not find row");
-			return 0;
-		} else {
-			return undefined;
-		}
+		return (this._row || 1);
+	}
+
+	set col (num) {
+		console.assert(Number.isInteger(num),`ERROR in column setter: column must be integer`);
+		console.assert(num > 0,`ERROR in column setter: column must be positive`);
+		console.assert(num <= setup.ROW_SIZE,`ERROR in column setter: column cannot be greater than row size`);
+		this._col = num;
 	}
 
 	get col () {
-		if (setup.BATTLE_GRID === true) {
-			var party;
-			if (this instanceof Enemy) {
-				party = V().enemies;
-			} else if (this instanceof Puppet) {
-				party = V().puppets;
-			}
-			for (var i = 1; i <	setup.ROW_SIZE; i++) {
-				if (party.indexOf(this) % setup.COLUMN_SIZE == (i-1)) {
-					return i;
-				}
-			}
-			console.log("ERROR in column getter: could not find column");
-			return 0;
+		return (this._col || this.ownParty.indexOf(this) + 1);
+	}
+
+	get gridArea () {
+		//	For use with CSS styling.
+		if (this instanceof Enemy) {
+			return `grid-area: ${setup.COLUMN_SIZE - this.row + 1} / ${this.col}`;
 		} else {
-			return undefined;
+			return `grid-area: ${this.row} / ${this.col}`;
 		}
+	}
+
+	get guardBreak () {
+		//	Boolean. If true, this character will not guard characters behind them.
+		//	By default, dead characters will automatically return true.
+
+		return (this.dead || this.effects.find(function(eff) { return eff && eff.guardBreak }));
 	}
 
 	// MISCELLANEOUS

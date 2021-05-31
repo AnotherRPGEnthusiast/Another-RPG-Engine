@@ -99,3 +99,10 @@ html.redLinks a:hover {
 	width: 100%;
 	text-align: center;
 }
+
+.flex-center {
+	display: flex !important;
+	align-items: center;
+	justify-content: center;
+	/* requires a set height value */
+}

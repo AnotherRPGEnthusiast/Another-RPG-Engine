@@ -1,4 +1,18 @@
 :: Changelog[text]
+Version 3.03
+<ul>
+<li><b>The battle grid has been redone.</b> Positioning is now determined by manually-set <code>row</code> and <code>col</code> values rather than the index of the character. This means you don't have to fill parties with <code>null</code> entries anymore!</li>
+<ul><li>Code for displaying characters in the battle grid is now stored in a separate file, <code>Battle Grid.tw</code>, to keep the main code uncluttered.</li>
+<li>Additionally, the broken "move" command has been fixed.</li>
+<li>Empty tiles are now styled with dotted borders rather than solid ones to make them less obtrusive.</li></ul>
+<li>The <code>noself</code> check for ally-targeting abilities now checks the target's <code>id</code> rather than its <code>name</code>. This will prevent glitches in the case of a party having multiple characters with the same name.</li>
+<li>New <code>Action</code> property: <code>canTargetDead</code>. If <code>true</code>, the action can target dead characters. This is useful for revival skills and the like.</li>
+<ul><li>The "Actor Box" widget has been slightly tweaked to enable this function. "Actor Box Name" is now used for the display of dead character names as well, and has a priority branch that will bypass all others if the character is dead and the battle phase is not in targeting.</li></ul>
+<li>The "last action" functionality should work again.</li>
+<li>New <code>Effect</code> property: <code>guardBreak</code>. Effects with this property will prevent the victim from guarding characters (if you are using a battle map). There is a corresponding getter in <code>Actor</code>, which will also return <code>true</code> if the character is <code>dead</code>.</li>
+<li>During the targeting phase, hovering over a viable target will now highlight them and any targets affected by the action's area of effect, if it has one.</li>
+<li>You will no longer get an error if the handler for saving <code>lastAction</code> fails to find the action in the subject's actions.</li>
+</ul>
 Version 3.02
 <ul>
 <li>The gameplay effects of an action are now calculated before the text description is rendered. This allows you to customize the text based on variable results of the action, e.g. whether or not the attack missed. The <code>_hit</code> variable is now passed to <code>actText</code> to facilitate this.</li>

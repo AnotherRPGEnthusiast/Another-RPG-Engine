@@ -309,7 +309,7 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 
 //	console.log("massAttack after inner function call, arguments:"); console.log(args);
 	if (args.target === undefined) {
-		args.target = 'enemies';
+		args.target = action().area;
 	}
 	var content = args.content;
 	if (args.content === undefined) {
@@ -325,10 +325,11 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 	var result = `<<set _AoE = true>>`;
 
 	var [target,party] = findTarget(args.target);
+	party = party.filter(function (a) { return a && !a.guarded });
 	if (args.cut === true) {
 		var count = 0;
 		State.getVar(party).filter(function (a) { return a !== null; }).forEach(function(actor) {
-			if (!actor.dead && !actor.guarded) {
+			if (!actor.guarded) {
 				count++;
 			}
 		});
@@ -338,64 +339,53 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 		content = prepend+content;
 	}
 	if (typeof(args.type) == 'string') {
-		if (party.length < setup.PARTY_SIZE) {
-			// If the party isn't the normal size, something weird is going on, such as a singular boss enemy. We'll only hit the original target in this case.
+		if (V().B.override_AoE) {
 			result += content;
 		}
 		switch (args.type.toLowerCase()) {
 			case 'row':
-				result += `<<for _i = (target().row - 1) * setup.ROW_SIZE; _i < (target().row * setup.ROW_SIZE); _i++>>\
-						<<if ${party}[_i] !== null && !${party}[_i].dead && !${party}[_i].guarded>>\
-							<<set $target = ${party}[_i]>>\
+				party = party.filter(function (a) { return a && a.row === target().row });
+				result += `<<for _actor range ${party}>>\
+							<<set $target = _actor>>\
 							${content}\
 						<</if>>\
 					<</for>>`;
 				break;
 			case 'col':
 			case 'column':
-				result += `<<for _i = (target().col - 1); _i < (setup.COLUMN_SIZE * setup.ROW_SIZE); _i += setup.ROW_SIZE>>\
-						<<if ${party}[_i] !== null && !${party}[_i].dead && !${party}[_i].guarded>>\
-							<<set $target = ${party}[_i]>>\
+				party = party.filter(function (a) { return a && a.col === target().col });
+				result += `<<for _actor range ${party}>>\
+							<<set $target = _actor>>\
 							${content}\
 						<</if>>\
 					<</for>>`;
 				break;
 			case 'adjacent':
 			case '+':
-				var hitlist = [State.getVar(party).indexOf(target()),			// center
-					State.getVar(party).indexOf(target())-setup.ROW_SIZE,		// above
-					State.getVar(party).indexOf(target())-1,					// left
-					State.getVar(party).indexOf(target())+1,					// right
-					State.getVar(party).indexOf(target())+setup.ROW_SIZE];		// below
-				hitlist.deleteWith(function (targIdx,i) {
-					// This will remove targets that are out of index bounds and left/right entries that jump rows
-					return (targIdx < 0 || targIdx >= State.getVar(party).length || (i == 2 && target().col == 1) || (i == 3 && target().col == setup.ROW_SIZE));
-				});
-				State.temporary.hitlist = hitlist;
-				result += `<<for _t range _hitlist>>\
-						<<if ${party}[_t] !== null && !${party}[_t].dead && !${party}[_t].guarded>>\
-							<<set $target = ${party}[_t]>>\
+				party = party.filter(function (a) { return a && (
+					(a.id === target().id) ||
+					(a.col === target().col && (a.row === target().row + 1 || a.row === target().row - 1)) ||
+					(a.row === target().row && (a.col === target().col + 1 || a.col === target().col - 1))
+					)})
+				result += `<<for _actor range ${party}>>\
+							<<set $target = _actor>>\
 							${content}\
 						<</if>>\
 					<</for>>`;
 				break;
 			default:
-				result += `<<for _a range ${party}>>\
-					<<if _a !== null && !_a.dead && !_a.guarded>>\
-						<<set $target = _a>>\
+				result += `<<for _actor range ${party}>>\
+						<<set $target = _actor>>\
 						${content}\
-					<</if>>\
 				<</for>>`;
 				break;
 		}
 	}
 	else {
-		result += `<<for _a range ${party}>>\
-					<<if _a !== null && !_a.dead && !_a.guarded>>\
-						<<set $target = _a>>\
-						${content}\
-					<</if>>\
-				<</for>>`;
+		result += `<<for _actor range ${party}>>\
+				<<set $target = _actor>>\
+				${content}\
+		<</for>>`;
 	}
 	return result+extension;
 

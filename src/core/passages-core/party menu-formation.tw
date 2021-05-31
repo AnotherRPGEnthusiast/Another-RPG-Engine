@@ -1,14 +1,85 @@
 :: Menu: Formation[menu battle noreturn]
 <div id="content" class="menu"><<nobr>>
+<<set $grid = []>>
+<<for _r = 0; _r < setup.COLUMN_SIZE; _r++>>
+    <<set _row to []>>
+    <<for _c to 0; _c < setup.ROW_SIZE; _c++>>
+        /* Create the object used to store the default properties of a map cell. */
+        <<set _cell to {
+            id: ("cell_r" + _r + "_c" + _c),
+            contents: null,
+            movement: []
+        }>>
+        <<run _row.push(_cell)>>
+    <</for>>
+    <<run $grid.push(_row)>>
+<</for>>
+<<for _puppet range puppets()>>
+	<<set $grid[_puppet.row-1][_puppet.col-1].contents = _puppet>>
+<</for>>
+<<liveblock>>
 <div id="puppets" class="actors grid">
 <<include "formation puppets">>
 </div>
+<</liveblock>>
 <</nobr>>
 
 Click on a character to select them, then click on another space to move or swap.
 </div>
 
+:: ActorBox formation[nobr]
+<div>
+	<<if ndef _subj>>
+		<<capture _actor>>
+		<<link "_actor.name">>
+			<<set _subj = _actor>>
+			<<update>>
+		<</link>>
+		<</capture>>
+	<<elseif _subj !== _actor>>
+		<<capture _actor>>
+		<<link "_actor.name">>
+			<<set $grid[_actor.row-1][_actor.col-1].contents = _subj;
+						$grid[_subj.row-1][_subj.col-1].contents = _actor;
+						_holder = [_subj.row,_subj.col];
+						_subj.row = _actor.row; _subj.col = _actor.col;
+						_actor.row = _holder[0]; _actor.col = _holder[1]>>
+			<<unset _subj>>
+			<<update>>
+		<</link>>
+		<</capture>>
+	<<else>>
+		<span class="actorname" style="font-weight:bold">_actor.name</span>
+	<</if>>
+</div>
+
 :: formation puppets[nobr]
+<<for _r, _row range $grid>>
+	<<for _c, _cell range _row>>
+		<<if _cell.contents instanceof Actor>>
+			<<actorBox _cell.contents "flex-center" "formation">>
+		<<elseif def _subj>>
+			<div class="actor grid flex-center empty">
+				<<capture _r, _c, _cell>>
+				<<link "[MOVE]">>
+					<<set $grid[_subj.row-1][_subj.col-1].contents = null;
+								_subj.row = _r+1; _subj.col = _c+1;
+								_cell.contents = _subj>>
+					<<unset _subj>>
+					<<update>>
+				<</link>>
+				<</capture>>
+			</div>
+		<<else>>
+			<div class="actor grid flex-center empty">
+				/* no content; empty box */
+			</div>
+		<</if>>
+	<</for>>
+<</for>>
+
+
+/*
 <div class="leaderlabel formation-label">Front Row</div>
 <div class="frontrowlabel formation-label">Middle Row</div>
 <div class="backrowlabel formation-label">Back Row</div>
@@ -53,11 +124,11 @@ Click on a character to select them, then click on another space to move or swap
 			<</if>>
 		</div>
 	<</for>>
-
+*/
 <<timed 0s>>
 	<<script>>
 	$("#puppets.actors.grid").css({
-	  "grid-template-columns": `auto repeat(${setup.ROW_SIZE},1fr)`
+	  "grid-template-columns": `repeat(${setup.ROW_SIZE},1fr)`
 	});
 	<</script>>
 <</timed>>

@@ -9,6 +9,9 @@
 <<case "at1">>
 /* Currently Bubblegum's name is too long and makes her box wider than normal. That's fitting though, maybe I should let it stay. */
 <<populateEnemies `["Jake","Princess Bubblegum","Finn"]`>>
+<<for _c = 1; _c <= $enemies.length; _c++>>
+	<<set $enemies[_c-1].col = _c>>
+<</for>>
 
 <<case "gf1">>
 <<populateEnemies `["Dipper","Mabel"]`>>
@@ -41,17 +44,14 @@
 <<widget "populateEnemies">>
 /* Quick way of populating enemy array. Pass array of names in order corresponding to enemy array order, including nulls for empty spaces. */
 /* The passed array must be quoted with backticks. */
+<<run console.assert($args[0] instanceof Array,"ERROR in populateEnemies: invalid argument")>>
 <<set $enemies = []>>
-<<if $args[0] instanceof Array && (setup.BATTLE_GRID !== true || $args[0].length == setup.PARTY_SIZE)>>
-	<<set _array = $args[0]>>
-	<<for _n, _name range _array>>
-		<<if typeof(_name) == 'string'>>
-			<<set $enemies.push(new Enemy(_name))>>
-		<<else>>
-			<<set $enemies.push(_name)>>
-		<</if>>
-	<</for>>
-<<else>>
-	<<run console.log("ERROR in populateEnemies: invalid argument")>>
-<</if>>
+<<set _array = $args[0]>>
+<<for _n, _name range _array>>
+	<<if typeof(_name) == 'string'>>
+		<<set $enemies.push(new Enemy(_name))>>
+	<<else>>
+		<<set $enemies.push(_name)>>
+	<</if>>
+<</for>>
 <</widget>>

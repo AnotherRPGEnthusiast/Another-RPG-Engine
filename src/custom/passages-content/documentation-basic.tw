@@ -157,6 +157,7 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 ** {{{enemyCD}}} is a nonnegative integer; determines the cooldown of this action when used by an enemy. Defaults to {{{cooldown}}}. Optional.
 ** {{{nameCD}}} is a string; determines the key in the enemy's {{{cd}}} Map the cooldown will reference when set. Defaults to the action's name. Optional.
 * {{{warmup}}} is a nonnegative integer; determines how many turns must elapse from the start of a battle before the action can be used. Requires a defined {{{cooldown}}} attribute. If not defined, this attribute will not be set. Optional.
+* {{{area}}} is a string; denotes the type of area-of-effect this action has, if any. If not defined, the action will be assumed to be single-target. Optional.
 * {{{formula}}} is a function; if defined, it will be used in place of the regular formula when calculating attack damage.
 * {{{basic}}} is a Boolean; if {{{true}}}, the action can be used when the character is under a skill lock effect.
 * {{{pierce}}} is a Boolean; if {{{true}}}, the attack ignores the target's {{{Defense}}} stat when calculating damage.
@@ -177,6 +178,7 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 ** {{{setupDelay}}} is an integer; specifies the number of turns that must elapse before the delayed action specified by {{{setupAction}}} will occur. Defaults to 1.
 ** {{{delayPersist}}} is a Boolean; if {{{true}}}, the delayed action will occur even if the user would otherwise be incapable of using an action (dead, stunned, etc). This must be set <b>on the action that will be performed</b>, not the setup action.
 * {{{targetMethod}}} is a function; used to determine the target for actions that must find their target logically (e.g. delayed and enemy actions). It must return the object you want to be the target of the action. Defaults to the logic in {{{Hitlist.targetEnemy}}}.
+* {{{canTargetDead}}} is a Boolean; if {{{true}}}, the action can target dead characters. (By default, dead characters cannot be targeted.)
 
 <h2 id="data.effects">Creating Effects</h2>
 Status effects change characters in some way. They can be beneficial, like boosting one or more stats, or detrimental, like preventing the character from using certain actions. (For more information, see [[Design]].) The database object for effects is called {{{effectData}}}, and its entries look like this:

@@ -1086,6 +1086,7 @@ setup.actionData = {
 	"Explosive Bolt": {
 		"cost":		4,
 		"weight":	1,
+		"area": "all",
 		"info":	function (action) {return 	`Inflict damage with a weight of ${action.weight} to target and half damage to all other enemies.`},
 		"desc":		`The famous "bomb arrow" technique popularized by a certain green-capped troublemaker. It consists of strapping a bomb to an arrow and shooting it away from you very fast. It's totally absurd, but then, what isn't?`,
 		"useText": null,
@@ -1520,7 +1521,7 @@ setup.actionData = {
 		"cost": 6,
 		"weight": 0.8,
 		"element": "red",
-		"phase": "confirm phase",
+		"area": "all",
 		"info":	function (action) {return 	`Inflicts Red damage to all enemies with a weight of ${action.weight}.`},
 		"desc":		`Remember that it is the color that matters, not the medium. Though we often associate water with the color blue, in truth it is a blank palette, clear but for the impurities it has consumed and scattered throughout its body. With this in mind, it is surprisingly easy to tint it with the consuming power of the Red.`,
 		"actText": function () {
@@ -1534,7 +1535,7 @@ setup.actionData = {
 		"cost": 6,
 		"weight": 0.8,
 		"element": "blue",
-		"phase": "confirm phase",
+		"area": "all",
 		"info":	function (action) {return 	`Inflicts Blue damage to all enemies with a weight of ${action.weight}.`},
 		"desc":		`Remember that it is the color that matters, not the medium. We often associate lightning with the color yellow, but why? It exists only for but a blinding instant; can you be sure your eyes do not play tricks on you? Some say it looks closer to a blue tinge, and sure enough it can channel the awful majesty of the Blue as well.`,
 		"actText": function () {
@@ -1548,7 +1549,7 @@ setup.actionData = {
 		"cost": 6,
 		"weight": 0.8,
 		"element": "yellow",
-		"phase": "confirm phase",
+		"area": "all",
 		"info":	function (action) {return 	`Inflicts Yellow damage to all enemies with a weight of ${action.weight}.`},
 		"desc":		`Remember that it is the color that matters, not the medium. Though we often associate fire with the color red, that is only actually true for the coldest flames. A hotter flame can hold the manic energy of the Yellow just fine.`,
 		"actText": function () {
@@ -1687,6 +1688,7 @@ setup.actionData = {
 	"Bloody Rain": {
 		"crisis": true,
 		"weight": 1.5,
+		"area": "all",
 		"act": massAttack(),
 		"actText": function () {
 			return `${subject().name} rains death from the sky.`;
@@ -1851,6 +1853,7 @@ setup.actionData = {
 
 	"Grenade": {
 		"weight": 1.5,
+		"area": "all",
 		"actText": `$subject.name chucks a grenade.`,
 		"act": splashDamage({target:'t',cut:2}),
 		"preview": ["splash","mass"]
@@ -1860,7 +1863,7 @@ setup.actionData = {
 		"weight": 1,
 		"effweight": 0.6,
 		"dur": 5,
-		"phase": "confirm phase",
+		"area": "all",
 		"actText": `$subject.name bathes your enemies in flame.`,
 		"act": massAttack({target:'enemies', cut:true, content: applyEffect("Burning")}),
 		"preview": Prev.cutAttack("Burning")
@@ -1870,14 +1873,15 @@ setup.actionData = {
 		"weight": 1,
 		"effweight": 0.6,
 		"dur": 5,
-		"phase": "confirm phase",
+		"area": "all",
 		"actText": `$subject.name throws a bomb filled with noxious gas.`,
 		"act": massAttack({target:'enemies', cut:true, content: applyEffect("Poisoned")}),
 		"preview": Prev.cutAttack("Poisoned")
 	},
 
 	"Flashbang": {
-		"phase": "confirm phase",
+		"effects": "Stunned",
+		"area": "all",
 		"act": massAttack({target: "enemies", content: applyEffect("Stunned")}),
 		"preview": "mass"
 	},

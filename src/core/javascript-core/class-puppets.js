@@ -63,8 +63,11 @@ window.Puppet = class Puppet extends Actor{
 		if (!(V().B.targeting === "all" || V().B.targeting === "ally")) {
 			//	If not targeting allies, invalid target
 			return false;
-		} else if (action().noself === true && subject().name === this.name) {
+		} else if (action().noself === true && subject().id === this.id) {
 			//	If action has noself enabled and this is the action user, invalid target
+			return false;
+		} else if (this.dead && !action().canTargetDead) {
+			//	If this actor is dead, invalid target UNLESS action canTargetDead
 			return false;
 		} else {
 			return true;

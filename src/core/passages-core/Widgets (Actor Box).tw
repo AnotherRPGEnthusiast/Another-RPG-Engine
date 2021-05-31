@@ -10,13 +10,15 @@
 <<if _actor instanceof Puppet>>
   <<set _idx = $puppets.findIndex(function (a) { return _actor.id == a.id; })>>
   <<set _nameID = "pname"+_idx>>
-  <<set _healthBar = $B.playerBars[_idx]>>
-  <<if !Meter.has(_healthBar)>>
-    <<newmeter _healthBar 1>>
-      <<colors setup.PLAYER_BAR_COLOR>>
-      <<animation setup.HEALTH_BAR_TIME linear>>
-      <<sizing 100%>>
-    <</newmeter>>
+  <<if $inbattle>>
+    <<set _healthBar = $B.playerBars[_idx]>>
+    <<if !Meter.has(_healthBar)>>
+      <<newmeter _healthBar 1>>
+        <<colors setup.PLAYER_BAR_COLOR>>
+        <<animation setup.HEALTH_BAR_TIME linear>>
+        <<sizing 100%>>
+      <</newmeter>>
+    <</if>>
   <</if>>
 <<elseif _actor instanceof Enemy>>
   <<set _idx = $enemies.findIndex(function (a) { return _actor.id == a.id })>>
@@ -38,6 +40,12 @@
   <<set _class += $args[1]>>
 <</if>>
 
+<<set _style = "">>
+<<if setup.BATTLE_GRID === true>>
+  <<set _class += " grid">>
+  <<set _style += _actor.gridArea>>
+<</if>>
+
 /* determine if name should be capitalized */
 <<if _actor.caps>>
   <<set _nameStyle = "text-transform:uppercase">>
@@ -45,8 +53,11 @@
   <<set _nameStyle = "">>
 <</if>>
 
-<div @class=_class @id=_boxID>
-<<if _actor.dead && (!$args.includes("dmgDisplay") || _showDead)>>
+<div @class=_class @id=_boxID @style=_style>
+<<if $args.includes("formation")>>
+  <<include "ActorBox formation">>
+  /* see party menu-formation for details */
+<<elseif _actor.dead && (!$args.includes("dmgDisplay") || _showDead)>>
   /*  Dead characters display their name and the † (dagger) symbol in place of the status button
       UNLESS this box is for damage animation, in which case the dead display will only happen once all anims are finished */
   <<set _margin = $(_boxID).height>>
@@ -56,11 +67,7 @@
       <<set _class += " absolute">>
     <</if>>
     <span class="dead">
-      <<if setup.SCALE_NAMES>>
-        <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,true)>>
-      <<else>>
-        <<print _actor.fullname>>
-      <</if>>
+      <<include "Actor Box Name">>
       <span @class=_class>&dagger;</span>
     </span>
   </span>
@@ -100,19 +107,24 @@
 <</widget>>
 
 :: Actor Box Name [nobr]
-<<if _actor instanceof Puppet && $B.phase == "selection" && ndef _s && (!_actor.noact || _actor.down) && !_actor.isDone>>
+<<if _actor.dead && $B.phase !== "targeting">>
+  <<if setup.SCALE_NAMES>>
+    <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,{bold:true})>>
+  <<else>>
+    <<print _actor.fullname>>
+  <</if>>
+<<elseif _actor instanceof Puppet && $B.phase == "selection" && ndef _s && (!_actor.noact || _actor.down) && !_actor.isDone>>
 	/* For Puppets in the selection phase, their name becomes a link that sets them as the subject and allows the player to select their commands. */
 	<<capture _idx, _actor>>
 	<<link "_actor.name">>
+    <<run $.event.trigger(":puppet-selected")>>
 		<<set $subject = _actor>>
-		<<set _s = _idx>>
 		<<set $B.phase = "command">>
 		<<if setup.BATTLE_GRID === true>>
 			<<removeclass "#puppets" "grid">>
 		<</if>>
 		<<addclass "#enemies" "invisible">>
 		<<replace "#puppets">><<include "actorlist puppets">><</replace>>
-		<<replace "#phase">><<include "commands">><</replace>>
 	<</link>>
 	<</capture>>
 <<elseif $B.phase == "targeting">>
@@ -121,43 +133,65 @@
 	<<if _actor.validTarget()>>
     /* see validTarget in Puppet and Enemy classes */
 		/* If valid target, turn name into a link that assigns actor to the target variable, unsets the targeting varaible, and forwards the player to the next phase. We must also assign the ID variable determined earlier to a wrapper element to facilitate hotkey targeting. */
-		<<capture _actor>>
+		<<capture _actor, _idx>>
     <<set _link = `<<link "_actor.fullname">>
+        <<run $.event.trigger(":target-selected")>>
   			<<set $target = _actor; $B.targeting = null>>
   			<<replace "#phase">><<include "confirm phase">><</replace>>
   		<</link>>`>>
+    <<mouseover>>
+    <span class="mouseover">
     <<if setup.SCALE_NAMES>>
-      <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,_link)>>
+      <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,{bold:true},_link)>>
     <<else>>
       <<print _link>>
     <</if>>
+    </span>
+    <<onmouseover>>
+      <<switch _actor.id.charAt(0)>>
+        <<case "p">>
+          <<set _area = "#puppets">>
+        <<case "e">>
+          <<set _area = "#enemies">>
+      <</switch>>
+      <<set _location = `#box${_idx}`>>
+      <<switch $action.area>>
+        <<case "all" "mass">>
+          <<set _string = `${_area} > div > div`>>
+          <<addclass _string "selected">>
+        <<case "row">>
+          <<for _a range _actor.ownParty.filter(function (a) { return a && a.row === this.row },_actor)>>
+            <<set _location = `#box${_a.ownParty.indexOf(_a)}`>>
+            <<addclass _location "selected">>
+          <</for>>
+        <<case "column" "col">>
+          <<for _a range _actor.ownParty.filter(function (a) { return a && a.col === this.col },_actor)>>
+            <<set _location = `#box${_a.ownParty.indexOf(_a)}`>>
+            <<addclass _location "selected">>
+          <</for>>
+        <<default>>
+          <<addclass _location "selected">>
+      <</switch>>
+    <<onmouseout>>
+      <<set _string = `${_area} > div > div`>>
+      <<removeclass _string "selected">>
+    <</mouseover>>
 		<</capture>>
 	<<else>>
 		/* If invalid target, just display the name as normal. */
     <<if setup.SCALE_NAMES>>
-      <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,true)>>
+      <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,{bold:true})>>
     <<else>>
       <<print _actor.fullname>>
     <</if>>
 	<</if>>
-<<elseif _actor instanceof Puppet && $B.phase == "move" && _actor != $subject>>
-	/* For Puppets in the movement phase, their name becomes a link that swaps their position with the subject (except for the subject's own name) */
-	<<capture _idx, _actor>>
-  <<set _link = `<<link "_actor.fullname">>
-  		<<set _m = $puppets.indexOf($subject)>>
-  		<<set $puppets[_idx] = $subject; $puppets[_m] = _actor>>
-  		<<replace "#puppets">><<include "actorlist puppets">><</replace>>
-  	<</link>>`>>
-  <<if setup.SCALE_NAMES>>
-    <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,_link)>>
-  <<else>>
-    <<print _link>>
-  <</if>>
-	<</capture>>
+<<elseif $B.phase == "move">>
+  /* See Battle Grid.tw for details. */
+	<<include "ActorBox Move">>
 <<else>>
 	/* In all other phases, just display the name as normal. */
   <<if setup.SCALE_NAMES>>
-    <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,true)>>
+    <<print setup.scaledTextDiv(_actor.fullname,setup.NAME_LENGTH,{bold:true})>>
   <<else>>
     <<print _actor.fullname>>
   <</if>>

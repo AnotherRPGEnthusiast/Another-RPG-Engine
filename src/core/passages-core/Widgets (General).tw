@@ -99,21 +99,18 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 
 :: Widget: chain [widget nobr]
 <<widget "chain">>
-/*
-<<for _i, _a range $args>>
-	<<if def $args[_i] and $args[_i] isnot null and $args[_i][1] isnot null>>
-		<<set $args[_i][0] = State.getVar($args[_i][1])>>
-	<</if>>
-<</for>>
-*/
 <<if $target !== null>>
-<<run getActor("target")>>
+	<<run getActor("target")>>
 <</if>>
 <<if $subject !== null>>
-<<run getActor("subject")>>
+	<<run getActor("subject")>>
 <</if>>
 <<if $B.actor !== null>>
-<<run getActor("actor")>>
+	<<run getActor("actor")>>
+<</if>>
+
+<<if setup.BATTLE_GRID === true>>
+	<<run chainBattleGrid($enemyGrid); chainBattleGrid($puppetGrid)>>
 <</if>>
 <</widget>>
 

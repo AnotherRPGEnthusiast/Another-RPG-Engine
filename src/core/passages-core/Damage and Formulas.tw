@@ -83,11 +83,7 @@
 :: Widget: healCalc [widget nobr]
 <<widget "healCalc">>
 <<if $args.length > 0 && $args[0] instanceof Actor>>
-	<<if $inbattle>>
-		<<set $target = $args[0]>>
-	<<else>>
-		<<set $target = $args[0]>>
-	<</if>>
+	<<set $target = $args[0]>>
 <</if>>
 
 <<if typeof(action().special) === "number">>

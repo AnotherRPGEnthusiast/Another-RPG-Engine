@@ -190,12 +190,14 @@ window.Hitlist = class Hitlist extends Array {
 		//	For use with the battle grid. Checks if the target is guarded by a frontline character.
 		//	By default, this check is bypassed by ranged attacks and friendly fire.
 
+		console.log("guardCheck running");
 		if (setup.BATTLE_GRID === true
 			&& !V().action.ranged
-			&& !(subject().id.charAt(0) === target().id.charAt(0))) {
+			&& (subject().id.charAt(0) !== target.id.charAt(0))) {
 
 			console.assert(target instanceof Actor,`ERROR in guardCheck: target must be Actor`);
 			var newTarget = target;
+			console.log("battle grid enabled, main check running");
 
 			var party;
 			switch (target.id.charAt(0)) {
@@ -206,13 +208,12 @@ window.Hitlist = class Hitlist extends Array {
 					party = V().enemies;
 					break;
 			}
-			var index = party.indexOf(target());
-			if (index >= setup.ROW_SIZE && party[index-setup.ROW_SIZE] !== null && !party[index-setup.ROW_SIZE].dead) {
-				newTarget = party[index-setup.ROW_SIZE];
-			}
-			else if (index >= setup.ROW_SIZE * 2) {
-				newTarget = party[index-setup.ROW_SIZE];
-				newTarget = Hitlist.guardCheck(newTarget); // Run again to test if the new mid-row target is in turn guarded by a front row character
+			// Search for character immediately in front of this one (same column, row - 1)
+			newTarget = party.find(function (a) { return a && a.col === this.col && a.row === this.row - 1 },this);
+			if (newTarget instanceof Actor && !newTarget.guardBreak) {
+				newTarget = Hitlist.guardCheck(newTarget); // Run again to test if the new target is in turn guarded by a front row character
+			} else {
+				newTarget = target;
 			}
 			return newTarget;
 		} else {

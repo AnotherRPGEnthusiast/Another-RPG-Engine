@@ -344,6 +344,19 @@ window.Effect = class Effect {
 		return val;
 	}
 
+	get guardBreak () {
+		//	Boolean. If true, characters with this effect cannot guard characters behind them in the battle map.
+
+		var val = this._guardBreak;
+		if (val === undefined) {
+			val = this.effectData.guardBreak;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
 	get skillLock () {
 		//	Boolean. If true, this effect will prevent the victim from using non-basic actions.
 

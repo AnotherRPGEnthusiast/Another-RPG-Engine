@@ -73,13 +73,6 @@
 <span class="hotkey monospace right">[E]</span>
 <</widget>>
 
-:: Widget: move command[widget nobr]
-<<widget "move">>
-<<set $B.phase = "move"; _s = undefined>>
-<<replace "#puppets">><<include "actorlist puppets">><</replace>>
-<<replace "#phase">><<include "movement phase">><</replace>>
-<</widget>>
-
 :: Widget: spare command[widget nobr]
 <<widget "spare">>
 <<link "Spare">>
@@ -202,6 +195,7 @@
 
 <<if !_action.check()>>
 
+	<<run $.event.trigger(":action-selected")>>
 	<<unset _s>>
 	<<if _action.passagejump>>
 		<<goto _action.passagejump>>
@@ -398,7 +392,7 @@
 
 <<refreshPuppets>>
 
-<<unset $B; $subject; $target; $enemies>>
+<<unset $B; $subject; $target; $enemies; $enemyGrid; $puppetGrid>>
 <</widget>>
 
 :: Preparation
@@ -433,6 +427,9 @@
 		<<sizing 100%>>
 	<</newmeter>>
 <</for>>
+<<if setup.BATTLE_GRID === true>>
+	<<include "battle grid setup">>
+<</if>>
 <<include "custom battle preparation">>
 <<set $stScreen = 1>>
 <<if $B.ambush>>
@@ -492,7 +489,7 @@
 	<<set _enemiesClass += " grid"; _puppetsClass += " grid">>
 <</if>>
 
-<div @class="_enemiesClass" id="enemies">
+<div id="enemies">
 <<include "actorlist enemies">>
 </div>
 
@@ -505,82 +502,47 @@
 </div>
 
 :: actorlist enemies[nobr]
+<div @class="_enemiesClass">
 <<set _martyr = enemies().find(function (e) { return e.martyr})>> /* check if an enemy martyr exists; used in targeting */
+<<if setup.BATTLE_GRID === true>>
+	<<include "grid actorlist enemies">>
+<<else>>
+
 <<for _i, _enemy range $enemies>>
 	<<set _enemyClass = "enemy">>
-	<<if setup.BATTLE_GRID === true>>
-		<<set _enemyClass += " grid">>
-		<<if _enemy !== null && _enemy.large>>
-			<<set _enemyClass += " large">>
-		<</if>>
-	<<elseif _enemy.large>>
+	<<if _enemy.large>>
 		<<set _enemyClass += " full">>
 	<</if>>
 
-	<<if _enemy !== null && !_enemy.hidden>>
+	<<if !_enemy.hidden>>
 		<<actorBox _enemy _enemyClass>>
-	<<elseif _enemy === null>>
-		<div @class="'actor '+_enemyClass">
-			/* no content; empty box */
-		</div>
 	<<else>>
 		/* display nothing */
-	<</if>> /* end null if */
+	<</if>> /* end hidden if */
 <</for>>
 
-<<if setup.BATTLE_GRID === true>>
-<<timed 0s>>
-	<<script>>
-	$("#enemies.actors.grid").css({
-	  "grid-template-columns": `repeat(${setup.ROW_SIZE},1fr)`
-	});
-	<</script>>
-	<<run reverseChildren(document.getElementById("enemies"))>>
-<</timed>>
 <</if>>
+</div>
 
 :: actorlist puppets[nobr]
+<<if setup.BATTLE_GRID === true>>
+	<<include "grid actorlist puppets">>
+<<else>>
 <div @class="_puppetsClass">
-<<if setup.BATTLE_GRID === true && $B.phase == "move">>
-<div style="position:absolute; top:0; right:0"><<backbtn>></div>
-<</if>>
-<<if def _s>>
+
+<<if $B.phase === "command">>
 	<div style="position:absolute; top:0; right:0"><<backbtn>></div>
 	<<actorBox $subject>>
 <<else>>
-	<<if setup.BATTLE_GRID === true>>
-		<<if $B.phase == "selection">>
-			<div id="endturn" style="position:absolute; top:0; right:0">
-			<<include "End Turn Button">>
-			</div>
-		<</if>>
-	<</if>>
 	<<for _i, _puppet range $puppets>>
 		<<set _puppetClass = "">>
-		<<if setup.BATTLE_GRID === true>>
-			<<set _puppetClass += " grid">>
-		<</if>>
-		<<if _puppet === null>>
-			<div @class="'actor '+_puppetClass">
-			<<if $B.phase == "move">>
-			<div style="display: flex;  justify-content: center;  align-items: center; height: -webkit-fill-available">
-			<<link "[MOVE]">>
-				<<set _m = $puppets.indexOf($subject)>>
-				<<set $puppets[_i] = $subject; $puppets[_m] = _puppet>>
-				<<replace "#puppets">><<include "actorlist puppets">><</replace>>
-			<</link>>
-			</div>
-			<<else>>
-				/* no content; empty box */
-			<</if>>
-		<<else>>
-			<<actorBox _puppet _puppetClass>>
-		<</if>>
+		<<actorBox _puppet _puppetClass>>
 	<</for>>
 	<br/>
 <</if>>
 </div>
-<<if setup.BATTLE_GRID != true && $B.phase == "selection">>
+
+<<if $B.phase == "selection">>
 	<br/>
 	<div id="endturn">
 	<center>
@@ -591,16 +553,11 @@
 	<br/>
 	<span id="quit"><<include "Quit Button">></span>
 	<div id="roundCounter">ROUND <<print $B.turnCounter>></div>
+<<elseif $B.phase == "command">>
+	<br/>
+	<<include "commands">>
 <</if>>
 
-<<if setup.BATTLE_GRID === true>>
-<<timed 0s>>
-	<<script>>
-	$("#puppets.actors.grid").css({
-	  "grid-template-columns": `repeat(${setup.ROW_SIZE},1fr)`
-	});
-	<</script>>
-<</timed>>
 <</if>>
 
 :: End Turn Button[nobr]
@@ -621,12 +578,12 @@
 :: commands[nobr]
 <div class="commandcontainer">
 <div class="commands">
-	<span id="actbtn"><<act $puppets[_s]>></span><br />
-	<span id="restbtn"><<rest $puppets[_s]>></span><br />
-	<span id="itembtn"><<items $puppets[_s]>></span><br />
-	<<if setup.BATTLE_GRID === true>><<move $puppets[_s]>></span><br /><</if>>
+	<span id="actbtn"><<act $subject>></span><br />
+	<span id="restbtn"><<rest $subject>></span><br />
+	<span id="itembtn"><<items $subject>></span><br />
+	<<if setup.BATTLE_GRID === true>><span id="movebtn"><<move $subject>></span><br /><</if>>
 	<<if $B.surrender is true>>
-		<<spare $puppets[_s]>><br/>
+		<<spare $subject>><br/>
 	<</if>>
 </div>
 </div>
@@ -730,8 +687,8 @@
 <<set $B.phase = "actions">>
 <span class="hotkey monospace">
 [Q] = basic action
-<<if subject().lastAction instanceof Action>> |
-	<<if actionCheck(subject().lastAction)>>
+<<if typeof(subject().lastAction) === "string">> |
+	<<if new Action(subject().lastAction).check()>>
 		<<set _style = "color:gray">>
 	<<else>>
 		<<set _style = "">>
@@ -900,7 +857,10 @@ $subject.name will
 
 /* Remember this action for the last action shortcut: */
 <<if !$action.nosave && !$action.passagejump && !($action.name == "struggle" || $action.name == "spare")>>
-	<<set $subject.lastAction = $subject.actions.find(function (a) { return a && a.name == $action.saveMod }).name>>
+	<<set _lastAction = subject().actions.find(function (a) { return a && a.name == $action.saveMod })>>
+	<<if _lastAction instanceof Action>>
+		<<set subject().lastAction = _lastAction.name>>
+	<</if>>
 <</if>>
 
 /* If action has limited uses, decrement that */

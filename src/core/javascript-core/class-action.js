@@ -116,20 +116,23 @@ window.Action = class Action {
 			var hits = 0;
 			var party = [target()];
 			if (val.includes("mass") || val.includes("all")) {
-				party = target().ownParty.filter(function (a) { return a && !a.dead });
+				party = target().ownParty.filter(function (a) { return a && !a.guarded });
 			} else if (val.includes("row")) {
 				party = target().ownParty
-								.filter(function (a) { return a && !a.dead && a.row === target().row });
+								.filter(function (a) { return a && !a.guarded && a.row === target().row });
 			} else if (val.includes("col") || val.includes("column")) {
 				party = target().ownParty
-								.filter(function (a) { return a && !a.dead && a.col === target().col });
+								.filter(function (a) { return a && !a.guarded && a.col === target().col });
 			} else if (val.includes("adjacent") || val.includes("+")) {
 				party = target().ownParty
-								.filter(function (a) { return a && !a.dead && (
+								.filter(function (a) { return a && !a.guarded && (
 												a.id === target().id ||
 												a.col === target().col && (a.row === target().row + 1 || a.row === target().row - 1) ||
 											 	a.row === target().row && (a.col === target().col + 1 || a.row === target().col - 1)
 												) });
+			}
+			if (!this.canTargetDead) {
+				party = party.filter(function (a) { return !a.dead });
 			}
 			for (let actor of party) {
 				initialLength = result.length;
@@ -1007,6 +1010,36 @@ window.Action = class Action {
 			val = V().inbattle && this.passive ? true : false;
 		}
 		return val;
+	}
+
+	set canTargetDead (val) {
+		console.assert(typeof(val) === "boolean",`ERROR: canTargetDead must be Boolean`);
+		this._canTargetDead = val;
+	}
+
+	get canTargetDead () {
+		//	Boolean. If true, action can target dead actors in the targeting phase.
+		//	(By default, dead characters cannot be targeted.)
+
+		var val = this._canTargetDead;
+		if (val === undefined) {
+			val = this.actionData.canTargetDead;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
+	set area (val) {
+		console.assert(typeof(val) === "string",`ERROR: area must be string`);
+		this._area = val;
+	}
+
+	get area () {
+		//	String. Denotes class of AoE, if the action contains an area of effect.
+
+		return (this._area || this.actionData.area || "enemies");
 	}
 
 	set onApply (val) {

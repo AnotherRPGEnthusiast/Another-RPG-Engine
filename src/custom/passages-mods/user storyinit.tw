@@ -56,11 +56,13 @@ divisive: (base * (a.get("Attack")/b.get("Defense"))) * weight
 	<<set setup.STATUS_SCREENS.battle.push("aggression")>>
 <</if>>
 
+/* <<set setup.BATTLE_GRID = true>> */
+
 <<if setup.BATTLE_GRID === true>>
 	<<set setup.ROW_SIZE = 3>>
 	<<set setup.COLUMN_SIZE = 3>>
-	<<set setup.PARTY_SIZE = setup.ROW_SIZE * setup.COLUMN_SIZE>>
 	<<set setup.MENU_OPTIONS.push("Formation")>>
+	<<set setup.SCALE_NAMES = true>>
 <</if>>
 
 /* Initialize bestiary (if you want one) */
@@ -80,5 +82,6 @@ divisive: (base * (a.get("Attack")/b.get("Defense"))) * weight
 
 /* Define the starting party and area here. */
 <<set $puppets = [new Puppet("Rogue"),new Puppet("Fighter"),new Puppet("Artist")]>>
+<<set $puppets[0].col = 1; $puppets[1].col = 2; $puppets[2].col = 3>>
 
 <<set $Reserve_Puppets = [new Puppet("Bard"),new Puppet("Archer"),new Puppet("Cleric"),new Puppet("Witch"),new Puppet("Mage")]>>

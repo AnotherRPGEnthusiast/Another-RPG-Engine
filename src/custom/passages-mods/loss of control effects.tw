@@ -1,5 +1,5 @@
 :: loss of control effects [nobr]
-<<set _u = $puppets.find(function (p) { return (p.uncontrollable && !(p.isDone || p.noact || p.dead)); })>>
+<<set _u = $puppets.find(function (p) { return p && (p.uncontrollable && !(p.isDone || p.noact || p.dead)); })>>
 <<if def _u>>
 	<<set $subject = _u>>
 	<<if subject().name == "Mage">>

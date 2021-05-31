@@ -160,6 +160,9 @@ window.Enemy = class Enemy extends Actor {
 		if (!(V().B.targeting === "all" || V().B.targeting === "enemy")) {
 			//	If not targeting enemies, invalid target
 			return false;
+		} else if (this.dead && !action().canTargetDead) {
+			//	If this actor is dead, invalid target UNLESS action canTargetDead
+			return false;
 		} else if (this.martyr) {
 			//	If martyr, valid target
 			return true;

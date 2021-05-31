@@ -1,0 +1,154 @@
+:: battle grid setup [nobr]
+/* Initializes the battle grid. Run as part of the "Preparation" passage.
+  To customize, overwrite with a passage of the same name. */
+
+<<set $puppetGrid = []>>
+<<for _r = 0; _r < setup.COLUMN_SIZE; _r++>>
+    <<set _row to []>>
+    <<for _c to 0; _c < setup.ROW_SIZE; _c++>>
+        /* Create the object used to store the default properties of a map cell. */
+        <<set _cell to {
+            id: ("cell_r" + _r + "_c" + _c),
+            contents: null,
+            movement: []
+        }>>
+        <<run _row.push(_cell)>>
+    <</for>>
+    <<run $puppetGrid.push(_row)>>
+<</for>>
+<<for _puppet range puppets()>>
+  <<set $puppetGrid[_puppet.row-1][_puppet.col-1].contents = _puppet>>
+<</for>>
+<<set $enemyGrid = []>>
+<<for _r = 0; _r < setup.COLUMN_SIZE; _r++>>
+    <<set _row to []>>
+    <<for _c to 0; _c < setup.ROW_SIZE; _c++>>
+        /* Create the object used to store the default properties of a map cell. */
+        <<set _cell to {
+            id: ("cell_r" + _r + "_c" + _c),
+            contents: null,
+            movement: []
+        }>>
+        <<run _row.push(_cell)>>
+    <</for>>
+    <<run $enemyGrid.push(_row)>>
+<</for>>
+<<for _enemy range enemies()>>
+  <<set $enemyGrid[_enemy.row-1][_enemy.col-1].contents = _enemy>>
+<</for>>
+
+:: grid actorlist enemies [nobr]
+<<for _r, _row range $enemyGrid>>
+	<<for _c, _cell range _row>>
+		<<if _cell.contents instanceof Actor>>
+			<<actorBox _cell.contents "grid">>
+		<<else>>
+			<div class="actor grid flex-center empty">
+				/* no content; empty box */
+			</div>
+		<</if>>
+	<</for>>
+<</for>>
+
+<<timed 0s>>
+	<<script>>
+	$("#enemies .actors.grid").css({
+	  "grid-template-columns": `repeat(${setup.ROW_SIZE},1fr)`
+	});
+	<</script>>
+<</timed>>
+
+:: grid actorlist puppets [nobr]
+<div @class="_puppetsClass">
+<<if $B.phase == "move" || $B.phase == "command">>
+  <div style="position:absolute; top:0; right:0"><<backbtn>></div>
+<</if>>
+
+<<if $B.phase == "selection">>
+  <div id="endturn" style="position:absolute; top:0; right:0">
+  <<include "End Turn Button">>
+  </div>
+<</if>>
+
+<<if $B.phase == "command">>
+  <div style="grid-area: 1 / 2">
+    <<actorBox $subject "grid">>
+  </div>
+  <div style="grid-area: 2 / 2">
+    <<include "commands">>
+  </div>
+<<else>>
+
+<<for _r, _row range $puppetGrid>>
+	<<for _c, _cell range _row>>
+		<<if _cell.contents instanceof Actor>>
+			<<actorBox _cell.contents "grid">>
+		<<elseif $B.phase == "move" && def $subject>>
+			<div class="actor grid flex-center empty">
+				<<capture _r, _c, _cell>>
+				<<link "[MOVE]">>
+					<<set $puppetGrid[$subject.row-1][$subject.col-1].contents = null;
+								$subject.row = _r+1; $subject.col = _c+1;
+								_cell.contents = $subject>>
+					<<replace "#puppets">><<include "actorlist puppets">><</replace>>
+				<</link>>
+				<</capture>>
+			</div>
+		<<else>>
+			<div class="actor grid flex-center empty">
+				/* no content; empty box */
+			</div>
+		<</if>>
+	<</for>>
+<</for>>
+
+<</if>>
+</div>
+
+<<timed 0s>>
+	<<script>>
+	$("#puppets .actors.grid").css({
+	  "grid-template-columns": `repeat(${setup.ROW_SIZE},1fr)`
+	});
+	<</script>>
+<</timed>>
+
+:: ActorBox Move [nobr]
+/* For Puppets in the movement phase, their name becomes a link that swaps their position with the subject (except for the subject's own name) */
+<<run console.log("rendering "+_actor.name+" for movement phase, not subject? "+(_actor !== $subject))>>
+<<if _actor instanceof Puppet && _actor !== $subject>>
+  <<capture _actor>>
+  <<set _link = `<<link "_actor.name">>
+        <<set $puppetGrid[_actor.row-1][_actor.col-1].contents = $subject;
+              $puppetGrid[$subject.row-1][$subject.col-1].contents = _actor;
+              _holder = [$subject.row,$subject.col];
+              $subject.row = _actor.row; $subject.col = _actor.col;
+              _actor.row = _holder[0]; _actor.col = _holder[1]>>
+      <<replace "#puppets">><<include "actorlist puppets">><</replace>>
+    <</link>>`>>
+  <<if setup.SCALE_NAMES>>
+    <<print setup.scaledTextDiv(_actor.name,setup.NAME_LENGTH,{bold:true},_link)>>
+  <<else>>
+    <<print _link>>
+  <</if>>
+  <</capture>>
+<<else>>
+  <<if setup.SCALE_NAMES>>
+    <<print setup.scaledTextDiv(_actor.name,setup.NAME_LENGTH,{bold:true})>>
+  <<else>>
+    <<print _actor.name>>
+  <</if>>
+<</if>>
+
+:: Widget: move command[widget nobr]
+<<widget "move">>
+<<link "Move">>
+  <<set $B.phase = "move">>
+  <<replace "#puppets">><<include "actorlist puppets">><</replace>>
+  <<replace "#phase">><<include "movement phase">><</replace>>
+<</link>>
+<</widget>>
+
+:: movement phase [nobr]
+<br/>
+Click a space to move there or swap positions. Click BACK when done.
