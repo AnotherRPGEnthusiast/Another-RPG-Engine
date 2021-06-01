@@ -653,6 +653,43 @@ window.Actor = class Actor {
 		}
 	}
 
+	get position () {
+		//	Returns this character's cell in the grid object.
+		//	Note this does NOT return the cell's contents, but the cell itself.
+		var grid;
+		if (V().inbattle === true) {
+			switch (this.id.charAt(0)) {
+				case 'p':
+					grid = V().puppetGrid;
+					break;
+				case 'e':
+					grid = V().enemyGrid;
+					break;
+			}
+		} else {
+			grid = V().grid;
+		}
+		return grid[this.row-1][this.col-1];
+	}
+
+	set position (pos) {
+		//	Adjusts row and column simultaneously and automatically swaps with the contents of the new cell.
+		//	pos = array of 2 positive integers, [row,col]
+		console.assert(pos instanceof Array && pos.length >= 2,`ERROR in position setter: pos must be array with 2 elements`);
+		console.assert(pos[0] > 0 && pos[1] > 0,`ERROR in position setter: pos must be positive`);
+		console.assert(pos[0] <= setup.COLUMN_SIZE,`ERROR in position setter: row cannot be greater than column size`);
+		console.assert(pos[1] <= setup.ROW_SIZE,`ERROR in position setter: column cannot be greater than row size`);
+		var org = this.position;
+		this.row = pos[0]
+		this.col = pos[1];
+		// hold the contents of the cell that will be at the actor's new position
+		var holder = this.position.contents;
+		// populate the new cell with this character
+		this.position.contents = this;
+		// move the held contents to the original position
+		org.contents = holder;
+	}
+
 	get guardBreak () {
 		//	Boolean. If true, this character will not guard characters behind them.
 		//	By default, dead characters will automatically return true.

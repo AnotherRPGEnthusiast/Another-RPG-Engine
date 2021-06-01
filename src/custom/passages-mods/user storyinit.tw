@@ -56,7 +56,7 @@ divisive: (base * (a.get("Attack")/b.get("Defense"))) * weight
 	<<set setup.STATUS_SCREENS.battle.push("aggression")>>
 <</if>>
 
-/* <<set setup.BATTLE_GRID = true>> */
+<<set setup.BATTLE_GRID = true>>
 
 <<if setup.BATTLE_GRID === true>>
 	<<set setup.ROW_SIZE = 3>>

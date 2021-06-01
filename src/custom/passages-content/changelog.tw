@@ -1,4 +1,9 @@
 :: Changelog[text]
+Version 3.04
+<ul>
+<li>New <code>Actor</code> property: <code>position</code>. When invoked, it returns the character's cell in the grid; when set, it adjusts their <code>row</code> and <code>col</code> values and swaps the contents of the destination cell.</li>
+<li><code>pushAttack</code> should now work with the new battle grid code.</li>
+</ul>
 Version 3.03
 <ul>
 <li><b>The battle grid has been redone.</b> Positioning is now determined by manually-set <code>row</code> and <code>col</code> values rather than the index of the character. This means you don't have to fill parties with <code>null</code> entries anymore!</li>

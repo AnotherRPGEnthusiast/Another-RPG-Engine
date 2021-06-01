@@ -490,7 +490,11 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 
 //args = object with the following properties:
 //	target = string. Defaults to 't'. See findTarget for details.
-//	direction = int or strings "forward", "up", "back", "down", "left", or "right". String arguments will move the character in the stated direction, int will move the character to that index value in their party array.
+//	direction = strings "forward", "up", "pull", "back", "down", "push", "left", or "right". Moves target in the stated direction.
+//		-direction can also be a 2-element array corresponding to grid coordinate; if so, target will be moved to that coordinate.
+//	offset = integer. Number of tiles to move. Defaults to 1.
+
+	console.assert(typeof(args.direction) == 'string' || args.direction instanceof Array,`ERROR in pushAttack: invalid direction`);
 
 	if (args.target === undefined) {
 		args.target = 't';
@@ -498,56 +502,77 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 
 	return function () {
 
-	if (setup.BATTLE_GRID === true && (typeof(args.direction) == 'string' || Number.isInteger(args.direction))) {
 		var [target,party] = findTarget(args.target);
+		result = "";
+		target = State.getVar(target);
 		if (extension instanceof Function){
 			extension = extension();
 		}
-		var offset = 0;
-		var index = State.getVar(party).indexOf(State.getVar(target));
+		if (target.unmovable) {
+			return `${target.name} can't be moved!<br/>${extension}`;
+		}
+
+		var offset = args.offset;
+		if (Number.isInteger(args.offset) && args.offset > 0) {
+			offset = args.offset;
+		} else {
+			offset = 1;
+		}
 		if (typeof(args.direction) == 'string') {
 			switch (args.direction.toLowerCase()) {
 				case "forward":
 				case "up":
-					State.getVar(target).row == 1 ? offset = 0 : offset = (setup.ROW_SIZE * -1);
-					// if target is in front row, they can't be pulled forward any further
+				case "pull":
+					for (let i = 1; i <= offset; i++) {
+						try {
+							target.pos = [target.row-1][target.col];
+						} catch (e) {
+							result = `${target.name} couldn't be moved!`;
+							break;
+						}
+					}
 					break;
 				case "back":
 				case "down":
-					State.getVar(target).row == setup.COLUMN_SIZE ? offset = 0 : offset = setup.ROW_SIZE;
-					// if target is in back row (equal to column size), they can't be pushed any further
+				case "push":
+				for (let i = 1; i <= offset; i++) {
+					try {
+						target.pos = [target.row+1][target.col];
+					} catch (e) {
+						result = `${target.name} couldn't be moved!`;
+						break;
+					}
+				}
 					break;
 				case "left":
-					State.getVar(target).col == 1 ? offset = 0 : offset = -1;
-					// if target is in the first column, they can't go any more left
+				for (let i = 1; i <= offset; i++) {
+					try {
+						target.pos = [target.row][target.col-1];
+					} catch (e) {
+						result = `${target.name} couldn't be moved!`;
+						break;
+					}
+				}
 					break;
 				case "right":
-					State.getVar(target).col == setup.ROW_SIZE ? offset = 0 : offset = 1;
-					// if target is in the last column, they can't go any more right
+				for (let i = 1; i <= offset; i++) {
+					try {
+						target.pos = [target.row][target.col+1];
+					} catch (e) {
+						result = `${target.name} couldn't be moved!`;
+						break;
+					}
+				}
 					break;
 				default:
 					return "ERROR invalid direction in pushAttack";
 			}
-		} else if (Number.isInteger(args.direction)) {
-			offset = args.direction;
 		}
-		if (offset === 0 || State.getVar(target).unmovable) {
-			// If offset is 0, no movement will occur; no point in running the check. Just return the extension.
-			return extension;
-		} else {
-			return `<<set _newIdx = ${party}.indexOf(${target})+${offset}>>\
-				<<if ${party}[_newIdx] === null || ${party}[_newIdx].dead>>\
-					<<set _temp = ${target}>>\
-					<<set ${party}.indexOf(target()) = ${party}[_newIdx]; ${party}[_newIdx] = _temp>>\
-					${target().name} moved!<br/>\
-				<<else>>\
-					${target().name} couldn't be moved!<br/>\
-				<</if>>`+extension;
+		if (result.length === 0) {
+			result = `${target().name} moved!`;
 		}
-	} else {
-		return "ERROR in pushAttack: battle grid disabled or invalid direction type";
-	}
 
+		return result+"<br/>"+extension;
 	}
 };
 
