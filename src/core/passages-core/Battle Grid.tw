@@ -41,7 +41,7 @@
 <<for _r, _row range $enemyGrid>>
 	<<for _c, _cell range _row>>
 		<<if _cell.contents instanceof Actor>>
-			<<actorBox _cell.contents "grid">>
+			<<actorBox _cell.contents>>
 		<<else>>
 			<div class="actor grid flex-center empty">
 				/* no content; empty box */
@@ -82,14 +82,12 @@
 <<for _r, _row range $puppetGrid>>
 	<<for _c, _cell range _row>>
 		<<if _cell.contents instanceof Actor>>
-			<<actorBox _cell.contents "grid">>
+			<<actorBox _cell.contents>>
 		<<elseif $B.phase == "move" && def $subject>>
 			<div class="actor grid flex-center empty">
 				<<capture _r, _c, _cell>>
 				<<link "[MOVE]">>
-					<<set $puppetGrid[$subject.row-1][$subject.col-1].contents = null;
-								$subject.row = _r+1; $subject.col = _c+1;
-								_cell.contents = $subject>>
+					<<set <<set $subject.position = [_r+1,_c+1]>>
 					<<replace "#puppets">><<include "actorlist puppets">><</replace>>
 				<</link>>
 				<</capture>>
@@ -119,11 +117,7 @@
 <<if _actor instanceof Puppet && _actor !== $subject>>
   <<capture _actor>>
   <<set _link = `<<link "_actor.name">>
-        <<set $puppetGrid[_actor.row-1][_actor.col-1].contents = $subject;
-              $puppetGrid[$subject.row-1][$subject.col-1].contents = _actor;
-              _holder = [$subject.row,$subject.col];
-              $subject.row = _actor.row; $subject.col = _actor.col;
-              _actor.row = _holder[0]; _actor.col = _holder[1]>>
+        <<set $subject.position = [_actor.row,_actor.col]>>
       <<replace "#puppets">><<include "actorlist puppets">><</replace>>
     <</link>>`>>
   <<if setup.SCALE_NAMES>>
@@ -143,6 +137,7 @@
 :: Widget: move command[widget nobr]
 <<widget "move">>
 <<link "Move">>
+  <<run $.event.trigger(":move-selected")>>
   <<set $B.phase = "move">>
   <<replace "#puppets">><<include "actorlist puppets">><</replace>>
   <<replace "#phase">><<include "movement phase">><</replace>>

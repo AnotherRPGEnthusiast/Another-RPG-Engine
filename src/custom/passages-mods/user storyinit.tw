@@ -83,5 +83,6 @@ divisive: (base * (a.get("Attack")/b.get("Defense"))) * weight
 /* Define the starting party and area here. */
 <<set $puppets = [new Puppet("Rogue"),new Puppet("Fighter"),new Puppet("Artist")]>>
 <<set $puppets[0].col = 1; $puppets[1].col = 2; $puppets[2].col = 3>>
+<<set $puppets[0].position = [2,1]>>
 
 <<set $Reserve_Puppets = [new Puppet("Bard"),new Puppet("Archer"),new Puppet("Cleric"),new Puppet("Witch"),new Puppet("Mage")]>>

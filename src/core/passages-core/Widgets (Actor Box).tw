@@ -53,6 +53,10 @@
   <<set _nameStyle = "">>
 <</if>>
 
+<<include "Actor Box Container">>
+<</widget>>
+
+:: Actor Box Container [nobr]
 <div @class=_class @id=_boxID @style=_style>
 <<if $args.includes("formation")>>
   <<include "ActorBox formation">>
@@ -104,7 +108,6 @@
   <</if>>
 
 </div>
-<</widget>>
 
 :: Actor Box Name [nobr]
 <<if _actor.dead && $B.phase !== "targeting">>

@@ -371,6 +371,14 @@ window.Actor = class Actor {
 		this.stats[k].base = v;
 	}
 
+	addMod (key, id, mod, equipment) {
+		return this.stats[key].addMod(id,mod,equipment);
+	}
+
+	removeMod (key, id, index) {
+		this.stats[key].removeMod(id, index);
+	}
+
 	setTemp (k,v,abs){
 		// DEPRECIATED as of version 1.08. Use addMod instead.
 		if (abs !== undefined && (abs.toLowerCase() == 'abs' || abs.toLowerCase() == 'absolute')){
@@ -669,6 +677,7 @@ window.Actor = class Actor {
 		} else {
 			grid = V().grid;
 		}
+		console.assert(grid instanceof Array,`ERROR in position getter: grid does not exist or is not array`);
 		return grid[this.row-1][this.col-1];
 	}
 
@@ -679,15 +688,35 @@ window.Actor = class Actor {
 		console.assert(pos[0] > 0 && pos[1] > 0,`ERROR in position setter: pos must be positive`);
 		console.assert(pos[0] <= setup.COLUMN_SIZE,`ERROR in position setter: row cannot be greater than column size`);
 		console.assert(pos[1] <= setup.ROW_SIZE,`ERROR in position setter: column cannot be greater than row size`);
-		var org = this.position;
-		this.row = pos[0]
+		var org;
+		try {
+			org = this.position;
+		} catch (e) {
+			org = this.ownParty.find(function (a) { return a && a.row === pos[0] && a.col === pos[1] });
+		}
+		var row = this.row;
+		var col = this.col;
+		this.row = pos[0];
 		this.col = pos[1];
 		// hold the contents of the cell that will be at the actor's new position
-		var holder = this.position.contents;
-		// populate the new cell with this character
-		this.position.contents = this;
-		// move the held contents to the original position
-		org.contents = holder;
+		var holder;
+		try {
+			holder = this.position.contents;
+		} catch (e) {
+			holder = org;
+		}
+		if (holder instanceof Actor) {
+			holder.row = row;
+			holder.col = col;
+		}
+		try {
+			// populate the new cell with this character
+			this.position.contents = this;
+			// move the held contents to the original position
+			org.contents = holder;
+		} catch (e) {
+			// if no grid defined, further adjustments unnecessary; end here
+		}
 	}
 
 	get guardBreak () {

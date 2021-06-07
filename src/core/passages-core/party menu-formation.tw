@@ -39,11 +39,7 @@ Click on a character to select them, then click on another space to move or swap
 	<<elseif _subj !== _actor>>
 		<<capture _actor>>
 		<<link "_actor.name">>
-			<<set $grid[_actor.row-1][_actor.col-1].contents = _subj;
-						$grid[_subj.row-1][_subj.col-1].contents = _actor;
-						_holder = [_subj.row,_subj.col];
-						_subj.row = _actor.row; _subj.col = _actor.col;
-						_actor.row = _holder[0]; _actor.col = _holder[1]>>
+			<<set _subj.position = [_actor.row,_actor.col]>>
 			<<unset _subj>>
 			<<update>>
 		<</link>>
@@ -62,9 +58,7 @@ Click on a character to select them, then click on another space to move or swap
 			<div class="actor grid flex-center empty">
 				<<capture _r, _c, _cell>>
 				<<link "[MOVE]">>
-					<<set $grid[_subj.row-1][_subj.col-1].contents = null;
-								_subj.row = _r+1; _subj.col = _c+1;
-								_cell.contents = _subj>>
+					<<set _subj.position = [_r+1,_c+1]>>
 					<<unset _subj>>
 					<<update>>
 				<</link>>

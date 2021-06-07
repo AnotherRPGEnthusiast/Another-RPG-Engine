@@ -2,7 +2,17 @@
 Version 3.04
 <ul>
 <li>New <code>Actor</code> property: <code>position</code>. When invoked, it returns the character's cell in the grid; when set, it adjusts their <code>row</code> and <code>col</code> values and swaps the contents of the destination cell.</li>
+<ul><li>Movement code has been simplified to take advantage of this property.</li></ul>
 <li><code>pushAttack</code> should now work with the new battle grid code.</li>
+<li>The code for displaying the actor box container has now been compartmentalized into a passage, <code>Actor Box Container</code>, if customization without changing the surrounding actor box code is desired.</li>
+<li>Enemies now have setters for <code>xp</code> and <code>gp</code> properties.</li>
+<li>Added event triggers on several common battle functions, in case you want to tie special events to them. Current events are:</li>
+<ul><li><code>:puppet-selected</code>: triggered on puppet selection</li>
+<li><code>:act-selected</code>, <code>:rest-selected</code>, <code>:item-selected</code>, and <code>:move-selected</code>: triggered on selection of the respective command</li>
+<li><code>:action-selected</code>: triggered on action selected (also works if selected via hotkey)</li>
+<li><code>:action-performed</code>: triggered when action performed by puppet</li>
+<li><code>:target-selected</code>: triggered on target selection</li>
+<li><code>:endturn-run</code>: triggered upon execution of end-turn code.</li></ul>
 </ul>
 Version 3.03
 <ul>

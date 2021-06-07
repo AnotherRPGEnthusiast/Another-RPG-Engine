@@ -50,6 +50,11 @@ window.Enemy = class Enemy extends Actor {
 		return Number.isInteger(r) ? r : enemies().indexOf(this);
 	}
 
+	set xp (num) {
+		console.assert(Number.isInteger(num) && num > 0,`ERROR in xp setter: must be positive integer`);
+		this._xp = num;
+	}
+
 	get xp () {
 		var r;
 		if (this._xp !== undefined) {
@@ -58,6 +63,11 @@ window.Enemy = class Enemy extends Actor {
 			r = this.data.xp;
 		}
 		return Number.isInteger(r) ? r : 0;
+	}
+
+	set gp (num) {
+		console.assert(Number.isInteger(num) && num > 0,`ERROR in gp setter: must be positive integer`);
+		this._gp = num;
 	}
 
 	get gp () {

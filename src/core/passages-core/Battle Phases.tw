@@ -6,6 +6,7 @@
 :: Widget: endturn[widget nobr]
 <<widget "endturn">>
 <<set $B.turn = "enemy"; $B.phase = null>>
+<<run $.event.trigger(":endturn-run")>>
 <<goto "end of round">>
 <</widget>>
 
@@ -39,6 +40,7 @@
 <<else>>
 	<<link "Act">>
 		<<set $subject = $args[0]>>
+		<<run $.event.trigger(":act-selected")>>
 		<<replace "#phase">><<include "actions">><</replace>>
 	<</link>>
 <</if>>
@@ -49,6 +51,7 @@
 <<widget "rest">>
 <<link "Rest">>
 	<<set $subject = $args[0]; $action = new Action("rest"); $target = null>>
+	<<run $.event.trigger(":rest-selected")>>
 	<<replace "#phase">><<include "confirm phase">><</replace>>
 <</link>>
 <span class="hotkey monospace right">[W]</span>
@@ -64,6 +67,7 @@
 	<<if ($args[0].en >= setup.ITEM_COST) || ($args[0].crafty && $args[0].en >= Math.round(setup.ITEM_COST/2))>>
 		<<link "Item">>
 			<<set $subject = $args[0]>>
+			<<run $.event.trigger(":item-selected")>>
 			<<replace "#phase">><<include "items">><</replace>>
 		<</link>>
 	<<else>>
@@ -828,6 +832,7 @@ $subject.name will
 
 :: action phase[nobr battle]
 <<set $B.phase = null>>
+<<run $.event.trigger(":action-performed")>>
 <span id="status">
 <<include "status">>
 </span>
