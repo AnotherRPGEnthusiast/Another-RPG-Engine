@@ -29,25 +29,33 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 
 :: Widget: victorycheck [widget nobr]
 <<widget "victorycheck">>
-<<set _victory to 0>>
-<<set _defeat to 0>>
-<<for _enemy range enemies()>>
-	<<if _enemy.dead>>
-		<<set _victory++>>
-	<</if>>
-<</for>>
-<<if _victory == enemies().length>>
+<<set _destinationQueue = []>>
+<<set _victory = 0>>
+<<set _defeat = 0>>
+<<set _loadBearing = enemies().find(function (e) { return e && e.loadBearing })>>
+<<if def _loadBearing && _loadBearing.dead>>
 	<<set $B.victory = true>>
-	<<goto "Victory">>
-<</if>>
-<<for _puppet range puppets()>>
-	<<if _puppet.dead>>
-		<<set _defeat++>>
+<<else>>
+	<<set _victory = enemies().filter(function (e) { return e && !e.uncounted && e.dead }).length>>
+	<<if _victory == enemies().filter(function (e) { return e && !e.uncounted }).length>>
+		<<set $B.victory = true>>
 	<</if>>
-<</for>>
-<<if _defeat == puppets().length>>
+<</if>>
+<<if $B.victory === true>>
+	<<set _destinationQueue.push("Victory")>>
+<</if>>
+
+<<set _loadBearing = puppets().find(function (p) { return p && p.loadBearing })>>
+<<if def _loadBearing && _loadBearing.dead>>
 	<<set $B.defeat = true>>
-	<<goto "Defeat">>
+<<else>>
+	<<set _defeat = puppets().filter(function (p) { return p && !p.uncounted && p.dead }).length>>
+	<<if _defeat == puppets().filter(function (p) { return p && !p.uncounted }).length>>
+		<<set $B.defeat = true>>
+	<</if>>
+<</if>>
+<<if $B.defeat === true>>
+	<<set _destinationQueue.push("Defeat")>>
 <</if>>
 <</widget>>
 

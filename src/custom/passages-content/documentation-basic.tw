@@ -7,6 +7,7 @@ This introduction will teach you how to add content to the default engine settin
 ><a href="#databases">Objects, Classes, and Databases</a>
 ><a href="#data.puppets">Creating Puppets</a>
 ><a href="#data.actions">Creating Actions</a>
+>><a href="#actions.targeting">Targeting Logic</a>
 ><a href="#data.effects">Creating Effects</a>
 ><a href="#data.items">Creating Items</a>
 ><a href="#data.enemies">Creating Enemies</a>
@@ -101,6 +102,7 @@ This isn't what a live {{{Puppet}}} object looks like, but it contains all the d
 * {{{immortal}}} is a Boolean; if {{{true}}}, the character will not be defeated if their HP reaches 0. (Make sure their encounter has a custom resolution handler!)
 * {{{large}}} is a Boolean; if {{{true}}}, the character's actor box will span the full width of the screen.
 * {{{maskhp}}} is a Boolean; if {{{true}}}, the character's HP bar and HP total will not be displayed in their actor box.
+* {{{loadBearing}}} is a Boolean; if {{{true}}}, the battle will end when this character is defeated, regardless of the status of their teammates.
 * {{{specialInit}}} is a function that is run at the end of the {{{Puppet}}} constructor. This is a catchall that allows you to tweak any other variables you want that aren't specified by the regular attributes. (Due to a coding quirk, the object under construction needs to pass itself as an argument to this function, so assign your code to {{{actor}}} rather than {{{this}}}.) In addition to custom variables, it supports the assignment of the following properties:
 ** {{{showMaxHP}}} is a Boolean; if {{{true}}}, the character's max HP will be displayed alongside their current HP in their actor box.
 ** {{{caps}}} is a Boolean; if {{{true}}}, the character's name will be capitalized in their actor box.
@@ -177,8 +179,33 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 * {{{setupAction}}} is a string; if populated, a delayed action of the same name will be stored in the user's {{{delayedAction}}} property.
 ** {{{setupDelay}}} is an integer; specifies the number of turns that must elapse before the delayed action specified by {{{setupAction}}} will occur. Defaults to 1.
 ** {{{delayPersist}}} is a Boolean; if {{{true}}}, the delayed action will occur even if the user would otherwise be incapable of using an action (dead, stunned, etc). This must be set <b>on the action that will be performed</b>, not the setup action.
-* {{{targetMethod}}} is a function; used to determine the target for actions that must find their target logically (e.g. delayed and enemy actions). It must return the object you want to be the target of the action. Defaults to the logic in {{{Hitlist.targetEnemy}}}.
 * {{{canTargetDead}}} is a Boolean; if {{{true}}}, the action can target dead characters. (By default, dead characters cannot be targeted.)
+
+<h3 id="actions.targeting">Targeting Logic</h3>
+There are also parameters we can add to actions that will influence the logic used to select a target when the action is used by a computer-controlled character, such as an enemy. This is handled by two properties: {{{targetMethod}}} and {{{targetMod}}}. With {{{targetMethod}}}, you can define your own targeting function to completely customize your targeting logic. It must return the object you want to be the target of the action. If this property is unset, the action will use the default logic in {{{Hitlist.targetEnemy}}}. (See the {{{targeting.js}}} file for details.)
+
+However, you may think the default target method is fine, but want to make a few relevant tweaks; for instance, a piercing attack should prefer high-Defense characters, while a non-piercing attack should do the reverse. For that, you can use {{{targetMod}}}. This is an array of strings that will alter the default targeting logic in specific ways without you needing to define a custom method.
+* {{{"ignore untargetable"}}} and {{{"ignore martyr"}}}: Ignores the relevant effects when determining valid targets.
+* {{{"random"}}}: Produces a totally random result (but does not ignore untargetables or martyrs unless specified).
+* {{{"smart"}}}: The action will always use smart targeting, regardless of the user's {{{mercy}}} stat.
+* {{{"dispel"}}}: The action will run the {{{dispelFactors}}} method, preferentially targeting characters with buffs.
+** {{{"exclusive dispel"}}}: The action will <i>only</i> target characters with buffs.
+* {{{"exclusive"}}}: The action will ignore characters who are not preferred by the following mods. (These mods can also be used without the "exclusive" tag.)
+** {{{"most <Stat>"}}} or {{{"least <Stat>"}}}: Preferentially targets characters with the highest or lowest specified stat. HP can also be used, but targeting will be adjusted based on current HP, not maximum HP.
+** {{{"most damage"}}}: Preferentially targets the character who inflicted the most damage last round.
+** {{{"no effect"}}}: Preferentially targets characters who do not already have the effects applied by this action (as specified in the {{{effects}}} property).
+* {{{"ignore downed"}}}: Will <i>not</i> preferentially target characters with the "Off-Balance" or "Knocked Down" effects.
+* {{{"ignore damaging"}}}: Will <i>not</i> preferentially target the character who inflicted the most damage last round.
+* {{{"ignore vulnerable"}}}: Will <i>not</i> preferentially target characters with debuffed Defense or characters with low HP.
+* {{{"pierce"}}}: Preferentially targets the character with the highest Defense.
+* {{{"ruthless"}}}: Preferentially target characters based on the inverse proportion of their current HP to their maximum HP, multiplied by an additional weight specified by {{{setup.RUTHLESS_FACTOR}}} (default 3).
+* {{{"effect"}}}: Preferentially targets characters with debuffed Special, but ignores characters with a blocking effect.
+
+There are also some effects exclusive to ally-targeting abilities:
+* {{{"pragmatic"}}}: Ignores characters whose HP is lower than the proportion specified by {{{setup.PRAGMATIC_CUTOFF}}}.
+* {{{"ailments"}}}: Prefers characters with ailments, with additional weighting based on the effects' {{{threat}}} value.
+
+Several of these mods are added by default based on the action's properties. For example, actions with {{{pierce}}} will add the "pierce" mod, and actions with defined {{{effects}}} will add the "effect" mod.
 
 <h2 id="data.effects">Creating Effects</h2>
 Status effects change characters in some way. They can be beneficial, like boosting one or more stats, or detrimental, like preventing the character from using certain actions. (For more information, see [[Design]].) The database object for effects is called {{{effectData}}}, and its entries look like this:
@@ -321,6 +348,7 @@ This isn't what a live {{{Enemy}}} object looks like, but it contains all the da
 * {{{surrenderFail}}} is a function; run when the player violates an enemy's surrender by using a damaging action.
 * {{{xp}}} and {{{gp}}} are the number of experience points and currency points, respectively, the enemy awards on defeat. Must be integers. Defaults to 0 in both cases.
 * {{{itemDrops}}} is an object. Property names must correspond to items, and values must be integers between 1 and 100. Values are the percentile chance of the respective item dropping upon the enemy's defeat.
+* {{{uncounted}}} is a Boolean; if {{{true}}}, this character does not need to be defeated to win the battle.
 * {{{boss}}} is a Boolean; denotes that this is a boss enemy. Bosses are treated differently by some system code. (Must be assigned through {{{specialInit}}}.)
 * {{{specialdeath}}} is a string; the player will be forwarded to this passage when the enemy is defeated. (Must be assigned through {{{specialInit}}}.)
 * {{{bestiaryNo}}} is an integer that determines the order in which the enemy appears in the bestiary, if there is one.

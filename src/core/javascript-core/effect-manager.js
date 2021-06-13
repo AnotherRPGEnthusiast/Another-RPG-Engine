@@ -91,6 +91,12 @@ Actor.prototype.addEffect = function (name,mods) {
   }
   else {
 
+    if (temporary().effectApplied === undefined) {
+      temporary().effectApplied = {}
+    }
+    temporary().effectApplied[name] = this.testEffect(name,mods);
+    this.effectApplied = temporary().effectApplied;
+
     //  Create dummy Effect to access database properties
     E = new Effect(name);
     if (E.statmod && subject() instanceof Puppet && target() instanceof Enemy) {

@@ -1,0 +1,6 @@
+:: heal formula[nobr]
+<<if Number.isInteger(action().special)>>
+  <<set $heal = action().special>>
+<<else>>
+  <<set $heal = 0>>
+<</if>>

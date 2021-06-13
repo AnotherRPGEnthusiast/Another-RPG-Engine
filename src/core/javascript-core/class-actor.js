@@ -753,6 +753,12 @@ window.Actor = class Actor {
 		return;
 	}
 
+	hasEffect (name) {
+		//	name = string or array, name of effect to check
+
+		return this.effects.map(function (e) { return e.name }).includesAny(name);
+	}
+
 	get actionReady () {
 		//	Returns true if actor has a valid delayed action stored,
 		//	and they can perform it (not dead/held/uncontrollable, or delayPersist)
@@ -807,6 +813,40 @@ window.Actor = class Actor {
 		this._maskhp = flag;
 	}
 
+	get loadBearing () {
+		//	Boolean. If true, defeating this character will instantly end the encounter.
+
+		var val = this._loadBearing;
+		if (val === undefined) {
+			val = this.data.loadBearing;
+		}
+		if (val === undefined) {
+			val = false
+		}
+		return val;
+	}
+
+	set loadBearing (flag) {
+		this._loadBearing = flag;
+	}
+
+	get uncounted () {
+		//	Boolean. If true, this character does not need to be defeated to end an encounter.
+
+		var val = this._uncounted;
+		if (val === undefined) {
+			val = this.data.uncounted;
+		}
+		if (val === undefined) {
+			val = false
+		}
+		return val;
+	}
+
+	set uncounted (flag) {
+		this._uncounted = flag;
+	}
+
 	effectCount (type,mods) {
 		//	Returns the number of instances of the named effect currently posessed by this actor.
 		//	Can search for specific effects or classes of effect: buffs, ailments, DoTs, holds, blocks, shields, or all.
@@ -837,48 +877,6 @@ window.Actor = class Actor {
 
 		return count;
 	}
-
-/*
-	setTol (k, v) {
-		// DEPRECIATED as of version 1.08. Tolerances are now tied to the Tolerance object and function like Stats.
-
-		// This function works for both creation and modification (such as from equipment). Tolerances are objects with 3 attributes: current value, maximum value, and immune flag. If "immune" is true, the character has total immunity and cur/max are ignored. To set an immunity, pass "true" as the v argument. To remove an existing immunity, pass "false" as the v argument; previous tolerance values will still remain. To increment or reduce a tolerance value, pass a number as the v argument.
-		// This function will do nothing if you pass an argument that is not a boolean or integer. To reduce potential clutter on the status screen, it is also not possible to make useless tolerance (0 points and false immunity).
-		if (this.tolerances.has(k)){
-			if (typeof(v) == 'boolean'){
-				this.tolerances.get(k).immune = v;
-			} else if (Number.isInteger(v)){
-				this.tolerances.get(k).max += v;
-				this.resetTol(k);
-			}
-			if (this.tolerances.get(k).immune === false && this.tolerances.get(k).max <= 0){
-				this.tolerances.delete(k);
-			}
-		} else {
-			var tol;
-			if (Number.isInteger(v)){
-				tol = {cur: v, max: v, immune: false};
-			} else if (v === true){
-				tol = {cur: 0, max: 0, immune: v};
-			} else {
-				return "ERROR in setTol: non-integer or non-Boolean value passed\n";
-			}
-			this.tolerances.set(k, tol);
-		}
-	}
-*/
-
-	/* Relic of a time when effective stats were stored as an actual attribute. Easier to just calculate them every time with get(). */
-	/*
-	calcStats (){
-		this.stats.forEach( (v,k) => {
-			v.Eff = v.Base + v.bonus + v.Temp;
-			if (v.Eff < 0 && !(k == "Defense" && this.forsaken)){
-				v.Eff = 0;
-			}
-		} );
-	}
-	*/
 
 	clone () {
 		// Return a new instance containing our current data.

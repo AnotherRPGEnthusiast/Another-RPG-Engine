@@ -190,26 +190,15 @@ window.Hitlist = class Hitlist extends Array {
 		//	For use with the battle grid. Checks if the target is guarded by a frontline character.
 		//	By default, this check is bypassed by ranged attacks and friendly fire.
 
-		console.log("guardCheck running");
 		if (setup.BATTLE_GRID === true
 			&& !V().action.ranged
 			&& (subject().id.charAt(0) !== target.id.charAt(0))) {
 
 			console.assert(target instanceof Actor,`ERROR in guardCheck: target must be Actor`);
 			var newTarget = target;
-			console.log("battle grid enabled, main check running");
 
-			var party;
-			switch (target.id.charAt(0)) {
-				case 'p':
-					party = V().puppets;
-					break;
-				case 'e':
-					party = V().enemies;
-					break;
-			}
 			// Search for character immediately in front of this one (same column, row - 1)
-			newTarget = party.find(function (a) { return a && a.col === this.col && a.row === this.row - 1 },this);
+			newTarget = target.ownParty.find(function (a) { return a && a.col === this.col && a.row === this.row - 1 },target);
 			if (newTarget instanceof Actor && !newTarget.guardBreak) {
 				newTarget = Hitlist.guardCheck(newTarget); // Run again to test if the new target is in turn guarded by a front row character
 			} else {
@@ -409,6 +398,8 @@ Hitlist.prototype.addFactors = function (mods) {
 			t.chance += 1;
 		} else if (mods.includes("least SPC") && t.target.get("Special") >= lowestStat["Special"]) {
 			t.chance += 1;
+		} else if (mods.includes("no effect") && !t.target.effects.includesAny(action().effects)) {
+			t.chance += 1;
 		} else if (mods.includes("exclusive")) {
 			t.chance = 0;
 		} else {
@@ -419,7 +410,7 @@ Hitlist.prototype.addFactors = function (mods) {
 				t.chance += 1;
 			}
 			// Characters who inflicted the most damage on the last turn get an extra weight.
-			if (!mods.includes("ignore threat") && t.target.lastDmg >= mostDamaging) {
+			if (!mods.includes("ignore damaging") && t.target.lastDmg >= mostDamaging) {
 				t.chance += 1;
 			}
 			// If this attack pierces defense, preferentially target the character with the highest defense.
@@ -478,6 +469,8 @@ Hitlist.prototype.allyFactors = function (mods) {
 		if (mods.includes("least HP") && t.target.hp <= lowestHP) {
 			t.chance += 1;
 		} else if (mods.includes("most HP") && t.target.hp >= greatestHP) {
+			t.chance += 1;
+		} else if (mods.includes("no effect") && !t.target.hasEffect(action().effects)) {
 			t.chance += 1;
 		} else if (mods.includes("exclusive")) {
 			t.chance = 0;

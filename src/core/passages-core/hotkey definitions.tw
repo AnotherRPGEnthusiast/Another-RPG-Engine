@@ -1,127 +1,185 @@
+:: Q press
+/* Defines the function of pressing the Q key. */
+
+<<if $inbattle>>
+	<<switch $B.phase>>
+		<<case "command">>
+			<<if $subject !== null>>
+				<<set _id = "#actbtn a">>
+				<<trigger 'click' _id>>
+			<</if>>
+		<<case "actions">>
+			<<if typeof(subject().defaultAction) === "string">>
+				<<set _action = subject().actions.find(function (act) { return act && act.name === subject().defaultAction })>>
+				<<if _action instanceof Action>>
+					<<actionLink>>
+				<</if>>
+			<</if>>
+		<<case "confirm">>
+			<<trigger 'click' "#confirmLink a">>
+		<<case "selection">>
+			/* do nothing */
+		<<default>>
+			<<trigger 'click' "button.macro-button">>
+	<</switch>>
+<<elseif passage() == "Menu: Inventory" && def _display>>
+	<<set _id = '#button1 button'>>
+	<<trigger 'click' _id>>
+<</if>>
+
+:: W press
+/* Defines the function of pressing the W key. */
+
+<<if $inbattle>>
+	<<switch $B.phase>>
+		<<case "command">>
+			<<if $subject !== null>>
+				<<set _id = "#restbtn a">>
+				<<trigger 'click' _id>>
+			<</if>>
+		<<case "actions">>
+			<<if typeof(subject().lastAction) === "string">>
+				<<set _action = subject().actions.find(function (act) { return act && act.name === subject().lastAction })>>
+				<<if _action instanceof Action>>
+					<<actionLink>>
+				<</if>>
+			<</if>>
+	<</switch>>
+<<elseif passage() == "Menu: Inventory" && def _display>>
+	<<set _id = '#button2 button'>>
+	<<trigger 'click' _id>>
+<<elseif !tags().includes("nomenu") && !tags().includes("noreturn")>>
+	<<set $menu_screen = 0>>
+	<<goto "Menu: Status">>
+<</if>>
+
+:: E press
+/* Defines the function of pressing the E key. */
+
+<<if $inbattle>>
+	<<switch $B.phase>>
+		<<case "command">>
+			<<if $subject !== null>>
+				<<set _id = "#itembtn a">>
+				<<trigger 'click' _id>>
+			<</if>>
+		<<case "actions">>
+			<<if document.getElementById("crisisLink")>>
+				<<set _id = "#crisisLink a">>
+				<<trigger 'click' _id>>
+			<</if>>
+		<<case "crisis">>
+			<<set _id = "#regularActions a">>
+			<<trigger 'click' _id>>
+	<</switch>>
+<</if>>
+
+:: R press
+/* Defines the function of pressing the R key. */
+
+<<if $inbattle>>
+	<<switch $B.phase>>
+		<<default>>
+			<<if $('#battlebackbtn').length > 0>>
+				<<trigger 'click' '#battlebackbtn a'>>
+			<</if>>
+	<</switch>>
+<<else>>
+	<<if passage() == "Menu: Status" && def $subject>>
+		<<if document.getElementById("cancelbutton")>>
+			<<set _id = '#cancelbutton button'>>
+			<<trigger 'click' _id>>
+		<<else>>
+			<<trigger 'click' '#toggle a'>>
+		<</if>>
+	<<elseif passage() == "Menu: Equipment" && def _s>>
+		<<trigger 'click' '#toggle a'>>
+	<<elseif passage() == "Menu: Inventory" && document.getElementById("cancelbutton")>>
+		<<set _id = '#cancelbutton button'>>
+		<<trigger 'click' _id>>
+	<<elseif passage() == "Menu: Bestiary" && def _display>>
+		<<trigger 'click' '#toggle a'>>
+	<<else>>
+		<<trigger 'click' '#menu-return a'>>
+	<</if>>
+<</if>>
+
+:: A press
+/* Defines the function of pressing the A key. */
+
+<<if $inbattle || passage() == "Menu: Status" && def $subject>>
+	<<trigger 'click' '#statusback a'>>
+<<elseif passage() == "Menu: Bestiary" && def _display>>
+	<<trigger 'click' '#lastentry a'>>
+<<else>>
+	<<set $menu_screen-->>
+	<<if $menu_screen < 0>>
+		<<set $menu_screen = setup.MENU_OPTIONS.length-1>>
+	<</if>>
+	<<set _menupos = "#menu"+$menu_screen+" a">>
+	<<trigger 'click' _menupos>>
+<</if>>
+
+:: D press
+/* Defines the function of pressing the D key. */
+
+<<if $inbattle || passage() == "Menu: Status" && def $subject>>
+	<<trigger 'click' '#statusforward a'>>
+<<elseif passage() == "Menu: Bestiary" && def _display>>
+	<<trigger 'click' '#nextentry a'>>
+<<else>>
+	<<set $menu_screen++>>
+	<<if $menu_screen >= setup.MENU_OPTIONS.length>>
+		<<set $menu_screen = 0>>
+	<</if>>
+	<<set _menupos = "#menu"+$menu_screen+" a">>
+	<<trigger 'click' _menupos>>
+<</if>>
+
+:: M press
+/* Defines the function of pressing the M key. */
+
+<<if $muted === true>>
+	<<masteraudio unmute>>
+	<<set $muted = false>>
+	<<replace "#mutebutton">><<include "mute button">><</replace>>
+<<else>>
+	<<masteraudio mute>>
+	<<set $muted = true>>
+	<<replace "#mutebutton">><<include "mute button">><</replace>>
+<</if>>
+
+:: Shift press
+/* Defines the function of pressing the Shift key. */
+
+<<if $inbattle>>
+	<<switch $B.phase>>
+		<<case "targeting">>
+			<<if _targetingEnemy === true>>
+				<<set _targetingEnemy = false>>
+			<<elseif _targetingEnemy === false>>
+				<<set _targetingEnemy = true>>
+			<</if>>
+			<<if $('#target_help').length > 0>>
+				<<replace '#target_help'>>[Hotkeys targeting <<if _targetingEnemy === true>>enemies<<else>>allies<</if>>. Press Shift to switch targets.]<</replace>>
+			<</if>>
+	<</switch>>
+<</if>>
+
 :: hotkey definitions
 <<event keydown>>
 	<<which 81>> /* Q pressed */
-		<<if $inbattle>>
-			<<switch $B.phase>>
-				<<case "command">>
-					<<if $subject !== null>>
-						<<set _id = "#actbtn a">>
-						<<trigger 'click' _id>>
-					<</if>>
-				<<case "actions">>
-					<<if typeof(subject().defaultAction) === "string">>
-						<<set _action = subject().actions.find(function (act) { return act && act.name === subject().defaultAction })>>
-						<<if _action instanceof Action>>
-							<<actionLink>>
-						<</if>>
-					<</if>>
-				<<case "confirm">>
-					<<trigger 'click' "#confirmLink a">>
-				<<case "selection">>
-					/* do nothing */
-				<<default>>
-					<<trigger 'click' "button.macro-button">>
-			<</switch>>
-		<<elseif passage() == "Menu: Inventory" && def _display>>
-			<<set _id = '#button1 button'>>
-			<<trigger 'click' _id>>
-		<</if>>
+		<<include "Q press">>
 	<<which 87>> /* W pressed */
-		<<if $inbattle>>
-			<<run console.log("W handler: inbattle")>>
-			<<switch $B.phase>>
-				<<case "command">>
-					<<if $subject !== null>>
-						<<set _id = "#restbtn a">>
-						<<trigger 'click' _id>>
-					<</if>>
-				<<case "actions">>
-					<<if typeof(subject().lastAction) === "string">>
-						<<set _action = subject().actions.find(function (act) { return act && act.name === subject().lastAction })>>
-						<<if _action instanceof Action>>
-							<<actionLink>>
-						<</if>>
-					<</if>>
-			<</switch>>
-		<<elseif passage() == "Menu: Inventory" && def _display>>
-			<<set _id = '#button2 button'>>
-			<<trigger 'click' _id>>
-		<<elseif !tags().includes("nomenu") && !tags().includes("noreturn")>>
-			<<run console.log("W handler: tags do not include nomenu or noreturn")>>
-			<<set $menu_screen = 0>>
-			<<goto "Menu: Status">>
-		<</if>>
+		<<include "W press">>
 	<<which 69>> /* E pressed */
-		<<if $inbattle>>
-			<<switch $B.phase>>
-				<<case "command">>
-					<<if $subject !== null>>
-						<<set _id = "#itembtn a">>
-						<<trigger 'click' _id>>
-					<</if>>
-				<<case "actions">>
-					<<if document.getElementById("crisisLink")>>
-						<<set _id = "#crisisLink a">>
-						<<trigger 'click' _id>>
-					<</if>>
-				<<case "crisis">>
-					<<set _id = "#regularActions a">>
-					<<trigger 'click' _id>>
-			<</switch>>
-		<</if>>
+		<<include "E press">>
 	<<which 82>> /* R pressed */
-		<<if $inbattle>>
-			<<switch $B.phase>>
-				<<default>>
-					<<if $('#battlebackbtn').length > 0>>
-						<<trigger 'click' '#battlebackbtn a'>>
-					<</if>>
-			<</switch>>
-		<<else>>
-			<<if passage() == "Menu: Status" && def $subject>>
-				<<if document.getElementById("cancelbutton")>>
-					<<set _id = '#cancelbutton button'>>
-					<<trigger 'click' _id>>
-				<<else>>
-					<<trigger 'click' '#toggle a'>>
-				<</if>>
-			<<elseif passage() == "Menu: Equipment" && def _s>>
-				<<trigger 'click' '#toggle a'>>
-			<<elseif passage() == "Menu: Inventory" && document.getElementById("cancelbutton")>>
-				<<set _id = '#cancelbutton button'>>
-				<<trigger 'click' _id>>
-			<<elseif passage() == "Menu: Bestiary" && def _display>>
-				<<trigger 'click' '#toggle a'>>
-			<<else>>
-				<<trigger 'click' '#menu-return a'>>
-			<</if>>
-		<</if>>
+		<<include "R press">>
 	<<which 65>> /* A pressed */
-		<<if $inbattle || passage() == "Menu: Status" && def $subject>>
-			<<trigger 'click' '#statusback a'>>
-		<<elseif passage() == "Menu: Bestiary" && def _display>>
-			<<trigger 'click' '#lastentry a'>>
-		<<else>>
-			<<set $menu_screen-->>
-			<<if $menu_screen < 0>>
-				<<set $menu_screen = setup.MENU_OPTIONS.length-1>>
-			<</if>>
-			<<set _menupos = "#menu"+$menu_screen+" a">>
-			<<trigger 'click' _menupos>>
-		<</if>>
+		<<include "A press">>
 	<<which 68>> /* D pressed */
-		<<if $inbattle || passage() == "Menu: Status" && def $subject>>
-			<<trigger 'click' '#statusforward a'>>
-		<<elseif passage() == "Menu: Bestiary" && def _display>>
-			<<trigger 'click' '#nextentry a'>>
-		<<else>>
-			<<set $menu_screen++>>
-			<<if $menu_screen >= setup.MENU_OPTIONS.length>>
-				<<set $menu_screen = 0>>
-			<</if>>
-			<<set _menupos = "#menu"+$menu_screen+" a">>
-			<<trigger 'click' _menupos>>
-		<</if>>
+		<<include "D press">>
 	<<which 49>> /* 1 pressed */
 		<<numKey 0>>
 	<<which 50>> /* 2 pressed */
@@ -143,29 +201,9 @@
 	<<which 48>> /* 0 pressed */
 		<<numKey 9>>
 	<<which 16>> /* Shift pressed */
-		<<if $inbattle>>
-			<<switch $B.phase>>
-				<<case "targeting">>
-					<<if _targetingEnemy === true>>
-						<<set _targetingEnemy = false>>
-					<<elseif _targetingEnemy === false>>
-						<<set _targetingEnemy = true>>
-					<</if>>
-					<<if $('#target_help').length > 0>>
-						<<replace '#target_help'>>[Hotkeys targeting <<if _targetingEnemy === true>>enemies<<else>>allies<</if>>. Press Shift to switch targets.]<</replace>>
-					<</if>>
-			<</switch>>
-		<</if>>
+		<<include "Shift press">>
 	<<which 77>> /* M pressed */
-		<<if $muted === true>>
-			<<masteraudio unmute>>
-			<<set $muted = false>>
-			<<replace "#mutebutton">><<include "mute button">><</replace>>
-		<<else>>
-			<<masteraudio mute>>
-			<<set $muted = true>>
-			<<replace "#mutebutton">><<include "mute button">><</replace>>
-		<</if>>
+		<<include "M press">>
 <</event>>
 
 :: Widget: numKey [widget nobr]

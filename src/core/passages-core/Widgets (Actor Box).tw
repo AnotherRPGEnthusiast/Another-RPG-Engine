@@ -36,6 +36,9 @@
 
 /* determine container class; customized by arg 1, defaults to "actor" */
 <<set _class = "actor ">>
+<<if _actor.large>>
+  <<set _class += "large ">>
+<</if>>
 <<if $args.length > 1 && typeof($args[1]) == "string">>
   <<set _class += $args[1]>>
 <</if>>
@@ -120,7 +123,7 @@
 	/* For Puppets in the selection phase, their name becomes a link that sets them as the subject and allows the player to select their commands. */
 	<<capture _idx, _actor>>
 	<<link "_actor.name">>
-    <<run $.event.trigger(":puppet-selected")>>
+    <<run $(document).trigger(":puppet-selected")>>
 		<<set $subject = _actor>>
 		<<set $B.phase = "command">>
 		<<if setup.BATTLE_GRID === true>>
@@ -138,7 +141,7 @@
 		/* If valid target, turn name into a link that assigns actor to the target variable, unsets the targeting varaible, and forwards the player to the next phase. We must also assign the ID variable determined earlier to a wrapper element to facilitate hotkey targeting. */
 		<<capture _actor, _idx>>
     <<set _link = `<<link "_actor.fullname">>
-        <<run $.event.trigger(":target-selected")>>
+        <<run $(document).trigger(":target-selected")>>
   			<<set $target = _actor; $B.targeting = null>>
   			<<replace "#phase">><<include "confirm phase">><</replace>>
   		<</link>>`>>

@@ -307,9 +307,12 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 
 	return function () {
 
-//	console.log("massAttack after inner function call, arguments:"); console.log(args);
+	//	console.log("massAttack after inner function call, arguments:"); console.log(args);
 	if (args.target === undefined) {
-		args.target = action().area;
+		args.target = "enemies";
+	}
+	if (args.type === undefined) {
+		args.type = action().area;
 	}
 	var content = args.content;
 	if (args.content === undefined) {

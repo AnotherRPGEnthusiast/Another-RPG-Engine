@@ -50,6 +50,7 @@
 	overflow: hidden;
 	background-color: white;
 	color: black;
+  z-index: 100;
 }
 
 .actionDisplay {

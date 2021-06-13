@@ -466,7 +466,7 @@ The holy grail of this method is probably to make effect damage use the exact sa
 <h3 id="effects.dot">Damage Over Time</h3>
 Damage-over-time effects inflict damage at certain intervals, typically the start or end of a character's turn. This is one of the simplest effects conceptually, but one of the most complex to actually design.
 
-The first question you want to ask is: how much damage? There are a lot of methods you can use, discussed in [[the code section|Documentation]].
+The first question you want to ask is: how much damage? There are a lot of methods you can use, discussed in [[the code section|Documentation (Advanced)]].
 
 Most RPGs use <b>proportional</b> damage, meaning that the effect inflicts a portion of max HP (usually 1/8th). This kind of damage affects everyone equally: everyone will go down in the same number of turns, no matter how much HP they have. This levels the playing field between tough and fragile characters, because you can't mitigate damage-over-time with more HP like you can with regular attacks. This may be a problem if you want a game with a heavy tanking and defensive focus where that distinction is supposed to matter; or you could purposefully use it as a special case to turn those rules on their heads.
 

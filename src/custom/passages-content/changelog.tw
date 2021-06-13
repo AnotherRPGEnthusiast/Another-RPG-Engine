@@ -1,11 +1,24 @@
 :: Changelog[text]
 Version 3.04
 <ul>
-<li>New <code>Actor</code> property: <code>position</code>. When invoked, it returns the character's cell in the grid; when set, it adjusts their <code>row</code> and <code>col</code> values and swaps the contents of the destination cell.</li>
-<ul><li>Movement code has been simplified to take advantage of this property.</li></ul>
+<li>New <code>Actor</code> properties:</li>
+<ul><li><code>position</code>: When invoked, it returns the character's cell in the grid; when set, it adjusts their <code>row</code> and <code>col</code> values and swaps the contents of the destination cell.</li>
+<li><code>loadBearing</code>: Boolean. If a load-bearing character is defeated, the battle ends regardless of the state of their team members.</li>
+<li><code>uncounted</code>: Boolean. Uncounted characters are not counted towards the victory and defeat counters, and do not need to be defeated to end an encounter.</li>
+<li><code>hasEffect</code>: Returns Boolean based on if the character has the named effect. Can also test for multiple effects by passing an array (but will return <code>true</code> if the actor has <i>any</i> of the named effects).</li></ul>
+<li>Movement code has been simplified to take advantage of the <code>position</code> property.</li>
+<li>Victory handler code has been tweaked; instead of instantly moving to victory or defeat screens if their conditions are met, they are added to a <code>_destinationQueue</code> variable. After all the code is done, the player will be forwarded to the first element in <code>_destinationQueue</code> if one exists. This should avoid issues with <code>goto</code> pileups.</li>
+<ul><li>Special deaths are also added to this queue, and will now take priority over the standard victory destinations.</li></ul>
 <li><code>pushAttack</code> should now work with the new battle grid code.</li>
 <li>The code for displaying the actor box container has now been compartmentalized into a passage, <code>Actor Box Container</code>, if customization without changing the surrounding actor box code is desired.</li>
 <li>Enemies now have setters for <code>xp</code> and <code>gp</code> properties.</li>
+<li>The code for the <code>Bestiary</code> class has been split into a separate file.</li>
+<li>The code for battle widgets and setup has been split into a separate file, <code>Battle Setup.tw</code>.</li>
+<li>The code for each hotkey has been compartmentalized into its own passage for greater modularity.</li>
+<li>Adjusted the code for <code>healCalc</code> to make use of an action's <code>formula</code> property, if it has one, as well as compartmentalizing the default healing formula into a separate passage.</li>
+<li>The action info popup now has a high z-index value, preventing it from being obscured by other page elements.</li>
+<li>Added a new targeting parameter, "no effect". If included, the action will preferentially target characters that don't already have any of the action's effects (as specified in the <code>effects</code> property). This parameter is present for both ally and enemy targeting.</li>
+<li><code>addEffect</code> now records whether the effect was applied (and what blocked it, if not) as a property, <code>effectApplied</code>, of the calling <code>Actor</code> object. <code>effectApplied</code> is an object with effect names as keys and return values from <code>testEffect</code> as values.</li>
 <li>Added event triggers on several common battle functions, in case you want to tie special events to them. Current events are:</li>
 <ul><li><code>:puppet-selected</code>: triggered on puppet selection</li>
 <li><code>:act-selected</code>, <code>:rest-selected</code>, <code>:item-selected</code>, and <code>:move-selected</code>: triggered on selection of the respective command</li>

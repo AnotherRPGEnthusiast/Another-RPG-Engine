@@ -137,7 +137,7 @@
 :: Widget: move command[widget nobr]
 <<widget "move">>
 <<link "Move">>
-  <<run $.event.trigger(":move-selected")>>
+  <<run $(document).trigger(":move-selected")>>
   <<set $B.phase = "move">>
   <<replace "#puppets">><<include "actorlist puppets">><</replace>>
   <<replace "#phase">><<include "movement phase">><</replace>>
