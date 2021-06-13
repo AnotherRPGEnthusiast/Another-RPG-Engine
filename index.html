@@ -17144,26 +17144,15 @@ window.Hitlist = class Hitlist extends Array {
 		//	For use with the battle grid. Checks if the target is guarded by a frontline character.
 		//	By default, this check is bypassed by ranged attacks and friendly fire.
 
-		console.log("guardCheck running");
 		if (setup.BATTLE_GRID === true
 			&& !V().action.ranged
 			&& (subject().id.charAt(0) !== target.id.charAt(0))) {
 
 			console.assert(target instanceof Actor,`ERROR in guardCheck: target must be Actor`);
 			var newTarget = target;
-			console.log("battle grid enabled, main check running");
 
-			var party;
-			switch (target.id.charAt(0)) {
-				case 'p':
-					party = V().puppets;
-					break;
-				case 'e':
-					party = V().enemies;
-					break;
-			}
 			// Search for character immediately in front of this one (same column, row - 1)
-			newTarget = party.find(function (a) { return a && a.col === this.col && a.row === this.row - 1 },this);
+			newTarget = target.ownParty.find(function (a) { return a && a.col === this.col && a.row === this.row - 1 },target);
 			if (newTarget instanceof Actor && !newTarget.guardBreak) {
 				newTarget = Hitlist.guardCheck(newTarget); // Run again to test if the new target is in turn guarded by a front row character
 			} else {
@@ -25514,45 +25503,94 @@ Savvy readers may notice at this point that we haven&#39;t set any dimensions (r
 &lt;&lt;if setup.BATTLE_GRID === true&gt;&gt;
 	&lt;&lt;set setup.ROW_SIZE = 3&gt;&gt;
 	&lt;&lt;set setup.COLUMN_SIZE = 3&gt;&gt;
-	&lt;&lt;set setup.PARTY_SIZE = setup.ROW_SIZE * setup.COLUMN_SIZE&gt;&gt;
 	&lt;&lt;set setup.STATUS_SCREENS.menu.push(&quot;Formation&quot;)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 }}}
 When you enable the battle grid, you also need to define the length of your rows and columns. By default, that&#39;s set to 3 each, the maximum width that can fit comfortably in the default display. These variables will be used for several functions relating to the grid, including the construction of the grid itself.
 
+The next step is to create a representation of our grid as a data structure. This will be a two-dimensional array with elements corresponding to each cell in the grid. This is defined as &quot;battle grid setup&quot; in the {{{Battle Grid.tw}}} file.
+{{{
+&lt;&lt;set $puppetGrid = []&gt;&gt;
+&lt;&lt;for _r = 0; _r &lt; setup.COLUMN_SIZE; _r++&gt;&gt;
+    &lt;&lt;set _row to []&gt;&gt;
+    &lt;&lt;for _c to 0; _c &lt; setup.ROW_SIZE; _c++&gt;&gt;
+        /* Create the object used to store the default properties of a map cell. */
+        &lt;&lt;set _cell to {
+            id: (&quot;cell_r&quot; + _r + &quot;_c&quot; + _c),
+            contents: null,
+            movement: []
+        }&gt;&gt;
+        &lt;&lt;run _row.push(_cell)&gt;&gt;
+    &lt;&lt;/for&gt;&gt;
+    &lt;&lt;run $puppetGrid.push(_row)&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;&lt;for _puppet range puppets()&gt;&gt;
+  &lt;&lt;set $puppetGrid[_puppet.row-1][_puppet.col-1].contents = _puppet&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;&lt;set $enemyGrid = []&gt;&gt;
+&lt;&lt;for _r = 0; _r &lt; setup.COLUMN_SIZE; _r++&gt;&gt;
+    &lt;&lt;set _row to []&gt;&gt;
+    &lt;&lt;for _c to 0; _c &lt; setup.ROW_SIZE; _c++&gt;&gt;
+        /* Create the object used to store the default properties of a map cell. */
+        &lt;&lt;set _cell to {
+            id: (&quot;cell_r&quot; + _r + &quot;_c&quot; + _c),
+            contents: null,
+            movement: []
+        }&gt;&gt;
+        &lt;&lt;run _row.push(_cell)&gt;&gt;
+    &lt;&lt;/for&gt;&gt;
+    &lt;&lt;run $enemyGrid.push(_row)&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+&lt;&lt;for _enemy range enemies()&gt;&gt;
+  &lt;&lt;set $enemyGrid[_enemy.row-1][_enemy.col-1].contents = _enemy&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+}}}
+We must create two grids, one for the puppets and one for the enemies. Each cell is populated with additional metadata, and each character is assigned to the {{{contents}}} property of the cell determined by their {{{row}}} and {{{col}}} values, which we have hopefully set before the battle.
+
 Let&#39;s look at how to set up the grid in {{{actorlist}}}.
 {{{
-&lt;div @class=_enemiesClass&gt;
-&lt;&lt;if _enemy !== null&gt;&gt;
-	(...)
+&lt;&lt;if setup.BATTLE_GRID === true&gt;&gt;
+	&lt;&lt;include &quot;grid actorlist enemies&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
-	/* no content; empty actor box */
-&lt;&lt;/if&gt;&gt;
-&lt;/div&gt;
+	(...)
 }}}
-Everything we learned about populating the actor boxes in [[Documentation|Documentation (Advanced)]] happens within the first branch, {{{if _enemy !== null}}}. Else, if the character &lt;i&gt;is&lt;/i&gt; {{{null}}}, we do nothing: we leave the box empty. Because we still wrapped this tree in a {{{div class=&quot;actor&quot;}}}, the actor box will still generate and be slotted into the grid, but it will be blank, representing an empty tile.
+Every section in {{{actorlist}}} includes this branch to split the functionality of the passage into grid and non-grid sections. The grid sections are defined in {{{Battle Grid.tw}}}, and look like this:
+{{{
+&lt;&lt;for _r, _row range $enemyGrid&gt;&gt;
+	&lt;&lt;for _c, _cell range _row&gt;&gt;
+		&lt;&lt;if _cell.contents instanceof Actor&gt;&gt;
+			&lt;&lt;actorBox _cell.contents&gt;&gt;
+		&lt;&lt;else&gt;&gt;
+			&lt;div class=&quot;actor grid flex-center empty&quot;&gt;
+				/* no content; empty box */
+			&lt;/div&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+&lt;&lt;/for&gt;&gt;
+}}}
+This code iterates over the grid object (rather than the party, as in the normal {{{actorlist}}}) and creates an actor box whenever it detects the cell is populated with an {{{Actor}}} object. Otherwise, we display an empty box with the {{{empty}}} class to denote a blank tile.
 
-In other words, &lt;b&gt;we use {{{null}}} entries in party arrays to denote unoccupied tiles in the battle grid. This means you must include empty tiles as well as characters to the party arrays.&lt;/b&gt; This is done to maintain a consistent size for the battle grid, enforced by the {{{PARTY_SIZE}}} variable.
-
-Note that &lt;b&gt;{{{null}}} values do not have properties and will generate an error if you try to read them as if they are objects&lt;/b&gt;, so you must be careful to filter or provide handlers for {{{null}}} entries every time you iterate over a party array. This is the purpose of the {{{enemies()}}} and {{{puppets()}}} functions, which return their respective party arrays with {{{null}}} entries excluded.
+Now that all the elements exist, we still need to make sure they appear in the right position. By default, CSS grids will populate themselves in the order elements are created, left to right and top to bottom. That won&#39;t necessarily correspond to where the characters are supposed to be, so to make sure of that, we include this code in {{{actorBox}}}:
+{{{
+&lt;&lt;set _style = &quot;&quot;&gt;&gt;
+&lt;&lt;if setup.BATTLE_GRID === true&gt;&gt;
+  &lt;&lt;set _class += &quot; grid&quot;&gt;&gt;
+  &lt;&lt;set _style += _actor.gridArea&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+}}}
+{{{gridArea}}} is an {{{Actor}}} property that returns the CSS property {{{grid-area}}} with the relevant row and column values taken from the character&#39;s {{{row}}} and {{{col}}} properties. This ensures the character will appear exactly where we want them to.
 
 ...But we still haven&#39;t defined our grid dimensions! That comes at the end of the passage, here:
 {{{
 &lt;&lt;timed 0s&gt;&gt;
 	&lt;&lt;script&gt;&gt;
-	$(&quot;#puppets.actors.grid&quot;).css({
+	$(&quot;#enemies .actors.grid&quot;).css({
 	  &quot;grid-template-columns&quot;: `repeat(${setup.ROW_SIZE},1fr)`
 	});
 	&lt;&lt;/script&gt;&gt;
 &lt;&lt;/timed&gt;&gt;
 }}}
 This code runs raw JavaScript code. This code finds the {{{actors}}} container using jQuery, then modifies its {{{grid-template-columns}}} attribute to define a number of equally-spaced columns equal to {{{ROW_SIZE}}}. (We have to place it in the seemingly-pointless {{{&lt;&lt;timed 0s&gt;&gt;}}} macro because elements do not exist on the page untill all code has run and the passage has finished rendering. If we tried executing this code outside of a {{{&lt;&lt;timed&gt;&gt;}}}, it would tell use the element doesn&#39;t exist. But code within {{{&lt;&lt;timed&gt;&gt;}}} blocks execute after the passage has rendered, so with a delay of 0 we can use them to instantly modify an element on the page just after it&#39;s rendered. See &lt;a href=&quot;http://www.motoslave.net/sugarcube/2/docs/#macros-dom-warning&quot; target=&quot;_blank&quot;&gt;the SugarCube documentation&lt;/a&gt; for more info.)
-
-Note that the selector specifically only targets elements with the {{{grid}}} class, so this code won&#39;t do anything if the battle grid isn&#39;t enabled. For efficiency, though, we still wrap it in a check that only executes if {{{BATTLE_GRID}}} is enabled.
-{{{
-&lt;&lt;run reverseChildren(document.getElementById(&quot;enemies&quot;))&gt;&gt;
-}}}
-Enemies require an additional step. The grids here are populated according to the automatic fill rules, which means their tiles will be populated left to right, then top to bottom. This works great for the player&#39;s party... but the standard battle interface is designed to look like the enemy party mirrors the player. The enemies should therefore fill the grid bottom to top, with the front row on the bottom and the backmost row on the top. That&#39;s the purpose of this {{{reverseChildren}}} function, defined in {{{1_support-functions.js}}}. It will completely reverse the appearance of the enemy grid, with the 0th-indexed enemy appearing in the bottom-right and the nth-indexed enemy appearing in the top-left.
 
 In effect, most of the work has been done for you here. You only need to plug in values for {{{ROW_SIZE}}} and {{{COLUMN_SIZE}}}, and extend the width of {{{#content}}} if you want wider battle grids... &lt;i&gt;if&lt;/i&gt; you restrict yourself to perfectly rectangular battle grids. If you want an uneven grid with protrusions or holes, that&#39;s going to take more work. You will likely need to define both a custom grid and custom placement for your actors (via the {{{grid-rows}}} and {{{grid-columns}}} attributes).
 
@@ -25561,60 +25599,48 @@ For more information on how to use grids, see &lt;a href=&quot;https://css-trick
 &lt;h3 id=&quot;battlegrid.2&quot;&gt;Features&lt;/h3&gt;
 So now that we have our grid, how do we use it for gameplay?
 
-You can potentially use the grid for a lot of things. By default, the only thing it does is allow characters in higher rows to guard lower ones.
+You can potentially use the grid for a lot of things. By default, the only thing it does is allow characters in higher rows to guard lower ones. The code for this can be found in the {{{Hitlist}}} class definition in {{{targeting.js}}}.
 {{{
-window.guardCheck = function guardCheck (index) {
-	if (index &lt; 0 || index &gt;= V().enemies.length) {
-		console.log(&quot;ERROR in guardCheck: index out of bounds&quot;);
-		index = Math.clamp(index,0,V().enemies.length-1);
-	}
-	if (setup.BATTLE_GRID != true) {
-		return true;
-	}
-	else if (index &gt;= setup.ROW_SIZE &amp;&amp; V().enemies[index-setup.ROW_SIZE] !== null &amp;&amp; !V().enemies[index-setup.ROW_SIZE].dead) {
-		// Guarded by character in next row up, cannot be targeted
-		return false;
-	}
-	else if (index &gt;= setup.ROW_SIZE * 2) {
-		// No immediate guard (previous check failed), but not in front two rows, so another guard is possible. Move up a row and check again.
-		return guardCheck(index-setup.ROW_SIZE);
-	}
-	else {
-		return true;
+static guardCheck (target) {
+	if (setup.BATTLE_GRID === true
+		&amp;&amp; !V().action.ranged
+		&amp;&amp; (subject().id.charAt(0) !== target.id.charAt(0))) {
+
+		console.assert(target instanceof Actor,`ERROR in guardCheck: target must be Actor`);
+		var newTarget = target;
+
+		// Search for character immediately in front of this one (same column, row - 1)
+		newTarget = target.ownParty.find(function (a) { return a &amp;&amp; a.col === this.col &amp;&amp; a.row === this.row - 1 },target);
+		if (newTarget instanceof Actor &amp;&amp; !newTarget.guardBreak) {
+			newTarget = Hitlist.guardCheck(newTarget);
+		} else {
+			newTarget = target;
+		}
+		return newTarget;
+	} else {
+		return target;
 	}
 }
 }}}
-This function, defined in {{{1_support-functions.js}}}, runs that logic for us. Pass it the index value of an enemy, and it will check to see if there&#39;s a live enemy in the next row. If there is, we return {{{false}}} to show that this enemy is guarded; otherwise, we move up a row and check again; and if there&#39;s still no guard, we return {{{true}}}. (And if this function is called with the battle grid inactive, we just always return {{{true}}}.)
+This function takes the target object, and checks to see if there&#39;s any character directly in front of them (same column position, row position minus one). If there&#39;s no such character, the function will return {{{undefined}}}, and we&#39;ll know that we can just continue with the original target. If we &lt;i&gt;do&lt;/i&gt; find a guarding character, we need to reassign them as the new target (provided they don&#39;t have the {{{guardBreak}}} attribute).
+
+&lt;i&gt;But wait!&lt;/i&gt; What if that guarding character is, in turn, guarded by &lt;i&gt;another&lt;/i&gt; character in the next row up? To account for that, we have to call {{{guardCheck}}} &lt;i&gt;again&lt;/i&gt; on the new target. This technique -- calling the same function within itself -- is called &lt;i&gt;recursion&lt;/i&gt; in programming, and allows us to perform iterative logic similarly to loops. Just like loops, we have to be careful not to create infinite recursions -- in this case, that is handled by the fact we will eventually run out of rows, at which point we are guaranteed to return a fixed value and end the recursion chain.
+
+{{{guardCheck}}} is run both in the default targeting logic and when determining valid targets in the targeting phase.
 {{{
-&lt;&lt;if (!_martyr || _enemy.martyr) &amp;&amp; (_enemy.martyr || !_enemy.untargetable) &amp;&amp; ($action.ranged || guardCheck(_i))&gt;&gt;
-}}}
-You can see here (in {{{actorlist enemies}}}) that this function is used in the targeting phase. The enemy must pass the {{{guardCheck}}} for their name to be targetable -- though the check can be bypassed with a ranged attack.
-{{{
-&lt;&lt;widget &quot;guardCheck&quot;&gt;&gt;
-&lt;&lt;set _index = _party.indexOf(target())&gt;&gt;
-&lt;&lt;if _index &gt;= setup.ROW_SIZE &amp;&amp; _party[_index-setup.ROW_SIZE] !== null &amp;&amp; !_party[_index-setup.ROW_SIZE].dead&gt;&gt;
-	&lt;&lt;set $target = _party[_index-setup.ROW_SIZE]&gt;&gt;
-&lt;&lt;elseif _index &gt;= setup.ROW_SIZE * 2&gt;&gt;
-	&lt;&lt;set $target = _party[_index-setup.ROW_SIZE]&gt;&gt;
-	&lt;&lt;guardCheck&gt;&gt; /* Run again to test if the new mid-row target is in turn guarded by a front row character */
-&lt;&lt;/if&gt;&gt;
-&lt;&lt;/widget&gt;&gt;
-}}}
-We run analagous code in the targeting widget. The difference here is that the check can be run on any party, and we set a new target instead of returning {{{false}}}.
-{{{
-&lt;&lt;elseif _puppet === null&gt;&gt;
-	&lt;&lt;if $B.phase == &quot;move&quot;&gt;&gt;
-	&lt;div style=&quot;display: flex;  justify-content: center;  align-items: center; height: -webkit-fill-available&quot;&gt;
-	&lt;&lt;link &quot;[MOVE]&quot;&gt;&gt;
-		&lt;&lt;set _m = $puppets.indexOf($subject)&gt;&gt;
-		&lt;&lt;set $puppets[_i] = $subject; $puppets[_m] = _puppet&gt;&gt;
-		&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;actorlist puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
-	&lt;&lt;/link&gt;&gt;
+&lt;&lt;if _cell.contents instanceof Actor&gt;&gt;
+	&lt;&lt;actorBox _cell.contents&gt;&gt;
+&lt;&lt;elseif $B.phase == &quot;move&quot; &amp;&amp; def $subject&gt;&gt;
+	&lt;div class=&quot;actor grid flex-center empty&quot;&gt;
+		&lt;&lt;capture _r, _c, _cell&gt;&gt;
+		&lt;&lt;link &quot;[MOVE]&quot;&gt;&gt;
+			&lt;&lt;set &lt;&lt;set $subject.position = [_r+1,_c+1]&gt;&gt;
+			&lt;&lt;replace &quot;#puppets&quot;&gt;&gt;&lt;&lt;include &quot;actorlist puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;/link&gt;&gt;
+		&lt;&lt;/capture&gt;&gt;
 	&lt;/div&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;
 }}}
-We also want a way to move our characters around on the battle grid. That happens here, in the final branch of {{{actorlist puppets}}}. If the {{{phase}}} of the battle is &quot;move&quot;, empty tiles will generate a link that moves the selected puppet to that tile, and replaced their existing tile with a null. By default, this doesn&#39;t take up an action; players can move around all they want during their turn.
+We also want a way to move our characters around on the battle grid. That happens here, in a branch of {{{grid actorlist puppets}}}. If the {{{phase}}} of the battle is &quot;move&quot;, empty tiles will generate a link that moves the selected puppet to that tile, and replaced their existing tile with a null. By default, this doesn&#39;t take up an action; players can move around all they want during their turn.
 
 There are also additional action functions that interact with the grid, {{{massAttack}}} and {{{pushAttack}}}. The former can target small portions of the grid (rows, columns, or a + shape), and the latter can forcibly move characters around the grid.
 
@@ -27441,7 +27467,7 @@ The holy grail of this method is probably to make effect damage use the exact sa
 &lt;h3 id=&quot;effects.dot&quot;&gt;Damage Over Time&lt;/h3&gt;
 Damage-over-time effects inflict damage at certain intervals, typically the start or end of a character&#39;s turn. This is one of the simplest effects conceptually, but one of the most complex to actually design.
 
-The first question you want to ask is: how much damage? There are a lot of methods you can use, discussed in [[the code section|Documentation]].
+The first question you want to ask is: how much damage? There are a lot of methods you can use, discussed in [[the code section|Documentation (Advanced)]].
 
 Most RPGs use &lt;b&gt;proportional&lt;/b&gt; damage, meaning that the effect inflicts a portion of max HP (usually 1/8th). This kind of damage affects everyone equally: everyone will go down in the same number of turns, no matter how much HP they have. This levels the playing field between tough and fragile characters, because you can&#39;t mitigate damage-over-time with more HP like you can with regular attacks. This may be a problem if you want a game with a heavy tanking and defensive focus where that distinction is supposed to matter; or you could purposefully use it as a special case to turn those rules on their heads.
 
@@ -27531,6 +27557,7 @@ This introduction will teach you how to add content to the default engine settin
 &gt;&lt;a href=&quot;#databases&quot;&gt;Objects, Classes, and Databases&lt;/a&gt;
 &gt;&lt;a href=&quot;#data.puppets&quot;&gt;Creating Puppets&lt;/a&gt;
 &gt;&lt;a href=&quot;#data.actions&quot;&gt;Creating Actions&lt;/a&gt;
+&gt;&gt;&lt;a href=&quot;#actions.targeting&quot;&gt;Targeting Logic&lt;/a&gt;
 &gt;&lt;a href=&quot;#data.effects&quot;&gt;Creating Effects&lt;/a&gt;
 &gt;&lt;a href=&quot;#data.items&quot;&gt;Creating Items&lt;/a&gt;
 &gt;&lt;a href=&quot;#data.enemies&quot;&gt;Creating Enemies&lt;/a&gt;
