@@ -17467,7 +17467,7 @@ Config.saves.isAllowed = function () {
 };
 // This will disallow saving in battle. This is probably a good idea, but make sure you keep track of your inbattle variable so you don't accidentally prevent people from saving in the main story.
 
-setup.version = "3.04";
+setup.version = "3.04.1";
 
 Config.saves.version = 0;
 // Records a version number for saves. Update this when you update your version. This is helpful for updating saves from older versions.
@@ -34616,7 +34616,7 @@ divisive: (base * (a.get(&quot;Attack&quot;)/b.get(&quot;Defense&quot;))) * weig
 	&lt;&lt;set setup.STATUS_SCREENS.battle.push(&quot;aggression&quot;)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;set setup.BATTLE_GRID = true&gt;&gt;
+/* &lt;&lt;set setup.BATTLE_GRID = true&gt;&gt; */
 
 &lt;&lt;if setup.BATTLE_GRID === true&gt;&gt;
 	&lt;&lt;set setup.ROW_SIZE = 3&gt;&gt;
