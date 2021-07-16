@@ -630,10 +630,10 @@ setup.effectData = {
     "sticky": true,
     "ULTIMATESTICKY": true,
     "onApply": function (puppet) {
-      puppet.guarded = true;
+      puppet.areaImmune = true;
     },
     "onRemove": function (puppet) {
-      puppet.guarded = false;
+      puppet.areaImmune = false;
     },
     "info": function (effect) {
       return `Protected from direct attacks; out of reach of area attacks.`;

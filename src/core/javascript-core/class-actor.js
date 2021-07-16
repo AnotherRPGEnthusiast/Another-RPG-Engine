@@ -511,15 +511,18 @@ window.Actor = class Actor {
 
 	// EQUIPMENT FUNCTIONS
 
-	unequip (slot,index,mods) {
-		mods = (mods || {});
-		index = (index || 0);
+	unequip (slot,index = 0,mods = {}) {
 		console.assert(typeof(slot) == "string",`ERROR in unequip: slot must be string`);
-		console.assert(Number.isInteger(index),"ERROR in unequip: index must be integer");
+		console.assert(Number.isInteger(index) && index >= 0,"ERROR in unequip: index must be whole integer");
 		console.assert(this.equipment.has(slot),`ERROR in unequip: attempted to unequip nonexistent slot`);
 
 		var item = this.equipment.get(slot)[index];
-		if (item !== null && (!item.sticky || mods.unsticky === true)){
+		if (item instanceof Filler) {
+			console.log(this.equipment.values());
+			var multislot = Array.from(this.equipment.values()).flat().find(function (i) { return (i instanceof Item) && i.id === item.id });
+			this.unequip(Array.from(multislot.equippable.slot)[0]);
+		}
+		else if (item !== null && (!item.sticky || mods.unsticky === true)){
 			if (item.default === undefined && mods.destroy !== true) {
 				inv().addItem(item.id);
 			}
@@ -527,8 +530,22 @@ window.Actor = class Actor {
 				item.onRemove(this);
 			}
 			this.equipment.get(slot)[index] = null;
-			// If your system always has to read something in an equipment slot, such as if you wish to calculate equipment effects through a call function or iterator, replace the above line with the one below. Remember to define default equipment in the items database.
-			//this.equipment.set(slot,new Item("Default "+slot));
+
+			// If your system always has to read something in an equipment slot, such as if you wish to calculate equipment effects through a call function or iterator, define default item names in DEFAULT_EQUIPMENT. Remember to define default equipment in the items database.
+			if (typeof(setup.DEFAULT_EQUIPMENT) === "object") {
+				console.assert(typeof(setup.DEFAULT_EQUIPMENT[slot]) === "string","ERROR in unequip: no default equipment specified for "+slot);
+				this.equipment.get(slot)[index] = new Item(setup.DEFAULT_EQUIPMENT[slot]);
+			}
+
+			if (item.equippable.slot instanceof Set) {
+				// If item was equipped to multiple slots, we have to clear all the other slots it covered.
+				for (let slotName of item.equippable.slot) {
+					var pos = this.equipment.get(slotName);
+					for (let i = 0; i < pos.length; i++) {
+						pos[i] = null;
+					}
+				}
+			}
 		}
 	}
 
@@ -543,26 +560,43 @@ window.Actor = class Actor {
 	equip (item) {
 		// To equip an item, we also have to de-equip the existing item and return it to the inventory (unless you want players to lose replaced equipment). This function checks that the equipment slot exists and that it's filled by something. If it is, the current equipment is extracted and added to the inventory before we set the new equipment.
 		// If the item has any special equipment functionality, such as modifying stats, its onEquip function is passed the actor to modify.
-		console.assert(this.equipment.has(item.equippable.slot),"ERROR in equip: Equipment type not recognized");
-		var slot = this.equipment.get(item.equippable.slot);
-		var existing = null;
-		var subslot = -1;
-		// Run over the equipment subslots and find the first one that is empty (contains null)
-		for (let i = 0; i < slot.length; i++) {
-			if (slot[i] === null) {
-				subslot = i;
-				break;
+		console.assert(typeof(item.equippable) == "object","ERROR in equip: Item has no equippable property");
+		if (item.equippable.slot instanceof Set) {
+			var slotList = item.equippable.slot;
+			for (let slot of slotList) {
+				console.assert(this.equipment.has(slot),"ERROR in equip: Equipment type not recognized");
 			}
-		}
-		// If no empty subslot found (still -1), all subslots are occupied. Grab the item in the last subslot so we can unequip it.
-		if (subslot === -1) {
-			subslot = slot.length-1;
-			existing = slot[subslot];
-		}
-		// If an item is already equipped in this slot, unequip it.
-		if (existing !== null) this.unequip(item.equippable.slot,subslot);
+			for (let [s,slot] of Array.from(slotList).entries()) {
+				var pos = this.equipment.get(slot);
+				for (let i = 0; i < pos.length; i++) {
+					this.unequip(slot,i);
+					pos[i] = (s > 0 || i > 0) ? new Filler(item.id) : item;
+				}
+			}
+		} else {
+			console.assert(this.equipment.has(item.equippable.slot),"ERROR in equip: Equipment type not recognized");
+			var slot = this.equipment.get(item.equippable.slot);
+			var existing = null;
+			var subslot = -1;
+			// Run over the equipment subslots and find the first one that is empty (contains null)
+			for (let i = 0; i < slot.length; i++) {
+				if (slot[i] === null) {
+					subslot = i;
+					break;
+				}
+			}
+			// If no empty subslot found (still -1), all subslots are occupied. Grab the item in the last subslot so we can unequip it.
+			if (subslot === -1) {
+				subslot = slot.length-1;
+				existing = slot[subslot];
+			}
+			// If an item is already equipped in this slot, unequip it.
+			if (existing !== null) this.unequip(item.equippable.slot,subslot);
 
-		slot[subslot] = item;
+			// Assign the item to the slot.
+			slot[subslot] = item;
+		}
+
 		if (item.onEquip !== undefined){
 			item.onEquip(this);
 		}
@@ -724,6 +758,35 @@ window.Actor = class Actor {
 		//	By default, dead characters will automatically return true.
 
 		return (this.dead || this.effects.find(function(eff) { return eff && eff.guardBreak }));
+	}
+
+	get guarded () {
+		//	Boolean. Returns true if guardCheck returns a different target, and false otherwise.
+
+		var newTarget = Hitlist.guardCheck(this);
+		return newTarget === this ? false : true;
+	}
+
+	numAdjacent (area) {
+		//	Integer. Returns the number of OTHER characters in the group specified; does not include calling character
+		//	area: string; corresponds to one of the AoE types
+		console.assert(typeof(area) === "string",`ERROR in numAdjacent: area must be string`);
+
+		switch (area) {
+			case 'col':
+			case 'column':
+				return this.ownParty.filter(function (a) { return a && a.id !== this.id && a.col === this.col }).length;
+			case 'row':
+				return this.ownParty.filter(function (a) { return a && a.id !== this.id && a.row === this.row }).length;
+			case '+':
+			case 'adjacent':
+				return this.ownParty.filter(function (a) { return a && a.id === target().id && (
+					(a.col === target().col && (a.row === target().row + 1 || a.row === target().row - 1)) ||
+					(a.row === target().row && (a.col === target().col + 1 || a.col === target().col - 1))
+				)}).length;
+			default:
+				return 0;
+		}
 	}
 
 	// MISCELLANEOUS

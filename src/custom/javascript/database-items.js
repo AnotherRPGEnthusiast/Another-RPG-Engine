@@ -285,5 +285,17 @@ setup.itemData = {
 		"info": function (item) {
 			return (item.known) ? "CURSED | ATK -1" : "It's a mystery!";
 		}
+	},
+
+	"Zweihander": {
+		"equippable": {slot: new Set(["Weapon","Armor"]), restrictedTo: []},
+		"onEquip": function (actor) {
+			actor.stats["Attack"].addMod("Zweihander",{add: 20},true);
+		},
+		"onRemove": function (actor) {
+			actor.stats["Attack"].removeMod("Zweihander");
+		},
+		"info": "Attack +20",
+		"desc": "A massive sword too heavy to hold in only one hand."
 	}
 };

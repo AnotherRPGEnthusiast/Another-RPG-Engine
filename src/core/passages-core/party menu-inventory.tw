@@ -40,7 +40,7 @@
 <br/>
 <div class="itemcontainer">
 <<set _p = 2>>
-<<for _name, _item range $inventory>>
+<<for _name, _item range inv()>>
 	<<if _filter == "all" || (_filter == "usable" && _item.usable.includes("inmenu")) || (_filter == "equipment" && _item.equippable)>>
 	<<if _p == 1>>
 		<<set _p = 2>>

@@ -114,9 +114,7 @@ var multihit = function multihit (args = {},extension = "") {
 		if (!Number.isInteger(args.hits) && V().action !== null){
 			args.hits = action().hits;
 		}
-		if (!Number.isInteger(args.hits)) {
-			return "ERROR in multihit: args.hits must be an integer";
-		}
+		console.assert(Number.isInteger(args.hits),"ERROR in multihit: hits must be an integer");
 
 		if (extension instanceof Function){
 			extension = extension();
@@ -138,53 +136,53 @@ var multihitCustom = function multihitCustom (args = {content: `<<echoDamage>>`}
 //	noRedundant = Boolean. If true, spread attacks will be unable to hit the same character multiple times. Spread behavior will be applied automatically even if spread parameter is not true.
 //	finalExtension = string. SugarCube code to execute after ALL hits are completed. Only executes once.
 
-	var content;
-	if (args.content === undefined){
-		content = `<<echoDamage>>`;
-	} else if (args.content instanceof Function){
-		content = content();
-	}
-	if ((args.hits === undefined || !Number.isInteger(args.hits)) && V().action !== null){
-		args.hits = action()._hits;
-	}
-	if (args.hits === undefined || !Number.isInteger(args.hits)) {
-		return "ERROR in multihitCustom: args.hits must be an integer";
-	}
-	if (finalExtension instanceof Function){
-		finalExtension = finalExtension();
-	}
-	var str = "";
-	if (args.noRedundant === true) {
-		if ((puppets().length - deadCount()) < args.hits) {
-			args.hits = puppets().length - deadCount();
+	return function () {
+		var content;
+		if (args.content === undefined){
+			content = `<<echoDamage>>`;
+		} else if (args.content instanceof Function){
+			content = content();
 		}
-		State.temporary.list = [];
-		temporary().list.push(target().name);
-		str += content;
-		var subloop;
-		for (let i = 1; i < args.hits; i++){
-			subloop = `<<set _keepGoing = true>>\
-					<<for _keepGoing>>\
-						<<set $target = Hitlist.targetEnemy($action.targetMods)>>\
-						<<if _list.includes(target().name)>>\
-							<<set _keepGoing = true>>\
-						<<else>>\
-							<<set _keepGoing = false; _list.push(target().name)>>`+
-							content+
-						`<</if>>\
-					<</for>>`;
-			str += subloop;
+		if (!Number.isInteger(args.hits) && V().action !== null){
+			args.hits = action().hits;
 		}
-	} else {
-		str += content;
-		for (let i = 1; i < args.hits; i++){
-			if (args.spread === true) {
-				str += `<<set $target = Hitlist.targetEnemy($action.targetMods)>>`;
+		console.assert(Number.isInteger(args.hits),"ERROR in multihitCustom: hits must be an integer");
+		if (finalExtension instanceof Function){
+			finalExtension = finalExtension();
+		}
+		var str = "";
+		if (args.noRedundant === true) {
+			if ((puppets().length - deadCount()) < args.hits) {
+				args.hits = puppets().length - deadCount();
 			}
+			State.temporary.list = [];
+			temporary().list.push(target().name);
 			str += content;
+			var subloop;
+			for (let i = 1; i < args.hits; i++){
+				subloop = `<<set _keepGoing = true>>\
+						<<for _keepGoing>>\
+							<<set $target = Hitlist.targetEnemy($action.targetMods)>>\
+							<<if _list.includes(target().name)>>\
+								<<set _keepGoing = true>>\
+							<<else>>\
+								<<set _keepGoing = false; _list.push(target().name)>>`+
+								content+
+							`<</if>>\
+						<</for>>`;
+				str += subloop;
+			}
+		} else {
+			str += content;
+			for (let i = 1; i < args.hits; i++){
+				if (args.spread === true) {
+					str += `<<set $target = Hitlist.targetEnemy($action.targetMods)>>`;
+				}
+				str += content;
+			}
 		}
+		return str+finalExtension;
 	}
-	return str+finalExtension;
 };
 
 var applyEffect = function applyEffect (effects, args = {}, extension = "") {
@@ -328,11 +326,11 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 	var result = `<<set _AoE = true>>`;
 
 	var [target,party] = findTarget(args.target);
-	party = party.filter(function (a) { return a && !a.guarded });
+	party = party.filter(function (a) { return a && !a.areaImmune });
 	if (args.cut === true) {
 		var count = 0;
 		State.getVar(party).filter(function (a) { return a !== null; }).forEach(function(actor) {
-			if (!actor.guarded) {
+			if (!actor.areaImmune) {
 				count++;
 			}
 		});
@@ -420,7 +418,7 @@ var splashDamage = function splashDamage (args = {target: 't', cut: 1}, extensio
 	return `<<echoDamage>>\
 	<<set _temp = $target">\
 	<<for _actor range ${party}>>\
-	<<if !_actor.dead && _actor.id != _temp.id && !_actor.guarded>>\
+	<<if !_actor.dead && _actor.id != _temp.id && !_actor.areaImmune>>\
 	<<set $target = _actor>>\
 	<<damageCalc>>\
 	<<set $dmg = Math.round($dmg/${args.cut})>>\
@@ -735,7 +733,7 @@ var Prev = {
 		switch (type.toLowerCase()) {
 			case 'row':
 				return `<<for _i = (target().row - 1) * setup.ROW_SIZE; _i < (target().row * setup.ROW_SIZE); _i++>>\
-						<<if $enemies[_i] !== null && !$enemies[_i].dead && !$enemies[_i].guarded>>\
+						<<if $enemies[_i] !== null && !$enemies[_i].dead && !$enemies[_i].areaImmune>>\
 							<<damageCalc $enemies[_i]>>\
 							$enemies[_i].name will take <b>$dmg</b> damage<br/>\
 						<</if>>\
@@ -743,7 +741,7 @@ var Prev = {
 			case 'col':
 			case 'column':
 				return `<<for _i = (target().col - 1); _i < (setup.COLUMN_SIZE * setup.ROW_SIZE); _i += setup.ROW_SIZE>>\
-						<<if $enemies[_i] !== null && !$enemies[_i].dead && !$enemies[_i].guarded>>\
+						<<if $enemies[_i] !== null && !$enemies[_i].dead && !$enemies[_i].areaImmune>>\
 							<<damageCalc $enemies[_i]>>\
 							$enemies[_i].name will take <b>$dmg</b> damage<br/>\
 						<</if>>\
@@ -761,7 +759,7 @@ var Prev = {
 				});
 				State.temporary.hitlist = hitlist;
 				return `<<for _t range _hitlist>>\
-						<<if $enemies[_t] !== null && !$enemies[_t].dead && !$enemies[_t].guarded>>\
+						<<if $enemies[_t] !== null && !$enemies[_t].dead && !$enemies[_t].areaImmune>>\
 							<<damageCalc $enemies[_t]>>\
 							$enemies[_t].name will take <b>$dmg</b> damage<br/>\
 						<</if>>\

@@ -683,12 +683,12 @@ setup.actionData = {
 		"act": function () {
 			var cut = 0;
 			enemies().forEach(function(enemy) {
-				if (!enemy.dead && !enemy.guarded) {
+				if (!enemy.dead && !enemy.areaImmune) {
 					cut++;
 				}
 			});
 			return `<<for _enemy range $enemies>>\
-								<<if !_enemy.dead && !_enemy.guarded>>\
+								<<if !_enemy.dead && !_enemy.areaImmune>>\
 									<<set $target = _enemy>>\
 									<<damageCalc>>\
 									<<set $dmg = Math.round($dmg/${cut})>>\

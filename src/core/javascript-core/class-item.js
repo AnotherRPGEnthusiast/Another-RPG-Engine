@@ -150,7 +150,21 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 
 	toString () {
 		var text = `<span class="item-name">${this.name}</span>`;
-		if (this.equippable) text += `<div class="item-equippable">${this.equippable.slot}</div>`;
+		text += `<span class="action-tags">(${this.stock})</span>`;
+		if (this.equippable) {
+			if (this.equippable.slot instanceof Set) {
+				text += `<div class="item-equippable">`;
+				var array = Array.from(this.equippable.slot).entries();
+				for (let [s,slot] of array) {
+					console.log(slot); console.log(s);
+					text += slot;
+					if (s < this.equippable.slot.size-1) text += " + ";
+				}
+				text += `</div>`;
+			} else {
+				text += `<div class="item-equippable">${this.equippable.slot}</div>`;
+			}
+		}
 		text += `<div id="display-content">`;
 		text += `<div class="action-info">${this.info}</div>`;
 		text += `<div class="action-desc">${this.desc}</div>`;
@@ -169,6 +183,28 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 		const data = {};
 		Object.keys(this).forEach(pn => data[pn] = clone(this[pn]));
 		return JSON.reviveWrapper('new Item($ReviveData$)', data);
+	}
+};
+
+window.Filler = class Filler {
+	constructor(name) {
+		this.id = name;
+	}
+
+	toString () {
+		return "&mdash;&mdash;";
+	}
+
+	clone () {
+		// Return a new instance containing our current data.
+		return new Filler(this.id);
+	}
+
+	toJSON () {
+		// Return a code string that will create a new instance
+		// containing our current data.
+		let data = this.id;
+		return JSON.reviveWrapper('new Filler($ReviveData$)', data);
 	}
 };
 

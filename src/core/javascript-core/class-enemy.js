@@ -135,6 +135,14 @@ window.Enemy = class Enemy extends Actor {
 		return (this.data.desc || "Description goes here. Lorem ipsum dolor sit amen. This is a sentence. Filler text.");
 	}
 
+	get actionsThisTurn () {
+		try {
+			return V().B.actionsThisTurn[this.id];
+		} catch (e) {
+			return [];
+		}
+	}
+
 	changeInto (name) {
 		// Alters character attributes for mid-battle changes. By default, checks for HP, stat, and action changes.
 
@@ -184,10 +192,10 @@ window.Enemy = class Enemy extends Actor {
 		} else if (this.untargetable) {
 			//	If untargetable, invalid target
 			return false;
-		} else if (action().ranged || Hitlist.guardCheck(this).id === this.id) {
+		} else if (Hitlist.guardCheck(this).id !== this.id) {
 			//	For battle map: If guardCheck returns this (not guarded by anyone), valid target
 			//	Bypassed if using a ranged action, which can hit anyone
-			return true;
+			return false;
 		} else {
 			return true;
 		}

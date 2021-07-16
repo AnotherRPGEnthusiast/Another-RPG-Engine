@@ -1,4 +1,19 @@
 :: Changelog[text]
+Version 3.05
+<ul>
+<li>New <code>Actor</code> properties:</li>
+<ul><li><code>numAdjacent</code>: Returns the number of other characters in the area specified by the passed argument. Useful for AI code.</li>
+<li><code>guarded</code>: Returns <code>true</code> if the character is guarded by another character in the battle grid.</li>
+<ul><li>The "guarded" property used by the "Guarded" status effect has been renamed to <code>areaImmune</code> to avoid conflicts.</li></ul></ul>
+<li>New <code>Enemy</code> properties:</li>
+<ul><li><code>actionsThisTurn</code>: Returns the enemy's list from the <code>actionsThisTurn</code> object in the battle controller.</li></ul>
+<li>Equipment can now cover multiple slots! Your dreams of giving your characters two-handed swords and three-piece suits can now be realized. To do this, define the item's <code>slot</code> property as a <code>Set</code> of the slots you want the item to cover rather than a string. A new item, the "Zweihander", has been added to the item database as an example. <i>Credit to A Friendly Irin for providing this code.</i></li>
+<li>Fixed an error in <code>Enemy</code>'s <code>validTarget</code> function that prevented the guard check clause from behaving correctly.</li>
+<li>Fixed an error that prevented <code>actorBox</code> from being used outside of battle due to it calling for the battle controller even when it didn't exist.</li>
+<li>Removed the extra dead space between item entries in the equipment list.</li>
+<li>Items in the equipment list are now displayed with the <code>Item</code> object's <code>toString</code> function for consistency with other items.</li>
+<li>Updated the included Chapel macros bundle to be compatible with SugarCube 2.35.</li>
+</ul>
 Version 3.04
 <ul>
 <li>New <code>Actor</code> properties:</li>

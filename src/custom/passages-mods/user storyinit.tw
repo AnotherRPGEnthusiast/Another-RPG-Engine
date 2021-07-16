@@ -43,7 +43,8 @@ divisive: (base * (a.get("Attack")/b.get("Defense"))) * weight
 	new Item("Aura of Protection",1),
 	new Item("Color of Defeat",1),
 	new Item("Color of Growth",2),
-	new Item("Cursed Ring",3)
+	new Item("Cursed Ring",3),
+	new Item("Zweihander",1)
 	])>>
 
 <<if setup.formula == "subtractive">>

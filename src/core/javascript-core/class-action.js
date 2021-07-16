@@ -116,16 +116,16 @@ window.Action = class Action {
 			var hits = 0;
 			var party = [target()];
 			if (val.includes("mass") || val.includes("all")) {
-				party = target().ownParty.filter(function (a) { return a && !a.guarded });
+				party = target().ownParty.filter(function (a) { return a && !a.areaImmune });
 			} else if (val.includes("row")) {
 				party = target().ownParty
-								.filter(function (a) { return a && !a.guarded && a.row === target().row });
+								.filter(function (a) { return a && !a.areaImmune && a.row === target().row });
 			} else if (val.includes("col") || val.includes("column")) {
 				party = target().ownParty
-								.filter(function (a) { return a && !a.guarded && a.col === target().col });
+								.filter(function (a) { return a && !a.areaImmune && a.col === target().col });
 			} else if (val.includes("adjacent") || val.includes("+")) {
 				party = target().ownParty
-								.filter(function (a) { return a && !a.guarded && (
+								.filter(function (a) { return a && !a.areaImmune && (
 												a.id === target().id ||
 												a.col === target().col && (a.row === target().row + 1 || a.row === target().row - 1) ||
 											 	a.row === target().row && (a.col === target().col + 1 || a.row === target().col - 1)
@@ -269,7 +269,7 @@ window.Action = class Action {
 			val = this.actionData.useText;
 		}
 		if (val === undefined) {
-			val = `$subject.name uses "${this.name}".`;
+			val = `$subject.name uses "${this.displayname}".`;
 		}
 		return val;
   }
@@ -461,7 +461,7 @@ window.Action = class Action {
 		if (val === undefined) {
 			val = this instanceof ItemAction ? true : false;
 		}
-		return val;
+		return (val instanceof Function) ? val(this) : val;
 	}
 
 	set basic (val) {
@@ -478,7 +478,7 @@ window.Action = class Action {
 		if (val === undefined) {
 			val = false;
 		}
-		return val;
+		return (val instanceof Function) ? val(this) : val;
 	}
 
 	set instant (val) {
@@ -495,7 +495,7 @@ window.Action = class Action {
 		if (val === undefined) {
 			val = false;
 		}
-		return val;
+		return (val instanceof Function) ? val(this) : val;
 	}
 
 	set pierce (val) {
@@ -680,7 +680,7 @@ window.Action = class Action {
 		if (val === undefined) {
 			val = false;
 		}
-		return val;
+		return (val instanceof Function) ? val(this) : val;
 	}
 
 	get element () {
@@ -1118,7 +1118,7 @@ window.Action = class Action {
 		if (val === undefined) {
 			val = 1;
 		}
-		return val;
+		return (val instanceof Function) ? val(this) : val;
 	}
 
 	set effects (val) {

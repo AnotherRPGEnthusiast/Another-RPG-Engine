@@ -30,34 +30,30 @@
 
 :: equipment list[nobr]
 <<if def $subject && !$subject.lockEquipment>>
+	<br/>
 	<div style="line-height:1.4">
 	<<set _count = 0>>
-	<<for _k, _v range $inventory>>
+	<<for _k, _v range inv()>>
 		<<if _v.equippable && _v.stock > 0>>
-			<br/>
 			<<set _count++>>
 			<<if (def $subject && $subject.checkRestriction(_v)) || ndef $subject>>
-				<div @id="_k">
-				<b>
+				<<set _id = _k.split(' ').join('_')>>
+				<div @id="_id">
+				<<print _v>>
+				<<capture _v, _id>>
+				<<timed 0s>>
 				<<if def $subject>>
-					<<capture _v>>
-					<<link _v.name>>
-						<<run $subject.equip(_v)>>
-						<<replace "#puppets">><<include "equip manager puppets">><</replace>>
-						<<replace "#equipment-list">><<include "equipment list">><</replace>>
-					<</link>>
-					<</capture>>
-				<<else>>
-					<<print _k>>
+					<<set _selector = "#"+_id+" .item-name">>
+					<<replace _selector>>
+						<<link _v.name>>
+							<<run $subject.equip(_v)>>
+							<<replace "#puppets">><<include "equip manager puppets">><</replace>>
+							<<replace "#equipment-list">><<include "equipment list">><</replace>>
+						<</link>>
+					<</replace>>
 				<</if>>
-				</b>
-				<span style="float:right">(_v.stock)</span><br/>
-				<i style="font-size:12px"><<print _v.equippable.slot>></i><br/>
-				<<if _v.equippable.restrictedTo.length > 0>>
-					<div style="font-size:12px; font-style:italic">Restriction: <<for _char range _v.equippable.restrictedTo>><<print _char>><</for>></div>
-				<</if>>
-				<<print _v.desc>><br/>
-				<span class="action-desc"><<print _v.info>></span>
+				<</timed>>
+				<</capture>>
 				</div>
 			<</if>>
 		<</if>>
@@ -67,6 +63,7 @@
 	<</if>>
 	</div>
 <<elseif def $subject && $subject.lockEquipment>>
+	<br/>
 	<i>This character's equipment can't be changed.</i>
 <<else>>
 	<<unequipAll>>

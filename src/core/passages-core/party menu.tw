@@ -204,14 +204,12 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 ARG 0 = equipped item
 */
 
-<<if ndef $args[0]>> /* error handler */
-	<<print "ERROR: No item passed to equipSlotDisplay">>
-	<<run console.log("ERROR in equipSlotDisplay: no item passed")>>
-<<else>>
+<<run console.assert($args[0] instanceof Item || $args[0] === null || $args[0] instanceof Filler,"ERROR in equipSlotDisplay: no item passed")>>
 
 <<set _item = $args[0]>>
 
 <<if _item === null>><span class="menuactor-equipment-name">&nbsp;</span> /* if slot empty, display blank space */
+<<elseif _item instanceof Filler>><span class="menuactor-equipment-name">_item</span>
 <<else>>
 	<div class="menuactor-equipment-name">_item.name<br/>
 	<span class="action-desc">_item.info</span>
@@ -248,7 +246,6 @@ ARG 0 = equipped item
 	</span>
 <</if>>
 
-<</if>> /* end error handler if */
 <</widget>>
 
 :: menubar[nobr]
