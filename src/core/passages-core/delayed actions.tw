@@ -2,7 +2,7 @@
 <<if $B.turn == "player" && passage() == "Battle!">>
   <<for _puppet range puppets()>>
     <<if _puppet.actionReady>>
-      <<set $subject = _puppet; $action = new Action(_puppet.delayedAction); $target = $action.targetMethod()>>
+      <<set $subject = _puppet; $action = puppet.delayedAction; $target = $action.targetMethod()>>
       <<set _puppet.delayedAction = null>>
       <<goto "action phase">>
       <<break>>

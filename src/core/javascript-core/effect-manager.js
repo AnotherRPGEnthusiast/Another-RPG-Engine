@@ -206,7 +206,7 @@ Actor.prototype.addEffect = function (name,mods) {
           }
           //  Flag msg as true in case this is applied at end of round, and return the addText for this effect.
           temporary().msg = true;
-          return E.addText(this.name)+"\r\n";
+          return E.addText(this)+"\r\n";
         }
       }
 
@@ -245,7 +245,7 @@ Actor.prototype.addEffect = function (name,mods) {
     this.addPopup({shake: shake, type: "addEffect", content: E.name});
   }
 
-  var text = E.addText(this.name);
+  var text = E.addText(this);
 
   if (typeof(text) == "string" && text.length > 0) {
     text += '\r\n';
@@ -307,14 +307,14 @@ Actor.prototype.removeEffect = function (effect,mods = {}) {
         this.battleMsg.push({shake: shake, type: "removeEffect", content: "- "+E.name});
       }
       this.effects.delete(E);
-      result += E.removeText(this.name) + '\n';
+      result += E.removeText(this) + '\n';
       if (E.stackable && typeof(effect) == 'string' && mods.removeStack === true) {
         while (E !== undefined) {
           E = this.effects.find(function(e) { return e && e.name === effect; });
           if (E !== undefined) {
             E.onRemove(this);
             this.effects.delete(E);
-            result += E.removeText(this.name) + '\n';
+            result += E.removeText(this) + '\n';
           }
         }
       }

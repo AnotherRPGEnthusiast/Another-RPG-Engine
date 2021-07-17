@@ -245,13 +245,17 @@
 
 <<for _actor range $args[0].filter(function (a) { return a !== null; })>>
 	<<run console.assert(_actor instanceof Actor,"ERROR in newTurn: non-Actor element")>>
-	<<set _actor.isDone to false>>
+	<<set _actor.isDone = false>>
 	<<set _actor.lastDmg = 0>>
 
 	/* Refill retaliations if actor still alive */
 	<<if !_actor.dead>>
 		<<run _actor._retaliations.refill()>>
   <</if>>
+
+	<<if _actor.delayedAction instanceof Action && _actor.delayedAction.delayHold === true>>
+		<<set _actor.isDone = true>>
+	<</if>>
 
 	<<if _actor instanceof Puppet>>
 		/* Puppet-exclusive tasks:
@@ -261,6 +265,13 @@
 			refresh used actions & decrement cooldown */
 		<<if _actor.delayCounter > 0>>
 			<<set _actor.delayCounter -= 1>>
+			<<if _actor.delayedAction.delayMessage !== null>>
+				<<set _message to true>>
+				<div id="actFlavor">
+					<<print _actor.delayedAction.delayMessage(_actor)>>
+				</div>
+				<br/>
+			<</if>>
 		<</if>>
     <<if _actor.dead && _actor.respawn > 0>>
   		<<set _actor.respawn -= 1>>
@@ -298,11 +309,15 @@
 <<set _party = $args[0].filter(function (a) { return a !== null; })>>
 <<for _actor range _party>>
 	<<run console.assert(_actor instanceof Actor,"ERROR in endOfRound: non-Actor element")>>
-	<<set _actor.isDone = false>>
+	<<if (_actor.delayedAction instanceof Action && _actor.delayedAction.delayHold)>>
+		<<set _actor.isDone = true>>
+	<<else>>
+		<<set _actor.isDone = false>>
+	<</if>>
 	<<for _effect range _actor.effects>>
 		/* DoT check */
 		<<if _effect.dot && !_actor.dead>>
-				<<set _message to true>>
+				<<set _message = true>>
 				<<set $dmg = _effect.damage(_actor)>>
 				<div id="actFlavor">
 					<<print _effect.msg(_actor)>>
@@ -320,6 +335,13 @@
 	<<if _actor instanceof Enemy>>
 		<<if _actor.delayCounter > 0>>
 			<<set _actor.delayCounter -= 1>>
+			<<if _actor.delayedAction.delayMessage !== null>>
+				<<set _message to true>>
+				<div id="actFlavor">
+					<<print _actor.delayedAction.delayMessage(_actor)>>
+				</div>
+				<br/>
+			<</if>>
 		<</if>>
 		<<if !_actor.dead>>
 			<<run _actor.regenHP()>>

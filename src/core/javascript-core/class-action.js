@@ -945,6 +945,35 @@ window.Action = class Action {
 		return val;
 	}
 
+	get delayHold () {
+		//	Boolean. If true and this is a delayed action, the user will not be able to act for the duration of the action's delay time.
+		var val = this._delayHold;
+		if (val === undefined) {
+			val = this.actionData.delayHold;
+		}
+		if (val === undefined) {
+			val = false
+		}
+		return val;
+	}
+
+	get delayMessage () {
+		//	Function. Message printed at top of round when character is charging a delayed action.
+		//	Must be attached to the delayed action, not the setup action.
+		//	Set to null to display no message.
+
+		var val = this._delayMessage;
+		if (val === undefined) {
+			val = this.actionData.delayMessage;
+		}
+		if (val === undefined) {
+			val = function () {
+				return `${subject().name} is preparing to use ${this.displayname}!`;
+			};
+		}
+		return val;
+	}
+
 	get targetMethod () {
 		//	Function. Determines targeting logic for actions that must choose their own target, e.g. enemy and delayed actions.
 		//	Return value is the target object.

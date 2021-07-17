@@ -1,16 +1,16 @@
 setup.effectFunctions = {
 
 	add: function (target) {
-		return `${target} is <b>${this.name}</b>!`;
+		return `${target.name} is <b>${this.name}</b>!`;
 	},
 	rem: function (target) {
-		return `${target} is no longer ${this.name}.`;
+		return `${target.name} is no longer ${this.name}.`;
 	},
 	stance: function (target) {
-		return `${target} adopts the stance of a <b>${this.name}</b>.`;
+		return `${target.name} adopts the stance of a <b>${this.name}</b>.`;
 	},
 	remDebuff: function (target) {
-		return `${target}'s ${this.name} is cured.`;
+		return `${target.name}'s ${this.name} is cured.`;
 	},
 	remBuff: function (target) {
 		var article;
@@ -25,7 +25,7 @@ setup.effectFunctions = {
 			default:
 				article = 'a';
 		}
-		return `${target} loses ${article} ${this.name}.`;
+		return `${target.name} loses ${article} ${this.name}.`;
 	},
 	invisible: function () {return "";},
 
@@ -62,7 +62,7 @@ setup.effectData = {
       return `Attack reduced by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} suffers an <b>Injury</b>!`;
+      return `${target.name} suffers an <b>Injury</b>!`;
     },
     "removeText": setup.effectFunctions.remDebuff
   },
@@ -79,7 +79,7 @@ setup.effectData = {
       return `Defense reduced by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} is struck with <b>Pain</b>!`;
+      return `${target.name} is struck with <b>Pain</b>!`;
     },
     "removeText": setup.effectFunctions.remDebuff
   },
@@ -96,7 +96,7 @@ setup.effectData = {
       return `Special reduced by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} gets a <b>Headache</b>!`;
+      return `${target.name} gets a <b>Headache</b>!`;
     },
     "removeText": setup.effectFunctions.remDebuff
   },
@@ -114,7 +114,7 @@ setup.effectData = {
       return `Attack boosted by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} is surging with strength!`;
+      return `${target.name} is surging with strength!`;
     },
     "removeText": setup.effectFunctions.remBuff
   },
@@ -132,7 +132,7 @@ setup.effectData = {
       return `Defense boosted by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} feels tougher.`;
+      return `${target.name} feels tougher.`;
     },
     "removeText": setup.effectFunctions.remBuff
   },
@@ -150,7 +150,7 @@ setup.effectData = {
       return `Special boosted by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target}'s mind is racing.`;
+      return `${target.name}'s mind is racing.`;
     },
     "removeText": setup.effectFunctions.remBuff
   },
@@ -186,10 +186,10 @@ setup.effectData = {
       return `Inflicts <<print _effect.damage($B.actor)>> magical damage per round.`;
     },
     "addText": function (target) {
-      return `${target} feels the fires of <b>Perdition</b>.`;
+      return `${target.name} feels the fires of <b>Perdition</b>.`;
     },
     "removeText": function (target) {
-      return `${target} is freed from the fires of Perdition.`;
+      return `${target.name} is freed from the fires of Perdition.`;
     }
   },
   "Poisoned": {
@@ -321,10 +321,10 @@ setup.effectData = {
       return `All stats reduced by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} can't seem to do anything right.`;
+      return `${target.name} can't seem to do anything right.`;
     },
     "removeText": function (target) {
-      return `${target}'s ${this.name} is lifted.`;
+      return `${target.name}'s ${this.name} is lifted.`;
     }
   },
   "Forsaken": {
@@ -342,7 +342,7 @@ setup.effectData = {
       return `Defense reduced by ${this.power}. Defense can be negative.`;
     },
     "addText": function (target) {
-      return `${target} is <b>Forsaken</b>.`;
+      return `${target.name} is <b>Forsaken</b>.`;
     },
     "removeText": setup.effectFunctions.rem
   },
@@ -366,7 +366,7 @@ setup.effectData = {
       return `All stats boosted by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} feels a sense of grace.`;
+      return `${target.name} feels a sense of grace.`;
     },
     "removeText": setup.effectFunctions.remBuff
   },
@@ -415,10 +415,10 @@ setup.effectData = {
       return `Protected from ailments.`;
     },
     "addText": function (target) {
-      return `${target} has a tangible aura.`;
+      return `${target.name} has a tangible aura.`;
     },
     "removeText": function (target) {
-      return `${target} is no longer protected by ${this.name}.`;
+      return `${target.name} is no longer protected by ${this.name}.`;
     }
   },
   "Protector": {
@@ -448,10 +448,10 @@ setup.effectData = {
       return `Taking hits for ${effect.target.name}. Defense boosted by ${effect.power}.`;
     },
     "addText": function (target) {
-      return `${target} is protecting $target.name.`;
+      return `${target.name} is protecting $target.name.`;
     },
     "removeText": function (target) {
-      return `${target} is no longer protecting anyone.`;
+      return `${target.name} is no longer protecting anyone.`;
     }
   },
   "Martyr": {
@@ -470,7 +470,7 @@ setup.effectData = {
       return `Will be targeted by all direct attacks.`;
     },
     "addText": function (target) {
-      return `All eyes are on ${target}.`;
+      return `All eyes are on ${target.name}.`;
     },
     "removeText": setup.effectFunctions.invisible
   },
@@ -504,10 +504,10 @@ setup.effectData = {
       return `Can't be targeted by direct attacks.`;
     },
     "addText": function (target) {
-      return `${target} is evading attacks.`;
+      return `${target.name} is evading attacks.`;
     },
     "removeText": function (target) {
-      return `${target} is no longer hidden.`;
+      return `${target.name} is no longer hidden.`;
     }
   },
   "Berserker": {
@@ -555,10 +555,10 @@ setup.effectData = {
       return `Incoming damage reduced by <<print setup.SHIELD_FACTOR*100>>%.`;
     },
     "addText": function (target) {
-      return `The air before ${target} glimmers with a magical <b>Shield</b>.`;
+      return `The air before ${target.name} glimmers with a magical <b>Shield</b>.`;
     },
     "removeText": function (target) {
-      return `${target}'s Shield is gone.`;
+      return `${target.name}'s Shield is gone.`;
     }
   },
   "Frenzy": {
@@ -578,10 +578,10 @@ setup.effectData = {
       return `Attack boosted by ${this.power}; Defense reduced by ${Math.round(this.power/2)}.`;
     },
     "addText": function (target) {
-      return `${target} feels the <b>Frenzy</b>!`;
+      return `${target.name} feels the <b>Frenzy</b>!`;
     },
     "removeText": function (target) {
-      return `${target} is no longer in a Frenzy.`;
+      return `${target.name} is no longer in a Frenzy.`;
     }
   },
   "Stasis": {
@@ -605,10 +605,10 @@ setup.effectData = {
       return `Effects will not decay. Effects cannot be added or removed.`;
     },
     "addText": function (target) {
-      return `${target}'s effects are placed in <b>Stasis</b>.`;
+      return `${target.name}'s effects are placed in <b>Stasis</b>.`;
     },
     "removeText": function (target) {
-      return `${target}'s effects are no longer in Stasis.`;
+      return `${target.name}'s effects are no longer in Stasis.`;
     }
   },
   "Marked": {
@@ -657,10 +657,10 @@ setup.effectData = {
       return `Protects against one attack.`;
     },
     "addText": function (target) {
-      return `Translucent pink petals rise from the ground to wrap ${target} in a protective bubble.`;
+      return `Translucent pink petals rise from the ground to wrap ${target.name} in a protective bubble.`;
     },
     "removeText": function (target) {
-      return `${target}'s bubble shield dissipates.`;
+      return `${target.name}'s bubble shield dissipates.`;
     }
   },
   "Doom": {
@@ -677,10 +677,10 @@ setup.effectData = {
       return `Inflicts <<print _effect.damage($B.actor)>> magical damage per round.`;
     },
     "addText": function (target) {
-      return `${target} is cursed with <b>Doom</b>! Their life ticks away...`;
+      return `${target.name} is cursed with <b>Doom</b>! Their life ticks away...`;
     },
     "removeText": function (target) {
-      return `${target}'s ${this.name} is dispelled.`;
+      return `${target.name}'s ${this.name} is dispelled.`;
     }
   },
   "Asleep": {
@@ -696,7 +696,7 @@ setup.effectData = {
     },
     "addText": setup.effectFunctions.add,
     "removeText": function (target) {
-      return `${target} wakes up!`;
+      return `${target.name} wakes up!`;
     }
   },
   "Petrified": {
@@ -737,10 +737,10 @@ setup.effectData = {
       return `Protects and counterattacks against one attack.`;
     },
     "addText": function (target) {
-      return `Translucent pink petals rise from the ground to wrap ${target} in a protective bubble that grows menacing, spiky thorns all around.`;
+      return `Translucent pink petals rise from the ground to wrap ${target.name} in a protective bubble that grows menacing, spiky thorns all around.`;
     },
     "removeText": function (target) {
-      return `${target}'s spiky bubble dissipates.`;
+      return `${target.name}'s spiky bubble dissipates.`;
     }
   },
   "Consecrated": {
@@ -757,7 +757,7 @@ setup.effectData = {
       return `${this.type.toUpperFirst()} resistance increased by ${this.power*100}%.`;
     },
     "addText": function (target) {
-      return `${target} is <b>Consecrated</b> in the power of the <<print $action.element.toUpperFirst()>>.`;
+      return `${target.name} is <b>Consecrated</b> in the power of the <<print $action.element.toUpperFirst()>>.`;
     },
     "removeText": setup.effectFunctions.rem
   },
@@ -774,7 +774,7 @@ setup.effectData = {
       return `${this.type.toUpperFirst()} resistance decreased by ${this.power*100}%.`;
     },
     "addText": function (target) {
-      return `${target} is <b>Desecrated</b> in the power of the <<print $action.element.toUpperFirst()>>.`;
+      return `${target.name} is <b>Desecrated</b> in the power of the <<print $action.element.toUpperFirst()>>.`;
     },
     "removeText": setup.effectFunctions.rem
   },
@@ -791,10 +791,10 @@ setup.effectData = {
       return `Compelled to attack enemies.`;
     },
     "addText": function (target) {
-      return `${target} is filled with a blinding <b>Hatred</b>!`;
+      return `${target.name} is filled with a blinding <b>Hatred</b>!`;
     },
     "removeText": function (target) {
-      return `${target}'s unnatural hatred has passed.`;
+      return `${target.name}'s unnatural hatred has passed.`;
     }
   },
   "Confusion": {
@@ -810,10 +810,10 @@ setup.effectData = {
       return `Compelled to attack at random.`;
     },
     "addText": function (target) {
-      return `${target} cannot tell friend from foe!`;
+      return `${target.name} cannot tell friend from foe!`;
     },
     "removeText": function (target) {
-      return `${target}'s head clears.`;
+      return `${target.name}'s head clears.`;
     }
   },
   "Charmed": {
@@ -867,10 +867,10 @@ setup.effectData = {
       return `Protects against two attacks. (Remaining: ${effect.uses})`;
     },
     "addText": function (target) {
-      return `${target} gains <b>${this.name}!</b>`;
+      return `${target.name} gains <b>${this.name}!</b>`;
     },
     "removeText": function (target) {
-      return `${target} loses ${this.name}.`;
+      return `${target.name} loses ${this.name}.`;
     }
   }
 

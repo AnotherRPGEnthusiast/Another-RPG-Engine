@@ -8090,6 +8090,35 @@ window.Action = class Action {
 		return val;
 	}
 
+	get delayHold () {
+		//	Boolean. If true and this is a delayed action, the user will not be able to act for the duration of the action's delay time.
+		var val = this._delayHold;
+		if (val === undefined) {
+			val = this.actionData.delayHold;
+		}
+		if (val === undefined) {
+			val = false
+		}
+		return val;
+	}
+
+	get delayMessage () {
+		//	Function. Message printed at top of round when character is charging a delayed action.
+		//	Must be attached to the delayed action, not the setup action.
+		//	Set to null to display no message.
+
+		var val = this._delayMessage;
+		if (val === undefined) {
+			val = this.actionData.delayMessage;
+		}
+		if (val === undefined) {
+			val = function () {
+				return `${subject().name} is preparing to use ${this.displayname}!`;
+			};
+		}
+		return val;
+	}
+
 	get targetMethod () {
 		//	Function. Determines targeting logic for actions that must choose their own target, e.g. enemy and delayed actions.
 		//	Return value is the target object.
@@ -9290,8 +9319,8 @@ window.Actor = class Actor {
 		//	Returns true if actor has a valid delayed action stored,
 		//	and they can perform it (not dead/held/uncontrollable, or delayPersist)
 
-		return (typeof(this.delayedAction) === "string" && this.delayCounter <= 0 &&
-			(setup.actionData[this.delayedAction].delayPersist ||
+		return (this.delayedAction instanceof Action && this.delayCounter <= 0 &&
+			(this.delayedAction.delayPersist ||
 				!(this.dead || this.fakedeath || this.noact || this.uncontrollable)));
 	}
 
@@ -12825,16 +12854,16 @@ setup.actionData = {
 setup.effectFunctions = {
 
 	add: function (target) {
-		return `${target} is <b>${this.name}</b>!`;
+		return `${target.name} is <b>${this.name}</b>!`;
 	},
 	rem: function (target) {
-		return `${target} is no longer ${this.name}.`;
+		return `${target.name} is no longer ${this.name}.`;
 	},
 	stance: function (target) {
-		return `${target} adopts the stance of a <b>${this.name}</b>.`;
+		return `${target.name} adopts the stance of a <b>${this.name}</b>.`;
 	},
 	remDebuff: function (target) {
-		return `${target}'s ${this.name} is cured.`;
+		return `${target.name}'s ${this.name} is cured.`;
 	},
 	remBuff: function (target) {
 		var article;
@@ -12849,7 +12878,7 @@ setup.effectFunctions = {
 			default:
 				article = 'a';
 		}
-		return `${target} loses ${article} ${this.name}.`;
+		return `${target.name} loses ${article} ${this.name}.`;
 	},
 	invisible: function () {return "";},
 
@@ -12886,7 +12915,7 @@ setup.effectData = {
       return `Attack reduced by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} suffers an <b>Injury</b>!`;
+      return `${target.name} suffers an <b>Injury</b>!`;
     },
     "removeText": setup.effectFunctions.remDebuff
   },
@@ -12903,7 +12932,7 @@ setup.effectData = {
       return `Defense reduced by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} is struck with <b>Pain</b>!`;
+      return `${target.name} is struck with <b>Pain</b>!`;
     },
     "removeText": setup.effectFunctions.remDebuff
   },
@@ -12920,7 +12949,7 @@ setup.effectData = {
       return `Special reduced by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} gets a <b>Headache</b>!`;
+      return `${target.name} gets a <b>Headache</b>!`;
     },
     "removeText": setup.effectFunctions.remDebuff
   },
@@ -12938,7 +12967,7 @@ setup.effectData = {
       return `Attack boosted by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} is surging with strength!`;
+      return `${target.name} is surging with strength!`;
     },
     "removeText": setup.effectFunctions.remBuff
   },
@@ -12956,7 +12985,7 @@ setup.effectData = {
       return `Defense boosted by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} feels tougher.`;
+      return `${target.name} feels tougher.`;
     },
     "removeText": setup.effectFunctions.remBuff
   },
@@ -12974,7 +13003,7 @@ setup.effectData = {
       return `Special boosted by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target}'s mind is racing.`;
+      return `${target.name}'s mind is racing.`;
     },
     "removeText": setup.effectFunctions.remBuff
   },
@@ -13010,10 +13039,10 @@ setup.effectData = {
       return `Inflicts <<print _effect.damage($B.actor)>> magical damage per round.`;
     },
     "addText": function (target) {
-      return `${target} feels the fires of <b>Perdition</b>.`;
+      return `${target.name} feels the fires of <b>Perdition</b>.`;
     },
     "removeText": function (target) {
-      return `${target} is freed from the fires of Perdition.`;
+      return `${target.name} is freed from the fires of Perdition.`;
     }
   },
   "Poisoned": {
@@ -13145,10 +13174,10 @@ setup.effectData = {
       return `All stats reduced by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} can't seem to do anything right.`;
+      return `${target.name} can't seem to do anything right.`;
     },
     "removeText": function (target) {
-      return `${target}'s ${this.name} is lifted.`;
+      return `${target.name}'s ${this.name} is lifted.`;
     }
   },
   "Forsaken": {
@@ -13166,7 +13195,7 @@ setup.effectData = {
       return `Defense reduced by ${this.power}. Defense can be negative.`;
     },
     "addText": function (target) {
-      return `${target} is <b>Forsaken</b>.`;
+      return `${target.name} is <b>Forsaken</b>.`;
     },
     "removeText": setup.effectFunctions.rem
   },
@@ -13190,7 +13219,7 @@ setup.effectData = {
       return `All stats boosted by ${this.power}.`;
     },
     "addText": function (target) {
-      return `${target} feels a sense of grace.`;
+      return `${target.name} feels a sense of grace.`;
     },
     "removeText": setup.effectFunctions.remBuff
   },
@@ -13239,10 +13268,10 @@ setup.effectData = {
       return `Protected from ailments.`;
     },
     "addText": function (target) {
-      return `${target} has a tangible aura.`;
+      return `${target.name} has a tangible aura.`;
     },
     "removeText": function (target) {
-      return `${target} is no longer protected by ${this.name}.`;
+      return `${target.name} is no longer protected by ${this.name}.`;
     }
   },
   "Protector": {
@@ -13272,10 +13301,10 @@ setup.effectData = {
       return `Taking hits for ${effect.target.name}. Defense boosted by ${effect.power}.`;
     },
     "addText": function (target) {
-      return `${target} is protecting $target.name.`;
+      return `${target.name} is protecting $target.name.`;
     },
     "removeText": function (target) {
-      return `${target} is no longer protecting anyone.`;
+      return `${target.name} is no longer protecting anyone.`;
     }
   },
   "Martyr": {
@@ -13294,7 +13323,7 @@ setup.effectData = {
       return `Will be targeted by all direct attacks.`;
     },
     "addText": function (target) {
-      return `All eyes are on ${target}.`;
+      return `All eyes are on ${target.name}.`;
     },
     "removeText": setup.effectFunctions.invisible
   },
@@ -13328,10 +13357,10 @@ setup.effectData = {
       return `Can't be targeted by direct attacks.`;
     },
     "addText": function (target) {
-      return `${target} is evading attacks.`;
+      return `${target.name} is evading attacks.`;
     },
     "removeText": function (target) {
-      return `${target} is no longer hidden.`;
+      return `${target.name} is no longer hidden.`;
     }
   },
   "Berserker": {
@@ -13379,10 +13408,10 @@ setup.effectData = {
       return `Incoming damage reduced by <<print setup.SHIELD_FACTOR*100>>%.`;
     },
     "addText": function (target) {
-      return `The air before ${target} glimmers with a magical <b>Shield</b>.`;
+      return `The air before ${target.name} glimmers with a magical <b>Shield</b>.`;
     },
     "removeText": function (target) {
-      return `${target}'s Shield is gone.`;
+      return `${target.name}'s Shield is gone.`;
     }
   },
   "Frenzy": {
@@ -13402,10 +13431,10 @@ setup.effectData = {
       return `Attack boosted by ${this.power}; Defense reduced by ${Math.round(this.power/2)}.`;
     },
     "addText": function (target) {
-      return `${target} feels the <b>Frenzy</b>!`;
+      return `${target.name} feels the <b>Frenzy</b>!`;
     },
     "removeText": function (target) {
-      return `${target} is no longer in a Frenzy.`;
+      return `${target.name} is no longer in a Frenzy.`;
     }
   },
   "Stasis": {
@@ -13429,10 +13458,10 @@ setup.effectData = {
       return `Effects will not decay. Effects cannot be added or removed.`;
     },
     "addText": function (target) {
-      return `${target}'s effects are placed in <b>Stasis</b>.`;
+      return `${target.name}'s effects are placed in <b>Stasis</b>.`;
     },
     "removeText": function (target) {
-      return `${target}'s effects are no longer in Stasis.`;
+      return `${target.name}'s effects are no longer in Stasis.`;
     }
   },
   "Marked": {
@@ -13481,10 +13510,10 @@ setup.effectData = {
       return `Protects against one attack.`;
     },
     "addText": function (target) {
-      return `Translucent pink petals rise from the ground to wrap ${target} in a protective bubble.`;
+      return `Translucent pink petals rise from the ground to wrap ${target.name} in a protective bubble.`;
     },
     "removeText": function (target) {
-      return `${target}'s bubble shield dissipates.`;
+      return `${target.name}'s bubble shield dissipates.`;
     }
   },
   "Doom": {
@@ -13501,10 +13530,10 @@ setup.effectData = {
       return `Inflicts <<print _effect.damage($B.actor)>> magical damage per round.`;
     },
     "addText": function (target) {
-      return `${target} is cursed with <b>Doom</b>! Their life ticks away...`;
+      return `${target.name} is cursed with <b>Doom</b>! Their life ticks away...`;
     },
     "removeText": function (target) {
-      return `${target}'s ${this.name} is dispelled.`;
+      return `${target.name}'s ${this.name} is dispelled.`;
     }
   },
   "Asleep": {
@@ -13520,7 +13549,7 @@ setup.effectData = {
     },
     "addText": setup.effectFunctions.add,
     "removeText": function (target) {
-      return `${target} wakes up!`;
+      return `${target.name} wakes up!`;
     }
   },
   "Petrified": {
@@ -13561,10 +13590,10 @@ setup.effectData = {
       return `Protects and counterattacks against one attack.`;
     },
     "addText": function (target) {
-      return `Translucent pink petals rise from the ground to wrap ${target} in a protective bubble that grows menacing, spiky thorns all around.`;
+      return `Translucent pink petals rise from the ground to wrap ${target.name} in a protective bubble that grows menacing, spiky thorns all around.`;
     },
     "removeText": function (target) {
-      return `${target}'s spiky bubble dissipates.`;
+      return `${target.name}'s spiky bubble dissipates.`;
     }
   },
   "Consecrated": {
@@ -13581,7 +13610,7 @@ setup.effectData = {
       return `${this.type.toUpperFirst()} resistance increased by ${this.power*100}%.`;
     },
     "addText": function (target) {
-      return `${target} is <b>Consecrated</b> in the power of the <<print $action.element.toUpperFirst()>>.`;
+      return `${target.name} is <b>Consecrated</b> in the power of the <<print $action.element.toUpperFirst()>>.`;
     },
     "removeText": setup.effectFunctions.rem
   },
@@ -13598,7 +13627,7 @@ setup.effectData = {
       return `${this.type.toUpperFirst()} resistance decreased by ${this.power*100}%.`;
     },
     "addText": function (target) {
-      return `${target} is <b>Desecrated</b> in the power of the <<print $action.element.toUpperFirst()>>.`;
+      return `${target.name} is <b>Desecrated</b> in the power of the <<print $action.element.toUpperFirst()>>.`;
     },
     "removeText": setup.effectFunctions.rem
   },
@@ -13615,10 +13644,10 @@ setup.effectData = {
       return `Compelled to attack enemies.`;
     },
     "addText": function (target) {
-      return `${target} is filled with a blinding <b>Hatred</b>!`;
+      return `${target.name} is filled with a blinding <b>Hatred</b>!`;
     },
     "removeText": function (target) {
-      return `${target}'s unnatural hatred has passed.`;
+      return `${target.name}'s unnatural hatred has passed.`;
     }
   },
   "Confusion": {
@@ -13634,10 +13663,10 @@ setup.effectData = {
       return `Compelled to attack at random.`;
     },
     "addText": function (target) {
-      return `${target} cannot tell friend from foe!`;
+      return `${target.name} cannot tell friend from foe!`;
     },
     "removeText": function (target) {
-      return `${target}'s head clears.`;
+      return `${target.name}'s head clears.`;
     }
   },
   "Charmed": {
@@ -13691,10 +13720,10 @@ setup.effectData = {
       return `Protects against two attacks. (Remaining: ${effect.uses})`;
     },
     "addText": function (target) {
-      return `${target} gains <b>${this.name}!</b>`;
+      return `${target.name} gains <b>${this.name}!</b>`;
     },
     "removeText": function (target) {
-      return `${target} loses ${this.name}.`;
+      return `${target.name} loses ${this.name}.`;
     }
   }
 
@@ -16875,7 +16904,7 @@ Actor.prototype.addEffect = function (name,mods) {
           }
           //  Flag msg as true in case this is applied at end of round, and return the addText for this effect.
           temporary().msg = true;
-          return E.addText(this.name)+"\r\n";
+          return E.addText(this)+"\r\n";
         }
       }
 
@@ -16914,7 +16943,7 @@ Actor.prototype.addEffect = function (name,mods) {
     this.addPopup({shake: shake, type: "addEffect", content: E.name});
   }
 
-  var text = E.addText(this.name);
+  var text = E.addText(this);
 
   if (typeof(text) == "string" && text.length > 0) {
     text += '\r\n';
@@ -16976,14 +17005,14 @@ Actor.prototype.removeEffect = function (effect,mods = {}) {
         this.battleMsg.push({shake: shake, type: "removeEffect", content: "- "+E.name});
       }
       this.effects.delete(E);
-      result += E.removeText(this.name) + '\n';
+      result += E.removeText(this) + '\n';
       if (E.stackable && typeof(effect) == 'string' && mods.removeStack === true) {
         while (E !== undefined) {
           E = this.effects.find(function(e) { return e && e.name === effect; });
           if (E !== undefined) {
             E.onRemove(this);
             this.effects.delete(E);
-            result += E.removeText(this.name) + '\n';
+            result += E.removeText(this) + '\n';
           }
         }
       }
@@ -20539,7 +20568,7 @@ $subject.name will
 &lt;&lt;/if&gt;&gt;
 
 &lt;&lt;if typeof($action.setupAction) == &quot;string&quot;&gt;&gt;
-	&lt;&lt;set subject().delayedAction = $action.setupAction; subject().delayCounter = $action.setupDelay&gt;&gt;
+	&lt;&lt;set subject().delayedAction = new Action($action.setupAction); subject().delayCounter = $action.setupDelay&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
 &lt;&lt;if subject() instanceof Enemy &amp;&amp; Number.isInteger($action.enemyCD)&gt;&gt;
@@ -20765,7 +20794,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 				&lt;&lt;/if&gt;&gt;
 				&lt;&lt;set _counters = []&gt;&gt;
 				&lt;&lt;if _enemy.actionReady&gt;&gt;
-					&lt;&lt;set $action = new Action(_enemy.delayedAction)&gt;&gt;
+					&lt;&lt;set $action = _enemy.delayedAction&gt;&gt;
 					&lt;&lt;set _enemy.delayedAction = null&gt;&gt;
 				&lt;&lt;else&gt;&gt;
 					&lt;&lt;run _enemy.actions()&gt;&gt;
@@ -21023,13 +21052,17 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 
 &lt;&lt;for _actor range $args[0].filter(function (a) { return a !== null; })&gt;&gt;
 	&lt;&lt;run console.assert(_actor instanceof Actor,&quot;ERROR in newTurn: non-Actor element&quot;)&gt;&gt;
-	&lt;&lt;set _actor.isDone to false&gt;&gt;
+	&lt;&lt;set _actor.isDone = false&gt;&gt;
 	&lt;&lt;set _actor.lastDmg = 0&gt;&gt;
 
 	/* Refill retaliations if actor still alive */
 	&lt;&lt;if !_actor.dead&gt;&gt;
 		&lt;&lt;run _actor._retaliations.refill()&gt;&gt;
   &lt;&lt;/if&gt;&gt;
+
+	&lt;&lt;if _actor.delayedAction instanceof Action &amp;&amp; _actor.delayedAction.delayHold === true&gt;&gt;
+		&lt;&lt;set _actor.isDone = true&gt;&gt;
+	&lt;&lt;/if&gt;&gt;
 
 	&lt;&lt;if _actor instanceof Puppet&gt;&gt;
 		/* Puppet-exclusive tasks:
@@ -21039,6 +21072,13 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 			refresh used actions &amp; decrement cooldown */
 		&lt;&lt;if _actor.delayCounter &gt; 0&gt;&gt;
 			&lt;&lt;set _actor.delayCounter -= 1&gt;&gt;
+			&lt;&lt;if _actor.delayedAction.delayMessage !== null&gt;&gt;
+				&lt;&lt;set _message to true&gt;&gt;
+				&lt;div id=&quot;actFlavor&quot;&gt;
+					&lt;&lt;print _actor.delayedAction.delayMessage(_actor)&gt;&gt;
+				&lt;/div&gt;
+				&lt;br/&gt;
+			&lt;&lt;/if&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
     &lt;&lt;if _actor.dead &amp;&amp; _actor.respawn &gt; 0&gt;&gt;
   		&lt;&lt;set _actor.respawn -= 1&gt;&gt;
@@ -21073,11 +21113,15 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 &lt;&lt;set _party = $args[0].filter(function (a) { return a !== null; })&gt;&gt;
 &lt;&lt;for _actor range _party&gt;&gt;
 	&lt;&lt;run console.assert(_actor instanceof Actor,&quot;ERROR in endOfRound: non-Actor element&quot;)&gt;&gt;
-	&lt;&lt;set _actor.isDone = false&gt;&gt;
+	&lt;&lt;if (_actor.delayedAction instanceof Action &amp;&amp; _actor.delayedAction.delayHold)&gt;&gt;
+		&lt;&lt;set _actor.isDone = true&gt;&gt;
+	&lt;&lt;else&gt;&gt;
+		&lt;&lt;set _actor.isDone = false&gt;&gt;
+	&lt;&lt;/if&gt;&gt;
 	&lt;&lt;for _effect range _actor.effects&gt;&gt;
 		/* DoT check */
 		&lt;&lt;if _effect.dot &amp;&amp; !_actor.dead&gt;&gt;
-				&lt;&lt;set _message to true&gt;&gt;
+				&lt;&lt;set _message = true&gt;&gt;
 				&lt;&lt;set $dmg = _effect.damage(_actor)&gt;&gt;
 				&lt;div id=&quot;actFlavor&quot;&gt;
 					&lt;&lt;print _effect.msg(_actor)&gt;&gt;
@@ -21095,6 +21139,13 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 	&lt;&lt;if _actor instanceof Enemy&gt;&gt;
 		&lt;&lt;if _actor.delayCounter &gt; 0&gt;&gt;
 			&lt;&lt;set _actor.delayCounter -= 1&gt;&gt;
+			&lt;&lt;if _actor.delayedAction.delayMessage !== null&gt;&gt;
+				&lt;&lt;set _message to true&gt;&gt;
+				&lt;div id=&quot;actFlavor&quot;&gt;
+					&lt;&lt;print _actor.delayedAction.delayMessage(_actor)&gt;&gt;
+				&lt;/div&gt;
+				&lt;br/&gt;
+			&lt;&lt;/if&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
 		&lt;&lt;if !_actor.dead&gt;&gt;
 			&lt;&lt;run _actor.regenHP()&gt;&gt;
@@ -21375,7 +21426,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 			&lt;&lt;if target().dmgreflection &amp;&amp; !_dmgreflecting &amp;&amp; target() !== subject() &amp;&amp; $dmg &gt; 0&gt;&gt;
 			/* If target has defined damage reflection, they reflect the attack&#39;s damage times their damage reflection value onto their attacker. Note that this code is executed before deathcheck, meaning damage will be reflected even if the attack defeats the enemy. You can change this by moving deathcheck above this section and including a check that disallows damage reflection if the target is dead. */
 				&lt;&lt;set $dmg = Math.round($dmg * target().dmgreflection)&gt;&gt;
-				&lt;&lt;set _OG = {target: $target&gt; subject: $subject}&gt;&gt;
+				&lt;&lt;set _OG = {target: $target, subject: $subject}&gt;&gt;
 				&lt;&lt;set $target = _OG.subject; $subject = _OG.target&gt;&gt;
 				&lt;&lt;set _dmgreflecting = true&gt;&gt; /* this prevents infinite recursion if a damage reflector attacks a damage reflector; can only reflect damage once per attack */
 				&lt;&lt;echoDamage &quot;nocalc&quot;&gt;&gt;
@@ -22994,7 +23045,7 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 &lt;&lt;run animateCSS(_idB,_animation,setup.DMG_DURATION+&quot;ms&quot;)&gt;&gt;</tw-passagedata><tw-passagedata pid="106" name="delayed actions" tags="nobr" position="725,1350" size="100,100">&lt;&lt;if $B.turn == &quot;player&quot; &amp;&amp; passage() == &quot;Battle!&quot;&gt;&gt;
   &lt;&lt;for _puppet range puppets()&gt;&gt;
     &lt;&lt;if _puppet.actionReady&gt;&gt;
-      &lt;&lt;set $subject = _puppet; $action = new Action(_puppet.delayedAction); $target = $action.targetMethod()&gt;&gt;
+      &lt;&lt;set $subject = _puppet; $action = puppet.delayedAction; $target = $action.targetMethod()&gt;&gt;
       &lt;&lt;set _puppet.delayedAction = null&gt;&gt;
       &lt;&lt;goto &quot;action phase&quot;&gt;&gt;
       &lt;&lt;break&gt;&gt;
@@ -26213,11 +26264,16 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;ul&gt;&lt;li&gt;The &quot;guarded&quot; property used by the &quot;Guarded&quot; status effect has been renamed to &lt;code&gt;areaImmune&lt;/code&gt; to avoid conflicts.&lt;/li&gt;&lt;/ul&gt;&lt;/ul&gt;
 &lt;li&gt;New &lt;code&gt;Enemy&lt;/code&gt; properties:&lt;/li&gt;
 &lt;ul&gt;&lt;li&gt;&lt;code&gt;actionsThisTurn&lt;/code&gt;: Returns the enemy&#39;s list from the &lt;code&gt;actionsThisTurn&lt;/code&gt; object in the battle controller.&lt;/li&gt;&lt;/ul&gt;
+&lt;li&gt;New &lt;code&gt;Action&lt;/code&gt; properties:&lt;/li&gt;
+&lt;ul&gt;&lt;li&gt;&lt;code&gt;delayHold&lt;/code&gt;: If &lt;code&gt;true&lt;/code&gt;, character will be unable to act while the delayed action is charging.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;delayMessage&lt;/code&gt;: Returns a message to be displayed at the top of rounds if the user is charging a delayed action. Set to &lt;code&gt;null&lt;/code&gt; to display no message.&lt;/li&gt;&lt;/ul&gt;
+&lt;li&gt;Delayed actions are now stored as &lt;code&gt;Action&lt;/code&gt; objects rather than just their name. This is to more easily facilitate the behavior described above. The &lt;code&gt;setupAction&lt;/code&gt; property is still a string.&lt;/li&gt;
 &lt;li&gt;Equipment can now cover multiple slots! Your dreams of giving your characters two-handed swords and three-piece suits can now be realized. To do this, define the item&#39;s &lt;code&gt;slot&lt;/code&gt; property as a &lt;code&gt;Set&lt;/code&gt; of the slots you want the item to cover rather than a string. A new item, the &quot;Zweihander&quot;, has been added to the item database as an example. &lt;i&gt;Credit to A Friendly Irin for providing this code.&lt;/i&gt;&lt;/li&gt;
 &lt;li&gt;Fixed an error in &lt;code&gt;Enemy&lt;/code&gt;&#39;s &lt;code&gt;validTarget&lt;/code&gt; function that prevented the guard check clause from behaving correctly.&lt;/li&gt;
 &lt;li&gt;Fixed an error that prevented &lt;code&gt;actorBox&lt;/code&gt; from being used outside of battle due to it calling for the battle controller even when it didn&#39;t exist.&lt;/li&gt;
 &lt;li&gt;Removed the extra dead space between item entries in the equipment list.&lt;/li&gt;
 &lt;li&gt;Items in the equipment list are now displayed with the &lt;code&gt;Item&lt;/code&gt; object&#39;s &lt;code&gt;toString&lt;/code&gt; function for consistency with other items.&lt;/li&gt;
+&lt;li&gt;Effects&#39; &lt;code&gt;addText&lt;/code&gt; and &lt;code&gt;removeText&lt;/code&gt; now take the entire character object as an argument, rather than just their name. This allows for more customizable messages.&lt;/li&gt;
 &lt;li&gt;Updated the included Chapel macros bundle to be compatible with SugarCube 2.35.&lt;/li&gt;
 &lt;/ul&gt;
 Version 3.04
@@ -27851,6 +27907,8 @@ This isn&#39;t what a live {{{Action}}} object looks like, but it contains all t
 * {{{setupAction}}} is a string; if populated, a delayed action of the same name will be stored in the user&#39;s {{{delayedAction}}} property.
 ** {{{setupDelay}}} is an integer; specifies the number of turns that must elapse before the delayed action specified by {{{setupAction}}} will occur. Defaults to 1.
 ** {{{delayPersist}}} is a Boolean; if {{{true}}}, the delayed action will occur even if the user would otherwise be incapable of using an action (dead, stunned, etc). This must be set &lt;b&gt;on the action that will be performed&lt;/b&gt;, not the setup action.
+** {{{delayHold}}} is a Boolean; if {{{true}}}, the user will be unable to act while charging their delayed action. This must be set &lt;b&gt;on the action that will be performed&lt;/b&gt;, not the setup action.
+** {{{delayMessage}}} is a function; returns a string to be displayed at the top of rounds while an action is charging. Set to {{{null}}} to display no message. This must be set &lt;b&gt;on the action that will be performed&lt;/b&gt;, not the setup action.
 * {{{canTargetDead}}} is a Boolean; if {{{true}}}, the action can target dead characters. (By default, dead characters cannot be targeted.)
 
 &lt;h3 id=&quot;actions.targeting&quot;&gt;Targeting Logic&lt;/h3&gt;

@@ -484,7 +484,7 @@ $subject.name will
 <</if>>
 
 <<if typeof($action.setupAction) == "string">>
-	<<set subject().delayedAction = $action.setupAction; subject().delayCounter = $action.setupDelay>>
+	<<set subject().delayedAction = new Action($action.setupAction); subject().delayCounter = $action.setupDelay>>
 <</if>>
 
 <<if subject() instanceof Enemy && Number.isInteger($action.enemyCD)>>
@@ -722,7 +722,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 				<</if>>
 				<<set _counters = []>>
 				<<if _enemy.actionReady>>
-					<<set $action = new Action(_enemy.delayedAction)>>
+					<<set $action = _enemy.delayedAction>>
 					<<set _enemy.delayedAction = null>>
 				<<else>>
 					<<run _enemy.actions()>>

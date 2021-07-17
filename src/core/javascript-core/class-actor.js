@@ -826,8 +826,8 @@ window.Actor = class Actor {
 		//	Returns true if actor has a valid delayed action stored,
 		//	and they can perform it (not dead/held/uncontrollable, or delayPersist)
 
-		return (typeof(this.delayedAction) === "string" && this.delayCounter <= 0 &&
-			(setup.actionData[this.delayedAction].delayPersist ||
+		return (this.delayedAction instanceof Action && this.delayCounter <= 0 &&
+			(this.delayedAction.delayPersist ||
 				!(this.dead || this.fakedeath || this.noact || this.uncontrollable)));
 	}
 
