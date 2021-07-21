@@ -1,4 +1,9 @@
 :: Changelog[text]
+Version 3.05.1
+<ul>
+<li>Equipment will now print their character restrictions in their default <code>toString</code>.</li>
+<li>The <code>itemDrop</code> widget now displays items with the default <code>toString</code> format.</li>
+</ul>
 Version 3.05
 <ul>
 <li>New <code>Actor</code> properties:</li>

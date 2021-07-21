@@ -150,19 +150,26 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 
 	toString () {
 		var text = `<span class="item-name">${this.name}</span>`;
-		text += `<span class="action-tags">(${this.stock})</span>`;
+		text += `<span class="action-tags">x${this.stock}</span>`;
 		if (this.equippable) {
 			if (this.equippable.slot instanceof Set) {
 				text += `<div class="item-equippable">`;
 				var array = Array.from(this.equippable.slot).entries();
 				for (let [s,slot] of array) {
-					console.log(slot); console.log(s);
 					text += slot;
 					if (s < this.equippable.slot.size-1) text += " + ";
 				}
 				text += `</div>`;
 			} else {
 				text += `<div class="item-equippable">${this.equippable.slot}</div>`;
+			}
+			if (this.restrictedTo.length > 0) {
+				text += `<div class="item-equippable">Restriction:`
+				for (let [n,name] of this.restrictedTo) {
+					text += ` ${name}`;
+					if (n < this.restrictedTo.length-1) text += ",";
+				}
+				text += `</div>`;
 			}
 		}
 		text += `<div id="display-content">`;
