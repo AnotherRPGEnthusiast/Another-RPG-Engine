@@ -69,6 +69,10 @@
 	text-align: left;
 }
 
+.infield #display-content {
+	height: auto;
+}
+
 .smalltext {
 	font-size:12px;
 	font-weight:normal;

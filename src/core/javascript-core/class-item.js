@@ -174,7 +174,7 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 		}
 		text += `<div id="display-content">`;
 		text += `<div class="action-info">${this.info}</div>`;
-		text += `<div class="action-desc">${this.desc}</div>`;
+		if (this.desc !== null) text += `<div class="action-desc">${this.desc}</div>`;
 		text += `</div>`;
 		return text;
 	}

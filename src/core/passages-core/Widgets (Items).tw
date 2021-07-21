@@ -17,7 +17,7 @@
 
 <<set _added = $inventory.addItem($args[0],_amt)>>
 <center>
-<div class="itembox">
+<div class="itembox infield">
 <<print _item>>
 </div>
 <<if _added === false>>

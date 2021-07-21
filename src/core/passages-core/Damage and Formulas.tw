@@ -170,7 +170,7 @@
 			<<if setup.THREAT_TARGETING === true && subject() instanceof Puppet && target() instanceof Enemy>>
 				<<include "echoDamage threat gain">>
 			<</if>>
-			<<if target().dmgreflection && !_dmgreflecting && target() !== subject() && $dmg > 0>>
+			<<if (!$action.noReflection || target().absreflect) && target().dmgreflection && !_dmgreflecting && target() !== subject() && $dmg > 0>>
 			/* If target has defined damage reflection, they reflect the attack's damage times their damage reflection value onto their attacker. Note that this code is executed before deathcheck, meaning damage will be reflected even if the attack defeats the enemy. You can change this by moving deathcheck above this section and including a check that disallows damage reflection if the target is dead. */
 				<<set $dmg = Math.round($dmg * target().dmgreflection)>>
 				<<set _OG = {target: $target, subject: $subject}>>

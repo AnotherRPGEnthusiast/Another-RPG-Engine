@@ -1,8 +1,12 @@
 :: Changelog[text]
-Version 3.05.1
+Version 3.06
 <ul>
+<li>New <code>Action</code> properties:</li>
+<ul><li><code>noReflection</code>: If <code>true</code>, the action will not trigger damage reflection unless the target has the <code>absreflect</code> property.</li></ul>
 <li>Equipment will now print their character restrictions in their default <code>toString</code>.</li>
 <li>The <code>itemDrop</code> widget now displays items with the default <code>toString</code> format.</li>
+<li>Item boxes displayed in <code>itemDrop</code> now have no limits on their height. This is governed through the "infield" class, which you can find in <code>stylesheets-core/menu/shared.css</code>.</li>
+<li>Items' default <code>toString</code> will no longer display null descriptions.</li>
 </ul>
 Version 3.05
 <ul>

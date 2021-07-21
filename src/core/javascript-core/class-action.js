@@ -1060,6 +1060,25 @@ window.Action = class Action {
 		return val;
 	}
 
+	set noReflection (val) {
+		console.assert(typeof(val) === "boolean",`ERROR: noReflection must be Boolean`);
+		this._noReflection = val;
+	}
+
+	get noReflection () {
+		//	Boolean. If true, action will not trigger damage reflection.
+		//	(Unless the target has the "absreflect" property.)
+
+		var val = this._noReflection;
+		if (val === undefined) {
+			val = this.actionData.noReflection;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
 	set area (val) {
 		console.assert(typeof(val) === "string",`ERROR: area must be string`);
 		this._area = val;
