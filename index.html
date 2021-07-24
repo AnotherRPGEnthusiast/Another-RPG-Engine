@@ -20658,7 +20658,7 @@ $subject.name will
 &lt;&lt;/if&gt;&gt;
 
 /* Special &quot;interrupt&quot; field, for battle interruptions, displayed after the use text but before the act text. To populate it, in &quot;battle interruptions&quot;, target &quot;#interrupt&quot; with the replace macro, and remember to remove the &quot;invisible&quot; class with removeClass. Note that as with all DOM macros, the element must be rendered before code is executed, so this will likely require wrapping the code in a timed 0s macro. */
-&lt;div id=&quot;interrupt&quot; class=&quot;invisible&quot;&gt;&lt;/div&gt;
+&lt;div id=&quot;interrupt&quot;&gt;&lt;/div&gt;
 
 /* Then descriptive text. This is a div element, so it creates an automatic line break. */
 
@@ -34526,18 +34526,30 @@ You can change the difficulty through the Settings button in the sidebar. Keep i
 &lt;&lt;if target().name == &quot;Steven&quot;&gt;&gt;
 	&lt;&lt;if $enemies[1].dead is false&gt;&gt;
 	/* Garnet is the first to defend him */
+&lt;&lt;timed 0s&gt;&gt;
+&lt;&lt;replace &quot;#interrupt&quot;&gt;&gt;
 @@.interruption;
 $enemies[1].name&#39;s head snaps towards you and she jumps in the way of your attack, leaving Steven unharmed.@@
+&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/timed&gt;&gt;
 		&lt;&lt;set _t to 1&gt;&gt;
 	&lt;&lt;elseif $enemies[0].dead is false&gt;&gt;
    	/* If Garnet is poofed, Pearl plays defense */
+&lt;&lt;timed 0s&gt;&gt;
+&lt;&lt;replace &quot;#interrupt&quot;&gt;&gt;
 @@.interruption;
 $enemies[0].name screams, &quot;STEVEN!!!&quot; and throws herself into your attack without hesitation.@@
+&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/timed&gt;&gt;
    		&lt;&lt;set _t to 0&gt;&gt;
   	&lt;&lt;elseif $enemies[2].dead is false&gt;&gt;
    	/* If Garnet and Pearl are poofed, Amethyst plays defense */
+&lt;&lt;timed 0s&gt;&gt;
+&lt;&lt;replace &quot;#interrupt&quot;&gt;&gt;
 @@.interruption;
 $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws herself in front of Steven.@@
+&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/timed&gt;&gt;
    		&lt;&lt;set _t to 2&gt;&gt;
   	&lt;&lt;else&gt;&gt;
    		&lt;&lt;set _t to 3&gt;&gt; /* this is Steven&#39;s index; he is vulnerable */

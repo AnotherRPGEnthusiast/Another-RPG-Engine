@@ -543,7 +543,7 @@ $subject.name will
 <</if>>
 
 /* Special "interrupt" field, for battle interruptions, displayed after the use text but before the act text. To populate it, in "battle interruptions", target "#interrupt" with the replace macro, and remember to remove the "invisible" class with removeClass. Note that as with all DOM macros, the element must be rendered before code is executed, so this will likely require wrapping the code in a timed 0s macro. */
-<div id="interrupt" class="invisible"></div>
+<div id="interrupt"></div>
 
 /* Then descriptive text. This is a div element, so it creates an automatic line break. */
 
