@@ -10,18 +10,33 @@
 <<if target().name == "Steven">>
 	<<if $enemies[1].dead is false>>
 	/* Garnet is the first to defend him */
+<<timed 0s>>
+<<removeClass "#interrupt" "invisible">>
+<<replace "#interrupt">>
 @@.interruption;
 $enemies[1].name's head snaps towards you and she jumps in the way of your attack, leaving Steven unharmed.@@
+<</replace>>
+<</timed>>
 		<<set _t to 1>>
 	<<elseif $enemies[0].dead is false>>
    	/* If Garnet is poofed, Pearl plays defense */
+<<timed 0s>>
+<<removeClass "#interrupt" "invisible">>
+<<replace "#interrupt">>
 @@.interruption;
 $enemies[0].name screams, "STEVEN!!!" and throws herself into your attack without hesitation.@@
+<</replace>>
+<</timed>>
    		<<set _t to 0>>
   	<<elseif $enemies[2].dead is false>>
    	/* If Garnet and Pearl are poofed, Amethyst plays defense */
+<<timed 0s>>
+<<removeClass "#interrupt" "invisible">>
+<<replace "#interrupt">>
 @@.interruption;
 $enemies[2].name yells, "Pick on someone your own size!" and throws herself in front of Steven.@@
+<</replace>>
+<</timed>>
    		<<set _t to 2>>
   	<<else>>
    		<<set _t to 3>> /* this is Steven's index; he is vulnerable */

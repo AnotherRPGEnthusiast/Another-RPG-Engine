@@ -465,6 +465,7 @@ $subject.name will
 
 :: action effects[nobr]
 /* Where the action actually happens. Kept separate from action phase for modularity purposes. */
+<<include "battle interruptions">>
 
 /* Subtract action cost */
 <<if typeof(subject().en) == "number">>
@@ -541,7 +542,8 @@ $subject.name will
 </div>
 <</if>>
 
-<<include "battle interruptions">>
+/* Special "interrupt" field, for battle interruptions, displayed after the use text but before the act text. To populate it, in "battle interruptions", target "#interrupt" with the replace macro, and remember to remove the "invisible" class with removeClass. Note that as with all DOM macros, the element must be rendered before code is executed, so this will likely require wrapping the code in a timed 0s macro. */
+<div id="interrupt" class="invisible"></div>
 
 /* Then descriptive text. This is a div element, so it creates an automatic line break. */
 

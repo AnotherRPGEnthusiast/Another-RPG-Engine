@@ -325,11 +325,12 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 
 	var result = `<<set _AoE = true>>`;
 
-	var [target,party] = findTarget(args.target);
+	var [target,partyName] = findTarget(args.target);
+	var party = State.getVar(partyName);
 	party = party.filter(function (a) { return a && !a.areaImmune });
 	if (args.cut === true) {
 		var count = 0;
-		State.getVar(party).filter(function (a) { return a !== null; }).forEach(function(actor) {
+		party.filter(function (a) { return a !== null; }).forEach(function(actor) {
 			if (!actor.areaImmune) {
 				count++;
 			}
@@ -345,8 +346,8 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 		}
 		switch (args.type.toLowerCase()) {
 			case 'row':
-				party = party.filter(function (a) { return a && a.row === target().row });
-				result += `<<for _actor range ${party}>>\
+				temporary().party = party.filter(function (a) { return a && a.row === target().row });
+				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
 						<</if>>\
@@ -354,8 +355,8 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				break;
 			case 'col':
 			case 'column':
-				party = party.filter(function (a) { return a && a.col === target().col });
-				result += `<<for _actor range ${party}>>\
+				temporary().party = party.filter(function (a) { return a && a.col === target().col });
+				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
 						<</if>>\
@@ -363,19 +364,19 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				break;
 			case 'adjacent':
 			case '+':
-				party = party.filter(function (a) { return a && (
+				temporary().party = party.filter(function (a) { return a && (
 					(a.id === target().id) ||
 					(a.col === target().col && (a.row === target().row + 1 || a.row === target().row - 1)) ||
 					(a.row === target().row && (a.col === target().col + 1 || a.col === target().col - 1))
 					)})
-				result += `<<for _actor range ${party}>>\
+				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
 						<</if>>\
 					<</for>>`;
 				break;
 			default:
-				result += `<<for _actor range ${party}>>\
+				result += `<<for _actor range ${partyName}>>\
 						<<set $target = _actor>>\
 						${content}\
 				<</for>>`;
@@ -383,7 +384,7 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 		}
 	}
 	else {
-		result += `<<for _actor range ${party}>>\
+		result += `<<for _actor range ${partyName}>>\
 				<<set $target = _actor>>\
 				${content}\
 		<</for>>`;

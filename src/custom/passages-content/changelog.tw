@@ -7,6 +7,8 @@ Version 3.06
 <li>The <code>itemDrop</code> widget now displays items with the default <code>toString</code> format.</li>
 <li>Item boxes displayed in <code>itemDrop</code> now have no limits on their height. This is governed through the "infield" class, which you can find in <code>stylesheets-core/menu/shared.css</code>.</li>
 <li>Items' default <code>toString</code> will no longer display null descriptions.</li>
+<li>Fixed an error in the <code>massAttack</code> function that prevented it from working correctly.</li>
+<li>Tweaked the way battle interruptions work to accommodate for the modular order of action display components. The passage "battle interruptions" is now run at the very start of any action, and the spot where it was previously run is now a <code>div</code> element with the id "interrupt" and the class "invisible". To populate it, remove the "invisible" class and target the id with a <code>replace</code> macro in "battle interruptions".</li>
 </ul>
 Version 3.05
 <ul>

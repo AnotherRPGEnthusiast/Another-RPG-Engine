@@ -5346,6 +5346,10 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	text-align: left;
 }
 
+.infield #display-content {
+	height: auto;
+}
+
 .smalltext {
 	font-size:12px;
 	font-weight:normal;
@@ -6671,11 +6675,12 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 
 	var result = `<<set _AoE = true>>`;
 
-	var [target,party] = findTarget(args.target);
+	var [target,partyName] = findTarget(args.target);
+	var party = State.getVar(partyName);
 	party = party.filter(function (a) { return a && !a.areaImmune });
 	if (args.cut === true) {
 		var count = 0;
-		State.getVar(party).filter(function (a) { return a !== null; }).forEach(function(actor) {
+		party.filter(function (a) { return a !== null; }).forEach(function(actor) {
 			if (!actor.areaImmune) {
 				count++;
 			}
@@ -6691,8 +6696,8 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 		}
 		switch (args.type.toLowerCase()) {
 			case 'row':
-				party = party.filter(function (a) { return a && a.row === target().row });
-				result += `<<for _actor range ${party}>>\
+				temporary().party = party.filter(function (a) { return a && a.row === target().row });
+				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
 						<</if>>\
@@ -6700,8 +6705,8 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				break;
 			case 'col':
 			case 'column':
-				party = party.filter(function (a) { return a && a.col === target().col });
-				result += `<<for _actor range ${party}>>\
+				temporary().party = party.filter(function (a) { return a && a.col === target().col });
+				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
 						<</if>>\
@@ -6709,19 +6714,19 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				break;
 			case 'adjacent':
 			case '+':
-				party = party.filter(function (a) { return a && (
+				temporary().party = party.filter(function (a) { return a && (
 					(a.id === target().id) ||
 					(a.col === target().col && (a.row === target().row + 1 || a.row === target().row - 1)) ||
 					(a.row === target().row && (a.col === target().col + 1 || a.col === target().col - 1))
 					)})
-				result += `<<for _actor range ${party}>>\
+				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
 						<</if>>\
 					<</for>>`;
 				break;
 			default:
-				result += `<<for _actor range ${party}>>\
+				result += `<<for _actor range ${partyName}>>\
 						<<set $target = _actor>>\
 						${content}\
 				<</for>>`;
@@ -6729,7 +6734,7 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 		}
 	}
 	else {
-		result += `<<for _actor range ${party}>>\
+		result += `<<for _actor range ${partyName}>>\
 				<<set $target = _actor>>\
 				${content}\
 		<</for>>`;
@@ -8198,6 +8203,25 @@ window.Action = class Action {
 		var val = this._canTargetDead;
 		if (val === undefined) {
 			val = this.actionData.canTargetDead;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
+	set noReflection (val) {
+		console.assert(typeof(val) === "boolean",`ERROR: noReflection must be Boolean`);
+		this._noReflection = val;
+	}
+
+	get noReflection () {
+		//	Boolean. If true, action will not trigger damage reflection.
+		//	(Unless the target has the "absreflect" property.)
+
+		var val = this._noReflection;
+		if (val === undefined) {
+			val = this.actionData.noReflection;
 		}
 		if (val === undefined) {
 			val = false;
@@ -10434,13 +10458,12 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 
 	toString () {
 		var text = `<span class="item-name">${this.name}</span>`;
-		text += `<span class="action-tags">(${this.stock})</span>`;
+		text += `<span class="action-tags">x${this.stock}</span>`;
 		if (this.equippable) {
 			if (this.equippable.slot instanceof Set) {
 				text += `<div class="item-equippable">`;
 				var array = Array.from(this.equippable.slot).entries();
 				for (let [s,slot] of array) {
-					console.log(slot); console.log(s);
 					text += slot;
 					if (s < this.equippable.slot.size-1) text += " + ";
 				}
@@ -10448,10 +10471,18 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 			} else {
 				text += `<div class="item-equippable">${this.equippable.slot}</div>`;
 			}
+			if (this.restrictedTo.length > 0) {
+				text += `<div class="item-equippable">Restriction:`
+				for (let [n,name] of this.restrictedTo) {
+					text += ` ${name}`;
+					if (n < this.restrictedTo.length-1) text += ",";
+				}
+				text += `</div>`;
+			}
 		}
 		text += `<div id="display-content">`;
 		text += `<div class="action-info">${this.info}</div>`;
-		text += `<div class="action-desc">${this.desc}</div>`;
+		if (this.desc !== null) text += `<div class="action-desc">${this.desc}</div>`;
 		text += `</div>`;
 		return text;
 	}
@@ -17601,7 +17632,7 @@ Config.saves.isAllowed = function () {
 };
 // This will disallow saving in battle. This is probably a good idea, but make sure you keep track of your inbattle variable so you don't accidentally prevent people from saving in the main story.
 
-setup.version = "3.05";
+setup.version = "3.06";
 
 Config.saves.version = 0;
 // Records a version number for saves. Update this when you update your version. This is helpful for updating saves from older versions.
@@ -20549,6 +20580,7 @@ $subject.name will
 &lt;&lt;include &quot;Battle Continue Button&quot;&gt;&gt;
 
 &lt;/span&gt;</tw-passagedata><tw-passagedata pid="23" name="action effects" tags="nobr" position="350,350" size="100,100">/* Where the action actually happens. Kept separate from action phase for modularity purposes. */
+&lt;&lt;include &quot;battle interruptions&quot;&gt;&gt;
 
 /* Subtract action cost */
 &lt;&lt;if typeof(subject().en) == &quot;number&quot;&gt;&gt;
@@ -20625,7 +20657,8 @@ $subject.name will
 &lt;/div&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;include &quot;battle interruptions&quot;&gt;&gt;
+/* Special &quot;interrupt&quot; field, for battle interruptions, displayed after the use text but before the act text. To populate it, in &quot;battle interruptions&quot;, target &quot;#interrupt&quot; with the replace macro, and remember to remove the &quot;invisible&quot; class with removeClass. Note that as with all DOM macros, the element must be rendered before code is executed, so this will likely require wrapping the code in a timed 0s macro. */
+&lt;div id=&quot;interrupt&quot; class=&quot;invisible&quot;&gt;&lt;/div&gt;
 
 /* Then descriptive text. This is a div element, so it creates an automatic line break. */
 
@@ -21423,7 +21456,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 			&lt;&lt;if setup.THREAT_TARGETING === true &amp;&amp; subject() instanceof Puppet &amp;&amp; target() instanceof Enemy&gt;&gt;
 				&lt;&lt;include &quot;echoDamage threat gain&quot;&gt;&gt;
 			&lt;&lt;/if&gt;&gt;
-			&lt;&lt;if target().dmgreflection &amp;&amp; !_dmgreflecting &amp;&amp; target() !== subject() &amp;&amp; $dmg &gt; 0&gt;&gt;
+			&lt;&lt;if (!$action.noReflection || target().absreflect) &amp;&amp; target().dmgreflection &amp;&amp; !_dmgreflecting &amp;&amp; target() !== subject() &amp;&amp; $dmg &gt; 0&gt;&gt;
 			/* If target has defined damage reflection, they reflect the attack&#39;s damage times their damage reflection value onto their attacker. Note that this code is executed before deathcheck, meaning damage will be reflected even if the attack defeats the enemy. You can change this by moving deathcheck above this section and including a check that disallows damage reflection if the target is dead. */
 				&lt;&lt;set $dmg = Math.round($dmg * target().dmgreflection)&gt;&gt;
 				&lt;&lt;set _OG = {target: $target, subject: $subject}&gt;&gt;
@@ -22766,19 +22799,17 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 	&lt;&lt;set _v.stock = _v.maxstock&gt;&gt;
 &lt;&lt;/for&gt;&gt;
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="94" name="Widget: itemDrop" tags="widget nobr" position="475,1225" size="100,100">&lt;&lt;widget &quot;itemDrop&quot;&gt;&gt;
-&lt;&lt;set _item = new Item($args[0])&gt;&gt;
 &lt;&lt;if def $args[1] &amp;&amp; typeof($args[1]) == &#39;number&#39;&gt;&gt;
 	&lt;&lt;set _amt = $args[1]&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;set _amt = 1&gt;&gt;
 &lt;&lt;/if&gt;&gt;
+&lt;&lt;set _item = new Item($args[0],_amt)&gt;&gt;
 
 &lt;&lt;set _added = $inventory.addItem($args[0],_amt)&gt;&gt;
 &lt;center&gt;
-&lt;div class=&quot;itembox&quot;&gt;
-&lt;b&gt;_item.name&lt;span style=&quot;float:right&quot;&gt;x&lt;&lt;print _amt&gt;&gt;&lt;/span&gt;&lt;/b&gt;&lt;br/&gt;
-&lt;&lt;print _item.info&gt;&gt;&lt;br/&gt;
-&lt;span class=&quot;actdesc&quot;&gt;&lt;&lt;print _item.desc&gt;&gt;&lt;/span&gt;
+&lt;div class=&quot;itembox infield&quot;&gt;
+&lt;&lt;print _item&gt;&gt;
 &lt;/div&gt;
 &lt;&lt;if _added === false&gt;&gt;
 	&lt;i&gt;You can&#39;t hold any more of these! Use or sell some and then come back.&lt;/i&gt;
@@ -26256,7 +26287,18 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 	&lt;&lt;goto &quot;Battle!&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;include &quot;action phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="Changelog" tags="text" position="225,2225" size="100,100">Version 3.05
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="Changelog" tags="text" position="225,2225" size="100,100">Version 3.06
+&lt;ul&gt;
+&lt;li&gt;New &lt;code&gt;Action&lt;/code&gt; properties:&lt;/li&gt;
+&lt;ul&gt;&lt;li&gt;&lt;code&gt;noReflection&lt;/code&gt;: If &lt;code&gt;true&lt;/code&gt;, the action will not trigger damage reflection unless the target has the &lt;code&gt;absreflect&lt;/code&gt; property.&lt;/li&gt;&lt;/ul&gt;
+&lt;li&gt;Equipment will now print their character restrictions in their default &lt;code&gt;toString&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;itemDrop&lt;/code&gt; widget now displays items with the default &lt;code&gt;toString&lt;/code&gt; format.&lt;/li&gt;
+&lt;li&gt;Item boxes displayed in &lt;code&gt;itemDrop&lt;/code&gt; now have no limits on their height. This is governed through the &quot;infield&quot; class, which you can find in &lt;code&gt;stylesheets-core/menu/shared.css&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Items&#39; default &lt;code&gt;toString&lt;/code&gt; will no longer display null descriptions.&lt;/li&gt;
+&lt;li&gt;Fixed an error in the &lt;code&gt;massAttack&lt;/code&gt; function that prevented it from working correctly.&lt;/li&gt;
+&lt;li&gt;Tweaked the way battle interruptions work to accommodate for the modular order of action display components. The passage &quot;battle interruptions&quot; is now run at the very start of any action, and the spot where it was previously run is now a &lt;code&gt;div&lt;/code&gt; element with the id &quot;interrupt&quot; and the class &quot;invisible&quot;. To populate it, remove the &quot;invisible&quot; class and target the id with a &lt;code&gt;replace&lt;/code&gt; macro in &quot;battle interruptions&quot;.&lt;/li&gt;
+&lt;/ul&gt;
+Version 3.05
 &lt;ul&gt;
 &lt;li&gt;New &lt;code&gt;Actor&lt;/code&gt; properties:&lt;/li&gt;
 &lt;ul&gt;&lt;li&gt;&lt;code&gt;numAdjacent&lt;/code&gt;: Returns the number of other characters in the area specified by the passed argument. Useful for AI code.&lt;/li&gt;
@@ -26274,6 +26316,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;Removed the extra dead space between item entries in the equipment list.&lt;/li&gt;
 &lt;li&gt;Items in the equipment list are now displayed with the &lt;code&gt;Item&lt;/code&gt; object&#39;s &lt;code&gt;toString&lt;/code&gt; function for consistency with other items.&lt;/li&gt;
 &lt;li&gt;Effects&#39; &lt;code&gt;addText&lt;/code&gt; and &lt;code&gt;removeText&lt;/code&gt; now take the entire character object as an argument, rather than just their name. This allows for more customizable messages.&lt;/li&gt;
+&lt;li&gt;Fixed a typo in the damage reflection code that prevented it from working correctly.&lt;/li&gt;
 &lt;li&gt;Updated the included Chapel macros bundle to be compatible with SugarCube 2.35.&lt;/li&gt;
 &lt;/ul&gt;
 Version 3.04
