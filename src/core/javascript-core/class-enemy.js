@@ -65,6 +65,10 @@ window.Enemy = class Enemy extends Actor {
 		return Number.isInteger(r) ? r : 0;
 	}
 
+	get XP () {
+		return this.xp;
+	}
+
 	set gp (num) {
 		console.assert(Number.isInteger(num) && num > 0,`ERROR in gp setter: must be positive integer`);
 		this._gp = num;
@@ -78,6 +82,10 @@ window.Enemy = class Enemy extends Actor {
 			r = this.data.gp;
 		}
 		return Number.isInteger(r) ? r : 0;
+	}
+
+	get GP () {
+		return this.gp;
 	}
 
 	get itemDrops () {

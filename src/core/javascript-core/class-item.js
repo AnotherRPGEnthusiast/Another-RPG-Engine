@@ -79,9 +79,10 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 
 	get value() {
 		let r = (this.itemData.value || 0);
+		r = (r instanceof Function) ? r(this) : r;
 		console.assert(Number.isInteger(r),`ERROR in value getter for ${this.name}: non-integer value`);
 
-    return (this.itemData.value || 0);
+    return r;
   }
 
   get usable() {

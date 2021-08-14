@@ -87,6 +87,10 @@ window.deadCount = function deadCount () {
 	return count;
 };
 
+function convertFunction (v) {
+	return (v instanceof Function) ? v() : v;
+}
+
 /*
 	Number-To-Words module
 	Converts a number, which must be a safe integer, into its short scale word equivalent.

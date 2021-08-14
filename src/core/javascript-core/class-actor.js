@@ -506,6 +506,7 @@ window.Actor = class Actor {
 
 	get deathMessage () {
 		var base = (this._deathMessage || this.data.deathMessage || `${this.name} is defeated!`);
+		if (base instanceof Function) base = base(this);
 		return base+"<br/>";
 	}
 
@@ -939,6 +940,17 @@ window.Actor = class Actor {
 			});
 
 		return count;
+	}
+
+	replenishUses (name) {
+		//	name = string
+		//	Refills the uses of all actions matching the passed name.
+
+		console.assert(typeof(name) == "string",`ERROR in replenishUses: action name must be string`);
+		this.actions.forEach(function (action) {
+			if (action.name === name) action.refill();
+		});
+		return;
 	}
 
 	clone () {

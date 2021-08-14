@@ -103,7 +103,7 @@ window.Action = class Action {
 			return val;
 		} else if (typeof(val) === "string") {
 			val = [val];
-		} else {
+		} else if (!(val instanceof Array)) {
 			val = [];
 		}
 		var result = "";

@@ -40,7 +40,7 @@ MegaCorp® is happy to provide you with their top-of-the-line items, provided yo
 </div>
 </div>
 <<print _v.info>><br/>
-<span class="actdesc"><<print _v.desc>></span><br/>
+<span class="action-desc"><<print _v.desc>></span><br/>
 <br/>
 <</if>>
 <</for>>

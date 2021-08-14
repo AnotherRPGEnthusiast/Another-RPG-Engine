@@ -9,7 +9,7 @@ function findTarget (selector) {
 //	IMPORTANT: Any action that uses this must RETURN A FUNCTION rather than calculating its results immediately. This is because the result will change depending on the active target and subject, so the function call itself must be renewed.
 
 //	console.log("findTarget called, selector = "+selector);
-	var target;
+	var targetName;
 	var party;
 	var mass = false;
 	if (selector == 'mass' || selector == 'e' || selector == 'enemies'){
@@ -18,7 +18,7 @@ function findTarget (selector) {
 		} else if (subject() instanceof Enemy) {
 			party = "$puppets";
 		}
-		target = "$target";
+		targetName = "$target";
 		mass = true;
 	} else if (selector == 'a' || selector == 'allies') {
 		if (subject() instanceof Puppet) {
@@ -26,16 +26,16 @@ function findTarget (selector) {
 		} else if (subject() instanceof Enemy) {
 			party = "$enemies";
 		}
-		target = "$target";
+		targetName = "$target";
 		mass = true;
 	} else if (selector == 'all') {
 		party = "$B.actors"
-		target = "$target";
+		targetName = "$target";
 		mass = true;
 	} else if (selector == 's'){
-		target = "$subject";
-		if (State.getVar(target) !== null) {
-			switch (State.getVar(target).id.charAt(0)) {
+		targetName = "$subject";
+		if (State.getVar(targetName) !== null) {
+			switch (State.getVar(targetName).id.charAt(0)) {
 				case 'p':
 					party = "$puppets";
 					break;
@@ -45,9 +45,9 @@ function findTarget (selector) {
 			}
 		}
 	} else if (selector === undefined || selector == 't'){
-		target = "$target";
-		if (State.getVar(target) !== null) {
-			switch (State.getVar(target).id.charAt(0)) {
+		targetName = "$target";
+		if (State.getVar(targetName) !== null) {
+			switch (State.getVar(targetName).id.charAt(0)) {
 				case 'p':
 					party = "$puppets";
 					break;
@@ -59,7 +59,7 @@ function findTarget (selector) {
 	} else {
 		console.log("ERROR in findTarget: invalid selector");
 	}
-	return [target,party,mass];
+	return [targetName,party,mass];
 }
 
 
@@ -274,11 +274,11 @@ var removeEffect = function (args = {target: 't'}, extension = "") {
 		}
 
 		var content = "";
-		var [target,party,mass] = findTarget(args.target);
+		var [targetName,party,mass] = findTarget(args.target);
 
-		content += `<<for _effect range ${target}.effects>>\
+		content += `<<for _effect range ${targetName}.effects>>\
 		<<if ${condition}>>\
-			<<print ${target}.removeEffect(_effect,_mods)>>\
+			<<print ${targetName}.removeEffect(_effect,_mods)>>\
 		<</if>>\
 		<</for>>`;
 
@@ -325,15 +325,13 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 
 	var result = `<<set _AoE = true>>`;
 
-	var [target,partyName] = findTarget(args.target);
+	var [targetName,partyName] = findTarget(args.target);
 	var party = State.getVar(partyName);
 	party = party.filter(function (a) { return a && !a.areaImmune });
 	if (args.cut === true) {
 		var count = 0;
-		party.filter(function (a) { return a !== null; }).forEach(function(actor) {
-			if (!actor.areaImmune) {
+		party.forEach(function(actor) {
 				count++;
-			}
 		});
 		var prepend = `<<damageCalc>>\
 		<<set $dmg = Math.round($dmg/${count})>>\
@@ -350,7 +348,6 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
-						<</if>>\
 					<</for>>`;
 				break;
 			case 'col':
@@ -359,7 +356,6 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
-						<</if>>\
 					<</for>>`;
 				break;
 			case 'adjacent':
@@ -372,7 +368,6 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
-						<</if>>\
 					<</for>>`;
 				break;
 			default:
@@ -408,7 +403,7 @@ var splashDamage = function splashDamage (args = {target: 't', cut: 1}, extensio
 	}
 	console.assert(Number.isFinite(args.cut),"ERROR in splashDamage: cut value undefined or nonnumber");
 
-	var [target,party] = findTarget(args.target);
+	var [targetName,party] = findTarget(args.target);
 
 	if (extension === undefined) {
 		extension = "";
@@ -504,14 +499,14 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 
 	return function () {
 
-		var [target,party] = findTarget(args.target);
+		var [targetName,party] = findTarget(args.target);
 		result = "";
-		target = State.getVar(target);
+		var targ = State.getVar(targetName);
 		if (extension instanceof Function){
 			extension = extension();
 		}
 		if (target.unmovable) {
-			return `${target.name} can't be moved!<br/>${extension}`;
+			return `${targ.name} can't be moved!<br/>${extension}`;
 		}
 
 		var offset = args.offset;
@@ -527,9 +522,9 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 				case "pull":
 					for (let i = 1; i <= offset; i++) {
 						try {
-							target.pos = [target.row-1][target.col];
+							targ.pos = [targ.row-1][targ.col];
 						} catch (e) {
-							result = `${target.name} couldn't be moved!`;
+							result = `${targ.name} couldn't be moved!`;
 							break;
 						}
 					}
@@ -539,9 +534,9 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 				case "push":
 				for (let i = 1; i <= offset; i++) {
 					try {
-						target.pos = [target.row+1][target.col];
+						targ.pos = [targ.row+1][targ.col];
 					} catch (e) {
-						result = `${target.name} couldn't be moved!`;
+						result = `${targ.name} couldn't be moved!`;
 						break;
 					}
 				}
@@ -549,9 +544,9 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 				case "left":
 				for (let i = 1; i <= offset; i++) {
 					try {
-						target.pos = [target.row][target.col-1];
+						targ.pos = [targ.row][targ.col-1];
 					} catch (e) {
-						result = `${target.name} couldn't be moved!`;
+						result = `${targ.name} couldn't be moved!`;
 						break;
 					}
 				}
@@ -559,9 +554,9 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 				case "right":
 				for (let i = 1; i <= offset; i++) {
 					try {
-						target.pos = [target.row][target.col+1];
+						targ.pos = [targ.row][targ.col+1];
 					} catch (e) {
-						result = `${target.name} couldn't be moved!`;
+						result = `${targ.name} couldn't be moved!`;
 						break;
 					}
 				}

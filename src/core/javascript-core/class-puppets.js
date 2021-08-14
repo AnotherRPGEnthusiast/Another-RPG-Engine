@@ -36,6 +36,19 @@ window.Puppet = class Puppet extends Actor{
 	}
 	}
 
+	get xp () {
+		return this._xp;
+	}
+
+	get XP () {
+		return this.xp;
+	}
+
+	set xp (num) {
+		console.assert(Number.isInteger(num) && num > 0,`ERROR in xp setter: must be positive integer`);
+		this._xp = num;
+	}
+
 	get levelRate () {
 		return (this._levelRate || this.data.levelRate || 'medium');
 	}
