@@ -94,6 +94,7 @@ Actor.prototype.addEffect = function (name,mods) {
     if (temporary().effectApplied === undefined) {
       temporary().effectApplied = {}
     }
+    V().target = this;
     temporary().effectApplied[name] = this.testEffect(name,mods);
     this.effectApplied = temporary().effectApplied;
 

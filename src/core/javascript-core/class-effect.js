@@ -159,6 +159,17 @@ window.Effect = class Effect {
 		return val;
 	}
 
+	get healBlock () {
+		var val = this._healBlock;
+		if (val === undefined) {
+			val = this.effectData.healBlock;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
 	get block () {
 		var val = this._block;
 		if (val === undefined) {

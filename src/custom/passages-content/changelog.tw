@@ -3,10 +3,14 @@ Version 3.07
 <ul>
 <li>New <code>Actor</code> functions:</li>
 <ul><li><code>replenishUses</code>: Fully refills the uses of all actions possessed by the character that match the passed <code>name</code> argument.</li></ul>
+<li>New <code>Effect</code> properties:</li>
+<ul><li><code>healBlock</code>: Prevents the afflicted character from being healed by healing skills.</li></ul>
 <li>Items' <code>value</code> property will now accept a function as a value.</li>
 <li>Fixed an oversight that prevented actions' <code>preview</code> properties from working correctly if they were defined as arrays.</li>
 <li>There are now redundant getters for the capitalized versions of the "xp" and "gp" properties to prevent confusion.</li>
 <li>Fixed an error that occurred in some action functions as a result of <code>findTarget</code> erroneously overwriting the <code>target</code> function.</li>
+<li>Fixed an error that occurred if a target was undefined when <code>addEffect</code> was called.</li>
+<li>Fixed an error that would cause healing abilities with custom formulas to produce glitch values.</li>
 </ul>
 Version 3.06
 <ul>

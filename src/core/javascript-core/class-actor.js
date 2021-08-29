@@ -194,6 +194,13 @@ window.Actor = class Actor {
 		return this.effects.find(function(eff) { return eff && eff.skillLock });
 	}
 
+	get healBlock () {
+		//	Checks if the Actor is under an effect that prevents healing
+		//	If healBlock effect found, will return a truthy value, else will return a falsy value.
+
+		return this.effects.find(function(eff) { return eff && eff.healBlock });
+	}
+
 	get shieldHits () {
 		//	Returns the number of blocks from shield effects on this character, if they have any
 

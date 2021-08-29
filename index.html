@@ -6035,6 +6035,10 @@ window.deadCount = function deadCount () {
 	return count;
 };
 
+function convertFunction (v) {
+	return (v instanceof Function) ? v() : v;
+}
+
 /*
 	Number-To-Words module
 	Converts a number, which must be a safe integer, into its short scale word equivalent.
@@ -6359,7 +6363,7 @@ function findTarget (selector) {
 //	IMPORTANT: Any action that uses this must RETURN A FUNCTION rather than calculating its results immediately. This is because the result will change depending on the active target and subject, so the function call itself must be renewed.
 
 //	console.log("findTarget called, selector = "+selector);
-	var target;
+	var targetName;
 	var party;
 	var mass = false;
 	if (selector == 'mass' || selector == 'e' || selector == 'enemies'){
@@ -6368,7 +6372,7 @@ function findTarget (selector) {
 		} else if (subject() instanceof Enemy) {
 			party = "$puppets";
 		}
-		target = "$target";
+		targetName = "$target";
 		mass = true;
 	} else if (selector == 'a' || selector == 'allies') {
 		if (subject() instanceof Puppet) {
@@ -6376,16 +6380,16 @@ function findTarget (selector) {
 		} else if (subject() instanceof Enemy) {
 			party = "$enemies";
 		}
-		target = "$target";
+		targetName = "$target";
 		mass = true;
 	} else if (selector == 'all') {
 		party = "$B.actors"
-		target = "$target";
+		targetName = "$target";
 		mass = true;
 	} else if (selector == 's'){
-		target = "$subject";
-		if (State.getVar(target) !== null) {
-			switch (State.getVar(target).id.charAt(0)) {
+		targetName = "$subject";
+		if (State.getVar(targetName) !== null) {
+			switch (State.getVar(targetName).id.charAt(0)) {
 				case 'p':
 					party = "$puppets";
 					break;
@@ -6395,9 +6399,9 @@ function findTarget (selector) {
 			}
 		}
 	} else if (selector === undefined || selector == 't'){
-		target = "$target";
-		if (State.getVar(target) !== null) {
-			switch (State.getVar(target).id.charAt(0)) {
+		targetName = "$target";
+		if (State.getVar(targetName) !== null) {
+			switch (State.getVar(targetName).id.charAt(0)) {
 				case 'p':
 					party = "$puppets";
 					break;
@@ -6409,7 +6413,7 @@ function findTarget (selector) {
 	} else {
 		console.log("ERROR in findTarget: invalid selector");
 	}
-	return [target,party,mass];
+	return [targetName,party,mass];
 }
 
 
@@ -6441,13 +6445,17 @@ var heal = function heal (test,extension = "") {
 		if (extension instanceof Function){
 			extension = "<br/>" + extension();
 		}
-		return `<<healCalc>>\
-		<<if setup.ANIMATIONS === true && _queue instanceof Set>>\
-			<<set _queue.add(target())>>\
-			<<set target().battleMsg.push({type: "healing", content: $heal})>>\
-		<</if>>\
-		<<run target().hp += $heal>>\
-		${target().name} recovers $heal HP!`+extension;
+		if (target().healBlock) {
+			return `${target().name} cannot be healed!`;
+		} else {
+			return `<<healCalc>>\
+			<<if setup.ANIMATIONS === true && _queue instanceof Set>>\
+				<<set _queue.add(target())>>\
+				<<set target().battleMsg.push({type: "healing", content: $heal})>>\
+			<</if>>\
+			<<run target().hp += $heal>>\
+			${target().name} recovers $heal HP!`+extension;
+		}
 	}
 };
 
@@ -6624,11 +6632,11 @@ var removeEffect = function (args = {target: 't'}, extension = "") {
 		}
 
 		var content = "";
-		var [target,party,mass] = findTarget(args.target);
+		var [targetName,party,mass] = findTarget(args.target);
 
-		content += `<<for _effect range ${target}.effects>>\
+		content += `<<for _effect range ${targetName}.effects>>\
 		<<if ${condition}>>\
-			<<print ${target}.removeEffect(_effect,_mods)>>\
+			<<print ${targetName}.removeEffect(_effect,_mods)>>\
 		<</if>>\
 		<</for>>`;
 
@@ -6675,15 +6683,13 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 
 	var result = `<<set _AoE = true>>`;
 
-	var [target,partyName] = findTarget(args.target);
+	var [targetName,partyName] = findTarget(args.target);
 	var party = State.getVar(partyName);
 	party = party.filter(function (a) { return a && !a.areaImmune });
 	if (args.cut === true) {
 		var count = 0;
-		party.filter(function (a) { return a !== null; }).forEach(function(actor) {
-			if (!actor.areaImmune) {
+		party.forEach(function(actor) {
 				count++;
-			}
 		});
 		var prepend = `<<damageCalc>>\
 		<<set $dmg = Math.round($dmg/${count})>>\
@@ -6700,7 +6706,6 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
-						<</if>>\
 					<</for>>`;
 				break;
 			case 'col':
@@ -6709,7 +6714,6 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
-						<</if>>\
 					<</for>>`;
 				break;
 			case 'adjacent':
@@ -6722,7 +6726,6 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 				result += `<<for _actor range _party>>\
 							<<set $target = _actor>>\
 							${content}\
-						<</if>>\
 					<</for>>`;
 				break;
 			default:
@@ -6758,7 +6761,7 @@ var splashDamage = function splashDamage (args = {target: 't', cut: 1}, extensio
 	}
 	console.assert(Number.isFinite(args.cut),"ERROR in splashDamage: cut value undefined or nonnumber");
 
-	var [target,party] = findTarget(args.target);
+	var [targetName,party] = findTarget(args.target);
 
 	if (extension === undefined) {
 		extension = "";
@@ -6854,14 +6857,14 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 
 	return function () {
 
-		var [target,party] = findTarget(args.target);
+		var [targetName,party] = findTarget(args.target);
 		result = "";
-		target = State.getVar(target);
+		var targ = State.getVar(targetName);
 		if (extension instanceof Function){
 			extension = extension();
 		}
 		if (target.unmovable) {
-			return `${target.name} can't be moved!<br/>${extension}`;
+			return `${targ.name} can't be moved!<br/>${extension}`;
 		}
 
 		var offset = args.offset;
@@ -6877,9 +6880,9 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 				case "pull":
 					for (let i = 1; i <= offset; i++) {
 						try {
-							target.pos = [target.row-1][target.col];
+							targ.pos = [targ.row-1][targ.col];
 						} catch (e) {
-							result = `${target.name} couldn't be moved!`;
+							result = `${targ.name} couldn't be moved!`;
 							break;
 						}
 					}
@@ -6889,9 +6892,9 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 				case "push":
 				for (let i = 1; i <= offset; i++) {
 					try {
-						target.pos = [target.row+1][target.col];
+						targ.pos = [targ.row+1][targ.col];
 					} catch (e) {
-						result = `${target.name} couldn't be moved!`;
+						result = `${targ.name} couldn't be moved!`;
 						break;
 					}
 				}
@@ -6899,9 +6902,9 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 				case "left":
 				for (let i = 1; i <= offset; i++) {
 					try {
-						target.pos = [target.row][target.col-1];
+						targ.pos = [targ.row][targ.col-1];
 					} catch (e) {
-						result = `${target.name} couldn't be moved!`;
+						result = `${targ.name} couldn't be moved!`;
 						break;
 					}
 				}
@@ -6909,9 +6912,9 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 				case "right":
 				for (let i = 1; i <= offset; i++) {
 					try {
-						target.pos = [target.row][target.col+1];
+						targ.pos = [targ.row][targ.col+1];
 					} catch (e) {
-						result = `${target.name} couldn't be moved!`;
+						result = `${targ.name} couldn't be moved!`;
 						break;
 					}
 				}
@@ -7253,7 +7256,7 @@ window.Action = class Action {
 			return val;
 		} else if (typeof(val) === "string") {
 			val = [val];
-		} else {
+		} else if (!(val instanceof Array)) {
 			val = [];
 		}
 		var result = "";
@@ -8711,6 +8714,13 @@ window.Actor = class Actor {
 		return this.effects.find(function(eff) { return eff && eff.skillLock });
 	}
 
+	get healBlock () {
+		//	Checks if the Actor is under an effect that prevents healing
+		//	If healBlock effect found, will return a truthy value, else will return a falsy value.
+
+		return this.effects.find(function(eff) { return eff && eff.healBlock });
+	}
+
 	get shieldHits () {
 		//	Returns the number of blocks from shield effects on this character, if they have any
 
@@ -9023,6 +9033,7 @@ window.Actor = class Actor {
 
 	get deathMessage () {
 		var base = (this._deathMessage || this.data.deathMessage || `${this.name} is defeated!`);
+		if (base instanceof Function) base = base(this);
 		return base+"<br/>";
 	}
 
@@ -9458,6 +9469,17 @@ window.Actor = class Actor {
 		return count;
 	}
 
+	replenishUses (name) {
+		//	name = string
+		//	Refills the uses of all actions matching the passed name.
+
+		console.assert(typeof(name) == "string",`ERROR in replenishUses: action name must be string`);
+		this.actions.forEach(function (action) {
+			if (action.name === name) action.refill();
+		});
+		return;
+	}
+
 	clone () {
 		// Return a new instance containing our current data.
 		return new Actor(this);
@@ -9840,6 +9862,17 @@ window.Effect = class Effect {
 		return val;
 	}
 
+	get healBlock () {
+		var val = this._healBlock;
+		if (val === undefined) {
+			val = this.effectData.healBlock;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
 	get block () {
 		var val = this._block;
 		if (val === undefined) {
@@ -10156,6 +10189,10 @@ window.Enemy = class Enemy extends Actor {
 		return Number.isInteger(r) ? r : 0;
 	}
 
+	get XP () {
+		return this.xp;
+	}
+
 	set gp (num) {
 		console.assert(Number.isInteger(num) && num > 0,`ERROR in gp setter: must be positive integer`);
 		this._gp = num;
@@ -10169,6 +10206,10 @@ window.Enemy = class Enemy extends Actor {
 			r = this.data.gp;
 		}
 		return Number.isInteger(r) ? r : 0;
+	}
+
+	get GP () {
+		return this.gp;
 	}
 
 	get itemDrops () {
@@ -10387,9 +10428,10 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 
 	get value() {
 		let r = (this.itemData.value || 0);
+		r = (r instanceof Function) ? r(this) : r;
 		console.assert(Number.isInteger(r),`ERROR in value getter for ${this.name}: non-integer value`);
 
-    return (this.itemData.value || 0);
+    return r;
   }
 
   get usable() {
@@ -10653,6 +10695,19 @@ window.Puppet = class Puppet extends Actor{
 		}
 
 	}
+	}
+
+	get xp () {
+		return this._xp;
+	}
+
+	get XP () {
+		return this.xp;
+	}
+
+	set xp (num) {
+		console.assert(Number.isInteger(num) && num > 0,`ERROR in xp setter: must be positive integer`);
+		this._xp = num;
 	}
 
 	get levelRate () {
@@ -16823,6 +16878,7 @@ Actor.prototype.addEffect = function (name,mods) {
     if (temporary().effectApplied === undefined) {
       temporary().effectApplied = {}
     }
+    V().target = this;
     temporary().effectApplied[name] = this.testEffect(name,mods);
     this.effectApplied = temporary().effectApplied;
 
@@ -17632,7 +17688,7 @@ Config.saves.isAllowed = function () {
 };
 // This will disallow saving in battle. This is probably a good idea, but make sure you keep track of your inbattle variable so you don't accidentally prevent people from saving in the main story.
 
-setup.version = "3.06";
+setup.version = "3.07";
 
 Config.saves.version = 0;
 // Records a version number for saves. Update this when you update your version. This is helpful for updating saves from older versions.
@@ -21378,7 +21434,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 &lt;&lt;if !action().formula&gt;&gt;
 	&lt;&lt;include &quot;heal formula&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
-	&lt;&lt;set $heal = action().formula&gt;&gt;
+	&lt;&lt;set $heal = action().formula()&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="47" name="Widget: echoDamage" tags="widget nobr" position="850,600" size="100,100">&lt;&lt;widget &quot;echoDamage&quot;&gt;&gt;
@@ -21681,7 +21737,7 @@ MegaCorp® is happy to provide you with their top-of-the-line items, provided yo
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;&lt;print _v.info&gt;&gt;&lt;br/&gt;
-&lt;span class=&quot;actdesc&quot;&gt;&lt;&lt;print _v.desc&gt;&gt;&lt;/span&gt;&lt;br/&gt;
+&lt;span class=&quot;action-desc&quot;&gt;&lt;&lt;print _v.desc&gt;&gt;&lt;/span&gt;&lt;br/&gt;
 &lt;br/&gt;
 &lt;&lt;/if&gt;&gt;
 &lt;&lt;/for&gt;&gt;</tw-passagedata><tw-passagedata pid="60" name="PassageDone" tags="nobr" position="1225,725" size="100,100">&lt;&lt;if _animationActive&gt;&gt;
@@ -26287,7 +26343,20 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 	&lt;&lt;goto &quot;Battle!&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;include &quot;action phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="Changelog" tags="text" position="225,2225" size="100,100">Version 3.06
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="Changelog" tags="text" position="225,2225" size="100,100">Version 3.07
+&lt;ul&gt;
+&lt;li&gt;New &lt;code&gt;Actor&lt;/code&gt; functions:&lt;/li&gt;
+&lt;ul&gt;&lt;li&gt;&lt;code&gt;replenishUses&lt;/code&gt;: Fully refills the uses of all actions possessed by the character that match the passed &lt;code&gt;name&lt;/code&gt; argument.&lt;/li&gt;&lt;/ul&gt;
+&lt;li&gt;New &lt;code&gt;Effect&lt;/code&gt; properties:&lt;/li&gt;
+&lt;ul&gt;&lt;li&gt;&lt;code&gt;healBlock&lt;/code&gt;: Prevents the afflicted character from being healed by healing skills.&lt;/li&gt;&lt;/ul&gt;
+&lt;li&gt;Items&#39; &lt;code&gt;value&lt;/code&gt; property will now accept a function as a value.&lt;/li&gt;
+&lt;li&gt;Fixed an oversight that prevented actions&#39; &lt;code&gt;preview&lt;/code&gt; properties from working correctly if they were defined as arrays.&lt;/li&gt;
+&lt;li&gt;There are now redundant getters for the capitalized versions of the &quot;xp&quot; and &quot;gp&quot; properties to prevent confusion.&lt;/li&gt;
+&lt;li&gt;Fixed an error that occurred in some action functions as a result of &lt;code&gt;findTarget&lt;/code&gt; erroneously overwriting the &lt;code&gt;target&lt;/code&gt; function.&lt;/li&gt;
+&lt;li&gt;Fixed an error that occurred if a target was undefined when &lt;code&gt;addEffect&lt;/code&gt; was called.&lt;/li&gt;
+&lt;li&gt;Fixed an error that would cause healing abilities with custom formulas to produce glitch values.&lt;/li&gt;
+&lt;/ul&gt;
+Version 3.06
 &lt;ul&gt;
 &lt;li&gt;New &lt;code&gt;Action&lt;/code&gt; properties:&lt;/li&gt;
 &lt;ul&gt;&lt;li&gt;&lt;code&gt;noReflection&lt;/code&gt;: If &lt;code&gt;true&lt;/code&gt;, the action will not trigger damage reflection unless the target has the &lt;code&gt;absreflect&lt;/code&gt; property.&lt;/li&gt;&lt;/ul&gt;
@@ -26296,7 +26365,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;Item boxes displayed in &lt;code&gt;itemDrop&lt;/code&gt; now have no limits on their height. This is governed through the &quot;infield&quot; class, which you can find in &lt;code&gt;stylesheets-core/menu/shared.css&lt;/code&gt;.&lt;/li&gt;
 &lt;li&gt;Items&#39; default &lt;code&gt;toString&lt;/code&gt; will no longer display null descriptions.&lt;/li&gt;
 &lt;li&gt;Fixed an error in the &lt;code&gt;massAttack&lt;/code&gt; function that prevented it from working correctly.&lt;/li&gt;
-&lt;li&gt;Tweaked the way battle interruptions work to accommodate for the modular order of action display components. The passage &quot;battle interruptions&quot; is now run at the very start of any action, and the spot where it was previously run is now a &lt;code&gt;div&lt;/code&gt; element with the id &quot;interrupt&quot; and the class &quot;invisible&quot;. To populate it, remove the &quot;invisible&quot; class and target the id with a &lt;code&gt;replace&lt;/code&gt; macro in &quot;battle interruptions&quot;.&lt;/li&gt;
+&lt;li&gt;Tweaked the way battle interruptions work to accommodate for the modular order of action display components. The passage &quot;battle interruptions&quot; is now run at the very start of any action, and the spot where it was previously run is now a &lt;code&gt;div&lt;/code&gt; element with the id &quot;interrupt&quot;. To populate it, target the id with a &lt;code&gt;replace&lt;/code&gt; macro in &quot;battle interruptions&quot;.&lt;/li&gt;
 &lt;/ul&gt;
 Version 3.05
 &lt;ul&gt;

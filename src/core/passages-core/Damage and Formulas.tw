@@ -89,7 +89,7 @@
 <<if !action().formula>>
 	<<include "heal formula">>
 <<else>>
-	<<set $heal = action().formula>>
+	<<set $heal = action().formula()>>
 <</if>>
 
 <</widget>>

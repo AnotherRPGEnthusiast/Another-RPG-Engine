@@ -91,13 +91,17 @@ var heal = function heal (test,extension = "") {
 		if (extension instanceof Function){
 			extension = "<br/>" + extension();
 		}
-		return `<<healCalc>>\
-		<<if setup.ANIMATIONS === true && _queue instanceof Set>>\
-			<<set _queue.add(target())>>\
-			<<set target().battleMsg.push({type: "healing", content: $heal})>>\
-		<</if>>\
-		<<run target().hp += $heal>>\
-		${target().name} recovers $heal HP!`+extension;
+		if (target().healBlock) {
+			return `${target().name} cannot be healed!`;
+		} else {
+			return `<<healCalc>>\
+			<<if setup.ANIMATIONS === true && _queue instanceof Set>>\
+				<<set _queue.add(target())>>\
+				<<set target().battleMsg.push({type: "healing", content: $heal})>>\
+			<</if>>\
+			<<run target().hp += $heal>>\
+			${target().name} recovers $heal HP!`+extension;
+		}
 	}
 };
 
