@@ -6,10 +6,10 @@
 <<set setup.formula to "subtractive">>
 /*
 Can choose between multiple premade damage formulas here.
-subtractive: (base + damper * a.get("Attack")) * weight - damper * b.get("Defense")
-subtractive lumped: (base + damper * (a.get("Attack") - b.get("Defense"))) * weight
-rpgmaker: (a.get("Attack") * 4 - b.get("Defense") * 2) * damper * weight
-divisive: (base * (a.get("Attack")/b.get("Defense"))) * weight
+subtractive: (base + damper * a.get($AttackStat)) * weight - damper * b.get($DefenseStat)
+subtractive lumped: (base + damper * (a.get($AttackStat) - b.get($DefenseStat))) * weight
+rpgmaker: (a.get($AttackStat) * 4 - b.get($DefenseStat) * 2) * damper * weight
+divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 */
 
 <<set setup.LEVEL_CAP = 10>>

@@ -143,10 +143,19 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 		return (this.itemData.stackSize || setup.ITEM_MAX);
 	}
 
+	get restrictedTo () {
+		//	Shorthand for getting the restrictedTo property of the equippable object.
+		return (typeof(this.equippable) == "object")
+			? this.equippable.restrictedTo
+			: undefined;
+	}
+
 	checkRestriction (puppet) {
 		//	DEPRECIATED as of v1.18. Use the Actor version instead.
 		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing or if the restricted listing is empty.
-		return (this.equippable.restrictedTo.length == 0 || this.equippable.restrictedTo.includes(puppet.name));
+		return (this.restrictedTo instanceof Array)
+			? (this.restrictedTo.includes(puppet.name))
+			: true
 	}
 
 	toString () {
@@ -164,7 +173,7 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 			} else {
 				text += `<div class="item-equippable">${this.equippable.slot}</div>`;
 			}
-			if (this.restrictedTo.length > 0) {
+			if (this.restrictedTo instanceof Array && this.restrictedTo.length > 0) {
 				text += `<div class="item-equippable">Restriction:`
 				for (let [n,name] of this.restrictedTo) {
 					text += ` ${name}`;

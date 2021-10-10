@@ -775,7 +775,7 @@ var Prev = {
 	},
 	cutAttack: function (type) {
 		return function () {
-			return `<<set _d = (setup.base + $subject.get("Special"))*$action.weight>>\
+			return `<<set _d = (setup.base + $subject.get(V().SpecialStat))*$action.weight>>\
 			This will inflict _d base damage and ${type} status, divided across the current number of enemies.`;
 		}
 	}

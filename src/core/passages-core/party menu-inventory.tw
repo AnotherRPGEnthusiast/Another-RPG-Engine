@@ -2,7 +2,9 @@
 <span id="content" class="menu"><<nobr>>
 <<set _filter = "all">>
 <div id="menu-display" class="relative">
+<<liveblock>>
 <<include "inventory item display">>
+<</liveblock>>
 </div>
 <div id="itemlist">
 <<include "inventory item list">>
@@ -52,7 +54,7 @@
 	<<capture _item>>
 	<<link _item.name>>
 		<<set _display = _item>>
-		<<replace "#menu-display">><<include "inventory item display">><</replace>>
+		<<update>>
 	<</link>>
 	<</capture>>
 	</b> <span class="itemstock">(_item.stock)</span>
@@ -85,6 +87,13 @@
 				</span>
 			</span>
 		<</if>>
+		<<if def _event>>
+			<span id="button1">
+				<span id="cancelbutton">
+				<<include "cancel button">>
+				</span>
+			</span>
+		<</if>>
 	</div>
 	<</if>>
 <</if>>
@@ -92,8 +101,7 @@
 :: equip button[nobr]
 <<button "EQUIP">>
 	<<set _event = "equip">>
-	<<if document.getElementById("usebutton")>><<replace "#usebutton">><<include "inventory use button">><</replace>><</if>>
-	<<if document.getElementById("equipbutton")>><<replace "#equipbutton">><<include "inventory cancel button">><</replace>><</if>>
+	<<update>>
 	<<replace "#itemlist">><<include "inventory puppets">><</replace>>
 <</button>>
 <<if _b == 1>>
@@ -108,21 +116,18 @@
 		<<run _display.onUse()>>
 	<<else>>
 		<<set _event = "use">>
-		<<if document.getElementById("usebutton")>><<replace "#usebutton">><<include "inventory cancel button">><</replace>><</if>>
-		<<if document.getElementById("equipbutton")>><<replace "#equipbutton">><<include "equip button">><</replace>><</if>>
+		<<update>>
 		<<replace "#itemlist">><<include "inventory puppets">><</replace>>
 	<</if>>
 <</button>>
 <span class="monospace" style="font-size:85%">[Q]</span>
 
 :: inventory cancel button[nobr]
-<span id="cancelbutton">
 <<button "CANCEL">>
-	<<if document.getElementById("usebutton")>><<replace "#usebutton">><<include "inventory use button">><</replace>><</if>>
-	<<if document.getElementById("equipbutton")>><<replace "#equipbutton">><<include "equip button">><</replace>><</if>>
+	<<unset _event>>
+	<<update>>
 	<<replace "#itemlist">><<include "inventory item list">><</replace>>
 <</button>>
-</span>
 <span class="monospace" style="font-size:85%">[R]</span>
 
 :: inventory puppets[nobr]

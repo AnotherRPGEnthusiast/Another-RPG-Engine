@@ -7129,7 +7129,7 @@ var Prev = {
 	},
 	cutAttack: function (type) {
 		return function () {
-			return `<<set _d = (setup.base + $subject.get("Special"))*$action.weight>>\
+			return `<<set _d = (setup.base + $subject.get(V().SpecialStat))*$action.weight>>\
 			This will inflict _d base damage and ${type} status, divided across the current number of enemies.`;
 		}
 	}
@@ -8519,7 +8519,7 @@ window.ItemAction = class ItemAction extends Action {
 };
 /* twine-user-script #4: "class-actor.js" */
 window.Actor = class Actor {
-	constructor(name){
+	constructor(name,pos){
 	if (typeof(name) == 'object'){
 		Object.keys(name).forEach(prop => this[prop] = clone(name[prop]));
 	}
@@ -8584,6 +8584,11 @@ window.Actor = class Actor {
 
 			for (let [pn,v] of Object.entries(equipData)) {
 				this.equipment.set(pn,new Array(v).fill(null));
+			}
+
+			if (pos instanceof Array) {
+				console.assert(pos.length == 2 && Number.isInteger(pos[0]),`ERROR in Actor constructor: invalid position array passed`);
+				this.position = pos;
 			}
 		}
 		else if (name !== "Dummy") {
@@ -9158,8 +9163,10 @@ window.Actor = class Actor {
 	}
 
 	checkRestriction (item) {
-		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing or if the restricted listing is empty.
-		return (item.equippable.restrictedTo.length == 0 || item.equippable.restrictedTo.includes(this.name));
+		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing.
+		return (item.equippable.restrictedTo instanceof Array)
+			? (item.equippable.restrictedTo.includes(this.name))
+			: true
 	}
 
 	// TOLERANCE FUNCTIONS
@@ -10123,12 +10130,12 @@ Effect.prototype.toJSON = function () {
 };
 /* twine-user-script #7: "class-enemy.js" */
 window.Enemy = class Enemy extends Actor {
-	constructor(name){
+	constructor(name,pos){
 	if (typeof(name) == 'object'){
-		super(name);
+		super(name,pos);
 	}
 	else {
-		super(name);
+		super(name,pos);
 
 		if (this.data.cooldown) { this.cd = new Map(Object.entries(this.data.cooldown)); }
 		this._noAttacks = Number.isInteger(this.data.noAttacks) && this.data.noAttacks > 0
@@ -10492,10 +10499,19 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 		return (this.itemData.stackSize || setup.ITEM_MAX);
 	}
 
+	get restrictedTo () {
+		//	Shorthand for getting the restrictedTo property of the equippable object.
+		return (typeof(this.equippable) == "object")
+			? this.equippable.restrictedTo
+			: undefined;
+	}
+
 	checkRestriction (puppet) {
 		//	DEPRECIATED as of v1.18. Use the Actor version instead.
 		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing or if the restricted listing is empty.
-		return (this.equippable.restrictedTo.length == 0 || this.equippable.restrictedTo.includes(puppet.name));
+		return (this.restrictedTo instanceof Array)
+			? (this.restrictedTo.includes(puppet.name))
+			: true
 	}
 
 	toString () {
@@ -10513,7 +10529,7 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 			} else {
 				text += `<div class="item-equippable">${this.equippable.slot}</div>`;
 			}
-			if (this.restrictedTo.length > 0) {
+			if (this.restrictedTo instanceof Array && this.restrictedTo.length > 0) {
 				text += `<div class="item-equippable">Restriction:`
 				for (let [n,name] of this.restrictedTo) {
 					text += ` ${name}`;
@@ -10660,12 +10676,12 @@ window.Music = class Music {
 };
 /* twine-user-script #10: "class-puppets.js" */
 window.Puppet = class Puppet extends Actor{
-	constructor(name){
+	constructor(name,pos){
 	if (typeof(name) == 'object'){
-		super(name);
+		super(name,pos);
 	}
 	else {
-		super(name);
+		super(name,pos);
 		if (this.data) {
 			this.actions = [];
 			for (let n of this.data.actions) {
@@ -11741,7 +11757,7 @@ setup.actionData = {
 								<</if>>\
 			<</for>>`;
 		},
-		"preview": `<<set _d = (setup.base + $subject.get("Attack"))*$action.weight>>\
+		"preview": `<<set _d = (setup.base + $subject.get(V().AttackStat))*$action.weight>>\
 			A judgment upon those who would defy you. This will inflict _d base damage and strip all buffs from every enemy.`
 	},
 
@@ -12969,10 +12985,10 @@ setup.effectFunctions = {
 	invisible: function () {return "";},
 
 	physical: function (puppet) {
-		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get("Defense"))));
+		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(V().DefenseStat))));
 	},
 	special: function (puppet) {
-		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get("Special"))));
+		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(V().SpecialStat))));
 	},
 	piercing: function (puppet) {
 		return this.weight*(setup.base + (setup.damper * this.power));
@@ -12992,10 +13008,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats["Attack"].addMod("Injury",-this.power);
+      this.id = puppet.stats[V().AttackStat].addMod("Injury",-this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats["Attack"].removeMod("Injury",this.id);
+      puppet.stats[V().AttackStat].removeMod("Injury",this.id);
     },
     "info": function (effect) {
       return `Attack reduced by ${this.power}.`;
@@ -13009,10 +13025,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats["Defense"].addMod("Pain",-this.power);
+      this.id = puppet.stats[V().DefenseStat].addMod("Pain",-this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats["Defense"].removeMod("Pain",this.id);
+      puppet.stats[V().DefenseStat].removeMod("Pain",this.id);
     },
     "info": function (effect) {
       return `Defense reduced by ${this.power}.`;
@@ -13026,10 +13042,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats["Special"].addMod("Headache",-this.power);
+      this.id = puppet.stats[V().SpecialStat].addMod("Headache",-this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats["Special"].removeMod("Headache",this.id);
+      puppet.stats[V().SpecialStat].removeMod("Headache",this.id);
     },
     "info": function (effect) {
       return `Special reduced by ${this.power}.`;
@@ -13044,10 +13060,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats["Attack"].addMod("ATK Boost",this.power);
+      this.id = puppet.stats[V().AttackStat].addMod("ATK Boost",this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats["Attack"].removeMod("ATK Boost",this.id);
+      puppet.stats[V().AttackStat].removeMod("ATK Boost",this.id);
     },
     "info": function (effect) {
       return `Attack boosted by ${this.power}.`;
@@ -13062,10 +13078,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats["Defense"].addMod("DEF Boost",this.power);
+      this.id = puppet.stats[V().DefenseStat].addMod("DEF Boost",this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats["Defense"].removeMod("DEF Boost",this.id);
+      puppet.stats[V().DefenseStat].removeMod("DEF Boost",this.id);
     },
     "info": function (effect) {
       return `Defense boosted by ${this.power}.`;
@@ -13080,10 +13096,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats["Special"].addMod("SPC Boost",this.power);
+      this.id = puppet.stats[V().SpecialStat].addMod("SPC Boost",this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats["Special"].removeMod("SPC Boost",this.id);
+      puppet.stats[V().SpecialStat].removeMod("SPC Boost",this.id);
     },
     "info": function (effect) {
       return `Special boosted by ${this.power}.`;
@@ -13222,11 +13238,11 @@ setup.effectData = {
     "hold": true,
     "onApply": function (puppet) {
       puppet.down = true;
-      puppet.stats["Defense"].addMod("Knocked Down",{mult: -0.5});
+      puppet.stats[V().DefenseStat].addMod("Knocked Down",{mult: -0.5});
     },
     "onRemove": function (puppet) {
       puppet.down = false;
-      puppet.stats["Defense"].removeMod("Knocked Down");
+      puppet.stats[V().DefenseStat].removeMod("Knocked Down");
     },
     "info": function (effect) {
       return `Cannot act until righted. Defense halved.`;
@@ -13246,15 +13262,15 @@ setup.effectData = {
     "threat": 3,
     "onApply": function (puppet) {
       puppet.curse = true;
-      puppet.stats["Attack"].addMod("Curse",-this.power);
-      puppet.stats["Defense"].addMod("Curse",-this.power);
-      puppet.stats["Special"].addMod("Curse",-this.power);
+      puppet.stats[V().AttackStat].addMod("Curse",-this.power);
+      puppet.stats[V().DefenseStat].addMod("Curse",-this.power);
+      puppet.stats[V().SpecialStat].addMod("Curse",-this.power);
     },
     "onRemove": function (puppet) {
       puppet.curse = false;
-      puppet.stats["Attack"].removeMod("Curse"),
-      puppet.stats["Defense"].removeMod("Curse"),
-      puppet.stats["Special"].removeMod("Curse");
+      puppet.stats[V().AttackStat].removeMod("Curse"),
+      puppet.stats[V().DefenseStat].removeMod("Curse"),
+      puppet.stats[V().SpecialStat].removeMod("Curse");
     },
     "info": function (effect) {
       return `All stats reduced by ${this.power}.`;
@@ -13271,11 +13287,11 @@ setup.effectData = {
     "synonym": "Curse",
     "onApply": function (puppet) {
       puppet.forsaken = true;
-      puppet.stats["Defense"].addMod("Forsaken",-this.power);
+      puppet.stats[V().DefenseStat].addMod("Forsaken",-this.power);
     },
     "onRemove": function (puppet) {
       puppet.forsaken = false;
-      puppet.stats["Defense"].removeMod("Forsaken");
+      puppet.stats[V().DefenseStat].removeMod("Forsaken");
     },
     "info": function (effect) {
       return `Defense reduced by ${this.power}. Defense can be negative.`;
@@ -13291,15 +13307,15 @@ setup.effectData = {
     "threat": 3,
     "onApply": function (puppet) {
       puppet.blessing = true;
-      puppet.stats["Attack"].addMod("Blessing",this.power);
-      puppet.stats["Defense"].addMod("Blessing",this.power);
-      puppet.stats["Special"].addMod("Blessing",this.power);
+      puppet.stats[V().AttackStat].addMod("Blessing",this.power);
+      puppet.stats[V().DefenseStat].addMod("Blessing",this.power);
+      puppet.stats[V().SpecialStat].addMod("Blessing",this.power);
     },
     "onRemove": function (puppet) {
       puppet.blessing = false;
-      puppet.stats["Attack"].removeMod("Blessing");
-      puppet.stats["Defense"].removeMod("Blessing");
-      puppet.stats["Special"].removeMod("Blessing");
+      puppet.stats[V().AttackStat].removeMod("Blessing");
+      puppet.stats[V().DefenseStat].removeMod("Blessing");
+      puppet.stats[V().SpecialStat].removeMod("Blessing");
     },
     "info": function (effect) {
       return `All stats boosted by ${this.power}.`;
@@ -13368,11 +13384,11 @@ setup.effectData = {
     "unblockable": true,
     "onApply": function (puppet) {
       puppet.protector = true;
-      puppet.stats["Defense"].addMod("Protector",this.power);
+      puppet.stats[V().DefenseStat].addMod("Protector",this.power);
     },
     "onRemove": function (puppet) {
       puppet.protector = false;
-      puppet.stats["Defense"].removeMod("Protector");
+      puppet.stats[V().DefenseStat].removeMod("Protector");
       var targets = [];
       switch(this.target.id.charAt(0)) {
         case "p": targets = State.variables.puppets; break;
@@ -13505,13 +13521,13 @@ setup.effectData = {
     "buff": true,
     "onApply": function (puppet) {
       puppet.frenzy = true;
-      puppet.stats["Attack"].addMod("Frenzy",this.power);
-      puppet.stats["Defense"].addMod("Frenzy",-this.power/2);
+      puppet.stats[V().AttackStat].addMod("Frenzy",this.power);
+      puppet.stats[V().DefenseStat].addMod("Frenzy",-this.power/2);
     },
     "onRemove": function (puppet) {
       puppet.frenzy = false;
-      puppet.stats["Attack"].removeMod("Frenzy");
-      puppet.stats["Defense"].removeMod("Frenzy");
+      puppet.stats[V().AttackStat].removeMod("Frenzy");
+      puppet.stats[V().DefenseStat].removeMod("Frenzy");
     },
     "info": function (effect) {
       return `Attack boosted by ${this.power}; Defense reduced by ${Math.round(this.power/2)}.`;
@@ -15255,7 +15271,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 
 				act = random(1,100);
 
-			if ( !this.thorns && ( ( ((this.get("Defense") < this.getBase("Defense")) || (this.get("Attack") < this.getBase("Attack"))) && act <= 30) || ((this.get("Defense") < this.getBase("Defense")) && (this.get("Attack") < this.getBase("Attack")) && act <= 50) || (this.marked && act <= 90) ) ) {
+			if ( !this.thorns && ( ( ((this.get(V().DefenseStat) < this.getBase(V().DefenseStat)) || (this.get(V().AttackStat) < this.getBase(V().AttackStat))) && act <= 30) || ((this.get(V().DefenseStat) < this.getBase(V().DefenseStat)) && (this.get(V().AttackStat) < this.getBase(V().AttackStat)) && act <= 50) || (this.marked && act <= 90) ) ) {
 				V().action = new Action("Thorns");
 				action()._useText = null;
 				action()._actText = `Rose grins from ear to ear as her gem flashes a bright pink.`;
@@ -16164,7 +16180,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				}
 			});
 
-			if (this.get("Special") > this.getBase("Special") && act <= 85 && hasItem === true) {
+			if (this.get(V().SpecialStat) > this.getBase(V().SpecialStat) && act <= 85 && hasItem === true) {
 				this.attackItemLogic();
 				this.inventory.inc(action().name,-1);
 				return;
@@ -16795,13 +16811,13 @@ Effect.prototype.calculatePower = function (target,subject) {
   let power;
   let check = this.buff ? setup.min_buff : setup.min_debuff;
 
-  if (subject.stats["Special"] !== undefined) {
+  if (subject.stats[V().SpecialStat] !== undefined) {
     if (this.statmod) {
-      let def = this.buff ? 0 : target.get("Special");
+      let def = this.buff ? 0 : target.get(V().SpecialStat);
       power = Math.round(
-        (setup.effbase + setup.effdamper * (subject.get("Special") - def)) * action().effweight);
+        (setup.effbase + setup.effdamper * (subject.get(V().SpecialStat) - def)) * action().effweight);
     } else if (this.dot) {
-      return subject.get("Special");
+      return subject.get(V().SpecialStat);
     }
   }
   else {
@@ -17365,8 +17381,15 @@ window.Hitlist = class Hitlist extends Array {
 		//	For use with the battle grid. Checks if the target is guarded by a frontline character.
 		//	By default, this check is bypassed by ranged attacks and friendly fire.
 
+		var rangeCheck = true;
+		try {
+			rangeCheck = !V().action.ranged;
+		} catch (e) {
+			// no change needed
+		}
+
 		if (setup.BATTLE_GRID === true
-			&& !V().action.ranged
+			&& rangeCheck
 			&& (subject().id.charAt(0) !== target.id.charAt(0))) {
 
 			console.assert(target instanceof Actor,`ERROR in guardCheck: target must be Actor`);
@@ -17561,17 +17584,17 @@ Hitlist.prototype.addFactors = function (mods) {
 			t.chance += 1;
 		} else if (mods.includes("most damage") && t.target.lastDmg >= mostDamaging) {
 			t.chance += 1;
-		} else if (mods.includes("most DEF") && t.target.get("Defense") >= highestStat["Defense"]) {
+		} else if (mods.includes("most DEF") && t.target.get(V().DefenseStat) >= highestStat[V().DefenseStat]) {
 			t.chance += 1;
-		} else if (mods.includes("least DEF") && t.target.get("Defense") >= lowestStat["Defense"]) {
+		} else if (mods.includes("least DEF") && t.target.get(V().DefenseStat) >= lowestStat[V().DefenseStat]) {
 			t.chance += 1;
-		} else if (mods.includes("most ATK") && t.target.get("Attack") >= highestStat["Attack"]) {
+		} else if (mods.includes("most ATK") && t.target.get(V().AttackStat) >= highestStatV().AttackStat) {
 			t.chance += 1;
-		} else if (mods.includes("least ATK") && t.target.get("Attack") >= lowestStat["Attack"]) {
+		} else if (mods.includes("least ATK") && t.target.get(V().AttackStat) >= lowestStatV().AttackStat) {
 			t.chance += 1;
-		} else if (mods.includes("most SPC") && t.target.get("Special") >= highestStat["Special"]) {
+		} else if (mods.includes("most SPC") && t.target.get(V().SpecialStat) >= highestStat[V().SpecialStat]) {
 			t.chance += 1;
-		} else if (mods.includes("least SPC") && t.target.get("Special") >= lowestStat["Special"]) {
+		} else if (mods.includes("least SPC") && t.target.get(V().SpecialStat) >= lowestStat[V().SpecialStat]) {
 			t.chance += 1;
 		} else if (mods.includes("no effect") && !t.target.effects.includesAny(action().effects)) {
 			t.chance += 1;
@@ -17589,12 +17612,12 @@ Hitlist.prototype.addFactors = function (mods) {
 				t.chance += 1;
 			}
 			// If this attack pierces defense, preferentially target the character with the highest defense.
-			if (mods.includes("pierce") && t.target.get("Defense") >= highestStat["Defense"]) {
+			if (mods.includes("pierce") && t.target.get(V().DefenseStat) >= highestStat[V().DefenseStat]) {
 				t.chance += 1;
 			}
 			// Otherwise, preferentially target characters with a DEF debuff to get the most out of the attack.
 			// To exclude this clause, pass "ignore vulnerable"; such as for non-damaging moves
-			else if (!mods.includes("ignore vulnerable") && t.target.get("Defense") < t.target.getBase("Defense")) {
+			else if (!mods.includes("ignore vulnerable") && t.target.get(V().DefenseStat) < t.target.getBase(V().DefenseStat)) {
 				t.chance += 1;
 			}
 			// Preferentially target more injured characters.
@@ -17609,7 +17632,7 @@ Hitlist.prototype.addFactors = function (mods) {
 			// If this attack applies a debuff, preferentially target characters with a SPC debuff,
 			// and ignore those with protective effects.
 			if (mods.includes("effect") && !(t.target.chi || t.target.stasis)
-				&& t.target.get("Special") < t.target.getBase("Special")) {
+				&& t.target.get(V().SpecialStat) < t.target.getBase(V().SpecialStat)) {
 					t.chance += 1;
 			}
 		}
@@ -17688,7 +17711,7 @@ Config.saves.isAllowed = function () {
 };
 // This will disallow saving in battle. This is probably a good idea, but make sure you keep track of your inbattle variable so you don't accidentally prevent people from saving in the main story.
 
-setup.version = "3.07";
+setup.version = "3.07.1-alpha";
 
 Config.saves.version = 0;
 // Records a version number for saves. Update this when you update your version. This is helpful for updating saves from older versions.
@@ -21355,13 +21378,13 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 	&lt;&lt;set _target = $target&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;set _atk = ($subject.get(&quot;Attack&quot;) * (1 - $action.useSpecial)) + ($subject.get(&quot;Special&quot;) * $action.useSpecial)&gt;&gt;
+&lt;&lt;set _atk = ($subject.get($AttackStat) * (1 - $action.useSpecial)) + ($subject.get($SpecialStat) * $action.useSpecial)&gt;&gt;
 
 /* Piercing? */
 &lt;&lt;if $action.pierce&gt;&gt;
-	&lt;&lt;set _def = Math.min(_target.get(&quot;Defense&quot;),setup.MIN_STAT)&gt;&gt;
+	&lt;&lt;set _def = Math.min(_target.get($DefenseStat),setup.MIN_STAT)&gt;&gt;
 &lt;&lt;else&gt;&gt;
-	&lt;&lt;set _def = _target.get(&quot;Defense&quot;)&gt;&gt;
+	&lt;&lt;set _def = _target.get($DefenseStat)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
 /* base damage */
@@ -21602,12 +21625,12 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 &lt;&lt;widget &quot;effectcalc&quot;&gt;&gt;
 &lt;&lt;switch $args[0]&gt;&gt;
 	&lt;&lt;case &quot;debuff&quot;&gt;&gt;
-		&lt;&lt;set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get(&quot;Special&quot;)-_target.get(&quot;Special&quot;)))*$action.effweight)&gt;&gt;
+		&lt;&lt;set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get($SpecialStat)-_target.get($SpecialStat)))*$action.effweight)&gt;&gt;
 		&lt;&lt;if _power &lt; setup.min_debuff&gt;&gt;
 			&lt;&lt;set _power = setup.min_debuff&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
 	&lt;&lt;case &quot;buff&quot;&gt;&gt;
-		&lt;&lt;set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get(&quot;Special&quot;)))*$action.effweight)&gt;&gt;
+		&lt;&lt;set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get($SpecialStat)))*$action.effweight)&gt;&gt;
 		&lt;&lt;if _power &lt; setup.min_buff&gt;&gt;
 			&lt;&lt;set _power = setup.min_buff&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
@@ -21764,6 +21787,9 @@ MegaCorp® is happy to provide you with their top-of-the-line items, provided yo
 &lt;&lt;set setup.min_DoT = 1&gt;&gt; /* minimum DoT damage */
 &lt;&lt;set setup.min_buff = 0&gt;&gt; /* minimum buff effect */
 &lt;&lt;set setup.min_debuff = 5&gt;&gt; /* minimum debuff effect */
+
+/* The following stat names will be referenced in situations that call for them (damage formula, etc.), change these if you want to change stat names */
+&lt;&lt;set $AttackStat = &quot;Attack&quot;; $DefenseStat = &quot;Defense&quot;; $SpecialStat = &quot;Special&quot;&gt;&gt;
 
 /*	Tooltip information associated with each stat, to be displayed in the status menu.
 		Also used elsewhere as a reference for the identity of core stats. */
@@ -22123,7 +22149,7 @@ Easy: no smart targeting
 	&lt;&lt;/if&gt;&gt;
 	&lt;&lt;if _modifiers.includes(&quot;debuff&quot;)&gt;&gt;
 /* Debuffing attacks will preferentially target puppets with lowered Special, as they will be more strongly affected */
-		&lt;&lt;for _puppet range _party.filter(function (p) { return !(p.dead || p.chi || p.stasis) &amp;&amp; p.get(&quot;Special&quot;) &lt; p.getBase(&quot;Special&quot;); })&gt;&gt;
+		&lt;&lt;for _puppet range _party.filter(function (p) { return !(p.dead || p.chi || p.stasis) &amp;&amp; p.get($SpecialStat) &lt; p.getBase($SpecialStat); })&gt;&gt;
 			&lt;&lt;if _modifiers.includes(&quot;ignore untargetable&quot;) || !_puppet.untargetable&gt;&gt;
 				&lt;&lt;run _hitlist.push(_puppet)&gt;&gt;
 			&lt;&lt;/if&gt;&gt;
@@ -22160,7 +22186,7 @@ Easy: no smart targeting
 			&lt;&lt;/if&gt;&gt;
 			&lt;&lt;if _modifiers.includes(&quot;debuff&quot;)&gt;&gt;
 			/* Debuffing attacks will preferentially target puppets with lowered Special, as they will be more strongly affected */
-				&lt;&lt;if !_puppet.chi &amp;&amp; &amp;&amp; !_puppet.stasis &amp;&amp; (_puppet.get(&quot;Special&quot;) &lt; _puppet.getBase(&quot;Special&quot;))&gt;&gt;
+				&lt;&lt;if !_puppet.chi &amp;&amp; &amp;&amp; !_puppet.stasis &amp;&amp; (_puppet.get($SpecialStat) &lt; _puppet.getBase($SpecialStat))&gt;&gt;
 					&lt;&lt;run _hitlist.push(_puppet)&gt;&gt;
 				&lt;&lt;/if&gt;&gt;
 			&lt;&lt;/if&gt;&gt;
@@ -24267,7 +24293,9 @@ Click on a character to select them, then click on another space to move or swap
 &lt;&lt;/timed&gt;&gt;</tw-passagedata><tw-passagedata pid="143" name="Menu: Inventory" tags="menu battle noreturn" position="350,1850" size="100,100">&lt;span id=&quot;content&quot; class=&quot;menu&quot;&gt;&lt;&lt;nobr&gt;&gt;
 &lt;&lt;set _filter = &quot;all&quot;&gt;&gt;
 &lt;div id=&quot;menu-display&quot; class=&quot;relative&quot;&gt;
+&lt;&lt;liveblock&gt;&gt;
 &lt;&lt;include &quot;inventory item display&quot;&gt;&gt;
+&lt;&lt;/liveblock&gt;&gt;
 &lt;/div&gt;
 &lt;div id=&quot;itemlist&quot;&gt;
 &lt;&lt;include &quot;inventory item list&quot;&gt;&gt;
@@ -24314,7 +24342,7 @@ Click on a character to select them, then click on another space to move or swap
 	&lt;&lt;capture _item&gt;&gt;
 	&lt;&lt;link _item.name&gt;&gt;
 		&lt;&lt;set _display = _item&gt;&gt;
-		&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+		&lt;&lt;update&gt;&gt;
 	&lt;&lt;/link&gt;&gt;
 	&lt;&lt;/capture&gt;&gt;
 	&lt;/b&gt; &lt;span class=&quot;itemstock&quot;&gt;(_item.stock)&lt;/span&gt;
@@ -24344,12 +24372,18 @@ Click on a character to select them, then click on another space to move or swap
 				&lt;/span&gt;
 			&lt;/span&gt;
 		&lt;&lt;/if&gt;&gt;
+		&lt;&lt;if def _event&gt;&gt;
+			&lt;span id=&quot;button1&quot;&gt;
+				&lt;span id=&quot;cancelbutton&quot;&gt;
+				&lt;&lt;include &quot;cancel button&quot;&gt;&gt;
+				&lt;/span&gt;
+			&lt;/span&gt;
+		&lt;&lt;/if&gt;&gt;
 	&lt;/div&gt;
 	&lt;&lt;/if&gt;&gt;
 &lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="146" name="equip button" tags="nobr" position="725,1850" size="100,100">&lt;&lt;button &quot;EQUIP&quot;&gt;&gt;
 	&lt;&lt;set _event = &quot;equip&quot;&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+	&lt;&lt;update&gt;&gt;
 	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 &lt;&lt;/button&gt;&gt;
 &lt;&lt;if _b == 1&gt;&gt;
@@ -24361,18 +24395,15 @@ Click on a character to select them, then click on another space to move or swap
 		&lt;&lt;run _display.onUse()&gt;&gt;
 	&lt;&lt;else&gt;&gt;
 		&lt;&lt;set _event = &quot;use&quot;&gt;&gt;
-		&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-		&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+		&lt;&lt;update&gt;&gt;
 		&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory puppets&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 &lt;&lt;/button&gt;&gt;
-&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="148" name="inventory cancel button" tags="nobr" position="975,1850" size="100,100">&lt;span id=&quot;cancelbutton&quot;&gt;
-&lt;&lt;button &quot;CANCEL&quot;&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;usebutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#usebutton&quot;&gt;&gt;&lt;&lt;include &quot;inventory use button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if document.getElementById(&quot;equipbutton&quot;)&gt;&gt;&lt;&lt;replace &quot;#equipbutton&quot;&gt;&gt;&lt;&lt;include &quot;equip button&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;&lt;&lt;/if&gt;&gt;
+&lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[Q]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="148" name="inventory cancel button" tags="nobr" position="975,1850" size="100,100">&lt;&lt;button &quot;CANCEL&quot;&gt;&gt;
+	&lt;&lt;unset _event&gt;&gt;
+	&lt;&lt;update&gt;&gt;
 	&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 &lt;&lt;/button&gt;&gt;
-&lt;/span&gt;
 &lt;span class=&quot;monospace&quot; style=&quot;font-size:85%&quot;&gt;[R]&lt;/span&gt;</tw-passagedata><tw-passagedata pid="149" name="inventory puppets" tags="nobr" position="1100,1850" size="100,100">&lt;&lt;set _HPmeters = []&gt;&gt;
 &lt;&lt;set _MPmeters = []&gt;&gt;
 &lt;&lt;for _i, _p range puppets().filter(function(p) { return temporary().event != &quot;equip&quot; || (!p.lockEquipment &amp;&amp; p.checkRestriction(temporary().display)); })&gt;&gt;
@@ -24723,15 +24754,15 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 			&lt;&lt;case &quot;equip&quot;&gt;&gt;
 					&lt;&lt;link _puppet.name&gt;&gt;
 						&lt;&lt;run _puppet.equip(_display)&gt;&gt;
-						&lt;&lt;unset _display&gt;&gt;
-						&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+						&lt;&lt;unset _display&gt;&gt;&lt;&lt;unset _event&gt;&gt;
+						&lt;&lt;update&gt;&gt;
 						&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 					&lt;&lt;/link&gt;&gt;
 			&lt;&lt;case &quot;use&quot;&gt;&gt;
 					&lt;&lt;link _puppet.name&gt;&gt;
 						&lt;&lt;notify &quot;menu&quot; 3s&gt;&gt;&lt;&lt;print _display.onUse(_puppet)&gt;&gt;&lt;&lt;/notify&gt;&gt;
-						&lt;&lt;unset _display&gt;&gt;
-						&lt;&lt;replace &quot;#menu-display&quot;&gt;&gt;&lt;&lt;include &quot;inventory item display&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+						&lt;&lt;unset _display&gt;&gt;&lt;&lt;unset _event&gt;&gt;
+						&lt;&lt;update&gt;&gt;
 						&lt;&lt;replace &quot;#itemlist&quot;&gt;&gt;&lt;&lt;include &quot;inventory item list&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 					&lt;&lt;/link&gt;&gt;
 			&lt;&lt;default&gt;&gt;
@@ -26343,7 +26374,14 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 	&lt;&lt;goto &quot;Battle!&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;include &quot;action phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="Changelog" tags="text" position="225,2225" size="100,100">Version 3.07
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="Changelog" tags="text" position="225,2225" size="100,100">Version 3.07.1
+&lt;ul&gt;
+&lt;li&gt;Streamlined the implementation of &lt;code&gt;restrictedTo&lt;/code&gt; in equippable items. You no longer need to define a &lt;code&gt;restrictedTo&lt;/code&gt; and handlers will account for invalid values. Additionally, there is now a shorthand getter for &lt;code&gt;restrictedTo&lt;/code&gt; that lets you avoid going through &lt;code&gt;equippable&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Simplified the inventory menu code to use the &lt;code&gt;update&lt;/code&gt; macro for updating the item display rather than manual &lt;code&gt;replace&lt;/code&gt; commands.&lt;/li&gt;
+&lt;li&gt;Added grid position as a constructor argument for &lt;code&gt;Actor&lt;/code&gt;s. If you pass a two-element array after the name, their position will be initialized to the given coordinates.&lt;/li&gt;
+&lt;li&gt;Tweaked the logic in &lt;code&gt;guardCheck&lt;/code&gt; so that it can be used even when an active action is unset.&lt;/li&gt;
+&lt;/ul&gt;
+Version 3.07
 &lt;ul&gt;
 &lt;li&gt;New &lt;code&gt;Actor&lt;/code&gt; functions:&lt;/li&gt;
 &lt;ul&gt;&lt;li&gt;&lt;code&gt;replenishUses&lt;/code&gt;: Fully refills the uses of all actions possessed by the character that match the passed &lt;code&gt;name&lt;/code&gt; argument.&lt;/li&gt;&lt;/ul&gt;
@@ -28665,7 +28703,7 @@ Princess Bubblegum reappears in the final battle of &lt;i&gt;Cartoon Battle&lt;/
 		}
 	});
 
-	if (this.get(&quot;Special&quot;) &gt; this.getBase(&quot;Special&quot;) &amp;&amp; act &lt;= 85 &amp;&amp; hasItem === true) {
+	if (this.get($SpecialStat) &gt; this.getBase($SpecialStat) &amp;&amp; act &lt;= 85 &amp;&amp; hasItem === true) {
 		this.attackItemLogic();
 		this.inventory.inc(action().name,-1);
 		return;
@@ -28873,7 +28911,7 @@ this.inventory.forEach(function(stock,item) {
 	}
 });
 
-if (this.get(&quot;Special&quot;) &gt; this.getBase(&quot;Special&quot;) &amp;&amp; act &lt;= 85 &amp;&amp; hasItem === true) {
+if (this.get($SpecialStat) &gt; this.getBase($SpecialStat) &amp;&amp; act &lt;= 85 &amp;&amp; hasItem === true) {
 	this.attackItemLogic();
 	this.inventory.inc(action().name,-1);
 	return;
@@ -28881,7 +28919,7 @@ if (this.get(&quot;Special&quot;) &gt; this.getBase(&quot;Special&quot;) &amp;&a
 }}}
 Then we get into the actual action selection logic. However, our first check is a special circumstance that occurs outside the normal action tree.
 
-Bonnibel&#39;s attack items are extremely valuable, so it makes sense that she should favor their use when she can get the most out of them; which is to say, when her Special stat is boosted. We can model this by giving her a higher chance of using an attack item than she would normally when {{{this.get(&quot;Special&quot;) &gt; this.getBase(&quot;Special&quot;)}}}. However, this is hard to model within the same tree as other actions without interfering with the probabilities of those other actions. For instance, let&#39;s say a character takes one action at {{{act}}} values 0-30 and another at {{{act}}} values 31-50. Under a special circumstance, you want the character to take the first action 50% of the time instead. You could model this by telling them to perform the action {{{if (act &lt;= 30 || (circumstance === true &amp;&amp; act &lt;= 50)}}}... but if you do not change the {{{act}}} range for the second action as well, now the character will &lt;i&gt;never&lt;/i&gt; take that action if {{{circumstance}}} is {{{true}}}! All possible values for {{{act}}} that could trigger it will now trigger the first action instead, and so the second action will be ignored. In some cases, this may be what you want; but for most cases, it is easier to segregate these special actions away from the main {{{if}}} tree.
+Bonnibel&#39;s attack items are extremely valuable, so it makes sense that she should favor their use when she can get the most out of them; which is to say, when her Special stat is boosted. We can model this by giving her a higher chance of using an attack item than she would normally when {{{this.get($SpecialStat) &gt; this.getBase($SpecialStat)}}}. However, this is hard to model within the same tree as other actions without interfering with the probabilities of those other actions. For instance, let&#39;s say a character takes one action at {{{act}}} values 0-30 and another at {{{act}}} values 31-50. Under a special circumstance, you want the character to take the first action 50% of the time instead. You could model this by telling them to perform the action {{{if (act &lt;= 30 || (circumstance === true &amp;&amp; act &lt;= 50)}}}... but if you do not change the {{{act}}} range for the second action as well, now the character will &lt;i&gt;never&lt;/i&gt; take that action if {{{circumstance}}} is {{{true}}}! All possible values for {{{act}}} that could trigger it will now trigger the first action instead, and so the second action will be ignored. In some cases, this may be what you want; but for most cases, it is easier to segregate these special actions away from the main {{{if}}} tree.
 
 Additionally, because Bonnibel has a limited inventory, we need to check if she has any items that match with this action at all; otherwise, running through this logic will be at best a waste of time, and at worst a glitch that will allow her to keep using items after she&#39;s exhausted them. We check this with a simple {{{forEach}}} loop run over her {{{inventory}}} attribute; if any of her attack items have a {{{stock}}} value greater than 0, she can use an attack item, and so we set {{{hasItem}}} to {{{true}}}.
 
@@ -32432,13 +32470,13 @@ The widgets for calculating and displaying damage are separate, due to the need 
 {{{
 &lt;&lt;set _w = $action.weight&gt;&gt;
 (...)
-&lt;&lt;set _atk = ($subject.get(&quot;Attack&quot;) * (1 - $action.useSpecial)) + ($subject.get(&quot;Special&quot;) * $action.useSpecial)&gt;&gt;
+&lt;&lt;set _atk = ($subject.get($AttackStat) * (1 - $action.useSpecial)) + ($subject.get($SpecialStat) * $action.useSpecial)&gt;&gt;
 
 /* Piercing? */
 &lt;&lt;if $action.pierce&gt;&gt;
-	&lt;&lt;set _def = Math.min(_target.get(&quot;Defense&quot;),setup.MIN_STAT)&gt;&gt;
+	&lt;&lt;set _def = Math.min(_target.get($DefenseStat),setup.MIN_STAT)&gt;&gt;
 &lt;&lt;else&gt;&gt;
-	&lt;&lt;set _def = _target.get(&quot;Defense&quot;)&gt;&gt;
+	&lt;&lt;set _def = _target.get($DefenseStat)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 }}}
 First, extract some attributes into shorter variable names, for convenience. The attack factor is a weighted average of the subject&#39;s Attack and Special stats, determined by the action&#39;s {{{useSpecial}}} attribute, which is a number between 0 and 1. An action with a {{{useSpecial}}} of 1 would be completely dependent on Special (as the Attack factor would be multiplied by 0), while an action with {{{useSpecial}}} of 0.25 would only have 25% of its power based on Special.
@@ -32823,11 +32861,11 @@ Effect.prototype.calculatePower = function (target,subject) {
 
   if (subject.stats[&quot;Special&quot;] !== undefined) {
     if (this.statmod) {
-      let def = this.buff ? 0 : target.get(&quot;Special&quot;);
+      let def = this.buff ? 0 : target.get($SpecialStat);
       power = Math.round(
-        (setup.effbase + setup.effdamper * (subject.get(&quot;Special&quot;) - def)) * action().effweight);
+        (setup.effbase + setup.effdamper * (subject.get($SpecialStat) - def)) * action().effweight);
     } else if (this.dot) {
-      return subject.get(&quot;Special&quot;);
+      return subject.get($SpecialStat);
     }
   }
   else {
@@ -32926,10 +32964,10 @@ We end by returning the effect&#39;s addition message. Returning text in this wa
 Damage-over-time calculation is handled through the effect database. Before the definitions for each effect, several functions are defined in the Effect class definition:
 {{{
 var physical = function (puppet) {
-	return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(&quot;Defense&quot;))));
+	return this.weight*(setup.base + (setup.damper * (this.power - puppet.get($DefenseStat))));
 }
 var special = function (puppet) {
-	return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(&quot;Special&quot;))));
+	return this.weight*(setup.base + (setup.damper * (this.power - puppet.get($SpecialStat))));
 }
 var piercing = function (puppet) {
 	return this.weight*(setup.base + (setup.damper * this.power));
@@ -33226,16 +33264,16 @@ else {
 		t.chance += 1;
 	}
 	if (mods.includes(&quot;effect&quot;) &amp;&amp; !(t.target.chi || t.target.stasis)
-		&amp;&amp; t.target.get(&quot;Special&quot;) &lt; t.target.getBase(&quot;Special&quot;)) {
+		&amp;&amp; t.target.get($SpecialStat) &lt; t.target.getBase($SpecialStat)) {
 			t.chance += 1;
 	}
 	if (!mods.includes(&quot;ignore threat&quot;) &amp;&amp; t.target.lastDmg &gt;= mostDamaging) {
 		t.chance += 1;
 	}
-	if (mods.includes(&quot;pierce&quot;) &amp;&amp; t.target.get(&quot;Defense&quot;) &gt;= highestStat[&quot;Defense&quot;]) {
+	if (mods.includes(&quot;pierce&quot;) &amp;&amp; t.target.get($DefenseStat) &gt;= highestStat[V().DefenseStat]) {
 		t.chance += 1;
 	}
-	else if (!mods.includes(&quot;ignore vulnerable&quot;) &amp;&amp; t.target.get(&quot;Defense&quot;) &lt; t.target.getBase(&quot;Defense&quot;)) {
+	else if (!mods.includes(&quot;ignore vulnerable&quot;) &amp;&amp; t.target.get($DefenseStat) &lt; t.target.getBase($DefenseStat)) {
 		t.chance += 1;
 	}
 	if (mods.includes(&quot;ruthless&quot;)) {
@@ -34870,10 +34908,10 @@ Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 &lt;&lt;set setup.formula to &quot;subtractive&quot;&gt;&gt;
 /*
 Can choose between multiple premade damage formulas here.
-subtractive: (base + damper * a.get(&quot;Attack&quot;)) * weight - damper * b.get(&quot;Defense&quot;)
-subtractive lumped: (base + damper * (a.get(&quot;Attack&quot;) - b.get(&quot;Defense&quot;))) * weight
-rpgmaker: (a.get(&quot;Attack&quot;) * 4 - b.get(&quot;Defense&quot;) * 2) * damper * weight
-divisive: (base * (a.get(&quot;Attack&quot;)/b.get(&quot;Defense&quot;))) * weight
+subtractive: (base + damper * a.get($AttackStat)) * weight - damper * b.get($DefenseStat)
+subtractive lumped: (base + damper * (a.get($AttackStat) - b.get($DefenseStat))) * weight
+rpgmaker: (a.get($AttackStat) * 4 - b.get($DefenseStat) * 2) * damper * weight
+divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 */
 
 &lt;&lt;set setup.LEVEL_CAP = 10&gt;&gt;

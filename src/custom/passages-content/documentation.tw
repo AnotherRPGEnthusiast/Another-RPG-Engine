@@ -3252,13 +3252,13 @@ The widgets for calculating and displaying damage are separate, due to the need 
 {{{
 <<set _w = $action.weight>>
 (...)
-<<set _atk = ($subject.get("Attack") * (1 - $action.useSpecial)) + ($subject.get("Special") * $action.useSpecial)>>
+<<set _atk = ($subject.get($AttackStat) * (1 - $action.useSpecial)) + ($subject.get($SpecialStat) * $action.useSpecial)>>
 
 /* Piercing? */
 <<if $action.pierce>>
-	<<set _def = Math.min(_target.get("Defense"),setup.MIN_STAT)>>
+	<<set _def = Math.min(_target.get($DefenseStat),setup.MIN_STAT)>>
 <<else>>
-	<<set _def = _target.get("Defense")>>
+	<<set _def = _target.get($DefenseStat)>>
 <</if>>
 }}}
 First, extract some attributes into shorter variable names, for convenience. The attack factor is a weighted average of the subject's Attack and Special stats, determined by the action's {{{useSpecial}}} attribute, which is a number between 0 and 1. An action with a {{{useSpecial}}} of 1 would be completely dependent on Special (as the Attack factor would be multiplied by 0), while an action with {{{useSpecial}}} of 0.25 would only have 25% of its power based on Special.
@@ -3643,11 +3643,11 @@ Effect.prototype.calculatePower = function (target,subject) {
 
   if (subject.stats["Special"] !== undefined) {
     if (this.statmod) {
-      let def = this.buff ? 0 : target.get("Special");
+      let def = this.buff ? 0 : target.get($SpecialStat);
       power = Math.round(
-        (setup.effbase + setup.effdamper * (subject.get("Special") - def)) * action().effweight);
+        (setup.effbase + setup.effdamper * (subject.get($SpecialStat) - def)) * action().effweight);
     } else if (this.dot) {
-      return subject.get("Special");
+      return subject.get($SpecialStat);
     }
   }
   else {
@@ -3746,10 +3746,10 @@ We end by returning the effect's addition message. Returning text in this way al
 Damage-over-time calculation is handled through the effect database. Before the definitions for each effect, several functions are defined in the Effect class definition:
 {{{
 var physical = function (puppet) {
-	return this.weight*(setup.base + (setup.damper * (this.power - puppet.get("Defense"))));
+	return this.weight*(setup.base + (setup.damper * (this.power - puppet.get($DefenseStat))));
 }
 var special = function (puppet) {
-	return this.weight*(setup.base + (setup.damper * (this.power - puppet.get("Special"))));
+	return this.weight*(setup.base + (setup.damper * (this.power - puppet.get($SpecialStat))));
 }
 var piercing = function (puppet) {
 	return this.weight*(setup.base + (setup.damper * this.power));
@@ -4046,16 +4046,16 @@ else {
 		t.chance += 1;
 	}
 	if (mods.includes("effect") && !(t.target.chi || t.target.stasis)
-		&& t.target.get("Special") < t.target.getBase("Special")) {
+		&& t.target.get($SpecialStat) < t.target.getBase($SpecialStat)) {
 			t.chance += 1;
 	}
 	if (!mods.includes("ignore threat") && t.target.lastDmg >= mostDamaging) {
 		t.chance += 1;
 	}
-	if (mods.includes("pierce") && t.target.get("Defense") >= highestStat["Defense"]) {
+	if (mods.includes("pierce") && t.target.get($DefenseStat) >= highestStat[V().DefenseStat]) {
 		t.chance += 1;
 	}
-	else if (!mods.includes("ignore vulnerable") && t.target.get("Defense") < t.target.getBase("Defense")) {
+	else if (!mods.includes("ignore vulnerable") && t.target.get($DefenseStat) < t.target.getBase($DefenseStat)) {
 		t.chance += 1;
 	}
 	if (mods.includes("ruthless")) {

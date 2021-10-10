@@ -1,10 +1,10 @@
 window.Puppet = class Puppet extends Actor{
-	constructor(name){
+	constructor(name,pos){
 	if (typeof(name) == 'object'){
-		super(name);
+		super(name,pos);
 	}
 	else {
-		super(name);
+		super(name,pos);
 		if (this.data) {
 			this.actions = [];
 			for (let n of this.data.actions) {

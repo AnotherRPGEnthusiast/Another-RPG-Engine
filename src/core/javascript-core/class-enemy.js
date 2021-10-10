@@ -1,10 +1,10 @@
 window.Enemy = class Enemy extends Actor {
-	constructor(name){
+	constructor(name,pos){
 	if (typeof(name) == 'object'){
-		super(name);
+		super(name,pos);
 	}
 	else {
-		super(name);
+		super(name,pos);
 
 		if (this.data.cooldown) { this.cd = new Map(Object.entries(this.data.cooldown)); }
 		this._noAttacks = Number.isInteger(this.data.noAttacks) && this.data.noAttacks > 0

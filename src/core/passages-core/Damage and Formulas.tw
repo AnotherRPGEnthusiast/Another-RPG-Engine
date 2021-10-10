@@ -7,13 +7,13 @@
 	<<set _target = $target>>
 <</if>>
 
-<<set _atk = ($subject.get("Attack") * (1 - $action.useSpecial)) + ($subject.get("Special") * $action.useSpecial)>>
+<<set _atk = ($subject.get($AttackStat) * (1 - $action.useSpecial)) + ($subject.get($SpecialStat) * $action.useSpecial)>>
 
 /* Piercing? */
 <<if $action.pierce>>
-	<<set _def = Math.min(_target.get("Defense"),setup.MIN_STAT)>>
+	<<set _def = Math.min(_target.get($DefenseStat),setup.MIN_STAT)>>
 <<else>>
-	<<set _def = _target.get("Defense")>>
+	<<set _def = _target.get($DefenseStat)>>
 <</if>>
 
 /* base damage */
@@ -277,12 +277,12 @@
 <<widget "effectcalc">>
 <<switch $args[0]>>
 	<<case "debuff">>
-		<<set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get("Special")-_target.get("Special")))*$action.effweight)>>
+		<<set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get($SpecialStat)-_target.get($SpecialStat)))*$action.effweight)>>
 		<<if _power < setup.min_debuff>>
 			<<set _power = setup.min_debuff>>
 		<</if>>
 	<<case "buff">>
-		<<set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get("Special")))*$action.effweight)>>
+		<<set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get($SpecialStat)))*$action.effweight)>>
 		<<if _power < setup.min_buff>>
 			<<set _power = setup.min_buff>>
 		<</if>>

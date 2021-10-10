@@ -1438,7 +1438,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 
 				act = random(1,100);
 
-			if ( !this.thorns && ( ( ((this.get("Defense") < this.getBase("Defense")) || (this.get("Attack") < this.getBase("Attack"))) && act <= 30) || ((this.get("Defense") < this.getBase("Defense")) && (this.get("Attack") < this.getBase("Attack")) && act <= 50) || (this.marked && act <= 90) ) ) {
+			if ( !this.thorns && ( ( ((this.get(V().DefenseStat) < this.getBase(V().DefenseStat)) || (this.get(V().AttackStat) < this.getBase(V().AttackStat))) && act <= 30) || ((this.get(V().DefenseStat) < this.getBase(V().DefenseStat)) && (this.get(V().AttackStat) < this.getBase(V().AttackStat)) && act <= 50) || (this.marked && act <= 90) ) ) {
 				V().action = new Action("Thorns");
 				action()._useText = null;
 				action()._actText = `Rose grins from ear to ear as her gem flashes a bright pink.`;
@@ -2347,7 +2347,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				}
 			});
 
-			if (this.get("Special") > this.getBase("Special") && act <= 85 && hasItem === true) {
+			if (this.get(V().SpecialStat) > this.getBase(V().SpecialStat) && act <= 85 && hasItem === true) {
 				this.attackItemLogic();
 				this.inventory.inc(action().name,-1);
 				return;

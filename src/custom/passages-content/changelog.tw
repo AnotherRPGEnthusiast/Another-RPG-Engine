@@ -1,4 +1,12 @@
 :: Changelog[text]
+Version 3.07.1
+<ul>
+<li>Streamlined the implementation of <code>restrictedTo</code> in equippable items. You no longer need to define a <code>restrictedTo</code> and handlers will account for invalid values. Additionally, there is now a shorthand getter for <code>restrictedTo</code> that lets you avoid going through <code>equippable</code>.</li>
+<li>Simplified the inventory menu code to use the <code>update</code> macro for updating the item display rather than manual <code>replace</code> commands.</li>
+<li>Added grid position as a constructor argument for <code>Actor</code>s. If you pass a two-element array after the name, their position will be initialized to the given coordinates.</li>
+<li>Tweaked the logic in <code>guardCheck</code> so that it can be used even when an active action is unset.</li>
+<li>You can now change the names of the Attack, Defense, and Special stats without needing to alter any code: just set the <code>AttackName</code>, <code>DefenseName</code>, and <code>SpecialName</code> variables in <code>StoryInit</code>.</li>
+</ul>
 Version 3.07
 <ul>
 <li>New <code>Actor</code> functions:</li>

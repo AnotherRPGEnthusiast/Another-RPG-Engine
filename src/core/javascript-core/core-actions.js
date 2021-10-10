@@ -701,7 +701,7 @@ setup.actionData = {
 								<</if>>\
 			<</for>>`;
 		},
-		"preview": `<<set _d = (setup.base + $subject.get("Attack"))*$action.weight>>\
+		"preview": `<<set _d = (setup.base + $subject.get(V().AttackStat))*$action.weight>>\
 			A judgment upon those who would defy you. This will inflict _d base damage and strip all buffs from every enemy.`
 	},
 

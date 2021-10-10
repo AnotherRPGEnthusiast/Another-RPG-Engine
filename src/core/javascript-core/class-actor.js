@@ -1,5 +1,5 @@
 window.Actor = class Actor {
-	constructor(name){
+	constructor(name,pos){
 	if (typeof(name) == 'object'){
 		Object.keys(name).forEach(prop => this[prop] = clone(name[prop]));
 	}
@@ -64,6 +64,11 @@ window.Actor = class Actor {
 
 			for (let [pn,v] of Object.entries(equipData)) {
 				this.equipment.set(pn,new Array(v).fill(null));
+			}
+
+			if (pos instanceof Array) {
+				console.assert(pos.length == 2 && Number.isInteger(pos[0]),`ERROR in Actor constructor: invalid position array passed`);
+				this.position = pos;
 			}
 		}
 		else if (name !== "Dummy") {
@@ -638,8 +643,10 @@ window.Actor = class Actor {
 	}
 
 	checkRestriction (item) {
-		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing or if the restricted listing is empty.
-		return (item.equippable.restrictedTo.length == 0 || item.equippable.restrictedTo.includes(this.name));
+		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing.
+		return (item.equippable.restrictedTo instanceof Array)
+			? (item.equippable.restrictedTo.includes(this.name))
+			: true
 	}
 
 	// TOLERANCE FUNCTIONS

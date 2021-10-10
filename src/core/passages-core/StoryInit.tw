@@ -12,6 +12,9 @@
 <<set setup.min_buff = 0>> /* minimum buff effect */
 <<set setup.min_debuff = 5>> /* minimum debuff effect */
 
+/* The following stat names will be referenced in situations that call for them (damage formula, etc.), change these if you want to change stat names */
+<<set $AttackStat = "Attack"; $DefenseStat = "Defense"; $SpecialStat = "Special">>
+
 /*	Tooltip information associated with each stat, to be displayed in the status menu.
 		Also used elsewhere as a reference for the identity of core stats. */
 <<set setup.statInfo = {

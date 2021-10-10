@@ -825,7 +825,7 @@ Princess Bubblegum reappears in the final battle of <i>Cartoon Battle</i>, but t
 		}
 	});
 
-	if (this.get("Special") > this.getBase("Special") && act <= 85 && hasItem === true) {
+	if (this.get($SpecialStat) > this.getBase($SpecialStat) && act <= 85 && hasItem === true) {
 		this.attackItemLogic();
 		this.inventory.inc(action().name,-1);
 		return;
@@ -1033,7 +1033,7 @@ this.inventory.forEach(function(stock,item) {
 	}
 });
 
-if (this.get("Special") > this.getBase("Special") && act <= 85 && hasItem === true) {
+if (this.get($SpecialStat) > this.getBase($SpecialStat) && act <= 85 && hasItem === true) {
 	this.attackItemLogic();
 	this.inventory.inc(action().name,-1);
 	return;
@@ -1041,7 +1041,7 @@ if (this.get("Special") > this.getBase("Special") && act <= 85 && hasItem === tr
 }}}
 Then we get into the actual action selection logic. However, our first check is a special circumstance that occurs outside the normal action tree.
 
-Bonnibel's attack items are extremely valuable, so it makes sense that she should favor their use when she can get the most out of them; which is to say, when her Special stat is boosted. We can model this by giving her a higher chance of using an attack item than she would normally when {{{this.get("Special") > this.getBase("Special")}}}. However, this is hard to model within the same tree as other actions without interfering with the probabilities of those other actions. For instance, let's say a character takes one action at {{{act}}} values 0-30 and another at {{{act}}} values 31-50. Under a special circumstance, you want the character to take the first action 50% of the time instead. You could model this by telling them to perform the action {{{if (act <= 30 || (circumstance === true && act <= 50)}}}... but if you do not change the {{{act}}} range for the second action as well, now the character will <i>never</i> take that action if {{{circumstance}}} is {{{true}}}! All possible values for {{{act}}} that could trigger it will now trigger the first action instead, and so the second action will be ignored. In some cases, this may be what you want; but for most cases, it is easier to segregate these special actions away from the main {{{if}}} tree.
+Bonnibel's attack items are extremely valuable, so it makes sense that she should favor their use when she can get the most out of them; which is to say, when her Special stat is boosted. We can model this by giving her a higher chance of using an attack item than she would normally when {{{this.get($SpecialStat) > this.getBase($SpecialStat)}}}. However, this is hard to model within the same tree as other actions without interfering with the probabilities of those other actions. For instance, let's say a character takes one action at {{{act}}} values 0-30 and another at {{{act}}} values 31-50. Under a special circumstance, you want the character to take the first action 50% of the time instead. You could model this by telling them to perform the action {{{if (act <= 30 || (circumstance === true && act <= 50)}}}... but if you do not change the {{{act}}} range for the second action as well, now the character will <i>never</i> take that action if {{{circumstance}}} is {{{true}}}! All possible values for {{{act}}} that could trigger it will now trigger the first action instead, and so the second action will be ignored. In some cases, this may be what you want; but for most cases, it is easier to segregate these special actions away from the main {{{if}}} tree.
 
 Additionally, because Bonnibel has a limited inventory, we need to check if she has any items that match with this action at all; otherwise, running through this logic will be at best a waste of time, and at worst a glitch that will allow her to keep using items after she's exhausted them. We check this with a simple {{{forEach}}} loop run over her {{{inventory}}} attribute; if any of her attack items have a {{{stock}}} value greater than 0, she can use an attack item, and so we set {{{hasItem}}} to {{{true}}}.
 

@@ -11,13 +11,13 @@ Effect.prototype.calculatePower = function (target,subject) {
   let power;
   let check = this.buff ? setup.min_buff : setup.min_debuff;
 
-  if (subject.stats["Special"] !== undefined) {
+  if (subject.stats[V().SpecialStat] !== undefined) {
     if (this.statmod) {
-      let def = this.buff ? 0 : target.get("Special");
+      let def = this.buff ? 0 : target.get(V().SpecialStat);
       power = Math.round(
-        (setup.effbase + setup.effdamper * (subject.get("Special") - def)) * action().effweight);
+        (setup.effbase + setup.effdamper * (subject.get(V().SpecialStat) - def)) * action().effweight);
     } else if (this.dot) {
-      return subject.get("Special");
+      return subject.get(V().SpecialStat);
     }
   }
   else {

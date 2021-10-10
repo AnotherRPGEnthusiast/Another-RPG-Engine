@@ -69,15 +69,15 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 			<<case "equip">>
 					<<link _puppet.name>>
 						<<run _puppet.equip(_display)>>
-						<<unset _display>>
-						<<replace "#menu-display">><<include "inventory item display">><</replace>>
+						<<unset _display>><<unset _event>>
+						<<update>>
 						<<replace "#itemlist">><<include "inventory item list">><</replace>>
 					<</link>>
 			<<case "use">>
 					<<link _puppet.name>>
 						<<notify "menu" 3s>><<print _display.onUse(_puppet)>><</notify>>
-						<<unset _display>>
-						<<replace "#menu-display">><<include "inventory item display">><</replace>>
+						<<unset _display>><<unset _event>>
+						<<update>>
 						<<replace "#itemlist">><<include "inventory item list">><</replace>>
 					<</link>>
 			<<default>>

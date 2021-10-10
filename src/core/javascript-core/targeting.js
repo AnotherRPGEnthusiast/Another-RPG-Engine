@@ -190,8 +190,15 @@ window.Hitlist = class Hitlist extends Array {
 		//	For use with the battle grid. Checks if the target is guarded by a frontline character.
 		//	By default, this check is bypassed by ranged attacks and friendly fire.
 
+		var rangeCheck = true;
+		try {
+			rangeCheck = !V().action.ranged;
+		} catch (e) {
+			// no change needed
+		}
+
 		if (setup.BATTLE_GRID === true
-			&& !V().action.ranged
+			&& rangeCheck
 			&& (subject().id.charAt(0) !== target.id.charAt(0))) {
 
 			console.assert(target instanceof Actor,`ERROR in guardCheck: target must be Actor`);
@@ -386,17 +393,17 @@ Hitlist.prototype.addFactors = function (mods) {
 			t.chance += 1;
 		} else if (mods.includes("most damage") && t.target.lastDmg >= mostDamaging) {
 			t.chance += 1;
-		} else if (mods.includes("most DEF") && t.target.get("Defense") >= highestStat["Defense"]) {
+		} else if (mods.includes("most DEF") && t.target.get(V().DefenseStat) >= highestStat[V().DefenseStat]) {
 			t.chance += 1;
-		} else if (mods.includes("least DEF") && t.target.get("Defense") >= lowestStat["Defense"]) {
+		} else if (mods.includes("least DEF") && t.target.get(V().DefenseStat) >= lowestStat[V().DefenseStat]) {
 			t.chance += 1;
-		} else if (mods.includes("most ATK") && t.target.get("Attack") >= highestStat["Attack"]) {
+		} else if (mods.includes("most ATK") && t.target.get(V().AttackStat) >= highestStatV().AttackStat) {
 			t.chance += 1;
-		} else if (mods.includes("least ATK") && t.target.get("Attack") >= lowestStat["Attack"]) {
+		} else if (mods.includes("least ATK") && t.target.get(V().AttackStat) >= lowestStatV().AttackStat) {
 			t.chance += 1;
-		} else if (mods.includes("most SPC") && t.target.get("Special") >= highestStat["Special"]) {
+		} else if (mods.includes("most SPC") && t.target.get(V().SpecialStat) >= highestStat[V().SpecialStat]) {
 			t.chance += 1;
-		} else if (mods.includes("least SPC") && t.target.get("Special") >= lowestStat["Special"]) {
+		} else if (mods.includes("least SPC") && t.target.get(V().SpecialStat) >= lowestStat[V().SpecialStat]) {
 			t.chance += 1;
 		} else if (mods.includes("no effect") && !t.target.effects.includesAny(action().effects)) {
 			t.chance += 1;
@@ -414,12 +421,12 @@ Hitlist.prototype.addFactors = function (mods) {
 				t.chance += 1;
 			}
 			// If this attack pierces defense, preferentially target the character with the highest defense.
-			if (mods.includes("pierce") && t.target.get("Defense") >= highestStat["Defense"]) {
+			if (mods.includes("pierce") && t.target.get(V().DefenseStat) >= highestStat[V().DefenseStat]) {
 				t.chance += 1;
 			}
 			// Otherwise, preferentially target characters with a DEF debuff to get the most out of the attack.
 			// To exclude this clause, pass "ignore vulnerable"; such as for non-damaging moves
-			else if (!mods.includes("ignore vulnerable") && t.target.get("Defense") < t.target.getBase("Defense")) {
+			else if (!mods.includes("ignore vulnerable") && t.target.get(V().DefenseStat) < t.target.getBase(V().DefenseStat)) {
 				t.chance += 1;
 			}
 			// Preferentially target more injured characters.
@@ -434,7 +441,7 @@ Hitlist.prototype.addFactors = function (mods) {
 			// If this attack applies a debuff, preferentially target characters with a SPC debuff,
 			// and ignore those with protective effects.
 			if (mods.includes("effect") && !(t.target.chi || t.target.stasis)
-				&& t.target.get("Special") < t.target.getBase("Special")) {
+				&& t.target.get(V().SpecialStat) < t.target.getBase(V().SpecialStat)) {
 					t.chance += 1;
 			}
 		}

@@ -198,7 +198,7 @@
 	<</if>>
 	<<if _modifiers.includes("debuff")>>
 /* Debuffing attacks will preferentially target puppets with lowered Special, as they will be more strongly affected */
-		<<for _puppet range _party.filter(function (p) { return !(p.dead || p.chi || p.stasis) && p.get("Special") < p.getBase("Special"); })>>
+		<<for _puppet range _party.filter(function (p) { return !(p.dead || p.chi || p.stasis) && p.get($SpecialStat) < p.getBase($SpecialStat); })>>
 			<<if _modifiers.includes("ignore untargetable") || !_puppet.untargetable>>
 				<<run _hitlist.push(_puppet)>>
 			<</if>>
@@ -235,7 +235,7 @@
 			<</if>>
 			<<if _modifiers.includes("debuff")>>
 			/* Debuffing attacks will preferentially target puppets with lowered Special, as they will be more strongly affected */
-				<<if !_puppet.chi && && !_puppet.stasis && (_puppet.get("Special") < _puppet.getBase("Special"))>>
+				<<if !_puppet.chi && && !_puppet.stasis && (_puppet.get($SpecialStat) < _puppet.getBase($SpecialStat))>>
 					<<run _hitlist.push(_puppet)>>
 				<</if>>
 			<</if>>
