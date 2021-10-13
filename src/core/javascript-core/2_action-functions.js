@@ -211,13 +211,13 @@ var applyEffect = function applyEffect (effects, args = {}, extension = "") {
 		extension = extension();
 	}
 
-	var target;
-	target = args.self === true ? "$subject" : "$target";
+	var effectTarget;
+	effectTarget = args.self === true ? "$subject" : "$target";
 	var content = "";
 
 	effects.forEach(function (effect) {
 		console.assert(typeof(effect) == "string","ERROR in applyEffect: effect undefined or non-string");
-		content += `<<print ${target}.addEffect("${effect}")>>`;
+		content += `<<print ${effectTarget}.addEffect("${effect}")>>`;
 	});
 
 	if (args.dmg === true) {

@@ -620,13 +620,13 @@ window.Actor = class Actor {
 
 	hasEquipped (name) {
 		var result = false;
-		this.equipment.forEach(function (item,slot) {
-			item.forEach(function (subitem) {
+		for (let [slot,item] of this.equipment) {
+			for (let subitem of item) {
 				if (subitem !== null && subitem.id == name) {
 					return true;
 				}
-			});
-		});
+			}
+		}
 		return result;
 	}
 

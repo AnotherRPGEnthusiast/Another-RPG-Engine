@@ -1,12 +1,12 @@
-Effect.prototype.calculatePower = function (target,subject) {
-  if (!(target instanceof Actor)) {
-    target = target();
+Effect.prototype.calculatePower = function (effectTarget,effectSubject) {
+  if (!(effectTarget instanceof Actor)) {
+    effectTarget = target();
   }
-  if (!(subject instanceof Actor)) {
-    subject = subject();
+  if (!(effectSubject instanceof Actor)) {
+    effectSubject = subject();
   }
-  console.assert(target instanceof Actor,`ERROR in calculatePower: invalid target`);
-  console.assert(subject instanceof Actor,`ERROR in calculatePower: invalid subject`);
+  console.assert(effectTarget instanceof Actor,`ERROR in calculatePower: invalid effectTarget`);
+  console.assert(effectSubject instanceof Actor,`ERROR in calculatePower: invalid effectSubject`);
 
   let power;
   let check = this.buff ? setup.min_buff : setup.min_debuff;
@@ -94,7 +94,7 @@ Actor.prototype.addEffect = function (name,mods) {
     if (temporary().effectApplied === undefined) {
       temporary().effectApplied = {}
     }
-    V().target = this;
+    if (V().target === null) V().target = this;
     temporary().effectApplied[name] = this.testEffect(name,mods);
     this.effectApplied = temporary().effectApplied;
 

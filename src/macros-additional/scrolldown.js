@@ -1,6 +1,6 @@
 /*
 	<<scrolldown [duration]>>
-	
+
 	Credit to The Mad Exile
 
 	duration : (optional) The length of time to animate the scroll, as the
@@ -9,7 +9,7 @@
 */
 Macro.add('scrolldown', {
 	handler : function () {
-		var target   = document.scrollingElement || 'html,body';
+		var tar   = document.scrollingElement || 'html,body';
 		var duration;
 
 		if (this.args.length > 0) {
@@ -33,10 +33,9 @@ Macro.add('scrolldown', {
 		}
 
 		setTimeout(function () {
-			$(target).animate({
+			$(tar).animate({
 				scrollTop: $(document).height() - $(window).height()
 			}, duration);
 		}, Engine.minDomActionDelay);
 	}
 });
-

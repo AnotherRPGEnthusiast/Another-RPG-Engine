@@ -15,9 +15,10 @@ window.enemies = function enemies () {
 	return V().enemies.filter(function(p) { return p !== null });
 };
 
-window.target = function target () {return State.variables.target;}
-window.subject = function subject () {return State.variables.subject;}
-window.action = function action () {return State.variables.action;}
+const target = function target () {return State.variables.target;}
+const subject = function subject () {return State.variables.subject;}
+const action = function action () {return State.variables.action;}
+window.target = target; window.subject = subject; window.action = action;
 
 window.getActor = function getActor(x) {
 	var targets = [];

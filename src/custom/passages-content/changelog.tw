@@ -1,4 +1,10 @@
 :: Changelog[text]
+Version 3.07.2
+<ul>
+<li>Fixed an error in <code>hasEquipped</code> that prevented it from returning the correct value if a match was found early.</li>
+<li>Fixed additional areas where the <code>target</code> function could accidentally be overwritten. <code>target</code>, <code>subject</code>, and <code>action</code> functions have been changed to constants, hopefully ending this problem once and for all.</li>
+<li>Fixed an error that occurred when effects had a target separate from the effect's recipient (such as Protector). Targets should now work correctly again.</li>
+</ul>
 Version 3.07.1
 <ul>
 <li>Streamlined the implementation of <code>restrictedTo</code> in equippable items. You no longer need to define a <code>restrictedTo</code> and handlers will account for invalid values. Additionally, there is now a shorthand getter for <code>restrictedTo</code> that lets you avoid going through <code>equippable</code>.</li>

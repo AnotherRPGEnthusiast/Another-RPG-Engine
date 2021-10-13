@@ -5963,9 +5963,10 @@ window.enemies = function enemies () {
 	return V().enemies.filter(function(p) { return p !== null });
 };
 
-window.target = function target () {return State.variables.target;}
-window.subject = function subject () {return State.variables.subject;}
-window.action = function action () {return State.variables.action;}
+const target = function target () {return State.variables.target;}
+const subject = function subject () {return State.variables.subject;}
+const action = function action () {return State.variables.action;}
+window.target = target; window.subject = subject; window.action = action;
 
 window.getActor = function getActor(x) {
 	var targets = [];
@@ -6565,13 +6566,13 @@ var applyEffect = function applyEffect (effects, args = {}, extension = "") {
 		extension = extension();
 	}
 
-	var target;
-	target = args.self === true ? "$subject" : "$target";
+	var effectTarget;
+	effectTarget = args.self === true ? "$subject" : "$target";
 	var content = "";
 
 	effects.forEach(function (effect) {
 		console.assert(typeof(effect) == "string","ERROR in applyEffect: effect undefined or non-string");
-		content += `<<print ${target}.addEffect("${effect}")>>`;
+		content += `<<print ${effectTarget}.addEffect("${effect}")>>`;
 	});
 
 	if (args.dmg === true) {
@@ -9140,13 +9141,13 @@ window.Actor = class Actor {
 
 	hasEquipped (name) {
 		var result = false;
-		this.equipment.forEach(function (item,slot) {
-			item.forEach(function (subitem) {
+		for (let [slot,item] of this.equipment) {
+			for (let subitem of item) {
 				if (subitem !== null && subitem.id == name) {
 					return true;
 				}
-			});
-		});
+			}
+		}
 		return result;
 	}
 
@@ -16894,7 +16895,7 @@ Actor.prototype.addEffect = function (name,mods) {
     if (temporary().effectApplied === undefined) {
       temporary().effectApplied = {}
     }
-    V().target = this;
+    if (V().target === null) V().target = this;
     temporary().effectApplied[name] = this.testEffect(name,mods);
     this.effectApplied = temporary().effectApplied;
 
@@ -17711,7 +17712,7 @@ Config.saves.isAllowed = function () {
 };
 // This will disallow saving in battle. This is probably a good idea, but make sure you keep track of your inbattle variable so you don't accidentally prevent people from saving in the main story.
 
-setup.version = "3.07.1-alpha";
+setup.version = "3.07.1";
 
 Config.saves.version = 0;
 // Records a version number for saves. Update this when you update your version. This is helpful for updating saves from older versions.
@@ -20019,7 +20020,7 @@ Macro.add('linkdropdown', {
 /* twine-user-script #36: "scrolldown.js" */
 /*
 	<<scrolldown [duration]>>
-	
+
 	Credit to The Mad Exile
 
 	duration : (optional) The length of time to animate the scroll, as the
@@ -20028,7 +20029,7 @@ Macro.add('linkdropdown', {
 */
 Macro.add('scrolldown', {
 	handler : function () {
-		var target   = document.scrollingElement || 'html,body';
+		var tar   = document.scrollingElement || 'html,body';
 		var duration;
 
 		if (this.args.length > 0) {
@@ -20052,13 +20053,12 @@ Macro.add('scrolldown', {
 		}
 
 		setTimeout(function () {
-			$(target).animate({
+			$(tar).animate({
 				scrollTop: $(document).height() - $(window).height()
 			}, duration);
 		}, Engine.minDomActionDelay);
 	}
 });
-
 /* twine-user-script #37: "shake-macro-set.min.js" */
 /*! <<shake>> macro set for SugarCube 2.x */
 !function() {
@@ -26374,12 +26374,18 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 	&lt;&lt;goto &quot;Battle!&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;include &quot;action phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="Changelog" tags="text" position="225,2225" size="100,100">Version 3.07.1
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="Changelog" tags="text" position="225,2225" size="100,100">Version 3.07.2
+&lt;ul&gt;
+&lt;li&gt;Fixed an error in &lt;code&gt;hasEquipped&lt;/code&gt; that prevented it from returning the correct value if a match was found early.&lt;/li&gt;
+&lt;li&gt;Quashed another bug where the &lt;code&gt;target&lt;/code&gt; function could accidentally be overwritten. &lt;code&gt;target&lt;/code&gt;, &lt;code&gt;subject&lt;/code&gt;, and &lt;code&gt;action&lt;/code&gt; functions have been changed to constants, hopefully ending this problem once and for all.&lt;/li&gt;
+&lt;/ul&gt;
+Version 3.07.1
 &lt;ul&gt;
 &lt;li&gt;Streamlined the implementation of &lt;code&gt;restrictedTo&lt;/code&gt; in equippable items. You no longer need to define a &lt;code&gt;restrictedTo&lt;/code&gt; and handlers will account for invalid values. Additionally, there is now a shorthand getter for &lt;code&gt;restrictedTo&lt;/code&gt; that lets you avoid going through &lt;code&gt;equippable&lt;/code&gt;.&lt;/li&gt;
 &lt;li&gt;Simplified the inventory menu code to use the &lt;code&gt;update&lt;/code&gt; macro for updating the item display rather than manual &lt;code&gt;replace&lt;/code&gt; commands.&lt;/li&gt;
 &lt;li&gt;Added grid position as a constructor argument for &lt;code&gt;Actor&lt;/code&gt;s. If you pass a two-element array after the name, their position will be initialized to the given coordinates.&lt;/li&gt;
 &lt;li&gt;Tweaked the logic in &lt;code&gt;guardCheck&lt;/code&gt; so that it can be used even when an active action is unset.&lt;/li&gt;
+&lt;li&gt;You can now change the names of the Attack, Defense, and Special stats without needing to alter any code: just set the &lt;code&gt;AttackName&lt;/code&gt;, &lt;code&gt;DefenseName&lt;/code&gt;, and &lt;code&gt;SpecialName&lt;/code&gt; variables in &lt;code&gt;StoryInit&lt;/code&gt;.&lt;/li&gt;
 &lt;/ul&gt;
 Version 3.07
 &lt;ul&gt;
