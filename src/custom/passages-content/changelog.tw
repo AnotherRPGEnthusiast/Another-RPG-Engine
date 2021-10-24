@@ -4,6 +4,7 @@ Version 3.07.2
 <li>Fixed an error in <code>hasEquipped</code> that prevented it from returning the correct value if a match was found early.</li>
 <li>Fixed additional areas where the <code>target</code> function could accidentally be overwritten. <code>target</code>, <code>subject</code>, and <code>action</code> functions have been changed to constants, hopefully ending this problem once and for all.</li>
 <li>Fixed an error that occurred when effects had a target separate from the effect's recipient (such as Protector). Targets should now work correctly again.</li>
+<li>Fixed an error in "highest attack" targeting logic.</li>
 </ul>
 Version 3.07.1
 <ul>
