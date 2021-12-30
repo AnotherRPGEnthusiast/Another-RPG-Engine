@@ -3,11 +3,11 @@
 	<<set _hit = true>>
 <<else>>
 	<<set _acc = $action.accuracy>>
-	<<if subject().stats.hasOwnProperty("Accuracy")>>
-		<<set _acc = Math.max(_acc + (subject().get("Accuracy")-100),setup.MIN_ACCURACY)>>
+	<<if subject().stats.hasOwnProperty(StatName("Accuracy"))>>
+		<<set _acc = Math.max(_acc + (subject().get(StatName("Accuracy"))-100),setup.MIN_ACCURACY)>>
 	<</if>>
-	<<if _target.stats.hasOwnProperty("Evasion")>>
-		<<set _acc = Math.max(_acc - _target.get("Evasion"),setup.MIN_ACCURACY)>>
+	<<if _target.stats.hasOwnProperty(StatName("Evasion"))>>
+		<<set _acc = Math.max(_acc - _target.get(StatName("Evasion")),setup.MIN_ACCURACY)>>
 	<</if>>
 	<<set _toHit = random(1,100)>>
 	<<if _toHit <= _acc>>

@@ -70,7 +70,7 @@ window.Puppet = class Puppet extends Actor{
 	}
 
 	validTarget () {
-		//	Returns Boolean. Determination for if character can be selected by the player in targeting phase.
+		//	Returns Boolean. Determination for if character can be selected by the player in Targeting Phase.
 		//	To customize, use Object.defineProperty.
 
 		if (!(V().B.targeting === "all" || V().B.targeting === "ally")) {

@@ -20,7 +20,7 @@
 
 :: Widget: hunterCheck [widget nobr]
 <<widget "hunterCheck">>
-/* Called in the enemy phase, after every enemy's action. */
+/* Called in the Enemy Phase, after every enemy's action. */
 
 	<<unset _party>>
 
@@ -42,7 +42,7 @@
 
 :: Widget: markAttack [widget nobr]
 <<widget "markAttack">>
-/* Called in the action phase, after action is finished. */
+/* Called in the Action Phase, after action is finished. */
 <<set _archer = $puppets.
 	find(function (p) { return p && p.name == "Archer" && !(p.dead || p.noact || p.uncontrollable) })>>
 

@@ -1,13 +1,13 @@
 :: Widget: backbtn[widget nobr]
 <<widget "backbtn">>
-<span class="btn back right" id="battlebackbtn">[[Back [R]|Battle!][$B.phase = "selection"; $B.targeting = null; $action = null; $target = null; $subject = null; $removed_effects = [];]]</span>
+<span class="btn back right" id="battlebackbtn">[[Back [R]|Player Phase][$B.phase = "selection"; $B.targeting = null; $action = null; $target = null; $subject = null; $removed_effects = [];]]</span>
 <</widget>>
 
-:: Widget: endturn[widget nobr]
-<<widget "endturn">>
+:: Widget: endRound[widget nobr]
+<<widget "endRound">>
 <<set $B.turn = "enemy"; $B.phase = null>>
-<<run $(document).trigger(":endturn-run")>>
-<<goto "end of round">>
+<<run $(document).trigger(":endRound-run")>>
+<<goto "RoundEnd">>
 <</widget>>
 
 :: Widget: status[widget nobr]
@@ -32,7 +32,7 @@
 	<<if $args[0].en >= setup.STRUGGLE_COST>>
 		<<link "Struggle">>
 			<<set $subject = $args[0]; $action = new Action("struggle"); $target = null>>
-			<<replace "#phase">><<include "confirm phase">><</replace>>
+			<<replace "#phase">><<include "Confirm Phase">><</replace>>
 		<</link>>
 	<<else>>
 		<b>Exhausted!</b>
@@ -52,7 +52,7 @@
 <<link "Rest">>
 	<<set $subject = $args[0]; $action = new Action("rest"); $target = null>>
 	<<run $(document).trigger(":rest-selected")>>
-	<<replace "#phase">><<include "confirm phase">><</replace>>
+	<<replace "#phase">><<include "Confirm Phase">><</replace>>
 <</link>>
 <span class="hotkey monospace right">[W]</span>
 <</widget>>
@@ -81,7 +81,7 @@
 <<widget "spare">>
 <<link "Spare">>
 	<<set $subject = $args[0]; $target = $enemy_to_spare; $action = {name: "spare", cost: 0}>>
-	<<replace "#phase">><<include "confirm phase">><</replace>>
+	<<replace "#phase">><<include "Confirm Phase">><</replace>>
 <</link>>
 <</widget>>
 
@@ -210,10 +210,10 @@
 		<</if>>
 		<<set $B.targeting = _action.target>>
 		<<set $B.noself = _action.noself>>
-		<<if _action.phase is "confirm phase">>
+		<<if _action.phase is "Confirm Phase">>
 			<<set $target = null>>
 			<<set $B.targeting = null>>
-		<<elseif _action.phase is "spell phase">>
+		<<elseif _action.phase is "Spell Phase">>
 			<<set $B.mincost = _action.cost>>
 			<<set $B.targeting = null>>
 		<</if>>
@@ -238,6 +238,94 @@
 </span>
 <</widget>>
 
+:: Widget: advanceDelay [widget nobr]
+/* Decrements the counter for delayed actions. */
+<<widget "advanceDelay">>
+<<run console.assert($args[0] instanceof Actor,`ERROR in advanceDelay: no actor passed`)>>
+<<set _a = $args[0]>>
+<<if _a.delayCounter > 0>>
+	<<set _a.delayCounter -= 1>>
+	<<if _a.delayedAction.delayMessage !== null>>
+		<<set _message to true>>
+		<div id="actFlavor">
+			<<print _a.delayedAction.delayMessage(_a)>>
+		</div>
+		<br/>
+	<</if>>
+<</if>>
+<</widget>>
+
+:: Widget: advanceRespawn [widget nobr]
+/* Decrements the respawn counter if the character has one. */
+<<widget "advanceRespawn">>
+<<run console.assert($args[0] instanceof Actor,`ERROR in advanceRespawn: no actor passed`)>>
+<<set _a = $args[0]>>
+<<if _a.dead && _a.respawn > 0>>
+	<<set _a.respawn -= 1>>
+	<<if _a.respawn <= 0>>
+		<<set _a.dead = false; _a.hp = Math.round(_a.maxHP * _a.respawnHP); _a.resetRespawn()>>
+		<<set _message to true>>
+		<div id="actFlavor">
+			<<print _a.respawnMessage>>
+		</div>
+		<br/>
+	<</if>>
+<</if>>
+<</widget>>
+
+:: Widget: regen [widget nobr]
+/* Activates per-turn regeneration. */
+<<widget "regen">>
+<<run console.assert($args[0] instanceof Actor,`ERROR in regen: no actor passed`)>>
+<<set _a = $args[0]>>
+<<if !_a.dead && !_a.healBlock>>
+	<<run _a.regenHP()>>
+<</if>>
+<<if !_a.noENregen>>
+	<<set _a.en += _a.ENregen>>
+<</if>>
+<</widget>>
+
+:: Widget: advanceCooldown [widget nobr]
+/* Decrements action cooldowns and refreshes used actions. */
+<<widget "advanceCooldown">>
+<<run console.assert($args[0] instanceof Actor,`ERROR in advanceCooldown: no actor passed`)>>
+<<set _a = $args[0]>>
+<<if _a instanceof Puppet>>
+	<<for _action range _a.actions>>
+		<<if _action.used === true>>
+			<<run _action.used = false>>
+		<</if>>
+		<<if _action.cd>>
+			<<run _action.cd -= 1>>
+		<</if>>
+	<</for>>
+<<elseif _a instanceof Enemy && !_a.noact>>
+	<<run _a.decCD()>>
+<</if>>
+<</widget>>
+
+:: Widget: DoT [widget nobr]
+/* Executes damage-over-time effects for a given actor. */
+<<widget "DoT">>
+<<run console.assert($args[0] instanceof Actor,`ERROR in DoT: no actor passed`)>>
+<<set _a = $args[0]>>
+<<for _effect range _a.effects.filter(function(e) { return e.dot })>>
+	/* DoT check */
+	<<if !_a.dead>>
+		<<set _message = true>>
+		<<set $dmg = _effect.damage(_a)>>
+		<div id="actFlavor">
+			<<print _effect.msg(_a)>>
+		</div>
+		<div id="actEffect">
+			<<echoDamage _a "indirect" "nocalc">>
+		</div>
+		<br/>
+	<</if>>
+<</for>>
+<</widget>>
+
 :: Widget: newTurn [widget nobr]
 <<widget "newTurn">>
 /* arg 0 = party array. MUST be an array; use an array with 1 element if you wish to call this for a single actor */
@@ -245,7 +333,7 @@
 
 <<for _actor range $args[0].filter(function (a) { return a !== null; })>>
 	<<run console.assert(_actor instanceof Actor,"ERROR in newTurn: non-Actor element")>>
-	<<set _actor.isDone = false>>
+	<<set _actor.active = true>>
 	<<set _actor.lastDmg = 0>>
 
 	/* Refill retaliations if actor still alive */
@@ -254,131 +342,74 @@
   <</if>>
 
 	<<if _actor.delayedAction instanceof Action && _actor.delayedAction.delayHold === true>>
-		<<set _actor.isDone = true>>
+		<<set _actor.active = false>>
 	<</if>>
 
 	<<if _actor instanceof Puppet>>
 		/* Puppet-exclusive tasks:
 			decrement counter for delayed actions (enemies do this at end of round)
 			decrement respawn (enemy respawn only decremented at end of round)
-			regen HP (enemies regen at end of round)
-			refresh used actions & decrement cooldown */
-		<<if _actor.delayCounter > 0>>
-			<<set _actor.delayCounter -= 1>>
-			<<if _actor.delayedAction.delayMessage !== null>>
-				<<set _message to true>>
-				<div id="actFlavor">
-					<<print _actor.delayedAction.delayMessage(_actor)>>
-				</div>
-				<br/>
-			<</if>>
-		<</if>>
-    <<if _actor.dead && _actor.respawn > 0>>
-  		<<set _actor.respawn -= 1>>
-  		<<if _actor.respawn <= 0>>
-  			<<set _actor.dead = false; _actor.hp = Math.round(_actor.maxhp * _actor.respawnHP); _actor.resetRespawn()>>
-  			<<set _message to true>>
-  			<div id="actFlavor">
-  				<<print _actor.respawnMessage>>
-  			</div>
-  			<br/>
-  		<</if>>
-    <</if>>
-		<<if !_actor.dead>>
-			<<run _actor.regenHP()>>
-		<</if>>
-    <<for _action range _actor.actions>>
-			<<if _action.used === true>>
-				<<run _action.used = false>>
-			<</if>>
-			<<if _action.cd>>
-				<<run _action.cd -= 1>>
-			<</if>>
-    <</for>>
+			regen HP (enemies regen at end of round) */
+		<<advanceDelay _actor>>
+		<<advanceRespawn _actor>>
+		<<regen _actor>>
 	<</if>>
 
-  <<decayMessage _actor.effects true>>
+	<<advanceCooldown _actor>>
+
+	/* decay top-decrementing effects */
+  <<decayEffects _actor.effects true>>
+
 <</for>>
 <<include "custom newTurn">>
 <</widget>>
 
-:: Widget: endOfRound [widget nobr]
-<<widget "endOfRound">>
-<<run console.assert($args[0] instanceof Array,"ERROR in endOfRound: invalid argument")>>
+:: Widget: endTurn [widget nobr]
+<<widget "endTurn">>
+<<run console.assert($args[0] instanceof Array,"ERROR in endTurn: invalid argument")>>
 
 <<set _party = $args[0].filter(function (a) { return a !== null; })>>
 <<for _actor range _party>>
-	<<run console.assert(_actor instanceof Actor,"ERROR in endOfRound: non-Actor element")>>
+	<<run console.assert(_actor instanceof Actor,"ERROR in endTurn: non-Actor element")>>
 	<<if (_actor.delayedAction instanceof Action && _actor.delayedAction.delayHold)>>
-		<<set _actor.isDone = true>>
+		<<set _actor.active = false>>
 	<<else>>
-		<<set _actor.isDone = false>>
+		<<set _actor.active = true>>
 	<</if>>
-	<<for _effect range _actor.effects>>
-		/* DoT check */
-		<<if _effect.dot && !_actor.dead>>
-				<<set _message = true>>
-				<<set $dmg = _effect.damage(_actor)>>
-				<div id="actFlavor">
-					<<print _effect.msg(_actor)>>
-				</div>
-				<div id="actEffect">
-					<<echoDamage _actor "indirect" "nocalc">>
-				</div>
-				<br/>
-		<</if>>
-	<</for>>
 
-	/* decrementor */
-	<<decayMessage _actor.effects false>>
+	/* Check and execute damage-over-time effects. */
+	<<DoT _actor>>
+
+	/* decay bottom-decrementing effects */
+	<<decayEffects _actor.effects false>>
 
 	<<if _actor instanceof Enemy>>
-		<<if _actor.delayCounter > 0>>
-			<<set _actor.delayCounter -= 1>>
-			<<if _actor.delayedAction.delayMessage !== null>>
-				<<set _message to true>>
-				<div id="actFlavor">
-					<<print _actor.delayedAction.delayMessage(_actor)>>
-				</div>
-				<br/>
-			<</if>>
-		<</if>>
-		<<if !_actor.dead>>
-			<<run _actor.regenHP()>>
-		<</if>>
+		<<advanceDelay _actor>>
+		<<advanceRespawn _actor>>
+		<<regen _actor>>
 		<<run _actor._noAttacks.refill()>>
-		<<if _actor.respawn > 0 && _actor.dead>>
-			<<set _actor.respawn -= 1>>
-			<<if _actor.respawn <= 0>>
-				<<set _actor.dead = false; _actor.hp = (_actor.maxhp * _actor.respawnHP); _actor.resetRespawn()>>
-				<<set _message = true>>
-					<div id="actFlavor">
-						<<print _actor.respawnMessage>>
-					</div>
-					<br/>
-			<</if>>
-		<</if>>
 	<</if>>
 <</for>>
-<<include "custom endOfRound">>
+<<include "custom endTurn">>
 <</widget>>
 
-:: Widget: decayMessage [widget nobr]
-<<widget "decayMessage">>
+:: Widget: decayEffects [widget nobr]
+<<widget "decayEffects">>
 /* arg 0 = effects array, arg 1 = Boolean, top decrement (optional, defaults to false) */
-<<run console.assert($args[0] instanceof Array,"ERROR in decayMessage: invalid argument")>>
-<<run console.assert(_actor !== undefined,"ERROR in decayMessage: undefined _actor")>>
+<<run console.assert($args[0] instanceof Array,"ERROR in decayEffects: invalid argument")>>
+<<run console.assert(_actor !== undefined,"ERROR in decayEffects: undefined _actor")>>
 
 <<set _topDec = Boolean($args[1])>>
 <<set _decayMsg = "">>
 <<for _effect range $args[0].filter(function (eff) { return eff.topDec == temporary().topDec })>>
-	<<run console.assert(_effect instanceof Effect,"ERROR in decayMessage: non-Effect element")>>
+	<<run console.assert(_effect instanceof Effect,"ERROR in decayEffects: non-Effect element")>>
   <<set _m = _effect.decay(_actor)>>
   <<if _m.length > 1>>
     <<set _decayMsg += _m>>
   <</if>>
 <</for>>
 <<if _decayMsg.length > 0>>
+	<<set _message = true>>
   <div id="actEffect">
     <<print _decayMsg>>
   </div>
@@ -460,7 +491,7 @@
 <<set $stScreen = 1>>
 <<if $B.ambush>>
 	<<set $B.turn = "enemy">>
-	<<goto "enemy phase">>
+	<<goto "Enemy Phase">>
 <<else>>
-	<<goto "Battle!">>
+	<<goto "Player Phase">>
 <</if>>

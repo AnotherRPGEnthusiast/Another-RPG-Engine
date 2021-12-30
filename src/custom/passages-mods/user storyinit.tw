@@ -16,6 +16,36 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 
 <<set setup.PORTRAIT_SIZE = 50>> /* Portrait size in px, used for save game display */
 
+<<set setup.STAT_MIN = {};
+	setup.STAT_MIN[StatName("atk")] = 0;
+	setup.STAT_MIN[StatName("spc")] = 0;
+>>
+
+<<if setup.formula == "subtractive">>
+	<<set setup.STAT_MIN[StatName("def")] = 0>>
+<<else>>
+	<<set setup.STAT_MIN[StatName("def")] = 1>>
+<</if>>
+
+<<set setup.STAT_MAX = {};
+	setup.STAT_MAX[StatName("atk")] = 999;
+	setup.STAT_MAX[StatName("def")] = 999;
+	setup.STAT_MAX[StatName("spc")] = 999;
+>>
+
+<<if setup.THREAT_TARGETING === true>>
+	<<set setup.STATUS_SCREENS.battle.push("aggression")>>
+<</if>>
+
+/* <<set setup.BATTLE_GRID = true>> */
+
+<<if setup.BATTLE_GRID === true>>
+	<<set setup.ROW_SIZE = 3>>
+	<<set setup.COLUMN_SIZE = 3>>
+	<<set setup.MENU_OPTIONS.push("Formation")>>
+	<<set setup.SCALE_NAMES = true>>
+<</if>>
+
 /* Defining starting inventory. */
 <<set $inventory = new Inventory([
 	new Item("Antidote",1),
@@ -47,24 +77,9 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 	new Item("Zweihander",1)
 	])>>
 
-<<if setup.formula == "subtractive">>
-	<<set setup.MIN_STAT = 0>>
-<<else>>
-	<<set setup.MIN_STAT = 1>>
-<</if>>
-
-<<if setup.THREAT_TARGETING === true>>
-	<<set setup.STATUS_SCREENS.battle.push("aggression")>>
-<</if>>
-
-/* <<set setup.BATTLE_GRID = true>> */
-
-<<if setup.BATTLE_GRID === true>>
-	<<set setup.ROW_SIZE = 3>>
-	<<set setup.COLUMN_SIZE = 3>>
-	<<set setup.MENU_OPTIONS.push("Formation")>>
-	<<set setup.SCALE_NAMES = true>>
-<</if>>
+<<set setup.BERSERK_FACTOR = 0.5>>
+<<set setup.DEFEND_FACTOR = 0.5>>
+<<set setup.SHIELD_FACTOR = 0.3>>
 
 /* Initialize bestiary (if you want one) */
 <<set $bestiary = new Bestiary()>>

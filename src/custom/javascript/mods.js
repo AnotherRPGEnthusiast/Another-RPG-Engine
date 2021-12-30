@@ -6,54 +6,6 @@ const ActionProto = Object.getPrototypeOf(new Action(""));
 
 const PuppetProto = Object.getPrototypeOf(new Puppet("Dummy"));
 
-//  maxen: number; maximum Energy points Puppet can hold
-if(!PuppetProto.maxen) {
-  Object.defineProperty(PuppetProto,'maxen', {
-    configurable: true,
-    writable: true,
-    enumerable: true,
-    value: 10
-  })
-}
-
-//  en: number; Energy points spent to use actions
-if(!PuppetProto.en) {
-  Object.defineProperty(PuppetProto,'en', {
-    configurable: true,
-    enumerable: true,
-    get: function() { return this._en },
-    set: function(amt) { this._en = Math.clamp(amt,0,this.maxen) }
-  })
-}
-
-if(!PuppetProto._en) {
-  Object.defineProperty(PuppetProto,'_en', {
-    configurable: true,
-    writable: true,
-    enumerable: false,
-    value: 5
-  })
-}
-
-//  ENregen: Stat; determines EN gain per turn
-if(!PuppetProto.ENregen) {
-  Object.defineProperty(PuppetProto,'ENregen', {
-    configurable: true,
-    enumerable: true,
-    get: function() { return this._ENregen.current },
-    set: function(amt) { this._ENregen.base = amt }
-  })
-}
-
-if(!PuppetProto._ENregen) {
-  Object.defineProperty(PuppetProto,'_ENregen', {
-    configurable: true,
-    writable: true,
-    enumerable: false,
-    value: new Stat(setup.ENregen)
-  })
-}
-
 //  crisisPoints: number; tracks progress to Crisis ability
 if(!PuppetProto.crisisPoints) {
   Object.defineProperty(PuppetProto,'crisisPoints', {

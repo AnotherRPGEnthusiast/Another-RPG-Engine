@@ -13,7 +13,7 @@
 <<if $subject[0].en >= _item.value>>
 <<capture _key, _item>>
 <<set _linktext = "Procure "+_key>>
-[[_linktext|confirm phase][$item_to_procure = _key; $action.cost = _item.value]]
+[[_linktext|Confirm Phase][$item_to_procure = _key; $action.cost = _item.value]]
 <</capture>>
 <<else>>
 <del>_key</del>

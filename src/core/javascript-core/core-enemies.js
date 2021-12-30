@@ -212,6 +212,7 @@ setup.enemyData = {
 				V().action = new Action("Assault");
 				V().action.actText = "Finn charges in recklessly!";
 				V().action.useText = null;
+				V().action.dur = 1;
 				V().action.act = applyEffect("Off-Balance",{self: true, dmg: true});
 			}
 
@@ -249,12 +250,12 @@ setup.enemyData = {
 
 //			He therefore has a higher chance of tanking than any other individual action, but will use debuff attacks most of the time. However, his attacks have long cooldowns, so on any given turn his chances might break down differently.
 
-			if (V().enemies[2].hp < (V().enemies[2].maxhp / 2) && !V().enemies[2].dead && !this.protector && act <= 30){ //If Finn is below 50% HP
+			if (V().enemies[2].hp < (V().enemies[2].maxHP / 2) && !V().enemies[2].dead && !this.protector && act <= 30){ //If Finn is below 50% HP
 				V().target = V().enemies[2];
 				V().action = new Action("Protector");
 				V().action._actText = `Jake wraps himself around $target.name like a suit of armor.`;
 			}
-			else if (V().enemies[1].hp < (V().enemies[1].maxhp / 2) && !V().enemies[1].dead && !this.protector && act <= 30){ //If Bubblegum is below 50% HP
+			else if (V().enemies[1].hp < (V().enemies[1].maxHP / 2) && !V().enemies[1].dead && !this.protector && act <= 30){ //If Bubblegum is below 50% HP
 				V().target = V().enemies[1];
 				V().action = new Action("Protector");
 				V().action._actText = `Jake wraps himself around $target.name like a suit of armor.`;
@@ -1438,7 +1439,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 
 				act = random(1,100);
 
-			if ( !this.thorns && ( ( ((this.get(V().DefenseStat) < this.getBase(V().DefenseStat)) || (this.get(V().AttackStat) < this.getBase(V().AttackStat))) && act <= 30) || ((this.get(V().DefenseStat) < this.getBase(V().DefenseStat)) && (this.get(V().AttackStat) < this.getBase(V().AttackStat)) && act <= 50) || (this.marked && act <= 90) ) ) {
+			if ( !this.thorns && ( ( ((this.get(StatName("def")) < this.getBase(StatName("def"))) || (this.get(StatName("atk")) < this.getBase(StatName("atk")))) && act <= 30) || ((this.get(StatName("def")) < this.getBase(StatName("def"))) && (this.get(StatName("atk")) < this.getBase(StatName("atk"))) && act <= 50) || (this.marked && act <= 90) ) ) {
 				V().action = new Action("Thorns");
 				action()._useText = null;
 				action()._actText = `Rose grins from ear to ear as her gem flashes a bright pink.`;
@@ -2324,7 +2325,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 //			normal:
 //			50%: support
 //			-first, check if anyone has >= 2 buffs and <= 1 ailment. If yes, they are added to a hitlist. If hitlist contains viable targets, 50% chance to use Stasis (target selection totally random). Otherwise...
-//			-target is random, but (1-hp/maxhp) chance to reroll if they are below half health (don't waste items on doomed people)
+//			-target is random, but (1-hp/maxHP) chance to reroll if they are below half health (don't waste items on doomed people)
 //			-25%: bottled chi
 //			-50%: buff drug for focus stat (Gumball gets 25% for all)
 //			-12.5%: buff drug for other stat
@@ -2347,7 +2348,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				}
 			});
 
-			if (this.get(V().SpecialStat) > this.getBase(V().SpecialStat) && act <= 85 && hasItem === true) {
+			if (this.get(StatName("spc")) > this.getBase(StatName("spc")) && act <= 85 && hasItem === true) {
 				this.attackItemLogic();
 				this.inventory.inc(action().name,-1);
 				return;
@@ -2404,9 +2405,9 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 						if (deadCount == 3) { // There is no point in rerolling if the user is the only viable target
 							keepGoing = false;
 						}
-						else if (target().name != "Bonnibel" && target().hp < (target().maxhp / 2)){ // Don't waste items on people who are about to die (but Bonnibel is a little selfish and excludes herself from this check)
+						else if (target().name != "Bonnibel" && target().hp < (target().maxHP / 2)){ // Don't waste items on people who are about to die (but Bonnibel is a little selfish and excludes herself from this check)
 							chance = random(1,100);
-							if (chance < ((target().hp / target().maxhp) * 100)) {
+							if (chance < ((target().hp / target().maxHP) * 100)) {
 								keepGoing = false;
 							}
 						}
@@ -2879,11 +2880,11 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 							// do nothing
 						}
 						else {
-							enemy.chance = (1 - (enemy.target.hp / enemy.target.maxhp)) * 100;
+							enemy.chance = (1 - (enemy.target.hp / enemy.target.maxHP)) * 100;
 							if (enemy.target.name == "Dipper") {
 								enemy.chance += 10; // Dipper gets a bonus to be protected because of his low DEF
 							}
-							if (enemy.target.hp < (enemy.target.maxhp / 2)) {
+							if (enemy.target.hp < (enemy.target.maxHP / 2)) {
 								enemy.chance += 40; // higher chance if they are below half HP
 							}
 							console.log(enemy.target.name+" protector chance = "+enemy.chance);

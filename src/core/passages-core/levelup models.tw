@@ -45,7 +45,7 @@ $subject.name has reached Level <<print $subject.level>>!<br/>
 	/* If an object is returned, behaves like growthRates. */
 	<<for _pn, _rate range _return>>
 		<<if _pn.toLowerCase() == "hp">>
-			<<run subject().maxhp += _rate>>
+			<<run subject().maxHP += _rate>>
 		<<else>>
 			<<run $subject.stats[_pn].base += _rate>>
 		<</if>>

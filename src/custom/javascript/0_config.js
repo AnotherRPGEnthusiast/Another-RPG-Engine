@@ -26,13 +26,13 @@ Config.saves.isAllowed = function () {
 };
 // This will disallow saving in battle. This is probably a good idea, but make sure you keep track of your inbattle variable so you don't accidentally prevent people from saving in the main story.
 
-setup.version = "3.07.2";
+setup.version = "4.00";
 
 Config.saves.version = 0;
 // Records a version number for saves. Update this when you update your version. This is helpful for updating saves from older versions.
 // NOTE: This is separate from the game version. Only update this when you need a new case for onLoad.
 
-Config.saves.onLoad = function (save) {
+Save.onLoad.add(function (save) {
 	switch (save.version){
 			// You would make a case for older version numbers, and adjust variables as necessary. If you've made variable changes since that would cause conflicts with the save, you can update them here.
 		case 0:
@@ -45,4 +45,4 @@ Config.saves.onLoad = function (save) {
 		default:
 			// all is (hopefully) well, do nothing
 	}
-};
+});

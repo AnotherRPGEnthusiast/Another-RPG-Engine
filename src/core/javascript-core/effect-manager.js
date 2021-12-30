@@ -11,13 +11,13 @@ Effect.prototype.calculatePower = function (effectTarget,effectSubject) {
   let power;
   let check = this.buff ? setup.min_buff : setup.min_debuff;
 
-  if (effectSubject.stats[V().SpecialStat] !== undefined) {
+  if (effectSubject.stats[StatName("spc")] !== undefined) {
     if (this.statmod) {
-      let def = this.buff ? 0 : target.get(V().SpecialStat);
+      let def = this.buff ? 0 : effectTarget.get(StatName("spc"));
       power = Math.round(
-        (setup.effbase + setup.effdamper * (effectSubject.get(V().SpecialStat) - def)) * action().effweight);
+        (setup.effbase + setup.effdamper * (effectSubject.get(StatName("spc")) - def)) * action().effweight);
     } else if (this.dot) {
-      return effectSubject.get(V().SpecialStat);
+      return effectSubject.get(StatName("spc"));
     }
   }
   else {
@@ -205,7 +205,7 @@ Actor.prototype.addEffect = function (name,mods) {
             let shake = (E.buff || mods.noShake) ? false : true;
             this.addPopup({shake: shake, type: "addEffect", content: E.name});
           }
-          //  Flag msg as true in case this is applied at end of round, and return the addText for this effect.
+          //  Flag msg as true in case this is applied at RoundEnd, and return the addText for this effect.
           temporary().msg = true;
           return E.addText(this)+"\r\n";
         }
@@ -221,7 +221,7 @@ Actor.prototype.addEffect = function (name,mods) {
       }
 
       if (E.dot) mods.weight = action().effweight;
-      if (name === "Protector") {
+      if (E.guard === true) {
         mods.target = target();
         target().protectedBy = this.id;
       }

@@ -3,7 +3,7 @@
 
 <<if $effects_to_remove <= 0>>
 <<set $ready to true>>
-<<goto "confirm phase">>
+<<goto "Confirm Phase">>
 <</if>>
 
 <span id="status">

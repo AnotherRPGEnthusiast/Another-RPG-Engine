@@ -39,6 +39,11 @@
 <<if _actor.large>>
   <<set _class += "large ">>
 <</if>>
+
+<<if !$args.includes("simplified") && _actor instanceof Puppet && _actor.active !== true>>
+	<<set _class += "inactive ">>
+<</if>>
+
 <<if $args.length > 1 && typeof($args[1]) == "string">>
   <<set _class += $args[1]>>
 <</if>>
@@ -100,7 +105,7 @@
   <<include "Actor Box Misc">>
 <</if>>
 
-  <<if setup.ANIMATIONS === true && passage() == "Battle!" && _actor.battleMsg.length > 0>>
+  <<if setup.ANIMATIONS === true && passage() == "Player Phase" && _actor.battleMsg.length > 0>>
     <<run console.log(_actor.name+" has a battle msg in master screen")>>
     <<set _queue.add(_actor); _animationActive = true>>
     <<for _x, _m range _actor.battleMsg>>
@@ -119,7 +124,7 @@
   <<else>>
     <<print _actor.fullname>>
   <</if>>
-<<elseif _actor instanceof Puppet && $B.phase == "selection" && ndef _s && (!_actor.noact || _actor.down) && !_actor.isDone>>
+<<elseif _actor instanceof Puppet && $B.phase == "selection" && ndef _s && (!_actor.noact || _actor.down) && _actor.active>>
 	/* For Puppets in the selection phase, their name becomes a link that sets them as the subject and allows the player to select their commands. */
 	<<capture _idx, _actor>>
 	<<link "_actor.name">>
@@ -134,7 +139,7 @@
 	<</link>>
 	<</capture>>
 <<elseif $B.phase == "targeting">>
-	/* In the targeting phase, characters' names must become links to select them, but only if they are valid targets. */
+	/* In the Targeting Phase, characters' names must become links to select them, but only if they are valid targets. */
 	<span class="targetnumber"><<print _idx+1>></span>
 	<<if _actor.validTarget()>>
     /* see validTarget in Puppet and Enemy classes */
@@ -143,7 +148,7 @@
     <<set _link = `<<link "_actor.fullname">>
         <<run $(document).trigger(":target-selected")>>
   			<<set $target = _actor; $B.targeting = null>>
-  			<<replace "#phase">><<include "confirm phase">><</replace>>
+  			<<replace "#phase">><<include "Confirm Phase">><</replace>>
   		<</link>>`>>
     <<mouseover>>
     <span class="mouseover">
@@ -222,16 +227,16 @@
 	<<capture _healthBar>>
 	<div>
 	HP: <<if _actor.maskhp>>???
-	<<else>><<print _hp>><<if _actor.showMaxHP>> / _actor.maxhp<</if>>
+	<<else>><<print _hp>><<if _actor.showMaxHP>> / _actor.maxHP<</if>>
 	<</if>>
 	</div>
 	<<if (!_actor.maskhp && setup.SHOW_HEALTHBARS)>>
 		<<if setup.BATTLE_GRID === true && _actor.large>>
 			<div class="largehealth">
-				<<showmeter _healthBar `_hp / _actor.maxhp`>>
+				<<showmeter _healthBar `_hp / _actor.maxHP`>>
 			</div>
 		<<else>>
-			<<showmeter _healthBar `_hp / _actor.maxhp`>>
+			<<showmeter _healthBar `_hp / _actor.maxHP`>>
 		<</if>>
 	<</if>>
 	<</capture>>
@@ -240,7 +245,7 @@
 :: Actor Box EN [nobr]
 <<if _actor instanceof Puppet && !$args.includes("simplified")>>
 	<div>
-	EN: _actor.en / _actor.maxen
+	<<print StatName("EnergyShort")>>: _actor.en / _actor.maxEN
 	</div>
 <</if>>
 
@@ -263,7 +268,7 @@
 	<div class="noact">
 	<<if $args.includes("simplified")>>
 		<br/>
-	<<elseif _actor.isDone>>
+	<<elseif setup.TURN_MODEL.toLowerCase() === "free" && !_actor.active>>
 		Done!
 	<<elseif _actor.stunned>>
 		Stunned!

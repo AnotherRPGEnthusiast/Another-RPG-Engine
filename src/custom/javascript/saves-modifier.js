@@ -2,7 +2,7 @@
 /* Code by The Mad Exile, with modifications by Another RPG Enthusiast */
 (function() {
 	// Add metadata to saves.
-	Config.saves.onSave = function (save) {
+	Save.onSave.add(function (save) {
 		var active = save.state.history[save.state.index];
 		save.metadata = {
 			area	: active.variables.currentArea,
@@ -10,13 +10,13 @@
 			money	: active.variables.currency,
 //			level	: active.variables.puppets[0].level
 		};
-	};
+	});
 
 	// Create save description from metadata.
 	function createSaveDescription(metadata) {
 		var desc = `<div class="save-desc monospace"><div class="save-left">`;
 //		var extra = `<div class="save-extra">`;
-		
+
 		if (metadata.area !== undefined) { desc += `<span class="save-area">${metadata.area}</span>`; }
 //		if (metadata.level !== undefined) { desc += `<span class="save-level">LV ${metadata.level}</span>`; }
 		if (metadata.money !== undefined) { desc += `<span class="save-money">${setup.CURRENCY_NAME}: ${metadata.money}</span>`; }
@@ -55,7 +55,7 @@
 					var save = slot === 'auto'
 						? Save.autosave.get()
 						: Save.slots.get(Number(slot));
-					
+
 					if (save !== null && typeof(save.metadata) == 'object') {
 						$tr.find('td>div:first-child')
 							.empty()

@@ -1,12 +1,52 @@
 :: Changelog[text]
-Version 3.07.2
+/*<h3>Version 4.01</h3>
+<ul>
+<li><b>NEW FEATURE:</b> Full support for the "timeline" turn model. See documentation for details, or Experiment 03 for a live example. New <code>Action</code> properties <code>recoveryTime</code> and <code>waitTime</code> have been added to work with the new system.</li>
+<li>A new variable, <code>TURN_MODEL</code>, can now be set in <code>StoryInit</code> to determine the turn model you want to use. Currently, only the free-action model and the timeline model are functional.</li>
+</ul>
+
+*/<h3>Version 4.00</h3>
+<b>Changes introduced in this version are incompatible with previous versions</b> due to changing the names of essential passages and variables. Apologies, but these changes will vastly improve usability going forward.
+<ul>
+<li>The <code>isDone</code> property has been renamed to <code>active</code> <b>and its logic has been flipped</b>, e.g. situations that would have set <code>isDone</code> to <code>true</code> now set <code>active</code> to false. Apologies for any problems this causes, but it will make code clearer going forward for other initiative models.</li>
+<li>Battle passages have been renamed for greater clarity and consistency. "Battle!" is now "Player Phase", "end of round" is now "RoundEnd", and all phases are now capitalized.</li>
+<li>The <code>endOfRound</code> widget has been renamed to "endTurn" for consistency with <code>newTurn</code>. The existing <code>endturn</code> widget has been renamed to "endRound" for clarity.</li>
+<li>Code used in <code>newTurn</code> and <code>endTurn</code> have been compartmentalized into additional widgets to reduce code redundancy. This will also allow you to more easily implement these features in other contexts.</li>
+<li>Characters will no longer regenerate HP if they are under a <code>healBlock</code> effect.</li>
+<li>Energy stats have been made default properties of the <code>Actor</code> constructor, but they will only be defined if an <code>en</code> property is defined in the corresponding database entry. Default values can also be provided through the <code>setup</code> variables <code>MAX_EN</code> and <code>EN_REGEN</code>.</li>
+<li>Energy regeneration has been added as part of the core <code>newTurn</code> widget. If you want to opt out, simply delete <code>MAX_EN</code> in your custom StoryInit section.</li>
+<li>New action function: <code>cancelAction</code>. It will remove the target's readied action if they have one.</li>
+<li>New <code>Actor</code> properties:</li>
+<ul><li><code>noENregen</code>: Similar to <code>healBlock</code>, it will return <code>true</code> if the character has an effect with the same property, and will disable Energy regeneration in <code>newTurn</code>. It will also return <code>true</code> if the character is <code>dead</code> or has no <code>en</code> property. The core effects "Winded" and "Petrified" have been modified to use this property.</li>
+<li><code>interruptGuard</code>: Checks if character has an effect with the same property. If true, protects against <code>cancelAction</code>.</li>
+<li>Corresponding property getters have been added to the <code>Effect</code> class.</li></ul>
+<li>Action execution code has been compartmentalized for greater modularity. Pre-action code can now be found under the <code>preAction</code> passage, and post-action code under the <code>postAction</code> passage. <code>custom end of action effects</code> has been renamed <code>postAction custom</code> for readability and consistency with other custom passages.</li>
+<li>Selecting an action now forwards the player to an "Action Handler" passage instead of directly to the action phase. This allows you to perform pre-processing and rerouting before executing the action itself. Currently, it exists to check for actions with <code>waitTime</code> under the timeline model, and otherwise forwards the player straight to the action phase.</li>
+<li>New <code>Action</code> property: <code>base</code>. This is a flat value added to an action's damage output, and is 0 by default.</li>
+<li>Default damage formulas have been adjusted to incorporate <code>base</code> damage, and a new formula has been added that just uses base damage with no other fluff.</li>
+<li>Action tooltips have been redone with snazzy images to convey important information. Images were taken from The Noun Project, with attributions listed on the game's page.</li>
+<li>The damage formula <code>switch</code> now converts the input to lower case before reading it. This avoids potential errors arising from mixed case.</li>
+<li>Stat names have been standardized as part of a <code>STAT_NAMES</code> object, which is part of <code>setup</code>.</li>
+<li>Stat minimums and maximums have been implemented. These can be defined in StoryInit as part of the <code>STAT_MIN</code> and <code>STAT_MAX</code> objects. Returned stat values will be clamped between these two values.</li>
+<ul><li>If exceptions are necessary, such as e.g. the Forsaken effect, a new <code>Actor</code> property has been added: <b><code>noMinimum</code></b>. This is initialized as an empty array for all new Actors, and will ignore <code>STAT_MIN</code> for any stat names included within. In the core code, Forsaken has been modified to use this property instead of a <code>forsaken</code> flag.</li></ul>
+<li>Shorthand functions have been created for accessing <code>STAT_NAMES</code>, <code>STAT_MIN</code>, and <code>STAT_MAX</code>. See <code>support_functions.js</code> for details.</li>
+<li>The functionality of the "Protector" effect has now been generalized to a property, "<code>guard</code>", that can be enabled in effect definitions. If <code>true</code>, the target of the ability will be flagged as protected by the subject.</li>
+<li>Instead of manually checking in both damage and effects, protection is now checked only once, in the "action effects" passage before an action is executed.</li>
+<li>Accuracy, shield, and multiple hit logic have been changed. An action's <code>act</code> function is now executed once for every <code>hit</code> property (default 1), and accuracy and shields are checked on every iteration. As a result, the <code>multihit</code> action function has been depreciated.</li>
+<ul><li>Spread and noRedundant behavior have been changed to Action properties instead.</li></ul>
+<li>New <code>Action</code> properties:</li>
+<ul><li><code>finisher</code>: Function that executes only on the final hit of an action. Emulates <code>multihit</code>'s previous rule for extensions (running only after all hits have been executed). Note that this finisher occurs <b>instead of</b> the regular <code>act</code> function.</li>
+<li><code>onMiss</code>: Function that excecutes if an action misses. Increase the risk to your reward. Perhaps if your character attempts a bombastic jumping attack but misses, they land poorly and sprain an ankle?</li></ul>
+<li>Fixed an error in <code>Effect.calculatePower</code>.</li>
+</ul>
+<h3>Version 3.07.2</h3>
 <ul>
 <li>Fixed an error in <code>hasEquipped</code> that prevented it from returning the correct value if a match was found early.</li>
 <li>Fixed additional areas where the <code>target</code> function could accidentally be overwritten. <code>target</code>, <code>subject</code>, and <code>action</code> functions have been changed to constants, hopefully ending this problem once and for all.</li>
 <li>Fixed an error that occurred when effects had a target separate from the effect's recipient (such as Protector). Targets should now work correctly again.</li>
 <li>Fixed an error in "highest attack" targeting logic.</li>
 </ul>
-Version 3.07.1
+<h3>Version 3.07.1</h3>
 <ul>
 <li>Streamlined the implementation of <code>restrictedTo</code> in equippable items. You no longer need to define a <code>restrictedTo</code> and handlers will account for invalid values. Additionally, there is now a shorthand getter for <code>restrictedTo</code> that lets you avoid going through <code>equippable</code>.</li>
 <li>Simplified the inventory menu code to use the <code>update</code> macro for updating the item display rather than manual <code>replace</code> commands.</li>
@@ -14,7 +54,7 @@ Version 3.07.1
 <li>Tweaked the logic in <code>guardCheck</code> so that it can be used even when an active action is unset.</li>
 <li>You can now change the names of the Attack, Defense, and Special stats without needing to alter any code: just set the <code>AttackName</code>, <code>DefenseName</code>, and <code>SpecialName</code> variables in <code>StoryInit</code>.</li>
 </ul>
-Version 3.07
+<h3>Version 3.07</h3>
 <ul>
 <li>New <code>Actor</code> functions:</li>
 <ul><li><code>replenishUses</code>: Fully refills the uses of all actions possessed by the character that match the passed <code>name</code> argument.</li></ul>
@@ -27,7 +67,7 @@ Version 3.07
 <li>Fixed an error that occurred if a target was undefined when <code>addEffect</code> was called.</li>
 <li>Fixed an error that would cause healing abilities with custom formulas to produce glitch values.</li>
 </ul>
-Version 3.06
+<h3>Version 3.06</h3>
 <ul>
 <li>New <code>Action</code> properties:</li>
 <ul><li><code>noReflection</code>: If <code>true</code>, the action will not trigger damage reflection unless the target has the <code>absreflect</code> property.</li></ul>
@@ -38,7 +78,7 @@ Version 3.06
 <li>Fixed an error in the <code>massAttack</code> function that prevented it from working correctly.</li>
 <li>Tweaked the way battle interruptions work to accommodate for the modular order of action display components. The passage "battle interruptions" is now run at the very start of any action, and the spot where it was previously run is now a <code>div</code> element with the id "interrupt". To populate it, target the id with a <code>replace</code> macro in "battle interruptions".</li>
 </ul>
-Version 3.05
+<h3>Version 3.05</h3>
 <ul>
 <li>New <code>Actor</code> properties:</li>
 <ul><li><code>numAdjacent</code>: Returns the number of other characters in the area specified by the passed argument. Useful for AI code.</li>
@@ -59,7 +99,7 @@ Version 3.05
 <li>Fixed a typo in the damage reflection code that prevented it from working correctly.</li>
 <li>Updated the included Chapel macros bundle to be compatible with SugarCube 2.35.</li>
 </ul>
-Version 3.04
+<h3>Version 3.04</h3>
 <ul>
 <li>New <code>Actor</code> properties:</li>
 <ul><li><code>position</code>: When invoked, it returns the character's cell in the grid; when set, it adjusts their <code>row</code> and <code>col</code> values and swaps the contents of the destination cell.</li>
@@ -87,7 +127,7 @@ Version 3.04
 <li><code>:target-selected</code>: triggered on target selection</li>
 <li><code>:endturn-run</code>: triggered upon execution of end-turn code.</li></ul>
 </ul>
-Version 3.03
+<h3>Version 3.03</h3>
 <ul>
 <li><b>The battle grid has been redone.</b> Positioning is now determined by manually-set <code>row</code> and <code>col</code> values rather than the index of the character. This means you don't have to fill parties with <code>null</code> entries anymore!</li>
 <ul><li>Code for displaying characters in the battle grid is now stored in a separate file, <code>Battle Grid.tw</code>, to keep the main code uncluttered.</li>
@@ -101,7 +141,7 @@ Version 3.03
 <li>During the targeting phase, hovering over a viable target will now highlight them and any targets affected by the action's area of effect, if it has one.</li>
 <li>You will no longer get an error if the handler for saving <code>lastAction</code> fails to find the action in the subject's actions.</li>
 </ul>
-Version 3.02
+<h3>Version 3.02</h3>
 <ul>
 <li>The gameplay effects of an action are now calculated before the text description is rendered. This allows you to customize the text based on variable results of the action, e.g. whether or not the attack missed. The <code>_hit</code> variable is now passed to <code>actText</code> to facilitate this.</li>
 <li>The item display box in the menu now has a fixed height; item descriptions that exceed the height will generate a scrollbar. This will prevent UI elements from jumping around.</li>
@@ -113,7 +153,7 @@ Version 3.02
 <li>Puppets will now display their HP/MP values instead of their equipment when being selected for an in-menu action.</li>
 <li>Fixed a bug where pressing R while using an action from the menu would cause the action to be performed on the first puppet in the party. There is now a cancel button included in the action display, and pressing R will trigger it.</li>
 </ul>
-Version 3.01
+<h3>Version 3.01</h3>
 <ul>
 <li>Target and subject variables have now been decoupled from the battle controller <code>B</code>. This allows more flexible usage of functions and widgets that call for interactions between characters, but may cause problems with existing code. Report any bugs.</li>
 <li>Equipment slots are now always occupied by arrays, instead of only those with multiple subslots. This should result in no functional change, but allows me to clean up equipment functions by not having to account for branching functionalities. <b>Note that this update will generate errors with existing games that used previous versions.</b> You will need to update your characters' equipment slots to match the new standards.</li>
@@ -149,7 +189,7 @@ Version 3.01
 <li>Fixed a bug in <code>BestiaryEntry.revealAll</code>. It will now reveal tolerances correctly.</li>
 <li>Finally caught up with the modern era and made a repository for the project on GitHub. A link is now provided in the sidebar.</li>
 </ul>
-Version 3.00
+<h3>Version 3.00</h3>
 <ul>
 <li>Targeting logic has been overhauled. It is now handled through functions rather than widgets, and certain adjustments such as Firefly have been automated.</li>
 <ul><li>A <code>Hitlist</code> class has been defined to facilitate this. It is an array that takes a set of targets and tracks the chance of selection for each. Smart targeting effects have been placed in a method function, <code>addFactors</code>.</li>
@@ -175,22 +215,22 @@ Version 3.00
 <li>I have started cleaning up enemy database entries by defining their actions in the action database, which will make them significantly less messy. These actions are defined in the <code>enemy-actions.js</code> file in the <code>custom</code> folder; it is separate from the <code>database-actions</code> file to keep that file clean. Currently, only Dipper and Mabel are done.</li>
 <li>Existing effects and enemies have been split off into core files, as actions are.</li>
 </ul>
-Version 2.05
+<h3>Version 2.05</h3>
 <ul>
 <li><code>removeEffect</code> now defaults to "all" if no effect type is specified.</li>
 </ul>
-Version 2.04
+<h3>Version 2.04</h3>
 <ul>
 <li>The action database is now separated into two files: <code>core-actions.js</code> is located in the <code>core</code> folder and contains the actions used by the default puppets; <code>database-actions.js</code> in the <code>custom</code> folder lets you expand the database with additional actions. This is useful if you use the core actions in your game and need to update them without overwriting your custom actions.</li>
 <li>A stylesheets folder has been added to <code>core</code> and <code>custom</code> folders, and stylesheets have been separated appropriately.</li>
 <li>The effect manager file has been moved to <code>core</code>. If you need to overwrite it with a custom version, a new file has been including in <code>custom</code> with instructions on how to do so.</li>
 <li><code>addEffect</code>'s duration parameter changed from <code>time</code> to <code>dur</code> for consistency with actions.</li>
 </ul>
-Version 2.03.2
+<h3>Version 2.03.2</h3>
 <ul>
 <li>Fixed a bug where the player could not be forwarded to the victory destination because <code>endofbattle</code> was run before <code>goto</code>, destroying the destination variable.</li>
 </ul>
-Version 2.03.1
+<h3>Version 2.03.1</h3>
 <ul>
 <li>Fixed a positioning glitch with the action info popup.</li>
 <li>Fixed a bug in Salvation and Assault.</li>
@@ -199,7 +239,7 @@ Version 2.03.1
 <li>Streamlined the code governing Off Your High Horse and turned it into an action function, <code>removeLastEffect</code>. This should hopefully remove any loop errors that occurred when using it.</li>
 <li><code>justdmg</code> has been alterned to return a function rather than a string, to enable better chaining. <b>However, this means that it must be assigned to Action properties with a function call, rather than as a variable.</b></li>
 </ul>
-Version 2.03
+<h3>Version 2.03</h3>
 <ul>
 <li>The height of the battle pane will now scale with the window height.</li>
 <li>Rearranged the folder structure to better differentiate core and custom code.</li>
@@ -207,7 +247,7 @@ Version 2.03
 <li>Character boxes will no longer display the status button during the damage readout.</li>
 <li>Added new Actor method: <code>effectCount</code>. It will return the number of instances of the named effect the character possesses. This can also be used to count all effects of a certain category (buffs, ailments, holds, etc.)</li>
 </ul>
-Version 2.02
+<h3>Version 2.02</h3>
 <ul>
 <li>Fixed a glitch where enemies would not be flagged dead the first time their HP reached 0 if animations were enabled. (This has in turn created a glitch where enemies are flagged dead before the killing blow finishes animating, but that is more minor and I will deal with it later.)</li>
 <li>Example entries for actions, effects, items, puppets, and enemies have been added to the default databases. These entries have the most relevant attributes for each class enumerated and set to their default values. You can copy and work off this entry to make your own entries more easily.</li>
@@ -223,16 +263,16 @@ Version 2.02
 <li>Hitting an Off-Balance character should no longer cause an error.</li>
 <li>It should no longer be possible for dead characters to gain non-persistent effects.</li>
 </ul>
-Version 2.01
+<h3>Version 2.01</h3>
 <ul>
 <li>New action properties: <code>enemyCD</code> and <code>nameCD</code>. These values will be automatically read to set the values of an enemy's cooldown Map when actions are executed. They default to the action's <code>cooldown</code> and <code>name</code> properties, but they can set to custom values if desired.</li>
 <li>Continuing in the theme of "features I implemented embarassingly late", player actions will now decrement cooldown at the start of a round.</li>
 </ul>
-Version 2.00.1
+<h3>Version 2.00.1</h3>
 <ul>
 <li>HP cost will now be automatically deducted when using HP-consuming skills.</li>
 </ul>
-Version 2.00
+<h3>Version 2.00</h3>
 <ul>
 <li>Added a new file in <code>javascript/custom</code>: <code style="font-weight:bold">mods.js</code>. This file is designed as a catch-all for any miscellaneous code the user wants to add to the JavaScript. It consists of a function, <code>customMods</code>, which is run at the end of StoryInit. (This placement is to ensure any relevant <code>setup</code> variables are defined first.) Currently, the code for Puppets' Energy- and Crisis-related attributes have been moved there, along with <code>XPtoNext</code> and <code>initialThreat</code>. This way, you can easily modify the specific functions you need without needing to edit the class definition.</li>
 <li>The <code>addeffect</code> widget has been depreciated, and its code has been moved to <code>Actor.addEffect</code>.</li>
@@ -247,7 +287,7 @@ Version 2.00
 <li>Future applications of the same effect will now add to the effect's duration instead of resetting it.</li>
 <li>Fixed a glitch in Thorns (and any similar effects) where the original target would still take damage. Shield effects that inflict damage on someone else should no longer have data bleed leading to unusual behavior.</li>
 </ul>
-Version 1.27
+<h3>Version 1.27</h3>
 <ul>
 <li><code>deathMessage</code> can now be defined as a database property.</li>
 <li>Equipment slots can now be defined in <code>StoryInit</code>, through the variable <code>DEFAULT_EQUIP_SLOTS</code>, or as a database property, instead of being hardcoded in the Actor constructor.</li>
@@ -264,7 +304,7 @@ Version 1.27
 <li>"custom end of action effects" now runs as part of "action effects". <code>markAttack</code> and <code>hunterCheck</code> have also been moved to "custom end of action effects".</li>
 <li>Counter logic has been offloaded to its own passage for modularity purposes.</li>
 </ul>
-Version 1.26.1
+<h3>Version 1.26.1</h3>
 <ul>
 <li>Health meters will no longer break if the player refreshes during a battle. Refreshing can still cause other problems, though, so try not to do it.</li>
 <li>Removed the "enemy holds" passage and replaced it with a <code>priority</code> property for effects. Effects are now sorted by <code>priority</code> to determine the correct hold effect to resolve.</li>
@@ -276,7 +316,7 @@ Version 1.26.1
 <li>Protector and damage-over-time effects should work correctly again.</li>
 <li>HP regeneration will now be communicated via popups at the start of every round.</li>
 </ul>
-Version 1.26
+<h3>Version 1.26</h3>
 <ul>
 <li>Documentation has now been split into "Basic" and "Advanced" sections. The "Basic" section should hopefully help people with less coding experience get into the engine more easily.</li>
 <li>Top-of-round effects should no longer trigger multiple times if an enemy uses an instant action as their first action.</li>
@@ -292,7 +332,7 @@ Version 1.26
 <li>Fixed dummy links in the documentation headers and restored the external link icons for external links.</li>
 <li>Reduced the line height of text in the documentation passages for easier reading and less dead space.</li>
 </ul>
-Version 1.25
+<h3>Version 1.25</h3>
 <ul>
 <li><b>NEW FEATURE:</b> Battle animations! Nothing fancy, but actor boxes will now shake and produce damage value popups during action phases. You can turn them off by disabling the <code>ANIMATIONS</code> flag in <code>StoryInit</code>.</li>
 <ul><li>As a consequence of the above, enemy actions now occur one at a time, instead of all at once. Tell me if this produces any bugs for you.</li></ul>
@@ -305,7 +345,7 @@ Version 1.25
 <li>Fixed a bug that prevented <code>oncePerTurn</code> actions from deactivating correctly.</li>
 <li>Fixed a bug that would allow illegal actions to be performed through the last action button under some circumstances.</li>
 </ul>
-Version 1.24.1
+<h3>Version 1.24.1</h3>
 <ul>
 <li><code>newturn</code> and <code>endofround</code> have been renamed to <code>newTurn</code> and <code>endOfRound</code> for clarity.</li>
 <li>Effect decay messages are now lumped into one box per character.</li>
@@ -316,7 +356,7 @@ Version 1.24.1
 <li>Actions that cost 0 EN will now display their cost again. Crisis actions will only display a cost if it is greater than 0.</li>
 <li>Updated documentation to reflect changes.</li>
 </ul>
-Version 1.24
+<h3>Version 1.24</h3>
 <ul>
 <li>Rogue now has a special Crisis that allows them to use any battle item for free. Try it out and see if it breaks anything.</li>
 <li>Tweaked Crisis display code so that it will no longer display if no Crisis abilities are specified in the puppet's database entry.</li>
@@ -328,7 +368,7 @@ Version 1.24
 <li>Fixed a bug related to the W hotkey.</li>
 <li>Added discussion and documentation for the Crisis feature.</li>
 </ul>
-Version 1.23.2
+<h3>Version 1.23.2</h3>
 <ul>
 <li>Realized widgets couldn't be clobbered, so every widget is now in its own passage. If you wish to replace a widget with a custom version, just make a new passage with the same name in the <code>passages-unique</code> folder and it'll be replaced.</li>
 <li>Database and class definitions have been partitioned into different files and folders for easier updating. You can now update the core JavaScript files without overwriting your custom databases.</li>
@@ -336,11 +376,11 @@ Version 1.23.2
 <li>Fixed a bug that was causing <code>actionLink</code> to fail in certain circumstances.</li>
 <li>The Q hotkey should no longer trigger the "end turn" button.</li>
 </ul>
-Version 1.23.1
+<h3>Version 1.23.1</h3>
 <ul>
 <li>Fixed a typo that was causing the effect adder to fail.</li>
 </ul>
-Version 1.23
+<h3>Version 1.23</h3>
 <ul>
 <li><b>NEW FEATURE:</b> "limit break" abilities! Puppets will fill up a Crisis bar as they take damage, and can unleash a powerful ability when it's full.</li>
 <li>Prettified end-of-round messages. They now display in the style of actions instead of plain text.</li>
@@ -365,12 +405,12 @@ Version 1.23
 <li>Removed outdated reference images from the documentation.</li>
 <li>Self-inflicted status ailments should now bypass Chi Shield, as intended.</li>
 </ul>
-Version 1.22.1
+<h3>Version 1.22.1</h3>
 <ul>
 <li>Fixed a bestiary-related bug that would occur when an enemy was struck with an element or ailment.</li>
 <li>Fixed a bug in Sacrament and Blasphemy.</li>
 </ul>
-Version 1.22
+<h3>Version 1.22</h3>
 <ul>
 <li><b>NEW FEATURE:</b> You can now give characters an <code>onHit</code> function that will execute whenever they are struck by damage. Note that this is separate from damage reflection.</li>
 <li>Several action functions have been restructured to use a single <code>args</code> argument, the properties of which make up the rest of the arguments. This will make it much easier to contruct action functions, as you can omit irrelevant arguments entirely and clearly label every argument you need. However, I may not have converted all existing actions to the new format correctly, so tell me if you encounter any bugs.</li>
@@ -379,7 +419,7 @@ Version 1.22
 <li>The code for the Bubble and Thorns effects have been generalized to work with other effects. The code now checks if the target of an attack has a "shielded" flag, then searches their effects for an effect with a "shield" flag and runs its "onHit" function.</li>
 <li>Fixed a bug in <code>splashDamage</code> that created an extra blank line.</li>
 </ul>
-Version 1.21.3
+<h3>Version 1.21.3</h3>
 <ul>
 <li>Rearranged the conditional checks in <code>callEncounter</code> so that the bestiary update loop is only run if the bestiary is defined.</li>
 <li>There is now a preview function for healing actions.</li>
@@ -388,14 +428,14 @@ Version 1.21.3
 <li>Enemy names should now display properly during the targeting phase.</li>
 <li>Fixed a bug in <code>randomTarget</code> that caused problems when a party array was passed as an argument. It is now passed as a string instead.</li>
 </ul>
-Version 1.21.2
+<h3>Version 1.21.2</h3>
 <ul>
 <li>Added a section on the design of story-based/fixed progression.</li>
 <li>Added a section on the design of skill progression.</li>
 <li>Slightly edited the design sections to provide some more information and resources.</li>
 <li>Added a return-home link at the bottom of info pages.</li>
 </ul>
-Version 1.21.1
+<h3>Version 1.21.1</h3>
 <ul>
 <li>The bestiary now flags every enemy as encountered (allowing them to appear in the bestiary) on game load.</li>
 <li><code>gp</code> and <code>xp</code> properties are now in lowercase, for standardization with <code>hp</code>.</li>
@@ -404,13 +444,13 @@ Version 1.21.1
 <li>Added documentation for the bestiary in Additional Features.</li>
 <li>Fixed a glitch that prevented bestiary objects from reviving correctly.</li>
 </ul>
-Version 1.21
+<h3>Version 1.21</h3>
 <ul>
 <li><b>NEW FEATURE:</b> Bestiary/enemy encyclopedia. The code for its construction can be found in <code>database-enemies.js</code>. The bestiary provides highly modular function, with tracking for masking/revealing every single stat, if desired. You can observe it for yourself in a new menu option.</li>
 <li>Further compartmentalized the actor display code.</li>
 <li>The getter for enemies' <code>fullname</code> attribute will now default to their regular name. This has allowed for some streamlining of the battle display.</li>
 </ul>
-Version 1.20
+<h3>Version 1.20</h3>
 <ul>
 <li>Added a sticky item for you to test yourself. Start a new game and you'll find three mysterious rings in your inventory. Try them on and see what happens!</li>
 <li>Also added a decurse station to let you remove sticky equipment. Pay the cleric 1 GP to appraise an unknown item or to remove a cursed item you've foolishly stuck on yourself.</li>
@@ -428,14 +468,14 @@ Version 1.20
 <li><code>setInv</code> is now called in <code>user storyinit</code>. A blank inventory is still automatically initialized in StoryInit.</li>
 <li>Fixed a bug in the inventory screen that stopped hotkeys from working if an item was selected after using or equipping another item.</li>
 </ul>
-Version 1.19
+<h3>Version 1.19</h3>
 <ul>
 <li>Accessibility features added: You can now change the default font to OpenDyslexic for easier reading with dyslexia, and change the link color if you have a condition that makes it difficult to pick out blue. <b>If you have one of these conditions, please tell me if these options are helpful and suggest changes if they are not.</b></li>
 <li>Tweaked the link mouseover color to be a bit less bright.</li>
 <li>Finally fixed the weird background color glitching when selecting input fields. It should now display black text on a white background, like everything else in the bleached style.</li>
 <li>Changed the input field for spell costs to <code>numberbox</code> for ease of use.</li>
 </ul>
-Version 1.18
+<h3>Version 1.18</h3>
 <ul>
 <li><b>NEW FEATURE:</b> Equipment locking. If you set the <code>lockEquipment</code> attribute on a Puppet, the player will be unable to change their equipment. Note that you can still alter their equipment through manual <code>equip</code> and <code>unequip</code> executions.</li>
 <ul><li>Specific equipment can also be locked. If its <code>sticky</code> attribute is truthy, you can put it on, but you can't take it off! Perfect for cursed items and the like.</li></ul>
@@ -449,7 +489,7 @@ Version 1.18
 <li>Moved the definition for <code>V</code> to support functions.</li>
 <li>Reorganized the code for the party menu to be a bit easier to use. Stat display code is now standardized to one template passage, and <code>equipmentlist</code> is now a passage rather than a widget.</li>
 </ul>
-Version 1.17
+<h3>Version 1.17</h3>
 <ul>
 <li><b>NEW FEATURE:</b> Miss chance and critical hits, even though I hate them. Default rates are defined in StoryInit, and custom rates can be defined in an action's definition. See the <code>accuracyCheck</code> and <code>critCheck</code> widgets added to "Damage and Formulas" for more details. By default, these are turned off (set to always-accurate and 0% respectively).</li>
 <li>Added support for attacks with mulitple elements. To do this, assign an array of element names (as strings) to the action's <code>element</code> property. Set the <code>AVERAGE_ELEMENTS</code> variable in StoryInit to determine if you want the calculation to average each element, or to just find the best one.</li>
@@ -463,7 +503,7 @@ Version 1.17
 <li><code>grenade</code> renamed to <code>splashDamage</code>.</li>
 <li>Added specification notes to Action properties.</li>
 </ul>
-Version 1.16.1
+<h3>Version 1.16.1</h3>
 <ul>
 <li>Moved the encounters database to passages-unique.</li>
 <li><code>randomtarget</code>, <code>echodamage</code>, <code>damagecalc</code>, <code>addeffect</code>, and <code>dispeltarget</code> have been renamed with camelCaps for better consistency and clarity.</li>
@@ -477,23 +517,23 @@ Version 1.16.1
 <li>Several tweaks made to action functions to enable better chaining.</li>
 <li>Several actions have been rewritten to use action functions instead of the original custom code.</li>
 </ul>
-Version 1.16
+<h3>Version 1.16</h3>
 <ul>
 <li><b>NEW FEATURE:</b> Shock cures. It is now possible for direct damage to cure certain status effects. Add a "shock" property value to the status effect to enable this. It can be either <code>true</code> for a guaranteed cure every time, or an integer value between 1 and 100 equal to the chance of cure <s>if you're a filthy randomizer</s>. None of the default effects use this feature at the present time.</li>
   <ul><li>As a corollary, you can now set a <code>noShock</code> property for actions if you do not wish for them to trigger shock cures.</li></ul>
 <li>File extensions have been converted from <code>.twee</code> to <code>.tw</code> to enable compatibility with Atom's SugarCube interpreter. Hopefully this will not cause problems.</li>
 <li>Updated documentation.</li>
 </ul>
-Version 1.15.2
+<h3>Version 1.15.2</h3>
 <ul>
 <li>Moved the puppets definition from the default <code>StoryInit</code> to the custom passage.</li>
 <li>Updated documentation for changes to the effect adder.</li>
 </ul>
-Version 1.15.1
+<h3>Version 1.15.1</h3>
 <ul>
 <li>Fixed an error that prevented actions with <code>displayname</code> from working as intended.</li>
 </ul>
-Version 1.15
+<h3>Version 1.15</h3>
 <ul>
 <li><b>NEW FEATURE:</b> Turn exchange. If this variable is set in <code>StoryInit</code>, an enemy will automatically act after every player action. This is useful if you don't want players ganging up on enemies.</li>
 <li><b>NEW FEATURE:</b> You can now set any action as a puppet's default action in the status menu, provided it does not have the <code>noDefault</code> property.</li>
@@ -507,7 +547,7 @@ Version 1.15
 <li>Fixed several bugs in the action functions that used <code>findTarget</code>. They should now work more intuitively, and you no longer need to wrap them in a double-function call on the database end.</li>
 <li>Protector should work again.</li>
 </ul>
-Version 1.14.3
+<h3>Version 1.14.3</h3>
 <ul>
 <li>Fixed an error in <code>applyEffect</code>. Single-target actions should no longer hit the whole party.</li>
 <li><code>addEffect</code> will now generate an error message if no arguments are passed to it.</li>
@@ -517,20 +557,20 @@ Version 1.14.3
 <li><code>actions_this_turn</code> should no longer generate an error when an enemy uses an ally-targeting skill.</li>
 <li>Exclusive effects should now be properly applied again.</li>
 </ul>
-Version 1.14.2
+<h3>Version 1.14.2</h3>
 <ul>
 <li>It is no longer possible to set an action's uses to more than its max uses.</li>
 <li>Fixed a naming error in the function for resetting action cooldown. Cooldowns should be correctly reset now.</li>
 <li>Added <a href="https://daneden.github.io/animate.css/" target="_blank">animate.css</a>.</li>
 <li>The background music now requires the user to click a link instead of playing automatically.</li>
 </ul>
-Version 1.14.1
+<h3>Version 1.14.1</h3>
 <ul>
 <li>The engine is now completely independent of Twine! The <code>StoryData</code> passage is now used to store necessary project data. Remember to edit it when making your own project. (Remove the <code>StorySettings</code> passage to generate your own IFID.)</li>
 <li>Removed <code>Effect Adder-modded</code>.</li>
 <li>Fixed several errors in the effect adder and the <code>Action.displayname</code> getter.</li>
 </ul>
-Version 1.14
+<h3>Version 1.14</h3>
 <ul>
 <li><b>NEW FEATURE:</b> Loss-of-control effects. These effects will force your puppets to attack randomly at the start of a round, like "berserk" or "confusion" effects in most RPGs. There are now three new effects in the effect database to let you test this for yourself: "Hatred" forces the puppet to attack enemies, "Charmed" forces the puppet to attack its allies (potentially including itself), and "Confusion" can make the puppet target anyone on the field.</li>
 <li><b>NEW FEATURE:</b> Battle grids. You can now display parties in a 3-by-3 grid on the battlefield. By default, characters in higher rows will guard lower ones, protecting them from direct attacks; you can implement other features as well. Set the <code>BATTLE_GRID</code> variable to <code>true</code> in StoryInit to enable this feature, but mind the instructions in the documentation. An additional menu pane for altering the formation of your characters has also been added. Helper functions have been added to <code>1_support-functions.js</code> to assist, allowing you to easily call parties excluding empty slots. (Thanks to A Friendly Irin for providing this code.)</li>
@@ -557,7 +597,7 @@ Version 1.14
 <li>Status buttons now have a small left margin to give them a buffer against long character names.</li>
 <li>Fixed an error in <code>playMusic</code>.</li>
 </ul>
-Version 1.13.2
+<h3>Version 1.13.2</h3>
 <ul>
 <li>Getters for Effects have been remade with greater specificity. It is now possible to override Boolean flags with <code>false</code>.</li>
 <li>The "persistent" property for effects is now split into <code>persistAfterDeath</code> and <code>persistAfterBattle</code> for greater modularity. <code>refreshPuppets</code> now only removes effects that do not <code>persistAfterBattle</code>.</li>
@@ -566,7 +606,7 @@ Version 1.13.2
 <li><code>deathcheck</code> will now remove sticky effects from defeated characters.</li>
 <li>Added links to SugarCube language definitions and Chapel's custom macros in the installation help page.</li>
 </ul>
-Version 1.13.1
+<h3>Version 1.13.1</h3>
 <ul>
 <li>Added a section in Design discussing targeting systems.</li>
 <li><code>endofbattle</code> now unsets the battle controller and the enemy party variable to reduce overhead.</li>
@@ -581,7 +621,7 @@ Version 1.13.1
 <li>The info text for Defender now correctly refers to the defend factor, not the berserk factor.</li>
 <li>Updated documentation.</li>
 </ul>
-Version 1.13
+<h3>Version 1.13</h3>
 <ul>
 <li><b>NEW FEATURE:</b> Aggro targeting! There is now a system for making enemies preferentially target characters based on how much damage they've inflicted. Set the <code>THREAT_TARGETING</code> variable to <code>true</code> in <code>StoryInit</code> to activate it. (Thanks to A Friendly Irin for providing this code.)</li>
 <li><b>NEW FEATURE:</b> Limited-use actions. You can now define an action as having a hard limit of uses per battle. By default uses are refilled after battle, but you can change this if you wish. (Thanks to A Friendly Irin for providing this code.)</li>
@@ -605,7 +645,7 @@ Version 1.13
 <li>Fixed a broken link in Design.</li>
 <li>Updated documentation.</li>
 </ul>
-Version 1.12
+<h3>Version 1.12</h3>
 <ul>
 <li><b>NEW CHARACTER:</b> The Artist. This character was created purely to explore the elemental affinities system, and is not intended to be balanced. Try them out on the Mystery Twins!</li>
 <li>Actors have now been converted to a database structure. This should make runtime more efficient and facilitates the construction of in-game lists such as a Pokedex or bestiary.</li>
@@ -635,7 +675,7 @@ Version 1.12
 <li>Added a section in Design explaining HP and hit-to-kill ratios.</li>
 <li>Updated documentation to reflect changes.</li>
 </ul>
-Version 1.11.1
+<h3>Version 1.11.1</h3>
 <ul>
 <li><b>Enemy attack order can now be customized.</b> Instead of enemies always acting in index order, you can give them a <code>priority</code> property to determine who acts in what order. Enemies will act in ascending priority value. Enemies will still act in index order by default.</li>
 <li><code>hunterCheck</code> now resets the active target, subject, and action back to the originals after the counter is finished. Additionally, support for enemy hunters and multiple hunters within each party has been added.</li>
@@ -644,7 +684,7 @@ Version 1.11.1
 <li>Enemies with multiple attacks will no longer continue to act if they die or are stunned in the middle of their turn.</li>
 <li>New property for effects: <b><code>persistent</code></b>. If flagged <code>true</code>, the effect will persist even after the character is defeated.</li>
 </ul>
-Version 1.11
+<h3>Version 1.11</h3>
 <ul>
 <li>Redid the getter functions for Boolean attributes of actions. They are now more robust, and will correctly return <code>false</code> or <code>null</code> if you set the override property to that value.</li>
 <li>Added a new getter for actions: <code>displayname</code>. This is used for when you want the name that displays in the action list to be different than the name given in the code. (Thanks to A Friendly Irin for providing this.)</li>
@@ -655,17 +695,17 @@ Version 1.11
 <li>New action function: <b><code>multihitCustom</code></b>. This function makes it easier to implement more complex multi-hit abilities. Look at the action functions code to see it in full.</li>
 <li>New helper function: <b><code>deadCount</code></b>. This returns the number of puppets currently flagged dead. It is located in 0_config.js.</li>
 </ul>
-Version 1.10.4
+<h3>Version 1.10.4</h3>
 <ul>
 <li>So apparently, all this time I forgot to make enemy protectors actually protect people. This has now been corrected.</li>
 </ul>
-Version 1.10.3
+<h3>Version 1.10.3</h3>
 <ul>
 <li>Status effects will no longer use an incorrect plural for their remaining duration if the duration is only 1 turn.</li>
 <li>Ending a dark-styled battle will no longer result in a "flicker" before transfering to the next passage. (Thanks to A Friendly Irin for figuring this one out.)</li>
 <li>Re-applying an effect should no longer produce a blank line.</li>
 </ul>
-Version 1.10.2
+<h3>Version 1.10.2</h3>
 <ul>
 <li>Fixed a bug in the command functionality from the 1.09 update. Command buttons should no longer link you to the wrong characters' actions.</li>
 <li>It is now once again possible to target allies with ally-targeting skills.</li>
@@ -673,7 +713,7 @@ Version 1.10.2
 <li>Steven should no longer generate an error when he's defeated.</li>
 <li>The Crystal Gems will now protect Steven as they do in <i>Cartoon Battle</i>.</li>
 </ul>
-Version 1.10.1
+<h3>Version 1.10.1</h3>
 <ul>
 <li>Modified <code>addEffect</code> for better readability and versatility. It will now bypass the power calculation branches if you do not use the Special stat in your game, preventing potential glitches. It has also been changed to a proper skeleton model with specific <i>Cartoon Battle</i> elements removed, though this means it is overwritten by a modified version in passages-unique that will have to be removed if you want to make changes.</li>
 <li>The quit button is now displayed in battle again. It is now tied to <code>actorlist puppets</code> rather than <code>commands</code>.</li>
@@ -681,7 +721,7 @@ Version 1.10.1
 <li>Removed some console logs in the code that were left over from testing.</li>
 <li>Updated documentation to reflect changes.</li>
 </ul>
-Version 1.10
+<h3>Version 1.10</h3>
 <ul>
 <li>HP regeneration and elemental affinities now have support for both flat and percent-based attributes. Status screens have been updated to display both types, but if you don't plan to use flat rates, you can hide them from the display by modifying the <code>SOAK</code> and <code>FLAT_REGEN</code> variables in StoryInit. <b>You will need to remake any Actor objects for earlier saves to be compatible with this update.</b></li>
 <li>Added new Actor method functions:</li>
@@ -693,12 +733,12 @@ Version 1.10
 <li>Items now use object cloning for <code>clone</code> and <code>toJSON</code>. This should correct a bug with unequipping stacked accessories negating the mods from all accessories.</li>
 <li>Menu widgets have been moved to the <code>party menu.twee</code> file for easier reference. The previous file has been renamed to <code>Widgets (Misc)</code> and contains widgets for status pane displays.</li>
 </ul>
-Version 1.09.1
+<h3>Version 1.09.1</h3>
 <ul>
 <li><code>addEffect</code> now works when passed an effect name, not just an Effect object. You can use it just like the Effect constructor: name first, then duration, then power.</li>
 <li>Fixed a potential error that could occur if <code>chain</code> attempted to run with an undefined target, subject, or actor.</li>
 </ul>
-Version 1.09
+<h3>Version 1.09</h3>
 <ul>
 <li><b>Rehauled battle character displays.</b> It should now be possible to have party sizes extend to multiple lines without issue. The command panes will no longer be displayed in the initial battle map; instead, you will select a character by clicking on their name or pressing their hotkey, and the party display will be collapsed to just them and their command pane. Done/Stunned notifications will now display at the bottom of the actor boxes instead of in the command panes.</li>
 <li>The cancel button is now R, to avoid interference with the E key also being the item command hotkey.</li>
@@ -707,13 +747,13 @@ Version 1.09
 <li>New feature: <b>automatic turn ending</b>. Enable this in the settings menu to end your turn automatically when all characters have acted.</li>
 <li>Fixed a text glitch in Focus.</li>
 </ul>
-Version 1.08.5
+<h3>Version 1.08.5</h3>
 <ul>
 <li>UI text should now display correctly even if the default text color has been changed through in-game modifications.</li>
 <li>Effects with no removal text will no longer force the player to click through the end-of-round passage.</li>
 <li>Actions now have a getter for the <code>nosave</code> property.</li>
 </ul>
-Version 1.08.4
+<h3>Version 1.08.4</h3>
 <ul>
 <li>The default add and remove text for effects should now display correctly.</li>
 <li>Protector should no longer create an error message on removal.</li>
@@ -723,7 +763,7 @@ Version 1.08.4
 <li>Moved the special checks passage to passages-unique.</li>
 <li><code>actionLink</code> now works for items as well.</li>
 </ul>
-Version 1.08.3
+<h3>Version 1.08.3</h3>
 <ul>
 <li>Moved hotkey definitions to their own passage for greater modularity and neatness of code.</li>
 <li>The call to the Special stat for item usage in the damage formula has been moved to "damageCalc custom factors" for greater modularity, in case you don't want items to use the Special stat (or don't want to have a Special stat at all).</li>
@@ -731,18 +771,18 @@ Version 1.08.3
 <li>Action's <code>toJSON</code> now clones the entire object instead of creating a new object with just the name. This is useful if you want unique action properties to persist.</li>
 <li>Fixed a typo in Battle Phases. Targeting should now work correctly if an enemy is both untargetable and a martyr.</li>
 </ul>
-Version 1.08.2
+<h3>Version 1.08.2</h3>
 <ul>
 <li>Equipping a new item to a filled equipment slot will now replace the last subslot rather than the first. I felt this was more intuitive.</li>
 <li>Mass status effect abilities now assign the current target to <code>$target</code>. This helps if you want to do something that depends on that.</li>
 <li>The action phase no longer checks to see if {{{$action.act()}}} evaluates to <code>null</code>. This was causing a problem where the <i>entire</i> function was being run in the check, not just evaluating the result. Actions were effectively run twice if they contained anything before the <code>return</code> statement. If you want the box to disappear, you will need to set the <code>act</code> property itself to <code>null</code>.</li>
 </ul>
-Version 1.08.1
+<h3>Version 1.08.1</h3>
 <ul>
 <li>It is now possible to equip multiple items of the same type. Puppets now have 2 Accessory slots, and you can test this functionality for yourself with the new "Color of Defeat" item.</li>
 <li>The unequip buttons have been removed from the full party view due to the discovery of a bug involving them.</li>
 </ul>
-Version 1.08
+<h3>Version 1.08</h3>
 <ul>
 <li>Actions and effects have now been converted to Flyweight format. This leads to a few changes in how certain attributes are defined; see documentation for details.</li>
 <li>Constants such as <code>$STATUS_SCREENS</code> have been changed to attributes of <code>setup</code>. This will allow changes to persist through game version changes.</li>
@@ -751,7 +791,7 @@ Version 1.08
 <li>The <code>unequip</code> function must now be explicitly passed a <code>destroy</code> value of <code>true</code> to destroy equipment, instead of any truthy value.</li>
 <li>The Status pane of the party menu now uses a widget, <code>statusDisplay</code>, to display the common portion of the normal and detailed status displays. The widget can be found in <code>Widgets (Menu)</code>.</li>
 </ul>
-Version 1.07
+<h3>Version 1.07</h3>
 * <b>The party menu has been rehauled to include the full functionality expected of a typical RPG!</b>
 ** Added a status screen that shows the party's HP, MP, and experience levels. Clicking on one character will provide detailed stat, equipment, and ability information.
 *** The detailed status screens are tied to the {{{$STATUS_SCREENS}}} variable, which has been changed to a generic object with two attributes to distinguish between the status screens visible in the menu and the status screens visible in battle. <b>If you have already made a project with an earlier version of the engine, you will need to update this variable in your {{{onLoad()}}} function to avoid errors in existing save games.</b>
@@ -768,14 +808,14 @@ Version 1.07
 * Changed the way status screen customization works to be more modular. Cycling is now tied to the length of the {{{$STATUS_SCREENS}}} array, and the displayed pane is based on the content of the array element rather than hardcoded to specific {{{$stScreen}}} values.
 * The structure of the item database has been reworked to incorporate Flyweight design principles. This should hopefully speed up the game. (Thanks to Akjosch for help with this.)
 
-Version 1.06.4
+<h3>Version 1.06.4</h3>
 <ul>
 <li><code>custom end of action effects</code> is now called at the end of enemy actions, not just player actions. This allows you to have events related to enemy actions as well.</li>
 <li>Added a default music display in the UI bar should you wish to use it. Remember to properly attribute your media if you are using it under a Creative Commons license.</li>
 <li>Protector SHOULD now be removed when the protected character dies, for real this time, probably, maybe, or possibly this bug will continue to be the bane of my existence. We'll find out.</li>
 <li>Enemies will no longer perform glitched actions if all puppets are dead when they attempt to find a target.</li>
 </ul>
-Version 1.06.3
+<h3>Version 1.06.3</h3>
 <ul>
 <li>Fixed the party selection glitch. You can no longer add an extra puppet to the active party by double-clicking on an active puppet.</li>
 <li>Changed the party selection screen to display the reserve in the main pane instead of the sidebar.</li>
@@ -788,7 +828,7 @@ Version 1.06.3
 <li>The checks for Protector and Martyr in the targeting logic have been compartmentalized into their own widgets.</li>
 <li>Added documentation on delayed attacks.</li>
 </ul>
-Version 1.06.2
+<h3>Version 1.06.2</h3>
 * New circumstantial modifiers for enemies:
 ** <b>hidden:</b> If you flag this attribute, the enemy won't get a stat block generated in <code>actorlist</code>, making it invisible to the player. Note that this means there is no way to target it, either. Hidden enemies are not excluded from the victory condition check, so if you use this, you should make a special victory condition or give the player some way to damage the enemy.
 ** <b>immortal:</b> If you flag this attribute, the enemy will not die when they are killed. They'll still produce a death message, but their "dead" flag will not be flipped to <code>true</code>. This is useful if you want to replicate a feature like the final battle of <i>EarthBound</i>, where the enemy cannot be defeated through normal means.
@@ -797,7 +837,7 @@ Version 1.06.2
 * The <code>removeEffect</code> function now has a shortcut for removing a specific type of effect. If you pass it a string rather than an effect object, it will remove the first effect whose name matches the string. Note that this only removes the first instance it finds, so it won't clear multiple instances of stackable effects.
 * You can now use actions to move the player to a new passage by setting the <code>passagejump</code> attribute to <code>true</code> and setting the <code>phase</code> attribute to the name of the desired passage. This is useful if you want to incorporate passage mechanics into your battles, such as allowing characters to interact with the objects in a room to produce changes to the battle.
 
-Version 1.06.1
+<h3>Version 1.06.1</h3>
 <ul>
 <li>Removed Chapel's cycles system due to its potential to cause a fatal error.</li>
 <li>Added hotkey support for all-targeting abilities.</li>
@@ -806,7 +846,7 @@ Version 1.06.1
 <li>Enemy reverse display is now handled through a battle variable, allowing it to be tracked more easily.</li>
 <li>The special handler for Focus' cost reduction has now been moved to custom end of action effects, to prevent conflicts if you want to create your own action named "Focus".</li>
 </ul>
-Version 1.06
+<h3>Version 1.06</h3>
 <ul>
 <li><b>Hotkeys are in!</b> Use the number keys to select characters, the Q key to confirm, and the E key to cancel.</li>
 <li>The story title area now displays white text as part of the default formatting style, making it easier to read with the dark UI bar. If you want to lighten the UI bar, such as with the normal Bleached style, you will probably want to change this.</li>
@@ -819,7 +859,7 @@ Version 1.06
 <li>You can now select protected enemies as targets, though their protector will still cover them. This encourages players to pay attention to who's protecting whom!</li>
 <li>Protector now displays the name of the protector's charge in the info box.</li>
 </ul>
-Version 1.05.1
+<h3>Version 1.05.1</h3>
 <ul>
 <li>Added documentation for health bars and the item shop.</li>
 <li>Enemy health bars will now be correctly mapped to the number of enemies, rather than the number of puppets.</li>
@@ -827,7 +867,7 @@ Version 1.05.1
 <li>Enemy and player health bar colors are now variables set in StoryInit.</li>
 <li>Enemy status buttons should no longer display for defeated enemies.</li>
 </ul>
-Version 1.05
+<h3>Version 1.05</h3>
 <ul>
 <li>The engine now comes bundled with <a href="https://twinelab.net/custom-macros-for-sugarcube-2/" target="_blank">Chapel's custom macros.</a></li>
 <li>Relatedly, the battle interface now displays health bars! If you prefer the old look, you can set <code>$SHOW_HEALTHBARS</code> to false.</li>
@@ -836,7 +876,7 @@ Version 1.05
 <li>The HP display will now be hidden if you flag an enemy's <code>maskhp</code> attribute. Additionally, the <code>healing</code> attribute has been renamed to <code>showMaxHP</code> for clarity.</li>
 <li>Added additional modularity in <code>damageCalc</code>: The damage formula definition is now a separate passage, as are handlers for actions with special behavior, such as Exacerbate and Downfall.</li>
 </ul>
-Version 1.04-beta
+<h3>Version 1.04</h3>-beta
 <ul>
 <li>Retweaked the handling for subjects and targets <i>again</i>. They now get the ID value from the current subject/target object itself instead of storing it as a separate variable, which removes the need to call <code>getActor()</code> manually.</li>
 <li>The battle passages have been tweaked to support additional modularity. Code for altering the actor list in special cases is now outsourced to another passage that can be edited separately from the main display code; the "Preparation" passage now calls to a separate passage for custom modifications; the Effect Adder outsources protection checks to a separate passage; and you can now set which status screens display in StoryInit.</li>
@@ -849,7 +889,7 @@ Version 1.04-beta
 <li><code>victorycheck</code> is now run in the enemy phase. This accounts for the rare case where the player is defeated through damage over time; previously, <code>victorycheck</code> was only run during the player's turn, so the enemy turn would still play out even if everyone was already defeated.</li>
 <li>Minor tweak, but it <i>really</i> bugged me: boss names are no longer misaligned with their HP display in the boss box. The display is still misaligned relative to the whole box because the status button still throws off the centering, but this is less noticeable.</li>
 </ul>
-Version 1.03-beta
+<h3>Version 1.03</h3>-beta
 <ul>
 <li>The handling for the <code>$subject</code>, <code>$target</code>, and <code>$actor</code> variables has been redone to be more intuitive and allow for easier tracking of the original objects. Thanks to Discord member <b>Akjosch</b> for help and directions. See documentation for details.</li>
 <li>Enemy cooldown logic is now more intuitive: They will be able to use attacks when the cooldown <i>is</i> zero, rather than requiring the cooldown to be negative. This means that the value you give to a cooldown will now be equal to the number of turns before it can be used again.</li>
@@ -859,21 +899,21 @@ Version 1.03-beta
 <li>Additionally, Martyr, Defender, and Berserker will no longer count towards the threshold check.</li>
 <li>Protector should now be correctly removed if the protected character dies, but I have not tested this. Please report any problems you encounter.</li>
 </ul>
-Version 1.02-beta
+<h3>Version 1.02</h3>-beta
 <ul>
 <li>The default damage constant has been doubled to 80; this should speed up battles significantly. (Keep in mind DoT effects use the same constant.)</li>
 <li>There is now support for enemies taking multiple actions per turn. Set the <code>noAttacks</code> attribute in an enemy object if you wish to use it. As this is a new feature, it may result in unforseen problems; please report any bugs you find.</li>
 <li>There is now support for modifying the CSS of battles. See documentation for details. A "dark" format that returns to the default SugarCube style is provided in the CSS files.</li>
 <li>The default style has been changed to a modified form of the Bleached style. The background is slightly less bright, links are easier to see on the white background, and UI messages will now be more readable.</li>
 </ul>
-Version 1.01-beta
+<h3>Version 1.01</h3>-beta
 <ul>
 <li>The <code>massAttack</code> function will now default to the action variable's duration if no duration is passed as an argument.</li>
 <li>Fixed a typo that prevented Berserker from being applied properly.</li>
 <li>Dispel abilities (Restoration/Neutralize/Cleanse) should now work correctly.</li>
 <li>Added a "user-defined variables" passage to be included in StoryInit. You can now keep your own StoryInit functionality completely separate from the engine's code, instead of needing to juggle multiple StoryInit files.</li>
 </ul>
-Version 1.0-beta
+<h3>Version 1.0</h3>-beta
 <ul>
 <li><b>Equipment is in!</b> Party Picker updated with a page for equipment and a corresponding GUI. Make sure to grab the new and updated CSS files so they display properly.</li>
 <li>New widget: <code>equipmentlist</code>.</li>
@@ -886,13 +926,13 @@ Version 1.0-beta
 <li>Updated documentation for new features.</li>
 <li>Updated this changelong to display in reverse chronological order.</li>
 </ul>
-Version 0.99-beta
+<h3>Version 0.99</h3>-beta
 * <code>Inventory</code> objects now revive correctly, and <code>Item</code> objects will no longer be revived as <code>ItemActions</code>.
 * Battle flow now works through <code>replace</code> macros instead of passage jumps. This should speed up battles considerably.
 * Defeated characters will now have their command menus hidden instead of displaying an ugly blank box.
 * Added a <code>longreturn</code> widget using the functionality described in the SugarCube v2 documentation.
 
-Version 0.95
+<h3>Version 0.95</h3>
 * Custom objects are now serializable, with custom <code>clone()</code> and <code>toJSON()</code> functions. <code>Actor</code>, <code>Action</code>, and <code>Inventory</code> are revived to exact copies of their old versions, while <code>Item</code> and <code>Effect</code> are revived to new versions using only their name ID. This allows changes made to the database to be incorporated when loading saves from an earlier version.
 ** A section on this has been added to the documentation.
 * Rehauled inventory. It now functions like a Map, meaning you can just call up the item name to find something instead of using the <code>find</code> widget.
@@ -914,23 +954,23 @@ Version 0.95
 * Fixed a typo in <code>deathcheck</code> that caused a fatal error.
 * Fixed several mixups in surrender logic. Surrendering enemies should now work correctly.
 
-Version 0.9
+<h3>Version 0.9</h3>
 * Massive rehaul. Actions, puppets, enemies, items, and effects now properly defined in database JavaScript files. Many widgets offloaded to JavaScript functions, and battle passage code tweaked for greater modularity. Actions now display fully consistently with special formatting that looks much neater and more professional.
 * Added support for elemental affinities and status effect tolerance.
 * Passages moved further down in the story map to hopefully prevent overlapping of story files when importing the engine through compilers.
 
-Version 0.57
+<h3>Version 0.57</h3>
 * New puppets added: the Archer, the Cleric, and the Witch! These are all specialists with 50 in one stat and 20 in both others. Anyone who felt the battles took too long should try out Archer. They have not been balance-tested at all, so do tell of any hilarious gamebreaking situations you encounter.
 * Action text added for all actions, and restructured the passage so it displays more consistently. A few other things have also been tidied behind the scenes to hopefully make the code easier to use.
 
-Version 0.56
+<h3>Version 0.56</h3>
 * New puppet added: the Bard! They are a jack-of-all-trades character designed to exploit the stackability of basic debuffs. I have not balance-tested them at all so please try them out.
 * Relatedly: party member swap functionality is in! I plan to tweak it later but it currently works as long as your characters aren't modified in any way between swaps. (Thanks to greyelf for helping me with the visual elements.)
 * Martyr is now removed if someone else uses it at the same time.
 * Stun wearing off will no longer trigger an infinite loop.
 * Tweaked the way some passages and widgets worked for more modularity and readability.
 
-Version 0.55
+<h3>Version 0.55</h3>
 * Completely rehauled the way stats are formatted: they are now all bound to a single Map object with sub-attributes for base values and temporary modifiers. Getter and setter functions added to enable easy access to these values.
 * Effect manager now only runs when necessary instead of all the time! This will probably save your processor a lot of grief.
 * Relatedly, Protector SHOULD finally behave properly.
@@ -938,27 +978,27 @@ Version 0.55
 * Added new passage for discussing implementation of extra features.
 * Added information about level up mechanics, and added example implementation for both standard level up mechanics and a point-buy system.
 
-Version 0.54
+<h3>Version 0.54</h3>
 * Added difficulty settings! Hard mode is the original targeting model. Easy mode will disable smart targeting altogether. Medium mode will still have smart targeting, but vulnerable characters will only get preferential chances of being targeted rather than being the only possible targets. Documentation will be updated when time permits.
 
-Version 0.53.1
+<h3>Version 0.53.1</h3>
 * Design notes on status effects and battle flow added.
 * Model passages added to enable use of different battle flow systems.
 
-Version 0.53
+<h3>Version 0.53</h3>
 * Documentation actually updated to reflect changes.
 
-Version 0.52.1
+<h3>Version 0.52.1</h3>
 * Streamlined some things in backend to be more readable. Effect adder now filters by attribute like the effect manager does, and if statements in story JavaScript changed to switches. I think I fixed all bugs created by this change, but do tell me if you encounter anything.
 * Pronouns added as attributes in the "Actor" class to make system text easier, like I alluded to in earlier versions of the documentation. Constructor must now take a gender (as a single uppercase character, F/M/N) as its final argument.
 * Documentation updated to reflect changes.
 
-Version 0.52
+<h3>Version 0.52</h3>
 * Stat mod glitch should be fixed.
 * Alert application now produces no message, as intended.
 
-Version 0.51
+<h3>Version 0.51</h3>
 * Protector no longer causes an error in PassageDone, and should be removed properly if the protected character dies.
 
-Version 0.5
+<h3>Version 0.5</h3>
 * Initial release.

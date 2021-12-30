@@ -30,16 +30,16 @@ setup.effectFunctions = {
 	invisible: function () {return "";},
 
 	physical: function (puppet) {
-		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(V().DefenseStat))));
+		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(StatName("def")))));
 	},
 	special: function (puppet) {
-		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(V().SpecialStat))));
+		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(StatName("spc")))));
 	},
 	piercing: function (puppet) {
 		return this.weight*(setup.base + (setup.damper * this.power));
 	},
 	proportional: function (puppet) {
-		return this.weight * puppet.maxhp;
+		return this.weight * puppet.maxHP;
 	},
 	fixed: function (puppet) {
 		return this.power;
@@ -53,10 +53,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats[V().AttackStat].addMod("Injury",-this.power);
+      this.id = puppet.stats[StatName("atk")].addMod("Injury",-this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats[V().AttackStat].removeMod("Injury",this.id);
+      puppet.stats[StatName("atk")].removeMod("Injury",this.id);
     },
     "info": function (effect) {
       return `Attack reduced by ${this.power}.`;
@@ -70,10 +70,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats[V().DefenseStat].addMod("Pain",-this.power);
+      this.id = puppet.stats[StatName("def")].addMod("Pain",-this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats[V().DefenseStat].removeMod("Pain",this.id);
+      puppet.stats[StatName("def")].removeMod("Pain",this.id);
     },
     "info": function (effect) {
       return `Defense reduced by ${this.power}.`;
@@ -87,10 +87,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats[V().SpecialStat].addMod("Headache",-this.power);
+      this.id = puppet.stats[StatName("spc")].addMod("Headache",-this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats[V().SpecialStat].removeMod("Headache",this.id);
+      puppet.stats[StatName("spc")].removeMod("Headache",this.id);
     },
     "info": function (effect) {
       return `Special reduced by ${this.power}.`;
@@ -105,10 +105,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats[V().AttackStat].addMod("ATK Boost",this.power);
+      this.id = puppet.stats[StatName("atk")].addMod("ATK Boost",this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats[V().AttackStat].removeMod("ATK Boost",this.id);
+      puppet.stats[StatName("atk")].removeMod("ATK Boost",this.id);
     },
     "info": function (effect) {
       return `Attack boosted by ${this.power}.`;
@@ -123,10 +123,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats[V().DefenseStat].addMod("DEF Boost",this.power);
+      this.id = puppet.stats[StatName("def")].addMod("DEF Boost",this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats[V().DefenseStat].removeMod("DEF Boost",this.id);
+      puppet.stats[StatName("def")].removeMod("DEF Boost",this.id);
     },
     "info": function (effect) {
       return `Defense boosted by ${this.power}.`;
@@ -141,10 +141,10 @@ setup.effectData = {
     "stackable": true,
     "statmod": true,
     "onApply": function (puppet) {
-      this.id = puppet.stats[V().SpecialStat].addMod("SPC Boost",this.power);
+      this.id = puppet.stats[StatName("spc")].addMod("SPC Boost",this.power);
     },
     "onRemove": function (puppet) {
-      puppet.stats[V().SpecialStat].removeMod("SPC Boost",this.id);
+      puppet.stats[StatName("spc")].removeMod("SPC Boost",this.id);
     },
     "info": function (effect) {
       return `Special boosted by ${this.power}.`;
@@ -223,11 +223,12 @@ setup.effectData = {
     "removeText": setup.effectFunctions.rem
   },
   "Winded": {
+		"noENregen": true,
     "onApply": function (puppet) {
-      puppet.winded = true;
+
     },
     "onRemove": function (puppet) {
-      puppet.winded = false;
+
     },
     "info": function (effect) {
       return `No Energy regen.`;
@@ -283,11 +284,11 @@ setup.effectData = {
     "hold": true,
     "onApply": function (puppet) {
       puppet.down = true;
-      puppet.stats[V().DefenseStat].addMod("Knocked Down",{mult: -0.5});
+      puppet.stats[StatName("def")].addMod("Knocked Down",{mult: -0.5});
     },
     "onRemove": function (puppet) {
       puppet.down = false;
-      puppet.stats[V().DefenseStat].removeMod("Knocked Down");
+      puppet.stats[StatName("def")].removeMod("Knocked Down");
     },
     "info": function (effect) {
       return `Cannot act until righted. Defense halved.`;
@@ -307,15 +308,15 @@ setup.effectData = {
     "threat": 3,
     "onApply": function (puppet) {
       puppet.curse = true;
-      puppet.stats[V().AttackStat].addMod("Curse",-this.power);
-      puppet.stats[V().DefenseStat].addMod("Curse",-this.power);
-      puppet.stats[V().SpecialStat].addMod("Curse",-this.power);
+      puppet.stats[StatName("atk")].addMod("Curse",-this.power);
+      puppet.stats[StatName("def")].addMod("Curse",-this.power);
+      puppet.stats[StatName("spc")].addMod("Curse",-this.power);
     },
     "onRemove": function (puppet) {
       puppet.curse = false;
-      puppet.stats[V().AttackStat].removeMod("Curse"),
-      puppet.stats[V().DefenseStat].removeMod("Curse"),
-      puppet.stats[V().SpecialStat].removeMod("Curse");
+      puppet.stats[StatName("atk")].removeMod("Curse"),
+      puppet.stats[StatName("def")].removeMod("Curse"),
+      puppet.stats[StatName("spc")].removeMod("Curse");
     },
     "info": function (effect) {
       return `All stats reduced by ${this.power}.`;
@@ -331,12 +332,12 @@ setup.effectData = {
     "statmod": true,
     "synonym": "Curse",
     "onApply": function (puppet) {
-      puppet.forsaken = true;
-      puppet.stats[V().DefenseStat].addMod("Forsaken",-this.power);
+      puppet.noMinimum.push(StatName("def"));
+      puppet.stats[StatName("def")].addMod("Forsaken",-this.power);
     },
     "onRemove": function (puppet) {
-      puppet.forsaken = false;
-      puppet.stats[V().DefenseStat].removeMod("Forsaken");
+      puppet.noMinimum.deleteAt(puppet.noMinimum.indexOf(StatName("def")));
+      puppet.stats[StatName("def")].removeMod("Forsaken");
     },
     "info": function (effect) {
       return `Defense reduced by ${this.power}. Defense can be negative.`;
@@ -352,15 +353,15 @@ setup.effectData = {
     "threat": 3,
     "onApply": function (puppet) {
       puppet.blessing = true;
-      puppet.stats[V().AttackStat].addMod("Blessing",this.power);
-      puppet.stats[V().DefenseStat].addMod("Blessing",this.power);
-      puppet.stats[V().SpecialStat].addMod("Blessing",this.power);
+      puppet.stats[StatName("atk")].addMod("Blessing",this.power);
+      puppet.stats[StatName("def")].addMod("Blessing",this.power);
+      puppet.stats[StatName("spc")].addMod("Blessing",this.power);
     },
     "onRemove": function (puppet) {
       puppet.blessing = false;
-      puppet.stats[V().AttackStat].removeMod("Blessing");
-      puppet.stats[V().DefenseStat].removeMod("Blessing");
-      puppet.stats[V().SpecialStat].removeMod("Blessing");
+      puppet.stats[StatName("atk")].removeMod("Blessing");
+      puppet.stats[StatName("def")].removeMod("Blessing");
+      puppet.stats[StatName("spc")].removeMod("Blessing");
     },
     "info": function (effect) {
       return `All stats boosted by ${this.power}.`;
@@ -427,13 +428,14 @@ setup.effectData = {
     "statmod": true,
     "exclusive": true,
     "unblockable": true,
+		"guard": true,
     "onApply": function (puppet) {
       puppet.protector = true;
-      puppet.stats[V().DefenseStat].addMod("Protector",this.power);
+      puppet.stats[StatName("def")].addMod("Protector",this.power);
     },
     "onRemove": function (puppet) {
       puppet.protector = false;
-      puppet.stats[V().DefenseStat].removeMod("Protector");
+      puppet.stats[StatName("def")].removeMod("Protector");
       var targets = [];
       switch(this.target.id.charAt(0)) {
         case "p": targets = State.variables.puppets; break;
@@ -566,13 +568,13 @@ setup.effectData = {
     "buff": true,
     "onApply": function (puppet) {
       puppet.frenzy = true;
-      puppet.stats[V().AttackStat].addMod("Frenzy",this.power);
-      puppet.stats[V().DefenseStat].addMod("Frenzy",-this.power/2);
+      puppet.stats[StatName("atk")].addMod("Frenzy",this.power);
+      puppet.stats[StatName("def")].addMod("Frenzy",-this.power/2);
     },
     "onRemove": function (puppet) {
       puppet.frenzy = false;
-      puppet.stats[V().AttackStat].removeMod("Frenzy");
-      puppet.stats[V().DefenseStat].removeMod("Frenzy");
+      puppet.stats[StatName("atk")].removeMod("Frenzy");
+      puppet.stats[StatName("def")].removeMod("Frenzy");
     },
     "info": function (effect) {
       return `Attack boosted by ${this.power}; Defense reduced by ${Math.round(this.power/2)}.`;
@@ -701,6 +703,7 @@ setup.effectData = {
   },
   "Petrified": {
     "hold": true,
+		"noENregen": true,
     "onApply": function (puppet) {
       puppet.petrified = true;
     },

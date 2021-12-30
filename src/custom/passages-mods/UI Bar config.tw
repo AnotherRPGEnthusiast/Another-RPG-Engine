@@ -11,14 +11,14 @@ Made in <a href="https://anotherrpgenthusiast.itch.io/another-rpg-engine">Anothe
       <<capture _puppet>>
       <<link _linkText>>
         <<set _puppet.crisisPoints = 100>>
-        <<goto "Battle!">>
+        <<goto "Player Phase">>
       <</link>>
       <</capture>><br/>
       <<set _linkText = "Kill Puppet "+_i>>
       <<capture _puppet>>
       <<link _linkText>>
         <<set _puppet.dead = true>>
-        <<goto "Battle!">>
+        <<goto "Player Phase">>
       <</link>>
       <</capture>><br/>
     <</for>>
@@ -27,7 +27,7 @@ Made in <a href="https://anotherrpgenthusiast.itch.io/another-rpg-engine">Anothe
       <<capture _enemy>>
       <<link _linkText>>
         <<set _enemy.dead = true>>
-        <<goto "Battle!">>
+        <<goto "Player Phase">>
       <</link>>
       <</capture>><br/>
     <</for>>

@@ -2,6 +2,6 @@
 <<if Number.isInteger(_target.crisisPoints) && $dmg > 0>>
   <<switch _target.crisisMode>>
     <<default>>
-      <<set _target.crisisPoints += Math.round(($dmg/_target.maxhp)*100*_target.crisisFactor)>>
+      <<set _target.crisisPoints += Math.round(($dmg/_target.maxHP)*100*_target.crisisFactor)>>
   <</switch>>
 <</if>>

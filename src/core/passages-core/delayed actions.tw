@@ -1,11 +1,31 @@
 :: delayed actions[nobr]
-<<if $B.turn == "player" && passage() == "Battle!">>
-  <<for _puppet range puppets()>>
-    <<if _puppet.actionReady>>
-      <<set $subject = _puppet; $action = puppet.delayedAction; $target = $action.targetMethod()>>
-      <<set _puppet.delayedAction = null>>
-      <<goto "action phase">>
-      <<break>>
-    <</if>>
-  <</for>>
+<<if passage() == "Player Phase">>
+  <<switch setup.TURN_MODEL.toLowerCase()>>
+    <<case "timeline">>
+      /* find the active character */
+      <<set _actor = allActors().find(function(p) { return p && p.active })>>
+      /* if found, check if they have a delayedAction */
+      <<if _actor instanceof Puppet && _actor.delayedAction instanceof Action>>
+        /* if yes, set them as subject and perform the action immediately */
+        <<set $subject = _actor; $action = _actor.delayedAction>>
+        <<if def _actor.target>>
+          <<set $target = getActorById(_actor.target); delete _actor.target>>
+        <<else>>
+          <<set $target = $action.targetMethod()>>
+        <</if>>
+        <<set _actor.delayedAction = null>>
+        <<goto "Action Phase">>
+      <</if>>
+    <<case "free">>
+      <<if $B.turn === "player">>
+        /* Check for puppets with actionReady. Because the action phase feeds back into this check, this will check for all puppets' readied actions in sequence after each is executed. */
+        <<set _puppet = puppets().find(function(p) { return p && p.actionReady })>>
+        /* if found, set them as subject and execute delayedAction */
+        <<if _puppet instanceof Puppet>>
+          <<set $subject = _puppet; $action = _puppet.delayedAction; $target = $action.targetMethod()>>
+          <<set _puppet.delayedAction = null>>
+          <<goto "Action Phase">>
+        <</if>>
+      <</if>>
+  <</switch>>
 <</if>>

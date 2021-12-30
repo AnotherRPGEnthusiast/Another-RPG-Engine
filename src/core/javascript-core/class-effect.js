@@ -170,6 +170,28 @@ window.Effect = class Effect {
 		return val;
 	}
 
+	get noENregen () {
+		var val = this._noENregen;
+		if (val === undefined) {
+			val = this.effectData.noENregen;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
+	get interruptGuard () {
+		var val = this._interruptGuard;
+		if (val === undefined) {
+			val = this.effectData.interruptGuard;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
 	get block () {
 		var val = this._block;
 		if (val === undefined) {
@@ -374,6 +396,19 @@ window.Effect = class Effect {
 		var val = this._skillLock;
 		if (val === undefined) {
 			val = this.effectData.skillLock;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
+	get guard () {
+		//	Boolean. If true, this effect causes the subject to guard another character.
+
+		var val = this._guard;
+		if (val === undefined) {
+			val = this.effectData.guard;
 		}
 		if (val === undefined) {
 			val = false;

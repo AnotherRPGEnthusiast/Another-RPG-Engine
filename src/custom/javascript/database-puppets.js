@@ -19,6 +19,8 @@ setup.puppetData = {
 	"Rogue": {
 		"gender": 'N',
 		"hp": setup.PUPPET_HP,
+		"en": 10,
+		"ENregen": 2,
 		"stats": {
 			"Attack"	: 10,
 			"Defense"	: 30,
@@ -66,6 +68,8 @@ setup.puppetData = {
 	"Fighter": {
 		"gender": 'N',
 		"hp": setup.PUPPET_HP,
+		"en": 10,
+		"ENregen": 2,
 		"stats": {
 			"Attack"	: 30,
 			"Defense"	: 50,
@@ -94,6 +98,8 @@ setup.puppetData = {
 	"Mage": {
 		"gender": 'N',
 		"hp": setup.PUPPET_HP,
+		"en": 10,
+		"ENregen": 2,
 		"stats": {
 			"Attack"	: 50,
 			"Defense"	: 10,
@@ -117,6 +123,8 @@ setup.puppetData = {
 	"Bard": {
 		"gender": 'N',
 		"hp": setup.PUPPET_HP,
+		"en": 10,
+		"ENregen": 2,
 		"stats": {
 			"Attack"	: 30,
 			"Defense"	: 30,
@@ -141,6 +149,8 @@ setup.puppetData = {
 	"Archer": {
 		"gender": 'N',
 		"hp": setup.PUPPET_HP,
+		"en": 10,
+		"ENregen": 2,
 		"stats": {
 			"Attack"	: 70,
 			"Defense"	: 10,
@@ -164,6 +174,8 @@ setup.puppetData = {
 	"Cleric": {
 		"gender": 'N',
 		"hp": setup.PUPPET_HP,
+		"en": 10,
+		"ENregen": 2,
 		"stats": {
 			"Attack"	: 10,
 			"Defense"	: 70,
@@ -192,6 +204,8 @@ setup.puppetData = {
 	"Witch": {
 		"gender": 'N',
 		"hp": setup.PUPPET_HP,
+		"en": 10,
+		"ENregen": 2,
 		"stats": {
 			"Attack"	: 10,
 			"Defense"	: 10,
@@ -219,6 +233,8 @@ setup.puppetData = {
 	"Artist": {
 		"gender": 'N',
 		"hp": setup.PUPPET_HP,
+		"en": 10,
+		"ENregen": 2,
 		"stats": {
 			"Attack"	: 30,
 			"Defense"	: 30,

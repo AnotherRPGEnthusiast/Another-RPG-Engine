@@ -2,6 +2,7 @@
 <<include "hotkey definitions">>
 
 <<set setup.formula = "subtractive">>
+<<set setup.TURN_MODEL = "free">>
 
 <<set setup.base = 80>> /* base constant for dmg formula */
 <<set setup.damper = 1>> /* damping factor for dmg formula */
@@ -13,7 +14,18 @@
 <<set setup.min_debuff = 5>> /* minimum debuff effect */
 
 /* The following stat names will be referenced in situations that call for them (damage formula, etc.), change these if you want to change stat names */
-<<set $AttackStat = "Attack"; $DefenseStat = "Defense"; $SpecialStat = "Special">>
+<<set setup.STAT_NAMES = {
+	"Attack": "Attack",
+	"Defense": "Defense",
+	"Special": "Special",
+	"Crit": "Skill",
+	"Accuracy": "Accuracy",
+	"Evasion": "Evasion",
+	"Speed": "Speed",
+	"Initiative": "Initiative",
+	"Energy": "Energy",
+	"EnergyShort": "EN"
+}>>
 
 /*	Tooltip information associated with each stat, to be displayed in the status menu.
 		Also used elsewhere as a reference for the identity of core stats. */
@@ -23,7 +35,9 @@
 	"Special": "Improves effectiveness of status effects, mitigates received status ailments, and increases damage of item attacks by 1 per point.",
 	"Skill": "Increases critical hit chance by 1% per point.",
 	"Accuracy": "Increases attack accuracy by 1% per point.",
-	"Evasion": "Reduces incoming attack accuracy by 1% per point."
+	"Evasion": "Reduces incoming attack accuracy by 1% per point.",
+	"Initiative": "Determines starting turn order and tiebreakers. Starting tick is highest combatant's Initiative minus this value.",
+	"Speed": "Shortens recovery time by 1 tick per point."
 }>>
 
 /*	These stats will not be displayed in the menu or status pane even if they are core stats
@@ -78,17 +92,10 @@
 <<set setup.SOAK = true>>
 <<set setup.FLAT_REGEN = true>>
 
-/* Variables for determining lasting damage. By default, puppets are fully restored after every battle. See refreshPuppets for more info. */
-<<set $lastingDamage = false>>
-<<set $reviveAfterBattle = true>>
-<<set $actionRefillAfterBattle = true>>
-
 /* Initializing constants that will be used elsewhere. DON'T define variables that will be used in JavaScript database definitions here, as StoryInit is run after JavaScript initialization. */
-<<set setup.ENregen = 2>>
+<<set setup.MAX_EN = null;
+      setup.EN_REGEN = null;>>
 <<set setup.STRUGGLE_COST = 2>>
-<<set setup.BERSERK_FACTOR = 0.5>>
-<<set setup.DEFEND_FACTOR = 0.5>>
-<<set setup.SHIELD_FACTOR = 0.3>>
 <<set setup.ITEM_COST = 2>> /* EN cost of using items */
 <<set setup.RESPAWN_HP = 1>> /* proportion of HP that respawned characters will revive at */
 <<set setup.THREAT_DECAY = 0.10>> /* threat decay per round */
@@ -98,7 +105,7 @@
 <<set setup.MIN_ACCURACY = 0>> /* minimum accuracy rate if reduced by e.g. evasion stat */
 <<set setup.CRITICAL_RATE = 0>> /* default critical hit rate in percent value, default 0% (no crits) */
 <<set setup.CRITICAL_MULTIPLIER = 1.5>> /* default multiplier for critical hit damage */
-<<set setup.CRISIS_FACTOR = (10/7)>> /* multiplied by dmg/maxhp to get crisis points per hit, at 1 target must take 100% max HP to fill Crisis */
+<<set setup.CRISIS_FACTOR = (10/7)>> /* multiplied by dmg/maxHP to get crisis points per hit, at 1 target must take 100% max HP to fill Crisis */
 <<set setup.DURATION_MAX = 9>> /* maximum turns a status effect can last */
 <<set setup.FIREFLY_FACTOR = 2>> /* targeting probability multiplier for characters with Firefly */
 <<set setup.WALLFLOWER_FACTOR = 0.5>> /* targeting probability multiplier for characters with Wallflower */
@@ -145,7 +152,7 @@ Easy: no smart targeting
 /* Determines whether the action list shows full action data or not. If true, hovering over an action will display a tooltip with the full action information. */
 <<set setup.COMPRESSED_ACTIONS = true>>
 
-/* Set whether to display the confirm phase in battle. This can be toggled by the user in the UI bar. */
+/* Set whether to display the Confirm Phase in battle. This can be toggled by the user in the UI bar. */
 <<set setup.SHOW_CONFIRM = true>>
 
 /* Set whether to automatically end the player's turn. This can be toggled by the user in the UI bar. */

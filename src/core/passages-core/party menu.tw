@@ -159,17 +159,17 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 	<div @class="'menuactor-hpmpblock'+_classMod">
 		<div class="hpmp">
 			HP: <span style="float:right">
-				<div class="hpmpvalue">_puppet.hp</div>/<div class="hpmpvalue">_puppet.maxhp</div>
+				<div class="hpmpvalue">_puppet.hp</div>/<div class="hpmpvalue">_puppet.maxHP</div>
 				</span>
 		</div>
-		<<showmeter _HPmeters[puppets().indexOf(_puppet)] `_puppet.hp / _puppet.maxhp`>>
+		<<showmeter _HPmeters[puppets().indexOf(_puppet)] `_puppet.hp / _puppet.maxHP`>>
 		<<if setup.SHOW_MP === true>>
 			<div class="hpmp">
 				MP: <span style="float:right">
-					<div class="hpmpvalue">_puppet.en</div>/<div class="hpmpvalue">_puppet.maxen</div>
+					<div class="hpmpvalue">_puppet.en</div>/<div class="hpmpvalue">_puppet.maxEN</div>
 					</span>
 			</div>
-			<<showmeter _MPmeters[puppets().indexOf(_puppet)] `_puppet.en / _puppet.maxen`>>
+			<<showmeter _MPmeters[puppets().indexOf(_puppet)] `_puppet.en / _puppet.maxEN`>>
 		<</if>>
 	</div>
 <<else>>

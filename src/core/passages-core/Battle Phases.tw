@@ -1,4 +1,4 @@
-:: Battle![nobr battle]
+:: Player Phase [nobr battle]
 <<set _destinationQueue = []>>
 <<specialcheck>>
 <<if $B.specialdeath.length > 0>>
@@ -13,18 +13,20 @@
 
 <<set $B.phase = "selection">>
 
-<<set _doneCount = 0>>
-<<for _puppet range puppets()>>
-	<<if (_puppet.isDone || _puppet.dead || _puppet.noact) && !_puppet.down>>
-		<<set _doneCount++>>
-	<</if>>
-<</for>>
-<<if !(_destinationQueue.length > 0 || _specialmsg)>>
-	<<if setup.AUTO_ENDTURN === true && _doneCount == puppets().length>>
-		<<endturn>>
-	<<elseif setup.TURN_EXCHANGE === true && $B.enemyTurns > 0>>
-		<<set $B.phase = null>>
-		<<goto "enemy phase">>
+<<if setup.TURN_MODEL.toLowerCase() === "free">>
+	<<set _doneCount = 0>>
+	<<for _puppet range puppets()>>
+		<<if (!_puppet.active || _puppet.dead || _puppet.noact) && !_puppet.down>>
+			<<set _doneCount++>>
+		<</if>>
+	<</for>>
+	<<if !(_destinationQueue.length > 0 || _specialmsg)>>
+		<<if setup.AUTO_ENDTURN === true && _doneCount == puppets().length>>
+			<<endRound>>
+		<<elseif setup.TURN_EXCHANGE === true && $B.enemyTurns > 0>>
+			<<set $B.phase = null>>
+			<<goto "Enemy Phase">>
+		<</if>>
 	<</if>>
 <</if>>
 
@@ -41,7 +43,7 @@
 </div>
 </span>
 
-:: actorlist[nobr]
+:: actorlist [nobr]
 /* setup */
 <<set _queue = new Set()>>
 <<set _enemiesClass = "actors enemies">>
@@ -101,7 +103,7 @@
 <</if>>
 </div>
 
-<<if $B.phase == "selection">>
+<<if setup.TURN_MODEL.toLowerCase() === "free" && $B.phase == "selection">>
 	<br/>
 	<div id="endturn">
 	<center>
@@ -119,19 +121,19 @@
 
 <</if>>
 
-:: End Turn Button[nobr]
+:: End Turn Button [nobr]
 <<if $B.enemyTurns == 0 || _doneCount == puppets().length>>
 	<<button "END TURN">>
-		<<endturn>>
+		<<endRound>>
 	<</button>>
 <<else>>
 	<<button "ADVANCE TURN">>
 		<<set $B.phase = null>>
-		<<goto "enemy phase">>
+		<<goto "Enemy Phase">>
 	<</button>>
 <</if>>
 
-:: Quit Button[nobr]
+:: Quit Button [nobr]
 <<link "Surrender and return to the Hub">><<replace "#quit">>Really quit? [[Yes|Defeat]] | <<link "No">><<replace "#quit">><<include "Quit Button">><</replace>><</link>><</replace>><</link>>
 
 :: commands[nobr]
@@ -147,7 +149,7 @@
 </div>
 </div>
 
-:: status[nobr]
+:: status [nobr]
 <<if def $B.actor && $B.actor !== null>>
 
 <div class="statusname">$B.actor.name</div>
@@ -242,7 +244,7 @@
 
 <</if>>
 
-:: actions[nobr battle]
+:: actions [nobr battle]
 <<set $B.phase = "actions">>
 <span class="hotkey monospace">
 [Q] = basic action
@@ -275,7 +277,7 @@
 <<actionListBattle>>
 </div>
 
-:: crisis actions[nobr]
+:: crisis actions [nobr]
 <<set $B.phase = "crisis">>
 <span class="hotkey monospace">
 [E] = <span id="regularActions">
@@ -295,7 +297,7 @@
 <<actionListBattle $subject "crisis">>
 </div>
 
-:: items[nobr battle]
+:: items [nobr battle]
 <<set $B.phase = "items">>
 
 <<if setup.COMPRESSED_ACTIONS === true>>
@@ -309,10 +311,10 @@
 <<itemList>>
 </div>
 
-:: action box default[nobr]
+:: action box default [nobr]
 <div class="actionBoxHelp">Hover over an action to see info</div>
 
-:: targeting phase[nobr battle]
+:: Targeting Phase [nobr battle]
 <<set $B.phase = "targeting">>
 <<replace "#actorlist">><<include "actorlist">><</replace>>
 <<if $B.targeting == "enemy">>
@@ -331,26 +333,19 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 </span>
 <</if>>
 
-:: confirm phase[nobr battle]
+:: Confirm Phase [nobr battle]
 <<replace "#actorlist">><</replace>>
 <<if setup.SHOW_CONFIRM>>
 <<set $B.phase = "confirm">>
 <<backbtn>>
 
-$subject.name will
-
-<<if $action.name is "rest">>
-	<b>rest</b> this turn.
-<<elseif $action.name is "struggle">>
-	spend <<print setup.STRUGGLE_COST>> Energy to get back on <<print subject().their>> feet.
-<<elseif $action.item is true>>
-	use <<switch $action.name.first().toLowerCase()>><<case 'a' 'e' 'i' 'o' 'u'>>an<<default>>a<</switch>> $action.name.
-<<elseif $action.name is "spare">>
-	accept the enemy's surrender.
-<<else>>
-	use <b>$action.name</b><<if $target isnot null>> on <b>$target.name</b><</if>>.
-<</if>>
- <span id="confirmLink">[[Confirm?|action phase]]</span><br />
+<<include "Confirm Text">>
+&nbsp;
+<span id="confirmLink">
+<<link "Confirm?">>
+	<<include "Action Handler">>
+<</link>>
+</span><br />
 <span class="preview">
 <<if $action.preview instanceof Function>>
 	<<print $action.preview()>>
@@ -361,8 +356,25 @@ $subject.name will
 <</if>>
 </span>
 <<else>>
-<<goto "action phase">>
+	<<include "Action Handler">>
 <</if>>
+
+:: Action Handler [nobr]
+<<switch setup.TURN_MODEL.toLowerCase()>>
+	<<case "timeline">>
+		<<if $action.waitTime > 0>>
+			<<set subject().ticks += $action.waitTime>>
+			<<set subject().delayedAction = new Action($action.name)>>
+			<<if $target instanceof Actor>>
+				<<set subject().target = $target.id>>
+			<</if>>
+			<<goto "Advance Timeline">>
+		<<else>>
+			<<goto "Action Phase">>
+		<</if>>
+	<<default>>
+		<<goto "Action Phase">>
+<</switch>>
 
 :: Battle Continue Button [nobr]
 <center id="continue">
@@ -370,22 +382,32 @@ $subject.name will
 	<<button "Return to Landing" "Start">><</button>>
 <<else>>
 	<<button "Continue...">>
+		/* If there are actions still in the queue, we must allow them to execute by re-running the Action Queue. */
 		<<if $B.actionQueue.length > 0>>
 			<<replace "#content" "t8n">>
 				<<include "Action Queue">>
 				<<timed 0s>><<include "animation activator">><</timed>>
 			<</replace>>
-		<<elseif passage() == "enemy phase" && ($B.enemyTurns > 0 || $B.turn == "enemy")>>
-		/* As long as there are enemy turns remaining (or the enemy's turn is active), continue refreshing the enemy phase until the enemies are all done. */
-			<<goto "enemy phase">>
+		/* Otherwise, the turn is over and we move the player to the next phase. */
 		<<else>>
-			<<goto "Battle!">>
+			<<switch setup.TURN_MODEL.toLowerCase()>>
+				<<case "free">>
+					<<if passage() == "Enemy Phase" && ($B.enemyTurns > 0 || $B.turn == "enemy")>>
+					/* As long as there are enemy turns remaining (or the enemy's turn is active), continue refreshing the Enemy Phase until the enemies are all done. */
+						<<goto "Enemy Phase">>
+					<<else>>
+						<<goto "Player Phase">>
+					<</if>>
+				<<case "timeline">>
+					<<goto "Advance Timeline">>
+			<</switch>>
 		<</if>>
 	<</button>>
 <</if>>
 </center>
 
-:: action phase[nobr battle]
+:: Action Phase [nobr battle]
+/* This phase is ONLY FOR PLAYERS. Enemy actions only run "action effects" (see below) */
 <<set $B.phase = null>>
 <<run $(document).trigger(":action-performed")>>
 <span id="status">
@@ -413,7 +435,17 @@ $subject.name will
 
 <<include "action effects">>
 
-/* Variable cleanup. Due to the way goto works, this will work even for silent actions. */
+/* mark turn done for Puppets */
+<<if $action.instant>>
+	/* do nothing */
+<<elseif $subject.inspired>>
+	<<set $subject.inspired = false>>
+<<else>>
+	<<set $subject.active = false>>
+	<<if setup.TURN_MODEL.toLowerCase() === "free">>
+		<<set $B.enemyTurns++>>
+	<</if>>
+<</if>>
 
 /* Remember this action for the last action shortcut: */
 <<if !$action.nosave && !$action.passagejump && !($action.name == "struggle" || $action.name == "spare")>>
@@ -423,49 +455,13 @@ $subject.name will
 	<</if>>
 <</if>>
 
-/* If action has limited uses, decrement that */
-<<if def $action.uses>>
-	<<run subject().actions.find(function(a) { return a && a.name == $action.name }).uses -= 1>>
-	/* Have to perform a search because $action is a clone of the original, reducing its uses will not reduce the uses of the action in the subject's actions list */
-<</if>>
-
-/* If action has a cooldown, reset it */
-<<if def $action.cd>>
-	<<run subject().actions.find(function(a) { return a && a.name == $action.name }).resetCD()>>
-	/* Have to perform a search because $action is a clone of the original */
-<</if>>
-
-/* If target was an enemy (i.e. an attacking skill was used), subject is marked as attacker. (This is for enemies that target the last puppet to attack them.) */
-<<if $target instanceof Enemy>>
-	<<set $B.attacker = $puppets.indexOf($subject)>>
-<</if>>
-
-/* isDone logic; checks for confounding factors */
-<<if $action.instant>>
-	/* do nothing */
-<<elseif $subject.inspired>>
-	<<set $subject.inspired = false>>
-<<else>>
-	<<set $subject.isDone = true>>
-	<<set $B.enemyTurns++>>
-<</if>>
-
-<<if $action.oncePerTurn>>
-	<<run subject().actions.find(function(a) { return a && a.name == $action.name }).used = true>>
-<</if>>
-
-<<if $B.surrender && def $action.name>>
-	<<print $enemy_to_spare.surrenderCheck()>>
-<</if>>
-
 <br/>
 <<include "Battle Continue Button">>
 
 </span>
 
-:: action effects[nobr]
-/* Where the action actually happens. Kept separate from action phase for modularity purposes. */
-<<include "battle interruptions">>
+:: preAction [nobr]
+/* Run in "action effects". Variable adjustments made before action execution. */
 
 /* Subtract action cost */
 <<if typeof(subject().en) == "number">>
@@ -480,17 +476,81 @@ $subject.name will
 	<<set $subject.en -= $action.cost>>
 <</if>>
 
+/* Subtract HP cost */
 <<if $action.hpcost > 0>>
 	<<set subject().hp -= $action.hpcost>>
 <</if>>
 
+/* Prime delayed action if one exists */
 <<if typeof($action.setupAction) == "string">>
-	<<set subject().delayedAction = new Action($action.setupAction); subject().delayCounter = $action.setupDelay>>
+	<<set subject().delayedAction = new Action($action.setupAction)>>
+	<<if setup.TURN_MODEL.toLowerCase() === "timeline">>
+		<<set subject().ticks += $action.waitTime>>
+	<<else>>
+		<<set subject().delayCounter = $action.setupDelay>>
+	<</if>>
 <</if>>
 
+/* For Enemies, set cooldown for the action */
 <<if subject() instanceof Enemy && Number.isInteger($action.enemyCD)>>
 	<<run subject().cd.set($action.nameCD,$action.enemyCD)>>
 <</if>>
+
+<<set $target = Hitlist.protectionCheck($target,$action.targetMod)>>
+/* see targeting.js for protectionCheck details */
+
+:: postAction [nobr]
+/* Run in "action effects". Variable adjustments made before action execution. */
+
+/* If action was a Crisis, reset crisis points */
+<<if $action.crisis && def subject().crisisPoints>>
+	<<set subject().crisisPoints = 0>>
+<</if>>
+
+/* If action was an item, decrement item stock and reset item flag */
+<<if subject() instanceof Puppet && $action instanceof ItemAction && !$action.free>>
+	<<run $inventory.decItem($action.name)>>
+<</if>>
+
+/* Set last element for e.g. Artist's attacks */
+<<if typeof($action.element) == 'string'>>
+	<<set subject().lastUsed = $action.element>>
+<</if>>
+
+<<if setup.TURN_MODEL.toLowerCase() === "timeline">>
+	<<include "Tick Formula">>
+<</if>>
+
+<<if subject() instanceof Puppet>>
+	/* If action has limited uses, decrement that */
+	<<if def $action.uses>>
+		<<run subject().actions.find(function(a) { return a && a.name == $action.name }).uses -= 1>>
+		/* Have to perform a search because $action is a clone of the original, reducing its uses will not reduce the uses of the action in the subject's actions list */
+	<</if>>
+
+	/* If action has a cooldown, reset it */
+	<<if def $action.cd>>
+		<<run subject().actions.find(function(a) { return a && a.name == $action.name }).resetCD()>>
+		/* Have to perform a search because $action is a clone of the original */
+	<</if>>
+
+	<<if $action.oncePerTurn>>
+		<<run subject().actions.find(function(a) { return a && a.name == $action.name }).used = true>>
+	<</if>>
+<</if>>
+
+/* Additional code goes here */
+<<include "postAction custom">>
+
+<<if $B.surrender && def $action.name>>
+	<<print $enemy_to_spare.surrenderCheck()>>
+<</if>>
+
+:: action effects [nobr]
+/* Where the action actually happens. Kept separate from Action Phase for modularity purposes. */
+<<include "battle interruptions">>
+
+<<include "preAction">>
 
 <<if $action.silent === true>>
 	<<if $action.act instanceof Function>>
@@ -498,7 +558,7 @@ $subject.name will
 	<<else>>
 		<<print $action.act>>
 	<</if>>
-		<<goto "Battle!">>
+		<<goto "Player Phase">>
 
 <<else>>
 
@@ -516,11 +576,53 @@ $subject.name will
 <<unset _targetingMsg>>
 <</if>>
 
-<<if $action.act instanceof Function>>
-<<print $action.act()>>
-<<else>>
-<<print $action.act>>
+<<if $action.noRedundant>>
+	<<set _list = [target().name]>>
+	<<if ($target.ownParty.length - deadCount($target.ownParty)) < $action.hits>>
+		<<set $action.hits = $target.ownParty.length - deadCount($target.ownParty)>>
+	<</if>>
 <</if>>
+<<for _hitNo = 1; _hitNo <= $action.hits; _hitNo++>>
+	<<set _hit = true>>
+	<<if $action.spread && _hitNo > 1>>
+		<<if $action.noRedundant && _list.length < $target.ownParty.length>>
+			<<set _keepGoing = true>>
+			<<for _keepGoing>>
+				<<set $target = Hitlist.targetEnemy($action.targetMod)>>
+				<<if _list.includes(target().name)>>
+					<<set _keepGoing = true>>
+				<<else>>
+					<<set _keepGoing = false; _list.push(target().name)>>
+				<</if>>
+			<</for>>
+		<<else>>
+			<<set $target = Hitlist.targetEnemy($action.targetMod)>>
+		<</if>>
+	<</if>>
+	<<accuracyCheck>>
+	<<if _hit === true>>
+		<<if !$action.targetMod.includes("unblockable")>>
+			<<shieldCheck>>
+		<</if>>
+		<<if _hit === true>>
+			<<if _hitNo === $action.hits && $action.finisher instanceof Function>>
+				<<print $action.finisher()>>
+			<<else>>
+				<<if $action.act instanceof Function>>
+					<<print $action.act()>>
+				<<else>>
+					<<print $action.act>>
+				<</if>>
+			<</if>>
+		<</if>>
+	<<else>>
+		<<print setup.MISS_MESSAGE>>
+		<<set target().battleMsg.push({shake: false, content:"MISS"})>>
+		<<if $action.onMiss instanceof Function>>
+			<<print $action.onMiss()>>
+		<</if>>
+	<</if>>
+<</for>>
 
 </div> /* close action effects div */
 <</if>>
@@ -588,29 +690,14 @@ $subject.name will
 
 <</if>> /* end silent check */
 
-/* If action was a Crisis, reset crisis points */
-<<if $action.crisis && def subject().crisisPoints>>
-	<<set subject().crisisPoints = 0>>
-<</if>>
-
-/* If action was an item, decrement item stock and reset item flag */
-<<if subject() instanceof Puppet && $action instanceof ItemAction && !$action.free>>
-	<<run $inventory.decItem($action.name)>>
-<</if>>
-
-/* Set last element for e.g. Artist's attacks */
-<<if typeof($action.element) == 'string'>>
-	<<set subject().lastUsed = $action.element>>
-<</if>>
-
-<<include "custom end of action effects">>
+<<include "postAction">>
 
 <<if def _OG>>
 	<<set $subject = _OG.subject; $target = _OG.target; $action = _OG.action>>
 	<<unset _OG>>
 <</if>>
 
-:: spell phase[nobr battle]
+:: Spell Phase [nobr battle]
 <<set $B.phase = "spell">>
 <<backbtn>>
 
@@ -631,21 +718,21 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 :: spell check[nobr]
 <<run $action._cost *= 1>>
 <<if ($action.cost < $B.mincost) or ($subject.en < $action.cost) or isNaN($action.cost)>>
-<<replace "#phase">><<include "spell phase">><</replace>>
+<<replace "#phase">><<include "Spell Phase">><</replace>>
 <<else>>
 
 <<run $action.spellMod()>>
 
-<<if $action.phase != "confirm phase">>
+<<if $action.phase != "Confirm Phase">>
 	<<set $B.targeting = $action.target>>
-	<<replace "#phase">><<include "targeting phase">><</replace>>
+	<<replace "#phase">><<include "Targeting Phase">><</replace>>
 <<else>>
 	<<replace "#phase">><<include $action.phase>><</replace>>
 <</if>>
 
 <</if>>
 
-:: end of round[nobr battle]
+:: RoundEnd [nobr battle]
 <span id="status">
 <<include status>>
 </span>
@@ -656,26 +743,26 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 /* If the turn reads "player", it's because the enemy round just finished. Run end of turn for enemies. */
 	/* If it's a new player turn, it's a "true" new round, so need to update and reset controller variables. */
 	<<set $B.turnCounter++; $B.embargo--; $B.enemyTurns = 0>>
-	<<endOfRound $enemies>>
+	<<endTurn $enemies>>
 	<<newTurn $puppets>>
 	<<if _message>>
-		<<button "Continue..." "Battle!">><</button>>
+		<<button "Continue..." "Player Phase">><</button>>
 	<<else>>
-		<<goto "Battle!">>
+		<<goto "Player Phase">>
 	<</if>>
 
 <<elseif $B.turn eq "enemy">>
 /* If the turn reads "enemy", the player turn just finished. Run end of turn for player. */
-	<<endOfRound $puppets>>
+	<<endTurn $puppets>>
 	<<if _message>>
-		<br/><<button "Continue..." "enemy phase">><</button>>
+		<br/><<button "Continue..." "Enemy Phase">><</button>>
 	<<else>>
-		<<goto "enemy phase">>
+		<<goto "Enemy Phase">>
 	<</if>>
 <</if>>
 </span>
 
-:: enemy phase[nobr battle]
+:: Enemy Phase [nobr battle]
 <<victorycheck>>
 
 <span id="status">
@@ -695,7 +782,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 	<<set _start = $B.enemyTurns>>
 
 	<<set _enemy = enemies().sort(function(a,b) { return a.priority - b.priority; })
-		.find(function (e) { return e && !e.isDone && (!e.dead || e.actionReady) })>>
+		.find(function (e) { return e && e.active && (!e.dead || e.actionReady) })>>
 	/* Returns the first active enemy that is not dead */
 	/* Exception is made for enemies that are dead but have a persistent delayed action */
 	<<if _enemy instanceof Enemy>>
@@ -703,10 +790,10 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 		<<set $subject = _enemy>>
 		<<set $target = null>>
 		<<set $action = null>>
-		<<if _enemy.isFirstAction>>
+		<<if setup.TURN_MODEL.toLowerCase() !== "timeline" && _enemy.isFirstAction>>
 			<<newTurn `[_enemy]`>>
 		<</if>>
-		<<set _enemy.isDone = true>>
+		<<set _enemy.active = false>>
 
 		<<if !_enemy.fakedeath || _enemy.actionReady>>
 
@@ -714,14 +801,11 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 				<<set _effect = _enemy.effects.sort(function(a,b) { return a.priority - b.priority; })
 					.find(function (e) { return e && e.holdAction instanceof Function })>>
 				/* Sorts effects by priority and returns the first hold effect (one with a holdAction) */
-				<<run console.assert(_effect !== undefined,`ERROR in enemy phase: ${_enemy.name} has noact but no hold effect`)>>
+				<<run console.assert(_effect !== undefined,`ERROR in Enemy Phase: ${_enemy.name} has noact but no hold effect`)>>
 				<<set $action = _effect.holdAction()>>
 				<<include "action effects">><br/>
 
 			<<else>>
-				<<if _enemy.isFirstAction>>
-					<<run _enemy.decCD()>>
-				<</if>>
 				<<set _counters = []>>
 				<<if _enemy.actionReady>>
 					<<set $action = _enemy.delayedAction>>
@@ -734,7 +818,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 					/* If a target hasn't already been selected, use the action's targetMethod (defaults to Hitlist methods) */
 					<<set $target = $action.targetMethod()>>
 				<</if>>
-				<<run console.assert($target instanceof Actor,"ERROR in enemy phase: no target found for "+$action.name+". Check the action's targeting logic for errors, e.g. all targets in Stasis when trying to apply an effect.")>>
+				<<run console.assert($target instanceof Actor,"ERROR in Enemy Phase: no target found for "+$action.name+". Check the action's targeting logic for errors, e.g. all targets in Stasis when trying to apply an effect.")>>
 				<<if !_targetfail>>
 					<<include "action effects">><br/>
 				<</if>>
@@ -746,10 +830,10 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 					<<run _enemy.noAttacks-->>
 				<</if>>
 				<<if _enemy.noAttacks > 0>>
-					/* If the enemy still has attacks remaining, their turn isn't done; set isDone to false so they will act again when this passage is re-called. */
-					<<set _enemy.isDone = false>>
-				<<else>>
-					/* Otherwise, the enemy is done; decrement their turn from the pool. */
+					/* If the enemy still has attacks remaining, their turn isn't done; set active to true again so they will act again when this passage is re-called. */
+					<<set _enemy.active = true>>
+				<<elseif setup.TURN_MODEL.toLowerCase() === "free">>
+					/* Otherwise, the enemy is done. If the model is free-action, we need to remove their turn from the pool. */
 					<<run $B.actionsThisTurn[_enemy.id] = []>>
 					<<run $B.enemyTurns -= 1>>
 				<</if>>
@@ -757,16 +841,21 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 
 		<<else>>
 		/* If faking death, enemies should do nothing, so just go to the next enemy.
-			All code outside this if such as newTurn and threat decay will still execute. */
-			<<goto "enemy phase">>
+			All code outside this if/else such as newTurn and threat decay will still execute. */
+			<<goto "Enemy Phase">>
 		<</if>> /* end fakedeath if */
 
 		<<run _enemy.decayThreat()>>
 
 	<<else>>
-	/* If this check failed, the enemy turn is done. Switch to player turn and run end of round. */
-		<<set $B.turn = "player">>
-		<<goto "end of round">>
+	/* If this check failed, the enemy turn is done. Advance the round. */
+		<<switch setup.TURN_MODEL.toLowerCase()>>
+			<<case "timeline">>
+				<<goto "Advance Timeline">>
+			<<case "free">>
+				<<set $B.turn = "player">>
+				<<goto "RoundEnd">>
+		<</switch>>
 	<</if>>
 
 	<<include "Battle Continue Button">>

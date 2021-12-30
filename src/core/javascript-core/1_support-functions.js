@@ -71,17 +71,97 @@ window.chainBattleGrid = chainBattleGrid;
 
 window.encounters = function encounters () {
 	return V().encounters;
+};
+
+const animationsOn = function () {
+	return (setup.ANIMATIONS === true && temporary().queue instanceof Set);
+};
+window.animationsOn = animationsOn;
+
+const StatName = function (statName) {
+	if (typeof(statName) === "string") {
+		switch (statName) {
+			case 'def':
+				statName = "Defense";
+				break;
+			case 'atk':
+				statName = "Attack";
+				break;
+			case 'spc':
+				statName = "Special";
+				break;
+			case 'spd':
+				statName = "Speed";
+				break;
+			case 'intv':
+				statName = "Initiative";
+				break;
+		}
+		return setup.STAT_NAMES[statName];
+	} else {
+		return setup.STAT_NAMES;
+	}
 }
+window.StatName = StatName;
+
+const StatMin = function (statName) {
+	if (typeof(statName) === "string") {
+		switch (statName) {
+			case 'def':
+				statName = "Defense";
+				break;
+			case 'atk':
+				statName = "Attack";
+				break;
+			case 'spc':
+				statName = "Special";
+				break;
+			case 'spd':
+				statName = "Speed";
+				break;
+			case 'intv':
+				statName = "Initiative";
+				break;
+		}
+		return setup.STAT_MIN[StatName(statName)];
+	} else {
+		return setup.STAT_MIN;
+	}
+}
+window.StatMin = StatName;
+
+const StatMax = function (statName) {
+	if (typeof(statName) === "string") {
+		switch (statName) {
+			case 'def':
+				statName = "Defense";
+				break;
+			case 'atk':
+				statName = "Attack";
+				break;
+			case 'spc':
+				statName = "Special";
+				break;
+			case 'spd':
+				statName = "Speed";
+				break;
+		}
+		return setup.STAT_MAX[StatName(statName)];
+	} else {
+		return setup.STAT_MAX;
+	}
+}
+window.StatMax = StatMax;
 
 Map.prototype.inc = function (key,amt) {
 	this.set(key,this.get(key)+amt);
 	return;
 };
 
-window.deadCount = function deadCount () {
+window.deadCount = function deadCount (party = puppets()) {
 	let count = 0;
-	puppets().forEach(function(puppet) {
-		if (puppet.dead) {
+	party.forEach(function(actor) {
+		if (actor.dead) {
 			count++;
 		}
 	});

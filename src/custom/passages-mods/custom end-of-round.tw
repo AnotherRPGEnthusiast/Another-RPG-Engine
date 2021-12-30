@@ -1,2 +1,2 @@
-:: custom endOfRound [nobr]
-/* Custom code to be run at the end of the endOfRound widget. */
+:: custom endTurn [nobr]
+/* Custom code to be run at the end of the endTurn widget. */

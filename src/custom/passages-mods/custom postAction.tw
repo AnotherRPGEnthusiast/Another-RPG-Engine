@@ -1,0 +1,10 @@
+:: postAction custom [nobr]
+/* Appended to the Action Phase, immediately after mark attacks and potential surrender failure. Include any custom code or messages you want here. */
+
+<<if !_markActive>>
+	<<markAttack>>
+<</if>>
+
+<<if !_counterActive>>
+	<<hunterCheck>>
+<</if>>

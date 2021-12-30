@@ -1,0 +1,6 @@
+:: manaBurnCalc [widget nobr]
+/* Formula for mana burns. */
+
+<<widget "manaBurnCalc">>
+  <<set $dmg = action().special>>
+<</widget>>

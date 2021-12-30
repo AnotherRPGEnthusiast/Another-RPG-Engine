@@ -57,6 +57,10 @@
   text-align: center;
 }
 
+.actor.inactive {
+	opacity: 0.5;
+}
+
 .selected {
   /* background-color: cyan; */
   border-color: blue;

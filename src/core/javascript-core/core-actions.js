@@ -175,7 +175,7 @@ setup.actionData = {
 	"Berserker": {
 		"cost": 0,
 		"instant": true,
-		"phase": "confirm phase",
+		"phase": "Confirm Phase",
 		"effects": ["Berserker"],
 		"info": function (action) {return `Increase damage dealt and received by ${setup.BERSERK_FACTOR*100}%.`},
 		"desc": `Fighter will throw down their shield and fight with reckless abandon, hitting harder but hurting harder, too.`,
@@ -188,7 +188,7 @@ setup.actionData = {
 	"Defender": {
 		"cost": 0,
 		"instant": true,
-		"phase": "confirm phase",
+		"phase": "Confirm Phase",
 		"effects": ["Defender"],
 		"info": function (action) {return `Reduce damage dealt and received by ${setup.DEFEND_FACTOR*100}%.`},
 		"desc": `Fighter will hunker behind their shield, blocking oncoming blows but making it harder for them to attack.`,
@@ -202,7 +202,7 @@ setup.actionData = {
 		"cost": 5,
 		"basic": true,
 		"dur": 4,
-		"phase": "confirm phase",
+		"phase": "Confirm Phase",
 		"effects": ["ailments"],
 		"info": function (action) {return `Cure user of all negative ailments and bestow <b>Chi Shield</b>, protecting them from future ailments for ${action.dur} turns.`},
 		"actText": function () {
@@ -240,7 +240,7 @@ setup.actionData = {
 
 	"Martyr": {
 		"cost":		2,
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"effects": ["Martyr"],
 		"info":	function (action) {return 	`Draw all direct attacks for this round.`},
 		"actText": null,
@@ -261,7 +261,7 @@ setup.actionData = {
 		"actText": function () {
 			return `${subject().name} draws two knives and rushes in, slashing with one hand and stabbing with the other.`;
 		},
-		"act": multihit({hits: 2}),
+		"act": justdmg(),
 		"preview": "multihit"
 	},
 
@@ -287,7 +287,7 @@ setup.actionData = {
 
 	"Reload": {
 		"cost":		2,
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"basic":	true,
 		"silent": true,
 		"noDefault": true,
@@ -384,7 +384,7 @@ setup.actionData = {
 	"Flurry": {
 		"cost":		5,
 		"weight":	0.55,
-		"hits": 3,
+		"hits": 4,
 		"dur":	1,
 		"effects": ["Off-Balance"],
 		"info":	function (action) {return 	`Attack thrice with a weight of ${action.weight} and inflict Off-Balance.`},
@@ -392,13 +392,14 @@ setup.actionData = {
 		"actText": function () {
 			return `With uncharacteristic unsubtlety, $subject.name charges forward, swinging their blades in a whirlwind of flashing steel. Not every swing connects, but it doesn't need to. The enemy stumbles and sways from the pressing assault, looking like they could be knocked over by a light breeze. $subject.name grins and leaps away, their job done.`;
 		},
-		"act": multihit({hits: 3},applyEffect("Off-Balance")),
+		"act": justdmg(),
+		"finisher": applyEffect("Off-Balance"),
 		"preview": "multihit"
 	},
 
 	"Sneak": {
 		"cost":		2,
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"dur":		3,
 		"effects": ["Hidden"],
 		"info":	function (action) {return 	`Become untargetable for ${action.dur} rounds.`},
@@ -423,7 +424,7 @@ setup.actionData = {
 		"cost":		2,
 		"special": 	4,
 		"noDefault": false,
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"info":	function (action) {return 	`Gain ${action.special} Energy (net ${action.special - action.cost}).`},
 		"desc":		`Magic is everywhere if you know where to look. A skilled mage can, with concentration, read the currents that flow through the world and pluck power from them like notes from a harp.`,
 		"actText": function () {
@@ -439,7 +440,7 @@ setup.actionData = {
 	"Sacrifice": {
 		"cost":		0,
 		"special":	2,
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"basic":	true,
 		"instant":	true,
 		"oncePerTurn": true,
@@ -460,7 +461,7 @@ setup.actionData = {
 	"Blast": {
 		"cost":		3,
 		"weight":	1,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			switch (action().cost){
 				case 10:
@@ -515,7 +516,7 @@ setup.actionData = {
 		"weight":	1,
 		"effweight":	0.6,
 		"effects": ["Burning"],
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			switch (action().cost){
 				case 10:
@@ -561,7 +562,7 @@ setup.actionData = {
 
 	"Favor": {
 		"cost":		1,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			switch (action().cost){
 				case 10:
@@ -583,7 +584,7 @@ setup.actionData = {
 		},
 		"preview": function () {
 			var note = "";
-			if ((target().en + V().action.cost) > target().maxen) {
+			if ((target().en + V().action.cost) > target().maxEN) {
 				note = ` ...but they already have $target.en Energy, so some of it will be wasted.`;
 			}
 			return `$subject.name will transfer $action.cost Energy to $target.name.`+note;
@@ -600,8 +601,8 @@ setup.actionData = {
 		},
 		"act": function () {
 			target().en += action().cost;
-			if (target().isDone == true){
-				target().isDone = false;
+			if (target().active == false){
+				target().active = true;
 			} else {
 				target().inspired = true;
 			}
@@ -612,7 +613,7 @@ setup.actionData = {
 
 	"Restoration": {
 		"cost":		3,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			switch (action().cost) {
 				case 10:
@@ -623,6 +624,7 @@ setup.actionData = {
 					this.removedEffects = 1+(action().cost-V().B.mincost);
 			}
 		},
+		"effects": "ailments",
 		"target":	"ally",
 		"info":	function (action) {return 	`Cure an ally of their most recent status ailment, plus one ailment per Energy invested.`},
 		"desc":		`People have always turned to mystics for cures to the world's ills and pains. To be blighted by an enemy you cannot see is terrifying and transcendent -- so surely, one must seek out a person that is the same. And so Mage gained the power of healing.`,
@@ -636,7 +638,7 @@ setup.actionData = {
 	"Salvation": {
 		"cost":		10,
 		"dur": 		3,
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"saveMod": "Restoration",
 		"actText": function () {
 			return `$subject.name spreads their hands wide, exultant. The curses afflicting your puppets condense into balls of dark energy before bursting in brilliant showers of light. The glow swirls around them, enveloping them in protective energy.`;
@@ -652,7 +654,7 @@ setup.actionData = {
 
 	"Neutralize": {
 		"cost":		3,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			switch (action().cost) {
 				case 10:
@@ -663,6 +665,7 @@ setup.actionData = {
 					this.removedEffects = 1+(action().cost-V().B.mincost);
 			}
 		},
+		"effects": "buffs",
 		"info":	function (action) {return 	`Strip an enemy of their most recent buff, plus one buff per Energy invested.`},
 		"desc": 	`To make magic, one must first know how to break it. Your enemies think themselves safe, shining and untouchable with all those enchantments? With a whisper, Mage can remind them just how mortal they really are.`,
 		"actText": function () {
@@ -675,7 +678,7 @@ setup.actionData = {
 	"Annulment": {
 		"cost":		10,
 		"weight": 	1,
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"saveMod": "Neutralize",
 		"actText": function () {
 			return `$subject.name places their hand out, palm up. With violent suddenness they close it into a fist. You suddenly see the enchantments aiding the enemy clear as day, little balls of energy orbiting them like little planets -- before they all shatter at once like a galaxy of dying stars.`;
@@ -701,7 +704,7 @@ setup.actionData = {
 								<</if>>\
 			<</for>>`;
 		},
-		"preview": `<<set _d = (setup.base + $subject.get(V().AttackStat))*$action.weight>>\
+		"preview": `<<set _d = (setup.base + $subject.get(StatName("atk")))*$action.weight>>\
 			A judgment upon those who would defy you. This will inflict _d base damage and strip all buffs from every enemy.`
 	},
 
@@ -709,7 +712,7 @@ setup.actionData = {
 		"cost":		5,
 		"effweight":	(10/45),
 		"effects": ["Blessing"],
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			switch (action().cost){
 				case 10:
@@ -756,7 +759,7 @@ setup.actionData = {
 		"cost":		10,
 		"effweight":	(10/45),
 		"dur":		5,
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"saveMod": "Blessing",
 		"actText": function () {
 			return `$subject.name raises their arms skyward. Their muscles strain and their fists suddenly clench, as if they are trying to grasp the Sun itself. Perhaps they succeed: their hands are suddenly effulgent with light, which they push down into the earth. The ground glows and your puppets are bathed in geysers of light, exultant.`;
@@ -771,7 +774,7 @@ setup.actionData = {
 		"cost":		5,
 		"effweight":	(1/3),
 		"effects": ["Curse"],
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			switch (action().cost){
 				case 10:
@@ -851,13 +854,13 @@ setup.actionData = {
 		"actText": function () {
 			return `${subject().name} draws an ornate dagger and slashes it twice across the enemy.`;
 		},
-		"act": multihit({hits: 2})
+		"act": justdmg()
 	},
 
 	"Shout": {
 		"cost":		3,
 		"weight":	1,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			action()._weight = action().weight + 0.25*(action().cost - V().B.mincost);
 		},
@@ -942,7 +945,7 @@ setup.actionData = {
 		"cost":		2,
 		"dur":		1,
 		"effects": ["Martyr"],
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"info":	function (action) {return 	`Draw all direct attacks for this round.`},
 		"desc":		`A bard thrives in the spotlight. This one knows just how to get it.`,
 		"actText": function () {
@@ -958,11 +961,10 @@ setup.actionData = {
 	"Shot": {
 		"cost":		1,
 		"weight":	0.45,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			if (action().cost > 1) {
 				action().hits = action().cost;
-				action().act = multihit();
 			}
 		},
 		"basic":	true,
@@ -986,7 +988,7 @@ setup.actionData = {
 	"Soulshot": {
 		"cost":		2,
 		"weight":	1,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			action()._weight = action().weight + 0.25*(action().cost - V().B.mincost);
 		},
@@ -1009,7 +1011,7 @@ setup.actionData = {
 	"SoulshotOLD": {
 		"cost":		3,
 		"weight":	0.8,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			action()._weight = action().weight + 0.1*(action().cost - V().B.mincost);
 		},
@@ -1125,7 +1127,7 @@ setup.actionData = {
 	"Hunter": {
 		"cost":		2,
 		"effects": ["Hunter"],
-		"phase":	"confirm phase",
+		"phase":	"Confirm Phase",
 		"info":	function (action) {return 	`Counterattack every enemy that attacks this round at a weight of ${setup.HUNTER_WEIGHT}.`},
 		"desc":		`Archer can forgo an attack to hone their senses to the peak of human perfection, straining their ears and eyes for the slightest movement. Any enemy that dares to come close will know their swift and vengeful wrath.`,
 		"actText": null,
@@ -1224,7 +1226,7 @@ setup.actionData = {
 		},
 		"preview": function () {
 			var str = `$subject.name will give action().hpcost HP to $target.name.`;
-			if ((target().hp + action().hpcost) > target().maxhp){
+			if ((target().hp + action().hpcost) > target().maxHP){
 				str += " ...but some of it will be wasted.";
 			}
 			return str;
@@ -1283,7 +1285,7 @@ setup.actionData = {
 		"weight":	0.75,
 		"effweight":	0.5,
 		"effects": ["Pain"],
-		"phase":		"targeting phase",
+		"phase":		"Targeting Phase",
 		"dur":		2,
 		"info":		function (action) {return `Inflict damage with a weight of ${action.weight} and inflict Pain for ${action.dur} rounds.`},
 		"desc":		`Witches are feared for their power over the unseen and unknowable. Cross them and they will strike you with an attack you can't even see: a terrible sickness of sores and blisters, unbearable in their pain.`,
@@ -1295,7 +1297,7 @@ setup.actionData = {
 
 	"Gift": {
 		"cost":		1,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			switch (action().cost) {
 				case 10:
@@ -1329,7 +1331,7 @@ setup.actionData = {
 	"Miracle": {
 		"cost": 10,
 		"special": 4,
-		"phase": "confirm phase",
+		"phase": "Confirm Phase",
 		"saveMod": "Gift",
 		"actText": function () {
 			return `$subject.name kneels down, spreading their hand over the earth, and whispers something you can't hear. There is a pause, and then shoots of green break through the ground. They grow and grow, joined by more and more as you watch. They burst into beautiful blooms of every possible color, vines and branches stretching out to gently rest against your puppets' shoulders like a motherly hand. Something in your vision shifts and the image suddenly disappears -- but the vibrancy of life remains. Your puppets are glowing with energy.`;
@@ -1345,7 +1347,7 @@ setup.actionData = {
 
 	"Cleanse": {
 		"cost":		2,
-		"phase":	"spell phase",
+		"phase":	"Spell Phase",
 		"spellMod": function () {
 			switch (action().cost){
 				case 10:
@@ -1358,6 +1360,7 @@ setup.actionData = {
 		},
 		"basic":	true,
 		"target":	"all",
+		"effects": "conditional",
 		"info":		`Removes the most recent ailment from an ally or the most recent buff from an enemy, plus 1 effect for every Energy point invested.`,
 		"desc":		`Wizards heal by forcing their will upon the world, demanding that it change for them. But there is an easier way, if you are willing to work with the currents of the world instead of against them. <b>Let</b> the magic depart, like water flowing downhill.`,
 		"actText": function () {
@@ -1369,7 +1372,7 @@ setup.actionData = {
 
 	"Renewal": {
 		"cost": 10,
-		"phase": "confirm phase",
+		"phase": "Confirm Phase",
 		"saveMod": "Cleanse",
 		"actText": function () {
 			return `$subject.name lifts their hands to the sky, palms up. There is an expectant, yearning silence in the air, and then you hear it: the crashing of waves. From out of nowhere comes an unstoppable tide of crystal-clear water, flowing over the whole arena. With every fighter it passes, you see motes of glowing magic dissolve into it, until the world before you looks like the clear night sky, bedazzled with lights. Then the flood passes, and the arena is back to normal. Everyone is completely dry.`;
@@ -1425,7 +1428,7 @@ setup.actionData = {
 
 	"Thaumastasis": {
 		"cost":		5,
-		"phase":	"targeting phase",
+		"phase":	"Targeting Phase",
 		"dur":		7,
 		"effects": ["Stasis"],
 		"target":	"ally",
@@ -1668,7 +1671,7 @@ setup.actionData = {
 		"crisis": true,
 		"dur": 3,
 		"effects": ["Invincible"],
-		"phase": "confirm phase",
+		"phase": "Confirm Phase",
 		"act": applyEffect("Invincible",{self:true}),
 		"actText": null,
 		"info": function (action) {return `User becomes immune to all damage for ${action.dur} rounds.`;},

@@ -1355,14 +1355,14 @@ How is this constructed, and what must you do if you wish to add, subtract, or m
 {{{
 (function() {
 	// Add metadata to saves.
-	Config.saves.onSave = function (save) {
+	Save.onSave.add(function (save) {
 		var active = save.state.history[save.state.index];
 		save.metadata = {
 			area	: active.variables.currentArea,
 			party	: active.variables.puppets.filter(function (p) { return p !== null; }),
 			money	: active.variables.currency
 		};
-	};
+	});
 
 	// Create save description from metadata.
 	function createSaveDescription(metadata) {
@@ -1422,14 +1422,14 @@ How is this constructed, and what must you do if you wish to add, subtract, or m
 }}}
 That is the purpose of this function, found in {{{saves-modifier.js}}} and authored by TheMadExile. There are three components here, but we will only cover the first two. (The third function, in a nutshell, alters the content of the HTML element holding the save description when the save menu is opened. You shouldn't need to touch it unless you really know what you're doing.)
 {{{
-Config.saves.onSave = function (save) {
-	var active = save.state.history[save.state.index];
-	save.metadata = {
-		area	: active.variables.currentArea,
-		party	: active.variables.puppets.filter(function (p) { return p !== null; }),
-		money	: active.variables.currency
-	};
-};
+	Save.onSave.add(function (save) {
+		var active = save.state.history[save.state.index];
+		save.metadata = {
+			area	: active.variables.currentArea,
+			party	: active.variables.puppets.filter(function (p) { return p !== null; }),
+			money	: active.variables.currency,
+		};
+	});
 }}}
 The first thing we need to do is record the data we want to use in our display. Fortunately, SugarCube saves have a property just for this kind of thing, called {{{metadata}}}. This function extracts the variables from the currently active moment of the story (so, the most current passage) and allows us to store them however we wish as properties of {{{metadata}}} when a save is made. By default, we store information for the area, the active party, and the player's money.
 {{{

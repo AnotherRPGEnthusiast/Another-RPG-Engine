@@ -66,17 +66,17 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 <<for _puppet range puppets()>>
 	<<set delete _puppet._displayHP>>
 	<<set _puppet.lastDmg = 0>>
-	<<set _puppet.isDone = false>>
+	<<set _puppet.active = true>>
 	<<set _puppet.inspired = false>>
 	<<set _puppet.lastAction = null>>
 	<<set _puppet.lastUsed = null>>
 	<<set _puppet.battleMsg = []>>
 	<<if _puppet.dead && $afterBattleRecovery.revive === true>>
 		<<set _puppet.dead = false>>
-		<<set _puppet.hp = Math.round(_puppet.maxhp * setup.RESPAWN_HP)>>
+		<<set _puppet.hp = Math.round(_puppet.maxHP * setup.RESPAWN_HP)>>
 	<</if>>
 	<<if !_puppet.dead && $afterBattleRecovery.hp === true>>
-		<<set _puppet.hp = _puppet.maxhp>>
+		<<set _puppet.hp = _puppet.maxHP>>
 	<</if>>
 	<<if $afterBattleRecovery.actions === true>>
 		<<for _action range _puppet.actions.filter(function (a) { return a.uses !== undefined })>>

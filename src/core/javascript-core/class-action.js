@@ -93,7 +93,7 @@ window.Action = class Action {
 	}
 
 	get preview() {
-		//	Function. Pre-calculates the effect of the action and provides the result to the player in the confirm phase.
+		//	Function. Pre-calculates the effect of the action and provides the result to the player in the Confirm Phase.
 
     var val = this._preview;
 		if (val === undefined) {
@@ -313,8 +313,39 @@ window.Action = class Action {
 		this._act = val;
 	}
 
+	get finisher() {
+		//	Function. Effect ocurring on the final hit of the action only. Optional.
+		//	Note that ONLY the finisher is triggered on the final hit.
+
+		var val = this._finisher;
+		if (val === undefined) {
+			val = this.actionData.finisher;
+		}
+		return val;
+  }
+
+	set finisher (val) {
+		console.assert(val instanceof Function,`ERROR in finisher setter: must be function`);
+		this._finisher = val;
+	}
+
+	get onMiss() {
+		//	Function. Executes if the action misses (but not if blocked by a shield effect). Optional.
+
+		var val = this._onMiss;
+		if (val === undefined) {
+			val = this.actionData.onMiss;
+		}
+		return val;
+  }
+
+	set onMiss (val) {
+		console.assert(val instanceof Function,`ERROR in onMiss setter: must be function`);
+		this._onMiss = val;
+	}
+
 	get spellMod() {
-		//	Function. Called in the spell phase to modify the action if the action's spell attribute is true.
+		//	Function. Called in the Spell Phase to modify the action if the action's spell attribute is true.
 
     return (this._spellMod || this.actionData.spellMod || "ERROR SPELLMOD UNDEFINED");
   }
@@ -323,7 +354,7 @@ window.Action = class Action {
 		//	String. Phase that the player will be forwarded to when the action is selected.
 		//	Must match one of the phase passage names EXACTLY.
 
-		return (this._phase || this.actionData.phase || "targeting phase");
+		return (this._phase || this.actionData.phase || "Targeting Phase");
 	}
 
 	get target () {
@@ -386,7 +417,26 @@ window.Action = class Action {
 	}
 
 	set weight (val) {
+		console.assert(typeof(val) === "number" && val >= 0,`ERROR in action weight setter: value was non-number or less than 0`)
 		this._weight = val;
+	}
+
+	get base () {
+		//	Integer. Flat bonus added to attack damage.
+
+		var val = this._base;
+		if (val === undefined) {
+			val = this.actionData.base;
+		}
+		if (val === undefined) {
+			val = 0;
+		}
+		return (val instanceof Function) ? val(this) : val;
+	}
+
+	set base (val) {
+		console.assert(Number.IsInteger(val) && val >= 0,`ERROR in action base setter: value was non-integer or less than 0`)
+		this._base = val;
 	}
 
 	get effweight () {
@@ -724,7 +774,7 @@ window.Action = class Action {
 	}
 
 	get silent () {
-		//	If true, action will not display any text during the action phase. Effects will still trigger, but the player will be auto-forwarded to the next phase.
+		//	If true, action will not display any text during the Action Phase. Effects will still trigger, but the player will be auto-forwarded to the next phase.
 
 		var val = this._silent;
 		if (val === undefined) {
@@ -923,7 +973,7 @@ window.Action = class Action {
 		if (val === undefined) {
 			val = this.actionData.setupDelay;
 		}
-		if (val === undefined || (!Number.isInteger(val) || val <= 0)) {
+		if (val === undefined || (!Number.isInteger(val) || val < 0)) {
 			val = 1;
 		}
 		return val;
@@ -973,6 +1023,45 @@ window.Action = class Action {
 		}
 		return val;
 	}
+
+	get waitTime () {
+		//	Whole integer. Number of ticks between selection and action execution.
+		//	For use with the timeline system.
+
+		var val = this._waitTime;
+		if (val === undefined) {
+			val = this.actionData.waitTime;
+		}
+		if (val === undefined) {
+			val = 0;
+		}
+		return val;
+	}
+
+	set waitTime (val) {
+		console.assert(Number.isInteger(val) && val >= 0,`ERROR: waitTime must be whole integer`);
+		this._waitTime = val;
+	}
+
+	set recoveryTime (val) {
+		console.assert(Number.isInteger(val) && val >= 0,`ERROR: recoveryTime must be whole integer`);
+		this._recoveryTime = val;
+	}
+
+	get recoveryTime () {
+		//	Whole integer. Number of ticks between action's execution and the user's next turn.
+		//	For use with the timeline system.
+
+		var val = this._recoveryTime;
+		if (val === undefined) {
+			val = this.actionData.recoveryTime;
+		}
+		if (val === undefined) {
+			val = 0;
+		}
+		return (val instanceof Function) ? val(this) : val;
+	}
+
 
 	get targetMethod () {
 		//	Function. Determines targeting logic for actions that must choose their own target, e.g. enemy and delayed actions.
@@ -1047,7 +1136,7 @@ window.Action = class Action {
 	}
 
 	get canTargetDead () {
-		//	Boolean. If true, action can target dead actors in the targeting phase.
+		//	Boolean. If true, action can target dead actors in the Targeting Phase.
 		//	(By default, dead characters cannot be targeted.)
 
 		var val = this._canTargetDead;
@@ -1072,6 +1161,42 @@ window.Action = class Action {
 		var val = this._noReflection;
 		if (val === undefined) {
 			val = this.actionData.noReflection;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
+	set spread (val) {
+		console.assert(typeof(val) === "boolean",`ERROR: spread must be Boolean`);
+		this._spread = val;
+	}
+
+	get spread () {
+		//	Boolean. If true and this action has multiple hits, a new target will be chosen every hit.
+
+		var val = this._spread;
+		if (val === undefined) {
+			val = this.actionData.spread;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
+	set noRedundant (val) {
+		console.assert(typeof(val) === "boolean",`ERROR: noRedundant must be Boolean`);
+		this._noRedundant = val;
+	}
+
+	get noRedundant () {
+		//	Boolean. If true and this action has multiple hits and this action is a spread action, this action may not target the same actor twice.
+
+		var val = this._noRedundant;
+		if (val === undefined) {
+			val = this.actionData.noRedundant;
 		}
 		if (val === undefined) {
 			val = false;
@@ -1221,46 +1346,64 @@ window.Action = class Action {
 
 	toString () {
 		//	Determines the default way actions are displayed in-game. Used with actionList.
-		var subj = subject() || temporary().display;
+	  var subj = subject() || temporary().display;
 
-    var text = `<span class="action-name">${this.name}</span>`;
-		if (typeof(this.cd) === "number" && this.cd !== 0) text += ` <span class="action-cooldown">[CD ${this.cd}]</span>`
-    if (this.uses !== undefined) text += ` <span class="action-uses">(Uses: ${this.uses}/${this.maxUses})</span>`;
-    var tags = "";
-    if (!V().inbattle && subj.defaultAction === this.name) tags += `<b>[Default]</b> `;
-    if (this.crisis) tags += `<b>[Crisis]</b> `;
-    if (this.basic) tags += `[Basic] `;
-    if (this.instant) tags += `[Instant] `;
-    if (this.passive) tags += `[Passive] `;
-    if (!this.passive && Number.isInteger(this.cost) &&
-              ((!this.crisis && this.cost >= 0) || (this.crisis && this.cost > 0))) {
-      tags += this.cost;
-      if (this.phase === "spell phase") tags += `+`;
-      tags += ` EN`;
-    }
-    text += `<span class="action-tags">${tags}</span>`;
-    var data = this;
-    text += `<div class="action-info">${data.info}</div>`;
-    if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
-    return text;
+	  var cRef = `<img src="${setup.ImagePath}/ui/waittime.png" />`;
+	  var rRef = `<img src="${setup.ImagePath}/ui/recovertime.png" />`;
+	  var eRef = `<img src="${setup.ImagePath}/ui/energy.png" />`;
+
+	  var text = `<span class="action-name">${this.name}</span>`;
+	  if (typeof(this.cd) === "number" && this.cd !== 0) text += ` <span class="action-cooldown">[CD ${this.cd}]</span>`
+	  if (this.uses !== undefined) text += ` <span class="action-uses">(Uses: ${this.uses}/${this.maxUses})</span>`;
+	  var tags = "";
+	  var cost = "";
+	  if (this.crisis) tags += `<span class="crisis-tag">Crisis</span>`;
+	  if (this.basic) tags += `<span>Basic</span>`;
+	  if (this.instant) tags += `<span>Instant</span>`;
+	  if (this.passive) tags += `<span>Passive</span>`;
+	  if (!V().inbattle && subj.defaultAction === this.name) tags += `<span><b>Default</b></span>`;
+	  text += `<div class="action-tags">${tags}</div>`;
+	  if (!this.passive && Number.isInteger(this.cost) && this.cost > 0) {
+	    cost += `${eRef} `;
+	    cost += this.cost;
+	    if (this.phase === "Spell Phase") cost += `+`;
+	    cost = `<div>${cost}</div>`;
+	  } else {
+	    cost = `<div><br/></div>`;
+	  }
+	  if (Number.isInteger(this.waitTime) && this.waitTime > 0) {
+	    cost += `<div>${cRef} ${this.waitTime}s</div>`;
+	  }
+	  if (Number.isInteger(this.recoveryTime) && this.recoveryTime > 0) {
+	    cost += `<div>${rRef} ${this.recoveryTime}s</div>`;
+	  }
+	  text += `<div class="action-cost">${cost}</div>`
+	  var data = this;
+	  text += `<div class="action-info">${data.info}</div>`;
+	  if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
+	  return text;
   }
 
 	printCompressed () {
 		//	Determines the display for compressed actions.
 		//	By default, this strips tags, info, and description.
 
-		var text = `<span class="action-name">${this.name}</span>`;
-		var tags = "";
-    if (this instanceof ItemAction && !this.crisis) {
-      tags += `x${inv().get(this.name).stock}`;
-    } else if (!this.passive && Number.isInteger(this.cost) &&
-              ((!this.crisis && this.cost >= 0) || (this.crisis && this.cost > 0))) {
-      tags += this.cost;
-      if (this.phase === "spell phase") tags += `+`;
-      tags += ` EN`;
-    }
-    text += `<span class="action-tags">${tags}</span>`;
-		return text;
+		var eRef = `<img src="${setup.ImagePath}/ui/energy.png" />`;
+
+	  var text = `<span class="action-name">${this.name}</span>`;
+	  var cost = "";
+	  if (this instanceof ItemAction && !this.crisis) {
+	    cost += `x${inv().get(this.name).stock}`;
+	  } else if (!this.passive && Number.isInteger(this.cost) && this.cost > 0) {
+	    cost += `${eRef} `;
+	    cost += this.cost;
+	    if (this.phase === "Spell Phase") cost += `+`;
+	    cost = `<div>${cost}</div>`;
+	  } else {
+	    cost = `<div><br/></div>`;
+	  }
+	  text += `<span class="action-cost">${cost}</span>`;
+	  return text;
 	}
 
 	clone () {

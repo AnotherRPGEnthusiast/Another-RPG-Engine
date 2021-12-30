@@ -215,7 +215,7 @@
 <<if $inbattle>>
 	<<switch $B.phase>>
 		<<case "selection">>
-			<<if def $puppets[_n] && $puppets[_n] !== null && !$puppets[_n].isDone && !$puppets[_n].dead>>
+			<<if def $puppets[_n] && $puppets[_n] !== null && $puppets[_n].active && !$puppets[_n].dead>>
 				<<set _id = "#pname"+_n+" a">>
 				<<trigger 'click' _id>>
 			<</if>>

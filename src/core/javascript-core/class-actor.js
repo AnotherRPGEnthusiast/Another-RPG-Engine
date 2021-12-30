@@ -33,8 +33,21 @@ window.Actor = class Actor {
 				}, this);
 			}
 
-			this._maxhp = new Stat(this.data.hp);
+			this._maxHP = new Stat(this.data.hp);
 			this._hp = this.data.hp;
+			if (Number.isInteger(this.data.en)) {
+				this._maxEN = new Stat(this.data.en);
+				this._en = this.data.en;
+			} else if (Number.isInteger(setup.MAX_EN)) {
+				this._maxEN = new Stat(setup.MAX_EN);
+				this._en = setup.MAX_EN;
+			}
+			this._ENregen = new Stat(0);
+			if (Number.isInteger(this.data.ENregen)) {
+				this._ENregen = new Stat(this.data.ENregen);
+			} else if (Number.isInteger(setup.EN_REGEN)) {
+				this._ENregen = new Stat(setup.EN_REGEN);
+			}
 			this.stats = {};
 			for (let [pn,v] of Object.entries(this.data.stats)) {
 				this.stats[pn] = new Stat(v);
@@ -49,12 +62,15 @@ window.Actor = class Actor {
 
 			this.battleMsg = [];	// container for popups that will appear during actions
 
+			this.active = true;
 			this.isDone = false;
 			this.dead = false;
 			this.protectedBy = null;
 			this.effects = [];
 			this.onHit = [];
 			this.lastDmg = 0;
+			this.noMinimum = [];	// stats that do not have minimums for this character; used by some effects
+			this.delayCounter = 0;
 
 			this.equipment = new Map();
 			var equipData;
@@ -75,7 +91,7 @@ window.Actor = class Actor {
 			console.log("ERROR: Actor "+name+" is not in database");
 			this.name = "INVALID ACTOR";
 			this._hp = 1;
-			this._maxhp = new Stat(1);
+			this._maxHP = new Stat(1);
 		}
 	}
 	}
@@ -206,6 +222,20 @@ window.Actor = class Actor {
 		return this.effects.find(function(eff) { return eff && eff.healBlock });
 	}
 
+	get interruptGuard () {
+		//	Checks if the Actor is under an effect that prevents action interruption
+		//	If interruptGuard effect found, will return a truthy value, else will return a falsy value.
+
+		return this.effects.find(function(eff) { return eff && eff.interruptGuard });
+	}
+
+	get noENregen () {
+		//	Checks if the Actor is under an effect that prevents EN regen
+		//	If noENregen effect found, will return a truthy value, else will return a falsy value.
+
+		return (typeof(this.en) === "number") && (this.dead || this.effects.find(function(eff) { return eff && eff.noENregen }));
+	}
+
 	get shieldHits () {
 		//	Returns the number of blocks from shield effects on this character, if they have any
 
@@ -221,24 +251,26 @@ window.Actor = class Actor {
 	}
 
 	set hp (amt) {
+		console.assert(Number.isInteger(amt),`ERROR in HP setter: HP must be integer`);
 		if (setup.ANIMATIONS && V().inbattle && this.displayHP === this.hp) {
 			this.displayHP = this.hp;
 		}
-		this._hp = Math.clamp(amt,0,this.maxhp);
+		this._hp = Math.clamp(amt,0,this.maxHP);
 	}
 
-	get maxhp () {
-		return this._maxhp.current;
+	get maxHP () {
+		return this._maxHP.current;
 	}
 
-	set maxhp (amt) {
-		this._maxhp.base = amt;
+	set maxHP (amt) {
+		console.assert(Number.isInteger(amt),`ERROR in max HP setter: max HP must be integer`);
+		this._maxHP.base = amt;
 	}
 
 	updateHP () {
 		// used for matching current HP to changes in max HP, e.g. HP-boosting equipment
 		if (!(this instanceof Puppet && V().lastingDamage)) {
-			this.hp = this.maxhp;
+			this.hp = this.maxHP;
 		}
 	}
 
@@ -267,7 +299,37 @@ window.Actor = class Actor {
 	}
 
 	set displayHP (amt) {
-		this._displayHP = Math.clamp(amt,0,this.maxhp);
+		this._displayHP = Math.clamp(amt,0,this.maxHP);
+	}
+
+	//  en: number; Energy points spent to use actions
+	get en () {
+		return this._en;
+	}
+
+	set en (amt) {
+		console.assert(Number.isInteger(amt),`ERROR in EN setter: EN must be integer`);
+		this._en = Math.clamp(amt,0,this.maxEN);
+	}
+
+	//  maxEN: number; maximum Energy points Puppet can hold
+	get maxEN () {
+		return this._maxEN.current;
+	}
+
+	set maxEN (amt) {
+		console.assert(Number.isInteger(amt),`ERROR in max en setter: max en must be integer`);
+		this._maxEN.base = amt;
+	}
+
+	//  ENregen: number; determines EN gain per turn
+	get ENregen () {
+		return this._ENregen.current;
+	}
+
+	set ENregen (amt) {
+		console.assert(Number.isInteger(amt),`ERROR in EN regen setter: EN regen must be integer`);
+		this._ENregen.base = amt;
 	}
 
 	get lastDmg () {
@@ -329,12 +391,12 @@ window.Actor = class Actor {
 	setHP (amt) {
 		// Relative setter: keeps HP within bounds on damage or heal
 		// DEPRECIATED as of version 1.12; use the hp setter instead.
-		this._hp = Math.clamp(this.hp + amt,0,this.maxhp);
+		this._hp = Math.clamp(this.hp + amt,0,this.maxHP);
 	}
 
 	setMaxHP (amt) {
 		// Absolute setter: for when both HP and max HP need to be set simultaneously, e.g. form changes.
-		this.maxhp = amt;
+		this.maxHP = amt;
 		this.hp = amt;
 	}
 
@@ -343,11 +405,12 @@ window.Actor = class Actor {
 		key = key.toUpperFirst();
 		if (this.stats[key]) {
 			let v = this.stats[key];
-			let n = v.current;
-			if (n < setup.MIN_STAT && !(key == "Defense" && this.forsaken)){
-				n = setup.MIN_STAT; // 0 in subtractive, 1 otherwise
-			}
-			return Math.round(n);
+			let n = Math.round(v.current);
+			let max = setup.STAT_MAX[key];
+			let min = setup.STAT_MIN[key];
+			return this.noMinimum.includes(key)
+				? Math.min(n,max)
+				: Math.clamp(n,min,max);
 		} else {
 			console.log("ERROR in stat getter, target does not have requested stat");
 			return 0;
@@ -804,12 +867,109 @@ window.Actor = class Actor {
 		}
 	}
 
+	// TIMELINE FUNCTIONS
+
+	get ticks () {
+		return this._ticks;
+	}
+
+	set ticks (num) {
+		console.assert(Number.isInteger(num),`ERROR in tick setter: non-integer passed`);
+		this._ticks = Math.max(0,num);
+	}
+
+	// BOOLEAN FLAGS
+
+	get immortal () {
+		var val = this._immortal;
+		if (val === undefined) {
+			val = this.data.immortal;
+		}
+		if (val === undefined) {
+			val = false
+		}
+		return val;
+	}
+
+	set immortal (flag) {
+		console.assert(typeof(flag) === "boolean",`ERROR in immortal setter: non-Boolean passed`);
+		this._immortal = flag;
+	}
+
+	get large () {
+		var val = this._large;
+		if (val === undefined) {
+			val = this.data.large;
+		}
+		if (val === undefined) {
+			val = false
+		}
+		return val;
+	}
+
+	set large (flag) {
+		console.assert(typeof(flag) === "boolean",`ERROR in large setter: non-Boolean passed`);
+		this._large = flag;
+	}
+
+	get maskhp () {
+		var val = this._maskhp;
+		if (val === undefined) {
+			val = this.data.maskhp;
+		}
+		if (val === undefined) {
+			val = false
+		}
+		return val;
+	}
+
+	set maskhp (flag) {
+		console.assert(typeof(flag) === "boolean",`ERROR in maskhp setter: non-Boolean passed`);
+		this._maskhp = flag;
+	}
+
+	get loadBearing () {
+		//	Boolean. If true, defeating this character will instantly end the encounter.
+
+		var val = this._loadBearing;
+		if (val === undefined) {
+			val = this.data.loadBearing;
+		}
+		if (val === undefined) {
+			val = false
+		}
+		return val;
+	}
+
+	set loadBearing (flag) {
+		console.assert(typeof(flag) === "boolean",`ERROR in loadBearing setter: non-Boolean passed`);
+		this._loadBearing = flag;
+	}
+
+	get uncounted () {
+		//	Boolean. If true, this character does not need to be defeated to end an encounter.
+
+		var val = this._uncounted;
+		if (val === undefined) {
+			val = this.data.uncounted;
+		}
+		if (val === undefined) {
+			val = false
+		}
+		return val;
+	}
+
+	set uncounted (flag) {
+		console.assert(typeof(flag) === "boolean",`ERROR in uncounted setter: non-Boolean passed`);
+		this._uncounted = flag;
+	}
+
 	// MISCELLANEOUS
 
 	regenHP () {
 		var gain = 0;
 		var mod;
-		gain += this.maxhp * this.HPregenPercent;
+		gain += this.maxHP * this.HPregenPercent;
 		gain += this.HPregenFlat;
 		if (gain === 0) {
 			return;
@@ -844,85 +1004,6 @@ window.Actor = class Actor {
 		return (this.delayedAction instanceof Action && this.delayCounter <= 0 &&
 			(this.delayedAction.delayPersist ||
 				!(this.dead || this.fakedeath || this.noact || this.uncontrollable)));
-	}
-
-	get immortal () {
-		var val = this._immortal;
-		if (val === undefined) {
-			val = this.data.immortal;
-		}
-		if (val === undefined) {
-			val = false
-		}
-		return val;
-	}
-
-	set immortal (flag) {
-		this._immortal = flag;
-	}
-
-	get large () {
-		var val = this._large;
-		if (val === undefined) {
-			val = this.data.large;
-		}
-		if (val === undefined) {
-			val = false
-		}
-		return val;
-	}
-
-	set large (flag) {
-		this._large = flag;
-	}
-
-	get maskhp () {
-		var val = this._maskhp;
-		if (val === undefined) {
-			val = this.data.maskhp;
-		}
-		if (val === undefined) {
-			val = false
-		}
-		return val;
-	}
-
-	set maskhp (flag) {
-		this._maskhp = flag;
-	}
-
-	get loadBearing () {
-		//	Boolean. If true, defeating this character will instantly end the encounter.
-
-		var val = this._loadBearing;
-		if (val === undefined) {
-			val = this.data.loadBearing;
-		}
-		if (val === undefined) {
-			val = false
-		}
-		return val;
-	}
-
-	set loadBearing (flag) {
-		this._loadBearing = flag;
-	}
-
-	get uncounted () {
-		//	Boolean. If true, this character does not need to be defeated to end an encounter.
-
-		var val = this._uncounted;
-		if (val === undefined) {
-			val = this.data.uncounted;
-		}
-		if (val === undefined) {
-			val = false
-		}
-		return val;
-	}
-
-	set uncounted (flag) {
-		this._uncounted = flag;
 	}
 
 	effectCount (type,mods) {

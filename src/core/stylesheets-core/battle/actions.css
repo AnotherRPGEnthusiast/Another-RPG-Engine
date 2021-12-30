@@ -44,13 +44,33 @@
 	border: solid 1px;
 	min-height: 100px;
 	width: 500px;
-	padding: 1em;
+	padding: 16px;
 	font-weight: normal;
 	max-height: 90vh;
 	overflow: hidden;
 	background-color: white;
 	color: black;
   z-index: 100;
+  -webkit-box-shadow: rgba(0,0,0,0.2) 0px 1px 3px;
+  -moz-box-shadow: rgba(0,0,0,0.2) 0px 1px 3px;
+  box-shadow: rgba(0,0,0,0.2) 0px 1px 3px;
+}
+
+.mockBox {
+  position: relative;
+	border: solid 1px;
+	min-height: 100px;
+	width: 500px;
+	padding: 16px;
+	font-weight: normal;
+	max-height: 90vh;
+	overflow: hidden;
+	background-color: white;
+	color: black;
+  z-index: 100;
+  -webkit-box-shadow: rgba(0,0,0,0.2) 0px 1px 3px;
+  -moz-box-shadow: rgba(0,0,0,0.2) 0px 1px 3px;
+  box-shadow: rgba(0,0,0,0.2) 0px 1px 3px;
 }
 
 .actionDisplay {
@@ -63,11 +83,43 @@
 
 .action-name, .item-name {
   font-weight: bold;
+  font-size: 125%;
 }
 
 .action-tags {
-  float: right;
+  position: absolute;
+  left:15px;
+  top:1px;
+  font-size:12px;
+  max-height:2em;
+  overflow: hidden;
+}
+
+.action-tags span {
+  border: 1px solid;
+  border-radius: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin-right: 5px;
+}
+
+.crisis-tag {
+  color: red;
+  font-weight: bold;
+}
+
+.action-cost {
+  display:inline-block;
+  float:right;
   margin-left: 0.5em;
+  font-size: 125%;
+}
+
+.action-cost img {
+  position: relative;
+  top: 3px;
+  height: 22px;
+  width: 22px;
 }
 
 .action-info {
@@ -81,7 +133,7 @@
 }
 
 .action-uses {
-	font-size: 11pt;
+	font-size: 12px;
 	margin-left: 1em;
 }
 

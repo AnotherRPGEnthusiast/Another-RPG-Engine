@@ -144,6 +144,7 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 * {{{cost}}} is a nonnegative integer; determines how many EN points the action consumes when used.
 * {{{hpcost}}} is a nonnegative integer; determines how many hit points the action consumes when used. Defaults to 0.
 * {{{weight}}} is a number; multiplied by the user's {{{Attack}}} stat when determining the damage of an attack. (See the damage formula for a deeper explanation.)
+* {{{base}}} is a positive integer; a flat value added to the action's damage output. (See the damage formula for a deeper explanation.)
 * {{{hits}}} is a positive integer; determines the number of attacks launched if this is a multi-hit action.
 * {{{effweight}}} is a number; determines the strength of any status effects applied by the action.
 * {{{dur}}} is an integer; determines the duration of any status effects applied by the action.

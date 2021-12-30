@@ -63,14 +63,8 @@ function findTarget (selector) {
 }
 
 
-var justdmg = function justdmg (extension,mods) {
+const justdmg = function justdmg (extension = "",mods = {}) {
 	var result = `<<echoDamage>>`;
-	if (mods === undefined) {
-		mods = {};
-	}
-	if (extension === undefined){
-		extension = "";
-	}
 	if (mods.counter === true) {
 		result = `<<set _counterActive = true>>`+result;
 	}
@@ -84,7 +78,7 @@ var justdmg = function justdmg (extension,mods) {
 	}
 };
 
-var heal = function heal (test,extension = "") {
+const heal = function heal (test,extension = "") {
 //	test = Boolean; set true to have the function return only the healing value. Useful if you just want to quickly calculate the result of the healing formula.
 
 	return function () {
@@ -105,91 +99,37 @@ var heal = function heal (test,extension = "") {
 	}
 };
 
-var multihit = function multihit (args = {},extension = "") {
-//	Function for simple multi-hit abilities that only inflict damage, e.g. Rogue's Knife. For more complex abilities, use multihitCustom.
+const manaBurn = function (args = {target: 't'},extension = "") {
+	//	Function for abilities that damage mana/energy/whatever.
+	//	Works with the manaBurn widget; see Damage and Formulas for details.
 
-//Args = object with following properties:
-//	hits = int. Number of attacks. If undefined or noninteger, will attempt to read the active action's hits property. If that fails, the function will return an error message.
+	//args = object with the following properties:
+	//	target = string. Defaults to 't'. See findTarget for details.
+	//	dmg = Boolean. If true, echoDamage will be appended to result.
 
-//	Note that extension is applied only after ALL hits are done.
+	if (args.target === undefined) {
+		args.target = 't';
+	}
 
 	return function () {
-		var final = "<<echoDamage>>";
-		if (!Number.isInteger(args.hits) && V().action !== null){
-			args.hits = action().hits;
-		}
-		console.assert(Number.isInteger(args.hits),"ERROR in multihit: hits must be an integer");
 
+		var [targetName,party] = findTarget(args.target);
+		content = "<<manaBurn>>";
+		var targ = State.getVar(targetName);
 		if (extension instanceof Function){
 			extension = extension();
 		}
-		for (let h = 1; h < args.hits; h++) {
-			final += "<<echoDamage>>";
-		}
-		return final+extension;
-	}
-};
 
-var multihitCustom = function multihitCustom (args = {content: `<<echoDamage>>`},finalExtension = "") {
-//	Function for more complex multi-hit abilities.
-
-//args = object with following properties:
-//	hits = int. Number of hits/applications of the content. If undefined or noninteger, will attempt to read the active action for a "_hits" property. If that fails, the function will return an error message.
-//	content = string. Full content of actions to occur with each hit. Defaults to echoDamage.
-//	spread = Boolean. If true, a new target will be chosen after each hit.
-//	noRedundant = Boolean. If true, spread attacks will be unable to hit the same character multiple times. Spread behavior will be applied automatically even if spread parameter is not true.
-//	finalExtension = string. SugarCube code to execute after ALL hits are completed. Only executes once.
-
-	return function () {
-		var content;
-		if (args.content === undefined){
-			content = `<<echoDamage>>`;
-		} else if (args.content instanceof Function){
-			content = content();
-		}
-		if (!Number.isInteger(args.hits) && V().action !== null){
-			args.hits = action().hits;
-		}
-		console.assert(Number.isInteger(args.hits),"ERROR in multihitCustom: hits must be an integer");
-		if (finalExtension instanceof Function){
-			finalExtension = finalExtension();
-		}
-		var str = "";
-		if (args.noRedundant === true) {
-			if ((puppets().length - deadCount()) < args.hits) {
-				args.hits = puppets().length - deadCount();
-			}
-			State.temporary.list = [];
-			temporary().list.push(target().name);
-			str += content;
-			var subloop;
-			for (let i = 1; i < args.hits; i++){
-				subloop = `<<set _keepGoing = true>>\
-						<<for _keepGoing>>\
-							<<set $target = Hitlist.targetEnemy($action.targetMods)>>\
-							<<if _list.includes(target().name)>>\
-								<<set _keepGoing = true>>\
-							<<else>>\
-								<<set _keepGoing = false; _list.push(target().name)>>`+
-								content+
-							`<</if>>\
-						<</for>>`;
-				str += subloop;
-			}
+		if (args.dmg === true) {
+			return `<<echoDamage>>`+content+extension;
 		} else {
-			str += content;
-			for (let i = 1; i < args.hits; i++){
-				if (args.spread === true) {
-					str += `<<set $target = Hitlist.targetEnemy($action.targetMods)>>`;
-				}
-				str += content;
-			}
+			return content+extension;
 		}
-		return str+finalExtension;
 	}
+
 };
 
-var applyEffect = function applyEffect (effects, args = {}, extension = "") {
+const applyEffect = function applyEffect (effects, args = {}, extension = "") {
 //	Function for abilities that apply status effects.
 
 //	effects is a string or array of strings corresponding to the effects to apply. Duration, power, and target will be the defaults. For more complex behavior, use Actor.addEffect directly.
@@ -229,13 +169,13 @@ var applyEffect = function applyEffect (effects, args = {}, extension = "") {
 	}
 };
 
-var removeEffect = function (args = {target: 't'}, extension = "") {
+const removeEffect = function (args = {target: 't'}, extension = "") {
 //	Function for removal of specific status effects, e.g. through the status cure items.
 //	By default, removes both buffs AND ailments if type is "all".
 
 //args = object with the following properties:
 //	effects = array. Name of effect(s) to remove.
-//		Include "all" to remove all effects; "buffs" to remove all buffs; "ailments" to remove all ailments
+//		Include "all" to remove all effects; "buffs" to remove all buffs; "ailments" to remove all ailments; "conditional" to remove buffs if used on enemy and ailments if used on ally
 //		defaults to the action's "effects" property, or "all" if that is undefined
 //	target = string. Defaults to target if unset. See findTarget for details.
 //	removeStack = Boolean. Set true to remove all instances of a stackable effect.
@@ -257,10 +197,14 @@ var removeEffect = function (args = {target: 't'}, extension = "") {
 		var perExtension = args.perExtension;
 		temporary().mods = args;	//will be passed to removeEffect execution in SugarCube
 
-		if (args.effects.includes("ailments")) {
+		var [targetName,party,mass] = findTarget(args.target);
+
+		if (args.effects.includes("conditional")) {
+			condition = `($subject.id.charAt(0) === ${targetName}.id.charAt(0) && !_effect.buff) || ($subject.id.charAt(0) !== ${targetName}.id.charAt(0) && _effect.buff)`;
+		} else if (args.effects.includes("ailments")) {
 			condition = `!_effect.buff`;
 		} else if (args.effects.includes("buffs")) {
-			condition = `!_effect.buff`;
+			condition = `_effect.buff`;
 		} else if (!args.effects.includes("all")) {
 			temporary().removedEffects = args.effects;
 			condition = `_removedEffects.includes(_effect.name)`;
@@ -278,7 +222,6 @@ var removeEffect = function (args = {target: 't'}, extension = "") {
 		}
 
 		var content = "";
-		var [targetName,party,mass] = findTarget(args.target);
 
 		content += `<<for _effect range ${targetName}.effects>>\
 		<<if ${condition}>>\
@@ -297,7 +240,7 @@ var removeEffect = function (args = {target: 't'}, extension = "") {
 	}
 };
 
-var massAttack = function massAttack (args = {target: 'enemies', content: `<<echoDamage>>`},extension = "") {
+const massAttack = function massAttack (args = {target: 'enemies', content: `<<echoDamage>>`},extension = "") {
 //	Function for attacks that target an entire party. By default, characters with the "guarded" flag are immune to this ability.
 //	The extension for this function is executed only once, after the loop.
 
@@ -393,7 +336,7 @@ var massAttack = function massAttack (args = {target: 'enemies', content: `<<ech
 	}
 };
 
-var splashDamage = function splashDamage (args = {target: 't', cut: 1}, extension) {
+const splashDamage = function splashDamage (args = {target: 't', cut: 1}, extension) {
 //	Function for "splash damage" attacks that inflict less damage to indirect targets, e.g. Grenade items.
 
 //args = object with the following properties:
@@ -429,7 +372,7 @@ var splashDamage = function splashDamage (args = {target: 't', cut: 1}, extensio
 	}
 };
 
-var removeLastEffect = function removeLastEffect (args) {
+const removeLastEffect = function removeLastEffect (args) {
 //	Removes the last buff of the target. For e.g. Off Your High Horse
 
 	return function () {
@@ -474,7 +417,7 @@ window.dispelCalc = function dispelCalc () {
 	}
 };
 
-var dispel = function () {
+const dispel = function () {
 	dispelCalc();
 	if ((target() instanceof Puppet) && (subject() instanceof Puppet)) {
 		V().B.heal_used = true;
@@ -485,7 +428,7 @@ var dispel = function () {
 	`<<set $removed_effects = []>>`;
 };
 
-var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
+const pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 //	Function for abilities that move characters in the battle grid. Only works if BATTLE_GRID is enabled. Will only move characters if the target square is unoccupied (null or dead).
 //	NOTE: BATTLE_GRID is set in StoryInit, which is excuted after this file. This means this function can only be called within a function if assigned as a property of an action.
 
@@ -577,9 +520,32 @@ var pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 	}
 };
 
+const cancelAction = function cancelAction (extension = "",mods = {}) {
+	var result = "";
+
+	return function () {
+		if (target().setupAction instanceof Action) {
+			if (target().interruptGuard) {
+				result = `${target().name}'s held ${target().their} concentration!`;
+			} else {
+				target().setupAction = null;
+				result = `${target().name}'s concentration was broken!`;
+			}
+		} else {
+			result = `${target().name} didn't have a prepared action!`
+		}
+		if (extension instanceof Function) {
+			result += extension();
+		} else {
+			result += extension;
+		}
+		return result;
+	}
+};
+
 // PREVIEW FUNCTIONS
 
-var Prev = {
+const Prev = {
 	dmg: `<<damageCalc>>This attack will inflict $dmg damage.`,
 	heal: function (args) {
 		return function() {
@@ -589,7 +555,7 @@ var Prev = {
 			var gain = heal(true);
 			if (args.revive) {
 				if (target().dead) {
-					gain = Math.round(target().maxhp * action().special);
+					gain = Math.round(target().maxHP * action().special);
 					return `$target.name will revive with ${gain} HP.`;
 				} else {
 					return `${target().name} isn't defeated, so this won't do anything.`;
@@ -775,16 +741,15 @@ var Prev = {
 	},
 	cutAttack: function (type) {
 		return function () {
-			return `<<set _d = (setup.base + $subject.get(V().SpecialStat))*$action.weight>>\
+			return `<<set _d = (setup.base + $subject.get(StatName("spc")))*$action.weight>>\
 			This will inflict _d base damage and ${type} status, divided across the current number of enemies.`;
 		}
 	}
 };
 
 
-
-var dmgandeffect = function dmgandeffect (target,type,dur) {
 // DEPRECIATED as of version 1.11. Use the dmg flag in applyEffect instead.
+const dmgandeffect = function dmgandeffect (target,type,dur) {
 
 			if (dur === undefined){
 				dur = "$action.dur";
@@ -795,4 +760,90 @@ var dmgandeffect = function dmgandeffect (target,type,dur) {
 				target = "$target";
 			}
 			return `<<echoDamage>><<addEffect ${target} "${type}" ${dur} $subject>>`;
+};
+
+// DEPRECIATED as of version 4.00. Multiple hit functionality now incorporated through action's "hits" property.
+const multihit = function multihit (args = {},extension = "") {
+//	Function for simple multi-hit abilities that only inflict damage, e.g. Rogue's Knife. For more complex abilities, use multihitCustom.
+
+//Args = object with following properties:
+//	hits = int. Number of attacks. If undefined or noninteger, will attempt to read the active action's hits property. If that fails, the function will return an error message.
+
+//	Note that extension is applied only after ALL hits are done.
+
+	return function () {
+		var final = "<<echoDamage>>";
+		if (!Number.isInteger(args.hits) && V().action !== null){
+			args.hits = action().hits;
+		}
+		console.assert(Number.isInteger(args.hits),"ERROR in multihit: hits must be an integer");
+
+		if (extension instanceof Function){
+			extension = extension();
+		}
+		for (let h = 1; h < args.hits; h++) {
+			final += "<<echoDamage>>";
+		}
+		return final+extension;
+	}
+};
+
+// DEPRECIATED as of version 4.00. Functionality handled by Battle Phases and the spread and noRedundant Action properties.
+const multihitCustom = function multihitCustom (args = {content: `<<echoDamage>>`},finalExtension = "") {
+//	Function for more complex multi-hit abilities.
+
+//args = object with following properties:
+//	hits = int. Number of hits/applications of the content. If undefined or noninteger, will attempt to read the active action for a "_hits" property. If that fails, the function will return an error message.
+//	content = string. Full content of actions to occur with each hit. Defaults to echoDamage.
+//	spread = Boolean. If true, a new target will be chosen after each hit.
+//	noRedundant = Boolean. If true, spread attacks will be unable to hit the same character multiple times. Spread behavior will be applied automatically even if spread parameter is not true.
+//	finalExtension = string. SugarCube code to execute after ALL hits are completed. Only executes once.
+
+	return function () {
+		var content;
+		if (args.content === undefined){
+			content = `<<echoDamage>>`;
+		} else if (args.content instanceof Function){
+			content = content();
+		}
+		if (!Number.isInteger(args.hits) && V().action !== null){
+			args.hits = action().hits;
+		}
+		console.assert(Number.isInteger(args.hits),"ERROR in multihitCustom: hits must be an integer");
+		if (finalExtension instanceof Function){
+			finalExtension = finalExtension();
+		}
+		var str = "";
+		if (args.noRedundant === true) {
+			if ((puppets().length - deadCount()) < args.hits) {
+				args.hits = puppets().length - deadCount();
+			}
+			State.temporary.list = [];
+			temporary().list.push(target().name);
+			str += content;
+			var subloop;
+			for (let i = 1; i < args.hits; i++){
+				subloop = `<<set _keepGoing = true>>\
+						<<for _keepGoing>>\
+							<<set $target = Hitlist.targetEnemy($action.targetMod)>>\
+							<<if _list.includes(target().name)>>\
+								<<set _keepGoing = true>>\
+							<<else>>\
+								<<set _keepGoing = false; _list.push(target().name)>>`+
+								content+
+							`<</if>>\
+						<</for>>`;
+				str += subloop;
+			}
+		} else {
+			str += content;
+			for (let i = 1; i < args.hits; i++){
+				if (args.spread === true) {
+					str += `<<set $target = Hitlist.targetEnemy($action.targetMod)>>`;
+				}
+				str += content;
+			}
+		}
+		return str+finalExtension;
+	}
 };

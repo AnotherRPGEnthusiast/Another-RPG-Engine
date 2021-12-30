@@ -16,7 +16,7 @@
 	<<set _idA = "#dmgBox"+_i>>
 	<<capture _idA, _p>>
     <<for _x, _m range _p.battleMsg>>
-			<<if passage() == "Battle!">>
+			<<if passage() == "Player Phase">>
 				<<if _p instanceof Enemy>>
 					<<set _idx = $enemies.findIndex(function (a) { return _p.id == a.id; })>>
 				<<elseif _p instanceof Puppet>>
@@ -55,6 +55,8 @@
 <<switch _m.type>>
 	<<case "damage">>
 		<<set _p.displayHP -= _m.content>>
+	<<case "mana damage">>
+		<<run $(_idB).addClass("stat-raised")>>
 	<<case "healing">>
 		<<run $(_idB).addClass("green")>>
 		<<set _p.displayHP += _m.content>>

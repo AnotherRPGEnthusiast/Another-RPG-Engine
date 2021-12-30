@@ -167,18 +167,7 @@ window.Hitlist = class Hitlist extends Array {
 		console.assert(mods instanceof Array,`ERROR in returnTarget: mods must be array`);
 
 		if (!(mods.includes("ignore protection") || mods.includes("ally")) && target.protectedBy) {
-			var party;
-			switch (target.id.charAt(0)) {
-				case "p":
-					party = V().puppets;
-					break;
-				case "e":
-					party = V().enemies;
-					break;
-				default:
-					party = V().puppets; console.log("ERROR in protectionCheck: invalid ID type");
-			}
-			var newTarget = party.find(function(t) { return t && t.id === target.protectedBy; });
+			var newTarget = target.ownParty.find(function(t) { return t && t.id === target.protectedBy; });
 			temporary().targetingMsg = newTarget.name+" took the hit for "+target.name+"!\n";
 			return newTarget;
 		} else {
@@ -393,17 +382,17 @@ Hitlist.prototype.addFactors = function (mods) {
 			t.chance += 1;
 		} else if (mods.includes("most damage") && t.target.lastDmg >= mostDamaging) {
 			t.chance += 1;
-		} else if (mods.includes("most DEF") && t.target.get(V().DefenseStat) >= highestStat[V().DefenseStat]) {
+		} else if (mods.includes("most DEF") && t.target.get(StatName("def")) >= highestStat[StatName("def")]) {
 			t.chance += 1;
-		} else if (mods.includes("least DEF") && t.target.get(V().DefenseStat) >= lowestStat[V().DefenseStat]) {
+		} else if (mods.includes("least DEF") && t.target.get(StatName("def")) >= lowestStat[StatName("def")]) {
 			t.chance += 1;
-		} else if (mods.includes("most ATK") && t.target.get(V().AttackStat) >= highestStat[V().AttackStat]) {
+		} else if (mods.includes("most ATK") && t.target.get(StatName("atk")) >= highestStat[StatName("atk")]) {
 			t.chance += 1;
-		} else if (mods.includes("least ATK") && t.target.get(V().AttackStat) >= lowestStat[V().AttackStat]) {
+		} else if (mods.includes("least ATK") && t.target.get(StatName("atk")) >= lowestStat[StatName("atk")]) {
 			t.chance += 1;
-		} else if (mods.includes("most SPC") && t.target.get(V().SpecialStat) >= highestStat[V().SpecialStat]) {
+		} else if (mods.includes("most SPC") && t.target.get(StatName("spc")) >= highestStat[StatName("spc")]) {
 			t.chance += 1;
-		} else if (mods.includes("least SPC") && t.target.get(V().SpecialStat) >= lowestStat[V().SpecialStat]) {
+		} else if (mods.includes("least SPC") && t.target.get(StatName("spc")) >= lowestStat[StatName("spc")]) {
 			t.chance += 1;
 		} else if (mods.includes("no effect") && !t.target.effects.includesAny(action().effects)) {
 			t.chance += 1;
@@ -421,27 +410,27 @@ Hitlist.prototype.addFactors = function (mods) {
 				t.chance += 1;
 			}
 			// If this attack pierces defense, preferentially target the character with the highest defense.
-			if (mods.includes("pierce") && t.target.get(V().DefenseStat) >= highestStat[V().DefenseStat]) {
+			if (mods.includes("pierce") && t.target.get(StatName("def")) >= highestStat[StatName("def")]) {
 				t.chance += 1;
 			}
 			// Otherwise, preferentially target characters with a DEF debuff to get the most out of the attack.
 			// To exclude this clause, pass "ignore vulnerable"; such as for non-damaging moves
-			else if (!mods.includes("ignore vulnerable") && t.target.get(V().DefenseStat) < t.target.getBase(V().DefenseStat)) {
+			else if (!mods.includes("ignore vulnerable") && t.target.get(StatName("def")) < t.target.getBase(StatName("def"))) {
 				t.chance += 1;
 			}
 			// Preferentially target more injured characters.
 			// To exclude this clause, pass "ignore vulnerable"; such as for non-damaging moves
 			// To weight this even higher, pass "ruthless"; multiplies this factor by RUTHLESS_FACTOR.
 			if (mods.includes("ruthless")) {
-				t.chance += (1-((t.target.hp)/t.target.maxhp))*setup.RUTHLESS_FACTOR;
+				t.chance += (1-((t.target.hp)/t.target.maxHP))*setup.RUTHLESS_FACTOR;
 			}
 			else if (!mods.includes("ignore vulnerable")) {
-				t.chance += (1-((t.target.hp)/t.target.maxhp));
+				t.chance += (1-((t.target.hp)/t.target.maxHP));
 			}
 			// If this attack applies a debuff, preferentially target characters with a SPC debuff,
 			// and ignore those with protective effects.
 			if (mods.includes("effect") && !(t.target.chi || t.target.stasis)
-				&& t.target.get(V().SpecialStat) < t.target.getBase(V().SpecialStat)) {
+				&& t.target.get(StatName("spc")) < t.target.getBase(StatName("spc"))) {
 					t.chance += 1;
 			}
 		}
@@ -461,7 +450,7 @@ Hitlist.prototype.allyFactors = function (mods) {
 
 	if (mods.includes("pragmatic")) {
 		for (let t of this) {
-			if (t.target.hp < (t.target.maxhp * Math.clamp(setup.PRAGMATIC_CUTOFF,0,1))) {
+			if (t.target.hp < (t.target.maxHP * Math.clamp(setup.PRAGMATIC_CUTOFF,0,1))) {
 				t.chance = 0;
 			}
 		}
@@ -483,7 +472,7 @@ Hitlist.prototype.allyFactors = function (mods) {
 			t.chance = 0;
 		} else {
 			if (mods.includes("vulnerable")) {
-				t.chance += (1-((t.target.hp)/t.target.maxhp))*2;
+				t.chance += (1-((t.target.hp)/t.target.maxHP))*2;
 			}
 			if (mods.includes("ailments")) {
 				t.chance += t.target.effectCount("ailment",["threat","nosticky"])
