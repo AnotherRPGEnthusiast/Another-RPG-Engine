@@ -1287,7 +1287,7 @@ Encounters are defined in the {{{database-encounters.tw}}} file in the {{{passag
 
 There is another widget defined here, {{{<<populateEnemies>>}}}, to make your work a little easier. Instead of having to write {{{new Enemy}}} for every single enemy, just pass their names to {{{<<populateEnemies>>}}} and it'll automate that for you. Note that you will have to wrap the argument in backticks {{{`}}} for it to be read correctly.
 
-To start an encounter in-game, you can set the {{{$scenario}}} manually and make a direct link to the "Preparation" passage, or you can use the {{{<<fight>>}}} widget.
+To start an encounter in-game, you can set the {{{$scenario}}} manually and make a direct link to the "Battle Preparation" passage, or you can use the {{{<<fight>>}}} widget.
 {{{
 <<widget "fight">>
 <<if $args.length > 0>>
@@ -1296,7 +1296,7 @@ To start an encounter in-game, you can set the {{{$scenario}}} manually and make
 	<<else>>
 		<<set _text = "BATTLE">>
 	<</if>>
-<center><<button _text "Preparation">><<set $scenario = $args[0]>><</button>></center>
+<center><<button _text "Battle Preparation">><<set $scenario = $args[0]>><</button>></center>
 <<else>>
 	<b>ERROR in fight: no arguments</b>
 <</if>>

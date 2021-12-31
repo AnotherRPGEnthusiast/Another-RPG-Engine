@@ -1310,7 +1310,7 @@ You can edit the {{{.css}}} attribute here to add any CSS formatting you wish to
 <h3 id="battlestyle">Special Aesthetics for Battles</h3>
 There may be instances where you want certain battles to look different. Maybe the player is fighting a scary enemy in a dark room, and you find that the engine's default bright white background undercuts the atmosphere.
 
-There is functionality for this in the "Preparation" passage, called before all battles:
+There is functionality for this in the "Battle Preparation" passage, called before all battles:
 {{{
 <<callEncounter $scenario>>
 <<if typeof($B.style) == 'string'>>
@@ -1683,7 +1683,7 @@ For actions that don't generate any animations, the animation activator won't be
 	<<goto "Battle!">>
 <</if>>
 }}}
-The "Preparation" passage, shown here, is responsible for cleaning up variables and getting everything ready for the battle. You will want to have something like this to make sure every battle starts the way you want it to, without any loose flags or variables messing things up. The most important thing here is the initialization of the {{{$B}}} variable, which stands for "battle controller". {{{$B}}} will be used to handle every flag and variable we need to keep track of during battle. Tying these variables to a single object makes keeping track of them easy -- if we want to clear and reset our variables (such as when starting a new battle), we can just create a brand new {{{$B}}}, instead of having to keep track of whether or not we've reset every single variable that can come up during battle.
+The "Battle Preparation" passage, shown here, is responsible for cleaning up variables and getting everything ready for the battle. You will want to have something like this to make sure every battle starts the way you want it to, without any loose flags or variables messing things up. The most important thing here is the initialization of the {{{$B}}} variable, which stands for "battle controller". {{{$B}}} will be used to handle every flag and variable we need to keep track of during battle. Tying these variables to a single object makes keeping track of them easy -- if we want to clear and reset our variables (such as when starting a new battle), we can just create a brand new {{{$B}}}, instead of having to keep track of whether or not we've reset every single variable that can come up during battle.
 
 You should pay attention to the {{{<<callEncounter>>}}} line, immediately after the initialization of {{{$B}}}. This references a widget defined in the "Database: Encounters" passage.
 {{{
@@ -1736,7 +1736,7 @@ By default, I've set the health bars to have no color transition, no animation, 
 After this, custom preparation code is called. In the default engine, this is just the {{{<<restock>>}}} widget, which replenishes items.
 
 <h2 id="skeleton">How the battle passages work</h2>
-The battle screen that the player sees isn't just a single passage. It's many smaller passages (including the "Preparation" passage you just read about) all linked together and called at various points. You can see all of them in the "Battle Phases" file in the "passages" folder. You can open that file to follow along.
+The battle screen that the player sees isn't just a single passage. It's many smaller passages (including the "Battle Preparation" passage you just read about) all linked together and called at various points. You can see all of them in the "Battle Phases" file in the "passages" folder. You can open that file to follow along.
 
 The file begins by defining a lot of the widgets used in battle. We'll return to these; you can skip over them for now.
 

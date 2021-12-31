@@ -81,7 +81,7 @@
 :: Defeat
 You lost! You can add a special defeat message here.
 
->[[Retry this battle|Preparation]]
+>[[Retry this battle|Battle Preparation]]
 >[[Return|Start]]
 
 <<endofbattle>>

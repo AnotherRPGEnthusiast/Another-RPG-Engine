@@ -9,7 +9,7 @@
 <b>Changes introduced in this version are incompatible with previous versions</b> due to changing the names of essential passages and variables. Apologies, but these changes will vastly improve usability going forward.
 <ul>
 <li>The <code>isDone</code> property has been renamed to <code>active</code> <b>and its logic has been flipped</b>, e.g. situations that would have set <code>isDone</code> to <code>true</code> now set <code>active</code> to false. Apologies for any problems this causes, but it will make code clearer going forward for other initiative models.</li>
-<li>Battle passages have been renamed for greater clarity and consistency. "Battle!" is now "Player Phase", "end of round" is now "RoundEnd", and all phases are now capitalized.</li>
+<li>Battle passages have been renamed for greater clarity and consistency. "Battle!" is now "Player Phase", "Preparation" is now "Battle Preparation", "end of round" is now "RoundEnd", and all phases are now capitalized.</li>
 <li>The <code>endOfRound</code> widget has been renamed to "endTurn" for consistency with <code>newTurn</code>. The existing <code>endturn</code> widget has been renamed to "endRound" for clarity.</li>
 <li>Code used in <code>newTurn</code> and <code>endTurn</code> have been compartmentalized into additional widgets to reduce code redundancy. This will also allow you to more easily implement these features in other contexts.</li>
 <li>Characters will no longer regenerate HP if they are under a <code>healBlock</code> effect.</li>
@@ -690,7 +690,7 @@
 <li>Added a new getter for actions: <code>displayname</code>. This is used for when you want the name that displays in the action list to be different than the name given in the code. (Thanks to A Friendly Irin for providing this.)</li>
 <li>The mute button now uses icons rather than the word "MUTE". These icons were taken from <a href="https://material.io/" target="_blank">Material Design</a>.</li>
 <li>Battle styling is now tied to a string variable, <code>B.style</code>, rather than Booleans. If you enter a string for <code>B.style</code>, the page will gain that class.</li>
-<li>Battle styling code has now been moved to the main "Preparation" passage.</li>
+<li>Battle styling code has now been moved to the main "Battle Preparation" passage.</li>
 <li><code>justeffect</code> and <code>dmgandeffect</code> have been condensed into one function, <code>applyEffect</code>. The code has been reworked to more easily accommodate applying multiple effects at once: just pass an array of names to the "type" parameter instead of a single string. Additionally, a new parameter has been added that can be flagged to make the applied effects pierce tolerance.</li>
 <li>New action function: <b><code>multihitCustom</code></b>. This function makes it easier to implement more complex multi-hit abilities. Look at the action functions code to see it in full.</li>
 <li>New helper function: <b><code>deadCount</code></b>. This returns the number of puppets currently flagged dead. It is located in 0_config.js.</li>
@@ -879,7 +879,7 @@
 <h3>Version 1.04</h3>-beta
 <ul>
 <li>Retweaked the handling for subjects and targets <i>again</i>. They now get the ID value from the current subject/target object itself instead of storing it as a separate variable, which removes the need to call <code>getActor()</code> manually.</li>
-<li>The battle passages have been tweaked to support additional modularity. Code for altering the actor list in special cases is now outsourced to another passage that can be edited separately from the main display code; the "Preparation" passage now calls to a separate passage for custom modifications; the Effect Adder outsources protection checks to a separate passage; and you can now set which status screens display in StoryInit.</li>
+<li>The battle passages have been tweaked to support additional modularity. Code for altering the actor list in special cases is now outsourced to another passage that can be edited separately from the main display code; the "Battle Preparation" passage now calls to a separate passage for custom modifications; the Effect Adder outsources protection checks to a separate passage; and you can now set which status screens display in StoryInit.</li>
 <li>Targeting AI now includes handlers for bypassing untargetable and protection clauses. Simply pass "ignore untargetable" or "ignore protection" as arguments to the widget, and those characters will be made viable targets.</li>
 <li>Spread attacks now bypass untargetability, as in <i>Bonfire</i>.</li>
 <li>The effect adder should now correctly identify when it's passed a number for effect power.</li>

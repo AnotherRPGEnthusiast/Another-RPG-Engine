@@ -1,5 +1,5 @@
 :: battle grid setup [nobr]
-/* Initializes the battle grid. Run as part of the "Preparation" passage.
+/* Initializes the battle grid. Run as part of the "Battle Preparation" passage.
   To customize, overwrite with a passage of the same name. */
 
 <<set $puppetGrid = []>>

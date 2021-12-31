@@ -452,7 +452,7 @@
 <<unset $B; $subject; $target; $enemies; $enemyGrid; $puppetGrid>>
 <</widget>>
 
-:: Preparation
+:: Battle Preparation
 <<set $inbattle = true>>
 <<unset $subject, $target>>
 <<set $B = {actor: null, turn: "player", turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: "selection", embargo: 0, event: false, surrender: false, kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}>>

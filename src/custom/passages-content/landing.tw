@@ -6,10 +6,10 @@ Click on the links above to learn about aspects of the engine in more detail.
 Download the source code and discuss the game at <a href="https://anotherrpgenthusiast.itch.io/another-rpg-engine" target="_blank">itch.io</a>. You can also discuss the game on <a href="https://archiveofourown.org/works/19398175" target="_blank">Archive of Our Own</a> if that's more your wheelhouse, and you can post your games there or on itch.io!
 
 Example battles:
-* [[Princess Bubblegum (Adventure Time)|Preparation][$scenario = "at1"]]
-* [[Mystery Twins (Gravity Falls)|Preparation][$scenario = "gf1"]]
-* [[Watterson Kids (The Amazing World of Gumball)|Preparation][$scenario = "gum1"]]
-* [[Crystal Gems (Steven Universe)|Preparation][$scenario = "su1"]]
+* [[Princess Bubblegum (Adventure Time)|Battle Preparation][$scenario = "at1"]]
+* [[Mystery Twins (Gravity Falls)|Battle Preparation][$scenario = "gf1"]]
+* [[Watterson Kids (The Amazing World of Gumball)|Battle Preparation][$scenario = "gum1"]]
+* [[Crystal Gems (Steven Universe)|Battle Preparation][$scenario = "su1"]]
 
 [[Here is the party menu|Menu: Status][$menu_screen = 0]] if you'd like to change your puppets or their equipment.
 

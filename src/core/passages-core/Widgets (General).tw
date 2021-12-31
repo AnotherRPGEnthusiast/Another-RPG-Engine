@@ -6,7 +6,7 @@
 	<<else>>
 		<<set _text = "BATTLE">>
 	<</if>>
-<center><<button _text "Preparation">><<set $scenario = $args[0]>><</button>></center>
+<center><<button _text "Battle Preparation">><<set $scenario = $args[0]>><</button>></center>
 <<else>>
 	<b>ERROR in fight: no arguments</b>
 <</if>>

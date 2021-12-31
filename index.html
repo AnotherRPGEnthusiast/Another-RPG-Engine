@@ -20519,7 +20519,7 @@ Macro.add('scrolldown', {
     }
   )
 }();
-</script><tw-passagedata pid="1" name="battle grid setup" tags="nobr" position="100,100" size="100,100">/* Initializes the battle grid. Run as part of the &quot;Preparation&quot; passage.
+</script><tw-passagedata pid="1" name="battle grid setup" tags="nobr" position="100,100" size="100,100">/* Initializes the battle grid. Run as part of the &quot;Battle Preparation&quot; passage.
   To customize, overwrite with a passage of the same name. */
 
 &lt;&lt;set $puppetGrid = []&gt;&gt;
@@ -21835,7 +21835,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 &lt;&lt;refreshPuppets&gt;&gt;
 
 &lt;&lt;unset $B; $subject; $target; $enemies; $enemyGrid; $puppetGrid&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="52" name="Preparation" tags="" position="225,725" size="100,100">&lt;&lt;set $inbattle = true&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="52" name="Battle Preparation" tags="" position="225,725" size="100,100">&lt;&lt;set $inbattle = true&gt;&gt;
 &lt;&lt;unset $subject, $target&gt;&gt;
 &lt;&lt;set $B = {actor: null, turn: &quot;player&quot;, turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: &quot;selection&quot;, embargo: 0, event: false, surrender: false, kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}&gt;&gt;
 &lt;&lt;callEncounter $scenario&gt;&gt;
@@ -23099,7 +23099,7 @@ Easy: no smart targeting
 	&lt;&lt;else&gt;&gt;
 		&lt;&lt;set _text = &quot;BATTLE&quot;&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-&lt;center&gt;&lt;&lt;button _text &quot;Preparation&quot;&gt;&gt;&lt;&lt;set $scenario = $args[0]&gt;&gt;&lt;&lt;/button&gt;&gt;&lt;/center&gt;
+&lt;center&gt;&lt;&lt;button _text &quot;Battle Preparation&quot;&gt;&gt;&lt;&lt;set $scenario = $args[0]&gt;&gt;&lt;&lt;/button&gt;&gt;&lt;/center&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;b&gt;ERROR in fight: no arguments&lt;/b&gt;
 &lt;&lt;/if&gt;&gt;
@@ -25576,7 +25576,7 @@ ARG 0 = equipped item
 	&lt;&lt;endofbattle&gt;&gt;
 &lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="176" name="Defeat" tags="" position="725,2225" size="100,100">You lost! You can add a special defeat message here.
 
-&gt;[[Retry this battle|Preparation]]
+&gt;[[Retry this battle|Battle Preparation]]
 &gt;[[Return|Start]]
 
 &lt;&lt;endofbattle&gt;&gt;</tw-passagedata><tw-passagedata pid="177" name="Installation" tags="text" position="850,2225" size="100,100">&lt;b&gt;IMPORTANT NOTE: Another RPG Engine uses ES6 components and may not function on all browswers. Google Chrome and Firefox should work, but other browsers may not. If you encounter errors, make sure you are using the most current version of your browser.&lt;/b&gt;
@@ -26873,7 +26873,7 @@ actor.stash.forEach(function (item) {
 That is the purpose of this additional code. It runs through the {{{stash}}} array and modifies every action to have the {{{free}}} attribute, which will bypass the item decrement check. We also need to make them behave as Crisis abilities by flagging their {{{_crisis}}} attribute -- otherwise, they wouldn&#39;t reset the user&#39;s Crisis points!
 
 These are the additional factors you&#39;ll need to add in order for Stash to work. The principles you learned here can also be generalized to other types of submenu abilities.</tw-passagedata><tw-passagedata pid="179" name="Anim Test" tags="nobr" position="1100,2225" size="100,100">&lt;&lt;set $scenario = &quot;gf1&quot;&gt;&gt;
-&lt;&lt;include &quot;Preparation&quot;&gt;&gt;
+&lt;&lt;include &quot;Battle Preparation&quot;&gt;&gt;
 &lt;&lt;set $subject = $puppets[0]&gt;&gt;
 &lt;&lt;set $subject.en = 10&gt;&gt;
 &lt;&lt;set $target = $enemies[1]&gt;&gt;
@@ -26917,7 +26917,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;b&gt;Changes introduced in this version are incompatible with previous versions&lt;/b&gt; due to changing the names of essential passages and variables. Apologies, but these changes will vastly improve usability going forward.
 &lt;ul&gt;
 &lt;li&gt;The &lt;code&gt;isDone&lt;/code&gt; property has been renamed to &lt;code&gt;active&lt;/code&gt; &lt;b&gt;and its logic has been flipped&lt;/b&gt;, e.g. situations that would have set &lt;code&gt;isDone&lt;/code&gt; to &lt;code&gt;true&lt;/code&gt; now set &lt;code&gt;active&lt;/code&gt; to false. Apologies for any problems this causes, but it will make code clearer going forward for other initiative models.&lt;/li&gt;
-&lt;li&gt;Battle passages have been renamed for greater clarity and consistency. &quot;Battle!&quot; is now &quot;Player Phase&quot;, &quot;end of round&quot; is now &quot;RoundEnd&quot;, and all phases are now capitalized.&lt;/li&gt;
+&lt;li&gt;Battle passages have been renamed for greater clarity and consistency. &quot;Battle!&quot; is now &quot;Player Phase&quot;, &quot;Preparation&quot; is now &quot;Battle Preparation&quot;, &quot;end of round&quot; is now &quot;RoundEnd&quot;, and all phases are now capitalized.&lt;/li&gt;
 &lt;li&gt;The &lt;code&gt;endOfRound&lt;/code&gt; widget has been renamed to &quot;endTurn&quot; for consistency with &lt;code&gt;newTurn&lt;/code&gt;. The existing &lt;code&gt;endturn&lt;/code&gt; widget has been renamed to &quot;endRound&quot; for clarity.&lt;/li&gt;
 &lt;li&gt;Code used in &lt;code&gt;newTurn&lt;/code&gt; and &lt;code&gt;endTurn&lt;/code&gt; have been compartmentalized into additional widgets to reduce code redundancy. This will also allow you to more easily implement these features in other contexts.&lt;/li&gt;
 &lt;li&gt;Characters will no longer regenerate HP if they are under a &lt;code&gt;healBlock&lt;/code&gt; effect.&lt;/li&gt;
@@ -27598,7 +27598,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;Added a new getter for actions: &lt;code&gt;displayname&lt;/code&gt;. This is used for when you want the name that displays in the action list to be different than the name given in the code. (Thanks to A Friendly Irin for providing this.)&lt;/li&gt;
 &lt;li&gt;The mute button now uses icons rather than the word &quot;MUTE&quot;. These icons were taken from &lt;a href=&quot;https://material.io/&quot; target=&quot;_blank&quot;&gt;Material Design&lt;/a&gt;.&lt;/li&gt;
 &lt;li&gt;Battle styling is now tied to a string variable, &lt;code&gt;B.style&lt;/code&gt;, rather than Booleans. If you enter a string for &lt;code&gt;B.style&lt;/code&gt;, the page will gain that class.&lt;/li&gt;
-&lt;li&gt;Battle styling code has now been moved to the main &quot;Preparation&quot; passage.&lt;/li&gt;
+&lt;li&gt;Battle styling code has now been moved to the main &quot;Battle Preparation&quot; passage.&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;justeffect&lt;/code&gt; and &lt;code&gt;dmgandeffect&lt;/code&gt; have been condensed into one function, &lt;code&gt;applyEffect&lt;/code&gt;. The code has been reworked to more easily accommodate applying multiple effects at once: just pass an array of names to the &quot;type&quot; parameter instead of a single string. Additionally, a new parameter has been added that can be flagged to make the applied effects pierce tolerance.&lt;/li&gt;
 &lt;li&gt;New action function: &lt;b&gt;&lt;code&gt;multihitCustom&lt;/code&gt;&lt;/b&gt;. This function makes it easier to implement more complex multi-hit abilities. Look at the action functions code to see it in full.&lt;/li&gt;
 &lt;li&gt;New helper function: &lt;b&gt;&lt;code&gt;deadCount&lt;/code&gt;&lt;/b&gt;. This returns the number of puppets currently flagged dead. It is located in 0_config.js.&lt;/li&gt;
@@ -27787,7 +27787,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;h3&gt;Version 1.04&lt;/h3&gt;-beta
 &lt;ul&gt;
 &lt;li&gt;Retweaked the handling for subjects and targets &lt;i&gt;again&lt;/i&gt;. They now get the ID value from the current subject/target object itself instead of storing it as a separate variable, which removes the need to call &lt;code&gt;getActor()&lt;/code&gt; manually.&lt;/li&gt;
-&lt;li&gt;The battle passages have been tweaked to support additional modularity. Code for altering the actor list in special cases is now outsourced to another passage that can be edited separately from the main display code; the &quot;Preparation&quot; passage now calls to a separate passage for custom modifications; the Effect Adder outsources protection checks to a separate passage; and you can now set which status screens display in StoryInit.&lt;/li&gt;
+&lt;li&gt;The battle passages have been tweaked to support additional modularity. Code for altering the actor list in special cases is now outsourced to another passage that can be edited separately from the main display code; the &quot;Battle Preparation&quot; passage now calls to a separate passage for custom modifications; the Effect Adder outsources protection checks to a separate passage; and you can now set which status screens display in StoryInit.&lt;/li&gt;
 &lt;li&gt;Targeting AI now includes handlers for bypassing untargetable and protection clauses. Simply pass &quot;ignore untargetable&quot; or &quot;ignore protection&quot; as arguments to the widget, and those characters will be made viable targets.&lt;/li&gt;
 &lt;li&gt;Spread attacks now bypass untargetability, as in &lt;i&gt;Bonfire&lt;/i&gt;.&lt;/li&gt;
 &lt;li&gt;The effect adder should now correctly identify when it&#39;s passed a number for effect power.&lt;/li&gt;
@@ -29746,7 +29746,7 @@ Encounters are defined in the {{{database-encounters.tw}}} file in the {{{passag
 
 There is another widget defined here, {{{&lt;&lt;populateEnemies&gt;&gt;}}}, to make your work a little easier. Instead of having to write {{{new Enemy}}} for every single enemy, just pass their names to {{{&lt;&lt;populateEnemies&gt;&gt;}}} and it&#39;ll automate that for you. Note that you will have to wrap the argument in backticks {{{`}}} for it to be read correctly.
 
-To start an encounter in-game, you can set the {{{$scenario}}} manually and make a direct link to the &quot;Preparation&quot; passage, or you can use the {{{&lt;&lt;fight&gt;&gt;}}} widget.
+To start an encounter in-game, you can set the {{{$scenario}}} manually and make a direct link to the &quot;Battle Preparation&quot; passage, or you can use the {{{&lt;&lt;fight&gt;&gt;}}} widget.
 {{{
 &lt;&lt;widget &quot;fight&quot;&gt;&gt;
 &lt;&lt;if $args.length &gt; 0&gt;&gt;
@@ -29755,7 +29755,7 @@ To start an encounter in-game, you can set the {{{$scenario}}} manually and make
 	&lt;&lt;else&gt;&gt;
 		&lt;&lt;set _text = &quot;BATTLE&quot;&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-&lt;center&gt;&lt;&lt;button _text &quot;Preparation&quot;&gt;&gt;&lt;&lt;set $scenario = $args[0]&gt;&gt;&lt;&lt;/button&gt;&gt;&lt;/center&gt;
+&lt;center&gt;&lt;&lt;button _text &quot;Battle Preparation&quot;&gt;&gt;&lt;&lt;set $scenario = $args[0]&gt;&gt;&lt;&lt;/button&gt;&gt;&lt;/center&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;b&gt;ERROR in fight: no arguments&lt;/b&gt;
 &lt;&lt;/if&gt;&gt;
@@ -31110,7 +31110,7 @@ You can edit the {{{.css}}} attribute here to add any CSS formatting you wish to
 &lt;h3 id=&quot;battlestyle&quot;&gt;Special Aesthetics for Battles&lt;/h3&gt;
 There may be instances where you want certain battles to look different. Maybe the player is fighting a scary enemy in a dark room, and you find that the engine&#39;s default bright white background undercuts the atmosphere.
 
-There is functionality for this in the &quot;Preparation&quot; passage, called before all battles:
+There is functionality for this in the &quot;Battle Preparation&quot; passage, called before all battles:
 {{{
 &lt;&lt;callEncounter $scenario&gt;&gt;
 &lt;&lt;if typeof($B.style) == &#39;string&#39;&gt;&gt;
@@ -31483,7 +31483,7 @@ For actions that don&#39;t generate any animations, the animation activator won&
 	&lt;&lt;goto &quot;Battle!&quot;&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 }}}
-The &quot;Preparation&quot; passage, shown here, is responsible for cleaning up variables and getting everything ready for the battle. You will want to have something like this to make sure every battle starts the way you want it to, without any loose flags or variables messing things up. The most important thing here is the initialization of the {{{$B}}} variable, which stands for &quot;battle controller&quot;. {{{$B}}} will be used to handle every flag and variable we need to keep track of during battle. Tying these variables to a single object makes keeping track of them easy -- if we want to clear and reset our variables (such as when starting a new battle), we can just create a brand new {{{$B}}}, instead of having to keep track of whether or not we&#39;ve reset every single variable that can come up during battle.
+The &quot;Battle Preparation&quot; passage, shown here, is responsible for cleaning up variables and getting everything ready for the battle. You will want to have something like this to make sure every battle starts the way you want it to, without any loose flags or variables messing things up. The most important thing here is the initialization of the {{{$B}}} variable, which stands for &quot;battle controller&quot;. {{{$B}}} will be used to handle every flag and variable we need to keep track of during battle. Tying these variables to a single object makes keeping track of them easy -- if we want to clear and reset our variables (such as when starting a new battle), we can just create a brand new {{{$B}}}, instead of having to keep track of whether or not we&#39;ve reset every single variable that can come up during battle.
 
 You should pay attention to the {{{&lt;&lt;callEncounter&gt;&gt;}}} line, immediately after the initialization of {{{$B}}}. This references a widget defined in the &quot;Database: Encounters&quot; passage.
 {{{
@@ -31536,7 +31536,7 @@ By default, I&#39;ve set the health bars to have no color transition, no animati
 After this, custom preparation code is called. In the default engine, this is just the {{{&lt;&lt;restock&gt;&gt;}}} widget, which replenishes items.
 
 &lt;h2 id=&quot;skeleton&quot;&gt;How the battle passages work&lt;/h2&gt;
-The battle screen that the player sees isn&#39;t just a single passage. It&#39;s many smaller passages (including the &quot;Preparation&quot; passage you just read about) all linked together and called at various points. You can see all of them in the &quot;Battle Phases&quot; file in the &quot;passages&quot; folder. You can open that file to follow along.
+The battle screen that the player sees isn&#39;t just a single passage. It&#39;s many smaller passages (including the &quot;Battle Preparation&quot; passage you just read about) all linked together and called at various points. You can see all of them in the &quot;Battle Phases&quot; file in the &quot;passages&quot; folder. You can open that file to follow along.
 
 The file begins by defining a lot of the widgets used in battle. We&#39;ll return to these; you can skip over them for now.
 
@@ -35109,10 +35109,10 @@ Click on the links above to learn about aspects of the engine in more detail.
 Download the source code and discuss the game at &lt;a href=&quot;https://anotherrpgenthusiast.itch.io/another-rpg-engine&quot; target=&quot;_blank&quot;&gt;itch.io&lt;/a&gt;. You can also discuss the game on &lt;a href=&quot;https://archiveofourown.org/works/19398175&quot; target=&quot;_blank&quot;&gt;Archive of Our Own&lt;/a&gt; if that&#39;s more your wheelhouse, and you can post your games there or on itch.io!
 
 Example battles:
-* [[Princess Bubblegum (Adventure Time)|Preparation][$scenario = &quot;at1&quot;]]
-* [[Mystery Twins (Gravity Falls)|Preparation][$scenario = &quot;gf1&quot;]]
-* [[Watterson Kids (The Amazing World of Gumball)|Preparation][$scenario = &quot;gum1&quot;]]
-* [[Crystal Gems (Steven Universe)|Preparation][$scenario = &quot;su1&quot;]]
+* [[Princess Bubblegum (Adventure Time)|Battle Preparation][$scenario = &quot;at1&quot;]]
+* [[Mystery Twins (Gravity Falls)|Battle Preparation][$scenario = &quot;gf1&quot;]]
+* [[Watterson Kids (The Amazing World of Gumball)|Battle Preparation][$scenario = &quot;gum1&quot;]]
+* [[Crystal Gems (Steven Universe)|Battle Preparation][$scenario = &quot;su1&quot;]]
 
 [[Here is the party menu|Menu: Status][$menu_screen = 0]] if you&#39;d like to change your puppets or their equipment.
 

@@ -1,6 +1,6 @@
 :: Anim Test [nobr]
 <<set $scenario = "gf1">>
-<<include "Preparation">>
+<<include "Battle Preparation">>
 <<set $subject = $puppets[0]>>
 <<set $subject.en = 10>>
 <<set $target = $enemies[1]>>
