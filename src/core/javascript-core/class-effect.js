@@ -305,6 +305,12 @@ window.Effect = class Effect {
 		return (this._holdAction || this.effectData.holdAction || null);
 	}
 
+	get onDecay () {
+		//	String. Name of action to be added to the action queue when effect decays, if any.
+		
+		return (this._onDecay || this.effectData.onDecay);
+	}
+
 	get priority () {
 		//	Integer. Order for which hold effects get resolved first. Lower numbers are resolved earlier.
 		//	Defaults to 0.
@@ -430,6 +436,7 @@ window.Effect = class Effect {
       this.duration -= 1;
 		}
 		if (this.duration == 0) {
+			State.temporary.decayed = true;
       var m = actor.removeEffect(this,{pierce: true, unsticky: "ultimate", noPopup: true});
 			if (m.length > 1) {
 				State.temporary.message = true;

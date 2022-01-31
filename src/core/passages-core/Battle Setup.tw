@@ -243,8 +243,8 @@
 <<widget "advanceDelay">>
 <<run console.assert($args[0] instanceof Actor,`ERROR in advanceDelay: no actor passed`)>>
 <<set _a = $args[0]>>
-<<if _a.delayCounter > 0>>
-	<<set _a.delayCounter -= 1>>
+<<if _a.delayedAction instanceof Action && _a.delayedAction.delayCounter > 0>>
+	<<set _a.delayedAction.delayCounter -= 1>>
 	<<if _a.delayedAction.delayMessage !== null>>
 		<<set _message to true>>
 		<div id="actFlavor">
@@ -407,6 +407,15 @@
   <<if _m.length > 1>>
     <<set _decayMsg += _m>>
   <</if>>
+	<<if _decayed === true && typeof(_effect.onDecay) === "string">>
+		<<set _action = new Action(_effect.onDecay); $action.target = _actor.id>>
+		<<if def _effect.subject>>
+			<<set _subjID = _effect.subject>>
+		<<else>>
+			<<set _subjID = _actor.id>>
+		<</if>>
+		<<set $B.actionQueue.push([_subjID,_action])>>
+	<</if>>
 <</for>>
 <<if _decayMsg.length > 0>>
 	<<set _message = true>>
@@ -414,6 +423,8 @@
     <<print _decayMsg>>
   </div>
   <br/>
+<<elseif $B.actionQueue.length > 0>>
+	<<goto "Action Queue">>
 <</if>>
 <</widget>>
 
@@ -452,6 +463,21 @@
 <<unset $B; $subject; $target; $enemies; $enemyGrid; $puppetGrid>>
 <</widget>>
 
+:: initTurns [widget nobr]
+<<widget "initTurns">>
+<<set $actors = allActors()>>
+<<switch setup.TURN_MODEL.toLowerCase()>>
+	<<case "timeline">>
+		<<initTurnsTimeline>>
+		<<set $actors = allActors("timeline")>>
+	<<default>>
+		/* default is free action model: everyone is always active */
+		<<for _actor range $actors>>
+			<<set _actor.active = true>>
+		<</for>>
+<</switch>>
+<</widget>>
+
 :: Battle Preparation
 <<set $inbattle = true>>
 <<unset $subject, $target>>
@@ -461,6 +487,9 @@
 	<<set $B.actionsThisTurn[_enemy.id] = []>>
 <</for>>
 <<refreshPuppets>>
+
+<<initTurns>>
+
 <<if typeof($B.style) == 'string'>>
 	<<addclass "html" $B.style>>
 <</if>>

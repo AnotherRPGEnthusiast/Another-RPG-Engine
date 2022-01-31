@@ -36,8 +36,8 @@
 	"Skill": "Increases critical hit chance by 1% per point.",
 	"Accuracy": "Increases attack accuracy by 1% per point.",
 	"Evasion": "Reduces incoming attack accuracy by 1% per point.",
-	"Initiative": "Determines starting turn order and tiebreakers. Starting tick is highest combatant's Initiative minus this value.",
-	"Speed": "Shortens recovery time by 1 tick per point."
+	"Initiative": "Determines starting turn order.",
+	"Speed": "Makes you go faster."
 }>>
 
 /*	These stats will not be displayed in the menu or status pane even if they are core stats

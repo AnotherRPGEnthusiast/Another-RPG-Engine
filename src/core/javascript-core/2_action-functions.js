@@ -129,7 +129,7 @@ const manaBurn = function (args = {target: 't'},extension = "") {
 
 };
 
-const applyEffect = function applyEffect (effects, args = {}, extension = "") {
+const applyEffect = function applyEffect (args = {}, effects, extension = "") {
 //	Function for abilities that apply status effects.
 
 //	effects is a string or array of strings corresponding to the effects to apply. Duration, power, and target will be the defaults. For more complex behavior, use Actor.addEffect directly.
@@ -520,15 +520,15 @@ const pushAttack = function pushAttack (args = {target: 't'},extension = "") {
 	}
 };
 
-const cancelAction = function cancelAction (extension = "",mods = {}) {
+const cancelAction = function cancelAction (mods = {}, extension = "") {
 	var result = "";
 
 	return function () {
-		if (target().setupAction instanceof Action) {
+		if (target().delayedAction instanceof Action) {
 			if (target().interruptGuard) {
-				result = `${target().name}'s held ${target().their} concentration!`;
+				result = `${target().name} held ${target().their} concentration!`;
 			} else {
-				target().setupAction = null;
+				target().delayedAction = null;
 				result = `${target().name}'s concentration was broken!`;
 			}
 		} else {

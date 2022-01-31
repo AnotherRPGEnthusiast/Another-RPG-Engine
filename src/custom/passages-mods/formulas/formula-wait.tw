@@ -1,0 +1,6 @@
+:: Wait Formula [nobr]
+<<run console.assert(subject() instanceof Actor,`ERROR in Tick Formula: no subject`)>>
+<<run console.assert($action instanceof Action,`ERROR in Tick Formula: no action`)>>
+
+<<set subject().ticks += ($action.waitTime - subject().get(StatName("spd")))>>
+<<set subject().ticks = Math.max(1,subject().ticks)>>

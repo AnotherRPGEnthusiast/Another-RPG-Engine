@@ -57,6 +57,18 @@ const getActorById = function (id) {
 };
 window.getActorById = getActorById;
 
+const allActors = function allActors (sort = "") {
+  let r = State.variables.puppets.concat(State.variables.enemies);
+  switch (sort.toLowerCase()) {
+    case "timeline":
+      r = r.sort(function(a,b) { return (a.ticks - b.ticks) });
+      break;
+    default:
+  }
+  return r;
+};
+window.allActors = allActors;
+
 const chainBattleGrid = function (grid) {
 	console.assert(grid instanceof Array,`ERROR in chainBattleGrid: non-array passed`);
 	for (let row of grid) {

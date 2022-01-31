@@ -34,6 +34,7 @@
 <<include status>>
 </span>
 
+<<liveblock>>
 <span id="content">
 <span id="actorlist">
 <<include "actorlist">>
@@ -42,6 +43,7 @@
 
 </div>
 </span>
+<</liveblock>>
 
 :: actorlist [nobr]
 /* setup */
@@ -103,17 +105,19 @@
 <</if>>
 </div>
 
-<<if setup.TURN_MODEL.toLowerCase() === "free" && $B.phase == "selection">>
-	<br/>
-	<div id="endturn">
-	<center>
-	<<include "End Turn Button">>
-	</center>
-	</div>
+<<if $B.phase == "selection">>
+	<<if setup.TURN_MODEL.toLowerCase() === "free">>
+		<br/>
+		<div id="endturn">
+		<center>
+		<<include "End Turn Button">>
+		</center>
+		</div>
+		<div id="roundCounter">ROUND <<print $B.turnCounter>></div>
+	<</if>>
 	<br/>
 	<br/>
 	<span id="quit"><<include "Quit Button">></span>
-	<div id="roundCounter">ROUND <<print $B.turnCounter>></div>
 <<elseif $B.phase == "command">>
 	<br/>
 	<<include "commands">>
@@ -134,7 +138,15 @@
 <</if>>
 
 :: Quit Button [nobr]
-<<link "Surrender and return to the Hub">><<replace "#quit">>Really quit? [[Yes|Defeat]] | <<link "No">><<replace "#quit">><<include "Quit Button">><</replace>><</link>><</replace>><</link>>
+<<if $scenario === "Tutorial">>
+	<<button "Return">>
+		<<replace "#quit">>Really quit? [[Yes|Defeat]] | <<link "No">><<replace "#quit">><<include "Quit Button">><</replace>><</link>><</replace>>
+	<</button>>
+<<else>>
+	<<button "Surrender">>
+		<<replace "#quit">>Really quit? [[Yes|Defeat]] | <<link "No">><<replace "#quit">><<include "Quit Button">><</replace>><</link>><</replace>>
+	<</button>>
+<</if>>
 
 :: commands[nobr]
 <div class="commandcontainer">
@@ -249,7 +261,7 @@
 <span class="hotkey monospace">
 [Q] = basic action
 <<if typeof(subject().lastAction) === "string">> |
-	<<if new Action(subject().lastAction).check()>>
+	<<if new Action(subject().lastAction).check(subject())>>
 		<<set _style = "color:gray">>
 	<<else>>
 		<<set _style = "">>
@@ -363,11 +375,14 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 <<switch setup.TURN_MODEL.toLowerCase()>>
 	<<case "timeline">>
 		<<if $action.waitTime > 0>>
-			<<set subject().ticks += $action.waitTime>>
+			<<include "Wait Formula">>
+			<<set subject().en -= $action.cost>>
 			<<set subject().delayedAction = new Action($action.name)>>
+			<<set subject().delayedAction.delayCounter = 0>>
 			<<if $target instanceof Actor>>
 				<<set subject().target = $target.id>>
 			<</if>>
+			<<set subject().active = false>>
 			<<goto "Advance Timeline">>
 		<<else>>
 			<<goto "Action Phase">>
@@ -473,7 +488,9 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 			<<set $action._cost = setup.ITEM_COST>>
 		<</if>>
 	<</if>>
-	<<set $subject.en -= $action.cost>>
+	<<if $action.waitTime === 0>>
+		<<set $subject.en -= $action.cost>>
+	<</if>>
 <</if>>
 
 /* Subtract HP cost */
@@ -483,11 +500,11 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 
 /* Prime delayed action if one exists */
 <<if typeof($action.setupAction) == "string">>
-	<<set subject().delayedAction = new Action($action.setupAction)>>
+	<<set _action = new Action($action.setupAction)>>
+	<<set _action.delayCounter = $action.setupDelay>>
+	<<set subject().delayedAction = _action>>
 	<<if setup.TURN_MODEL.toLowerCase() === "timeline">>
 		<<set subject().ticks += $action.waitTime>>
-	<<else>>
-		<<set subject().delayCounter = $action.setupDelay>>
 	<</if>>
 <</if>>
 
@@ -558,7 +575,12 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 	<<else>>
 		<<print $action.act>>
 	<</if>>
-		<<goto "Player Phase">>
+	<<switch setup.TURN_MODEL.toLowerCase()>>
+		<<case "timeline">>
+			<<goto "Advance Timeline">>
+		<<default>>
+			<<goto "Player Phase">>
+	<</switch>>
 
 <<else>>
 
@@ -809,7 +831,6 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 				<<set _counters = []>>
 				<<if _enemy.actionReady>>
 					<<set $action = _enemy.delayedAction>>
-					<<set _enemy.delayedAction = null>>
 				<<else>>
 					<<run _enemy.actions()>>
 				<</if>>

@@ -112,14 +112,6 @@ Actor.prototype.addEffect = function (name,mods) {
 
       if (!(E.unblockable || mods.unblockable === true)) {
 
-        if (!E.buff) {
-          $.wiki('<<shieldCheck>>');
-          if (temporary().hit === false) {
-            //  shieldCheck sets _hit to false if blocked; in this case, we should terminate this function immediately, because the effect was blocked.
-            return "";
-          }
-        }
-
         //  Block effect logic. Filter character effects to only block effects, sort them by priority, then check the block condition for each. If block condition passes, return blockText and terminate immediately.
 
         this.effects.filter(function (e) { return e && e.block })
@@ -235,11 +227,13 @@ Actor.prototype.addEffect = function (name,mods) {
 
   this.effects.push(E);
   E.onApply(this);
+  /*
   //  If this actor had a delayed action in progress and the effect made them
   //  unable to act AND the delayed action is not persistent, reset it
   if (!this.actionReady) {
-      this.delayedAction = null;
+    this.delayedAction = null;
   }
+  */
   if (!mods.noPopup) {
     //  Add popup for effect. By default, ailments shake, buffs do not.
     let shake = (E.buff || mods.noShake) ? false : true;

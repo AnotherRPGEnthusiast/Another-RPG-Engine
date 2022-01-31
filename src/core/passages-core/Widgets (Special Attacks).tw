@@ -9,6 +9,8 @@
 		<<if $action.counter>>
 			<<set $target = _OG.subject>>
 			<<set _counterActive = true>>
+		<<else>>
+			<<set $target = $action.targetMethod($action.targetMod)>>
 		<</if>>
 		<<include "action effects">><br/>
 		<<set _counterActive = false>>
@@ -22,16 +24,8 @@
 <<widget "hunterCheck">>
 /* Called in the Enemy Phase, after every enemy's action. */
 
-	<<unset _party>>
-
-	<<if $target instanceof Puppet && $subject instanceof Enemy>>
-		<<set _party = $puppets>>
-	<<elseif $target instanceof Enemy && $subject instanceof Puppet>>
-		<<set _party = $enemies>>
-	<</if>>
-
-	<<if def _party>>
-		<<for _actor range _party>>
+	<<if $target.id.charAt(0) !== $subject.id.charAt(0)>>
+		<<for _actor range $target.ownParty>>
 			<<if _actor.hunter && !(_actor.dead || _actor.noact || _actor.uncontrollable)>>
 				<<set $B.actionQueue.push([_actor.id,new Action("Hunter Counter")])>>
 			<</if>>

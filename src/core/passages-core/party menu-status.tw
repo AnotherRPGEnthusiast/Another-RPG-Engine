@@ -138,7 +138,9 @@
 <<if _char.crisis instanceof Array>>
 	<div class="abilities-header">CRISIS</div>
 	<<for _action range _char.crisis>>
-		<<print _action>>
+		<div class="actionDisplay">
+			<<print _action>>
+		</div>
 	<</for>>
 	<br/>
 <</if>>

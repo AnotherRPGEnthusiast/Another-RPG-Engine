@@ -1,0 +1,44 @@
+.tick-empty {
+  height: 6px;
+  width: 6px;
+  margin-bottom: 7px !important;
+}
+
+.tick-filled {
+  height: 10px;
+  width: 10px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.tick-occupant {
+  font-weight: bold;
+}
+
+.tick-action-notif {
+  color: red;
+}
+
+.tooltip.timeline-tick {
+  border: none;
+}
+
+#timeline img {
+  display: inline-block;
+  margin: 0 2px 5px 2px;
+}
+
+#timeline .tooltiptext {
+  text-align: center;
+  width: max-content;
+  top: -60%;
+  left: 140%;
+}
+
+#timeline {
+  margin-bottom: 20px;
+  width: 674px; /* matched to true width of #content */
+  line-height: 0;
+  display: flex;
+  justify-content: space-around;
+}

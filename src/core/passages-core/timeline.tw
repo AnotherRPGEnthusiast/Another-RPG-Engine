@@ -1,0 +1,107 @@
+:: initTurnsTimeline [widget nobr]
+<<widget "initTurnsTimeline">>
+
+<<set $timeline = new Array(setup.TIMELINE_LENGTH); $timeline.fill({occupants: []})>>
+/* sort actors in descending Initiative order (highest Initiative first) */
+<<run $actors.sort(function(a,b) { return b.get(StatName("intv")) - a.get(StatName("intv")) })>>
+/* set initiative bar to first actor's Initiative (highest Initiative) */
+<<run _init = $actors[0].get(StatName("intv"))>>
+/* set initial ticks to init minus each actor's Initiative */
+<<for _actor range $actors>>
+	<<set _actor.active = false>>
+	<<set _actor.ticks = _init - _actor.get(StatName("intv"))>>
+<</for>>
+<<run $actors[0].active = true>>
+
+<</widget>>
+
+:: Timeline [nobr]
+/* Construct an array of length $TIMELINE_LENGTH and fill each element with a generic object with one property, "occupants", initialized to an empty array. This will be used to track a number of future ticks equal to $TIMELINE_LENGTH, with actors that land on a given tick added to the occupants for that tick. */
+<<set $timeline = Array.from(
+    { length : setup.TIMELINE_LENGTH },
+    function () {
+        return { occupants : [] };
+    }
+)>>
+<<set $actors = allActors("timeline")>>
+/* Loop over timeline array and fill relevant ticks with occupants. i is tick number, p is the tick object. */
+<div id="timeline">
+<div id="timeline-container">
+<<for _i, _p range $timeline>>
+	/* Wasteful to loop over all actors every tick. Because actors are already sorted, we only need to check if the 0th actor matches the current tick. However, we must use a while loop to check this continually so we don't miss actors that are on the same tick. */
+	<<for ($actors.length > 0) && (_i === $actors[0].ticks)>>
+		/* If there's a match, extract the current actor from the actors array. */
+		<<run _p.occupants.push($actors.shift())>>
+	<</for>>
+	<<if _p.occupants.length === 0>>
+		<<set _src = setup.ImagePath+"ui/tick_empty.png">>
+		<img @src=_src class="tick-empty" />
+	<<else>>
+		<<set _src = setup.ImagePath+"ui/tick_filled.png">>
+		<div class="tooltip timeline-tick">
+			<img @src=_src class="tick-filled" />
+			<div class="tooltiptext">
+				<<for _actor range _p.occupants>>
+					<div class="tick-occupant">
+						<<if _actor.delayedAction instanceof Action>>
+							<span class="tick-action-notif">!</span>
+						<</if>>
+						<<print _actor.name>>
+					</div>
+				<</for>>
+			</div>
+		</div>
+	<</if>>
+<</for>>
+</div>
+</div>
+
+:: Advance Timeline [nobr]
+/* Grab list of all actors, sorted by tick order */
+<<set $actors = allActors("timeline")>>
+/* Continually decrement all actor ticks by 1 until the first actor's tick reaches 0. */
+<<for $actors[0].ticks > 0>>
+	/* advance 1 tick */
+	<<for _actor range $actors>>
+		<<set _actor.ticks -= 1>>
+		<<advanceRespawn _actor>>
+		<<regen _actor>>
+		<<advanceCooldown _actor>>
+		<<decayEffects _actor.effects false>>
+	<</for>>
+	/* If an effect decay generated a message, we want to stop the timeline here so it will be shown at the correct time. Break the outer loop. */
+	<<if _message>>
+		<<include "Timeline">>
+		<<button "Continue..." "Advance Timeline">><</button>>
+		<<break>>
+	<</if>>
+<</for>>
+/* Once an actor hits 0 ticks, set them as active and forward to relevant passage. */
+<<if !_message>> /* Check for the possibility of a message interrupt, because this code executes regardless of the break */
+	/* Grab all actors with 0 ticks in case of multiple characters reaching 0 at same time. */
+	<<set _actorQueue = $actors.filter(function (a) { return a && !a.dead && a.ticks <= 0 })>>
+	/* If this queue has more than 1 element, multiple characters are tied; run tiebreaker */
+	<<if _actorQueue.length > 1>>
+		<<tiebreaker _actorQueue>>
+	<</if>>
+	/* Set first actor in queue as active */
+	<<set _actorQueue[0].active = true>>
+	<<if _actorQueue[0] instanceof Puppet>>
+		<<goto "Player Phase">>
+	<<elseif _actorQueue[0] instanceof Enemy>>
+		<<goto "Enemy Phase">>
+	<</if>>
+<</if>>
+
+:: tiebreaker [widget nobr]
+/* Determines tiebreakers in cases where multiple characters land on the same turn. */
+/* Remember that the 0th element of the queue will become the active character. */
+<<widget "tiebreaker">>
+<<run console.assert($args[0] instanceof Array,`ERROR: tiebreaker used without array`)>>
+<<set _party = $args[0]>>
+/* Default: Sort in ascending Initiative order, or randomly if that also ties. */
+<<set _party = _party.sort(function(a, b)	{
+	var val = b.get(StatName("intv")) - a.get(StatName("intv"));
+	return (val === 0) ? random(-1,1) : val;
+	}	)>>
+<</widget>>

@@ -1,11 +1,17 @@
 :: Changelog[text]
-/*<h3>Version 4.01</h3>
+<h3>Version 4.01</h3>
 <ul>
-<li><b>NEW FEATURE:</b> Full support for the "timeline" turn model. See documentation for details, or Experiment 03 for a live example. New <code>Action</code> properties <code>recoveryTime</code> and <code>waitTime</code> have been added to work with the new system.</li>
+<li><b>NEW FEATURE:</b> Full support for the "timeline" turn model. Documentation pending. New <code>Action</code> properties <code>recoveryTime</code> and <code>waitTime</code> have been added to work with the new system. <b>Might be buggy. Report any issues.</b></li>
 <li>A new variable, <code>TURN_MODEL</code>, can now be set in <code>StoryInit</code> to determine the turn model you want to use. Currently, only the free-action model and the timeline model are functional.</li>
+<li>Additionally, actors must now be <b>active</b> in order to perform delayed actions, unless they have the <code>delayPersist</code> attribute. This will not affect the free-action model, but it will affect other turn models by allowing <code>delayPersist</code> actions to execute when it isn't the user's turn.</li>
+<li>Removed an extra <code>shieldCheck</code> in <code>applyEffect</code> that was a holdover from the old version.</li>
+<li>New <code>Effect</code> property: <code>onDecay</code>. This is a string name of an action to be executed when the effect decays. (It will not execute if the effect is removed by other means.) The subject of the action is determined by the <code>subject</code> property of the effect, which must be added manually on application.</li>
+<li>The default preview logic for actions has now been offloaded to its own file, <code>preview-function.js</code>, to make it easier to customize for your needs.</li>
+<li>Swapped the argument order for <code>args</code> and <code>effects</code> in <code>applyEffect</code>, because making <code>effects</code> an Action property meant I found myself needing to define <code>args</code> more often than <code>effects</code>. Any actions currently using the function will need to edited, but it should be a simple adjustment.</li>
+<li>Added a style tweak: Marker elements (bullet points) are now set to appear like text-adventure prompts. I consider this a neater way of formatting lists of player choices. To edit this, go to <code>markers.css</code> in <code>custom/stylesheets</code>.</li>
 </ul>
 
-*/<h3>Version 4.00</h3>
+<h3>Version 4.00</h3>
 <b>Changes introduced in this version are incompatible with previous versions</b> due to changing the names of essential passages and variables. Apologies, but these changes will vastly improve usability going forward.
 <ul>
 <li>The <code>isDone</code> property has been renamed to <code>active</code> <b>and its logic has been flipped</b>, e.g. situations that would have set <code>isDone</code> to <code>true</code> now set <code>active</code> to false. Apologies for any problems this causes, but it will make code clearer going forward for other initiative models.</li>

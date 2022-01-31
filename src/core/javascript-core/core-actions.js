@@ -182,7 +182,7 @@ setup.actionData = {
 		"actText": function () {
 			return `${subject().name}'s shield drops to the ground with a <i>clang</i>, and ${subject().they} grip ${subject().their} weapon with fiery determination. No holding back, now!`;
 		},
-		"act": applyEffect("Berserker",{self:true})
+		"act": applyEffect({self:true})
 	},
 
 	"Defender": {
@@ -195,7 +195,7 @@ setup.actionData = {
 		"actText": function () {
 			return `An expression of cool stillness passes over ${subject().name}'s face as they hunker behind ${subject().their} shield, eyes peeled for all incoming attacks.`;
 		},
-		"act": applyEffect("Defender",{self:true})
+		"act": applyEffect({self:true})
 	},
 
 	"Meditate": {
@@ -209,7 +209,7 @@ setup.actionData = {
 			return `${subject().name} stops, and closes ${subject().their} eyes. ${subject().their.toUpperFirst()} sudden tranquility is discordant with the chaos of the battle. ${subject().they.toUpperFirst()} take a deep breath, and when ${subject().they} let it out you swear you can see a physical presence leave ${subject().them}. ${subject().they.toUpperFirst()} stand up straighter, positively glowing.`;
 		},
 		"act": removeEffect({target:'s'},
-						applyEffect("Chi Shield",{self:true},
+						applyEffect({self:true},"Chi Shield",
 						`<<set $B.heal_used = true>>`)),
 		"preview": function () {
 			if (subject().stasis) {
@@ -233,7 +233,7 @@ setup.actionData = {
 		"actText": function () {
 			return `Without hesitation ${subject().name} jumps in front of ${subject().their} charge, shielding them from all harm.`;
 		},
-		"act": applyEffect("Protector",{self:true}),
+		"act": applyEffect({self:true}),
 		"preview": `$subject.name will protect $target.name and gain a bonus to Defense.`,
 		"desc":		`Leap to another puppet's defense! Fighter will put themselves in the way of any attack, deflecting it with their mighty shield. But they can't be everywhere at once, so beware of area attacks...`
 	},
@@ -244,7 +244,7 @@ setup.actionData = {
 		"effects": ["Martyr"],
 		"info":	function (action) {return 	`Draw all direct attacks for this round.`},
 		"actText": null,
-		"act": applyEffect("Martyr",{self:true}),
+		"act": applyEffect({self:true}),
 		"desc":		`The blinding intensity of Fighter's spirit can warp perception itself. Through sheer will they can become so overpoweringly <b>real</b> that enemies become unable to see anything else, compelling them to send all attacks Fighter's way. Unfortunately, the technique requires too much concentration for Fighter to raise their shield.`
 	},
 
@@ -310,7 +310,7 @@ setup.actionData = {
 			return `"Hey," you say. "Something in your eye."
 			'Something' turns out to be a fistful of dirt.`;
 		},
-		"act": applyEffect("Stunned")
+		"act": applyEffect()
 	},
 
 	"Poison Prick": {
@@ -324,7 +324,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name feints to the side, then with blinding speed draws a tiny concealed knife, stabbing it into the enemy like a needle. The skin around it breaks into welts and sickly purple splotches.`;
 		},
-		"act": applyEffect("Poisoned",{dmg: true})
+		"act": applyEffect({dmg: true})
 	},
 
 	"Off Your High Horse": {
@@ -350,7 +350,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name pauses, their eyes flicking over their opponent. They raise their knife level with their eyes, and the next instant lunge forward with a crippling stab to the arm joints.`;
 		},
-		"act": applyEffect("Injury", {dmg: true})
+		"act": applyEffect({dmg: true})
 	},
 
 	"Below the Belt": {
@@ -364,7 +364,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name pauses, their eyes flicking over their opponent. Suddenly they strike out like a viper, ramming a sharp kick into an exposed weak point.`;
 		},
-		"act": applyEffect("Pain", {dmg: true})
+		"act": applyEffect({dmg: true})
 	},
 
 	"Dead Ringer": {
@@ -378,7 +378,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name kicks dust into their opponent's eyes, disorienting ${target().them} just long enough for them to ram their dagger's pommel straight into ${target().their} temple.`;
 		},
-		"act": applyEffect("Headache", {dmg: true})
+		"act": applyEffect({dmg: true})
 	},
 
 	"Flurry": {
@@ -407,7 +407,7 @@ setup.actionData = {
 		"actText": function () {
 			return `The arena should be well-lit, but as $subject.name presses themselves against the wall, their surroundings suddenly become dimmer. You blink, and suddenly you can't tell where they end and the shadows begin.`;
 		},
-		"act": applyEffect("Hidden",{self:true})
+		"act": applyEffect({self:true})
 	},
 
 	"Procure": {
@@ -543,7 +543,7 @@ setup.actionData = {
 					return `$subject.name points a finger at the enemy, and a perfect sphere of orange-red flame shoots out like a missile. When it connects it lights up like a firework, exploding in a brilliant inferno.`;
 			}
 		},
-		"act": applyEffect("Burning", {dmg: true})
+		"act": applyEffect({dmg: true})
 	},
 
 	"Perdition": {
@@ -555,7 +555,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name raises their palms as if lifting a great weight, and $target.name is suddenly enveloped in a pillar of screaming white fire. The ember, lodged in $target.their heart, is unquenchable.`;
 		},
-		"act": applyEffect("Perdition", {dmg: true}),
+		"act": applyEffect({dmg: true}),
 		"preview": `<<damageCalc>>\
 			The flames of eternal torment. This attack will inflict $dmg damage and <b>Perdition</b> status, which will remain for the duration of the battle.`
 	},
@@ -752,19 +752,20 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name raises their arms skyward, then clasps their hands together as if in prayer. They suddenly let go, and wave their hands over $target.name with a flourish. Motes of light fall over ${target().them}, making ${target().them} glow with a strange aura.`;
 		},
-		"act": applyEffect("Blessing")
+		"act": applyEffect()
 	},
 
 	"Ascension": {
 		"cost":		10,
 		"effweight":	(10/45),
 		"dur":		5,
+		"effects": ["Blessing"],
 		"phase":	"Confirm Phase",
 		"saveMod": "Blessing",
 		"actText": function () {
 			return `$subject.name raises their arms skyward. Their muscles strain and their fists suddenly clench, as if they are trying to grasp the Sun itself. Perhaps they succeed: their hands are suddenly effulgent with light, which they push down into the earth. The ground glows and your puppets are bathed in geysers of light, exultant.`;
 		},
-		"act": massAttack({target: "allies", content: applyEffect("Blessing")}),
+		"act": massAttack({target: "allies", content: applyEffect()}),
 		"preview": function () {
 			return `Become something greater. This will endow a Blessing to all puppets for ${action().dur} rounds.`;
 		}
@@ -812,7 +813,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name stares intently, then calmly points a single finger at the enemy. $target.name sways, and the air around $target.them suddenly looks dingier.`;
 		},
-		"act": applyEffect("Curse")
+		"act": applyEffect()
 	},
 
 	"Forsaken": {
@@ -824,7 +825,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name does not even move. They only spare $target.name a look, and <<print target().theyare>> suddenly drowned in darkness.`;
 		},
-		"act": applyEffect("Forsaken"),
+		"act": applyEffect(),
 		"preview": `A terrible judgment that denies all mercy. This will inflict <b>Forsaken</b> status, which will sharply reduce Defense, even into the negatives.`
 	},
 
@@ -898,7 +899,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name insults the opponent's fighting style so wickedly they are crushed by despair.`;
 		},
-		"act": applyEffect("Injury")
+		"act": applyEffect()
 	},
 
 	"Joke": {
@@ -912,7 +913,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name makes a painfully bad joke.`;
 		},
-		"act": applyEffect("Pain")
+		"act": applyEffect()
 	},
 
 	"Equivocate": {
@@ -926,7 +927,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name leads the enemy on a meandering and nonsensical argument. It's irritating to everyone, but $target.name gets the worst of it.`;
 		},
-		"act": applyEffect("Headache")
+		"act": applyEffect()
 	},
 
 	"Rewrite": {
@@ -1109,7 +1110,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name stares with burning intensity, and if you squint, you think you can see a target over $target.name.`;
 		},
-		"act": applyEffect("Marked")
+		"act": applyEffect()
 	},
 
 	"Mercy": {
@@ -1131,7 +1132,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Counterattack every enemy that attacks this round at a weight of ${setup.HUNTER_WEIGHT}.`},
 		"desc":		`Archer can forgo an attack to hone their senses to the peak of human perfection, straining their ears and eyes for the slightest movement. Any enemy that dares to come close will know their swift and vengeful wrath.`,
 		"actText": null,
-		"act": applyEffect("Hunter",{self:true})
+		"act": applyEffect({self:true})
 	},
 
 	"Call to Arms": {
@@ -1143,7 +1144,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Bestow an ATK Boost to all puppets for ${action.dur} rounds.`},
 		"desc":		`Let slip the dogs of war.`,
 		"actText": null,
-		"act": massAttack({target: "allies", content: applyEffect("ATK Boost")}),
+		"act": massAttack({target: "allies", content: applyEffect()}),
 		"preview": "mass"
 	},
 
@@ -1202,7 +1203,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name places a hand over $target.name like a benediction.`;
 		},
-		"act": applyEffect("Shield")
+		"act": applyEffect()
 	},
 
 	"Lifegiver": {
@@ -1274,7 +1275,7 @@ setup.actionData = {
 		"info":	function (action) {return 	`Bestow a DEF Boost to all puppets for ${action.dur} rounds.`},
 		"desc":		`A line, to separate us from them. A shield to repel all.`,
 		"actText": null,
-		"act": massAttack({target: "allies", content: applyEffect("DEF Boost")}),
+		"act": massAttack({target: "allies", content: applyEffect()}),
 		"preview": "mass"
 	},
 
@@ -1292,7 +1293,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name points a finger at ${target().name}, and ${target().their} skin instantly breaks out in boils that swell and burst. It looks pretty painful.`;
 		},
-		"act": applyEffect("Pain", {dmg: true})
+		"act": applyEffect({dmg: true})
 	},
 
 	"Gift": {
@@ -1409,7 +1410,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name slowly waves a hand over $target.name's eyes.`;
 		},
-		"act": applyEffect("Stunned")
+		"act": applyEffect()
 	},
 
 	"Frenzy": {
@@ -1423,7 +1424,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name bites their thumb, and smears the blood over $target.name's face in a strange pattern. Their eyes narrow into slits.`;
 		},
-		"act": applyEffect("Frenzy")
+		"act": applyEffect()
 	},
 
 	"Thaumastasis": {
@@ -1437,7 +1438,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name snaps their fingers. The air around $target.name seems to freeze for a moment, then returns to normal.`;
 		},
-		"act": applyEffect("Stasis")
+		"act": applyEffect()
 	},
 
 	"Age of Enlightenment": {
@@ -1449,7 +1450,7 @@ setup.actionData = {
 		"info":		function (action) {return `Bestow a SPC Boost to all puppets for ${action.dur} rounds.`},
 		"desc":		`To hoard one's knowledge is inevitably to lose it. Let it free, so that it can live.`,
 		"actText": null,
-		"act": massAttack({target: "allies", content: applyEffect("SPC Boost")}),
+		"act": massAttack({target: "allies", content: applyEffect()}),
 		"preview": "mass"
 	},
 
@@ -1672,7 +1673,7 @@ setup.actionData = {
 		"dur": 3,
 		"effects": ["Invincible"],
 		"phase": "Confirm Phase",
-		"act": applyEffect("Invincible",{self:true}),
+		"act": applyEffect({self:true}),
 		"actText": null,
 		"info": function (action) {return `User becomes immune to all damage for ${action.dur} rounds.`;},
 		"desc": null
@@ -1681,7 +1682,7 @@ setup.actionData = {
 	"Divine Protection": {
 		"crisis": true,
 		"dur": -1,
-		"act": massAttack({target: "allies", content: applyEffect("Divine Protection")}),
+		"act": massAttack({target: "allies", content: applyEffect()}),
 		"target": "ally",
 		"actText": null,
 		"info": function (action) {return `All allies will gain complete protection from the next two attacks.`;},
@@ -1797,7 +1798,7 @@ setup.actionData = {
 		"target": "ally",
 		"dur": 3,
 		"effects": ["Chi Shield"],
-		"act": applyEffect("Chi Shield")
+		"act": applyEffect()
 	},
 
 	"Adrenaline": {
@@ -1806,7 +1807,7 @@ setup.actionData = {
 		"effects": ["ATK Boost"],
 		"target": "ally",
 		"actText": `$subject.name injects a shot of adrenaline.`,
-		"act": applyEffect("ATK Boost")
+		"act": applyEffect()
 	},
 
 	"Stoneskin": {
@@ -1815,7 +1816,7 @@ setup.actionData = {
 		"effects": ["DEF Boost"],
 		"target": "ally",
 		"actText": `$subject.name uses some Stoneskin formula.`,
-		"act": applyEffect("DEF Boost")
+		"act": applyEffect()
 	},
 
 	"Nootropic": {
@@ -1823,7 +1824,7 @@ setup.actionData = {
 		"dur": 4,
 		"effects": ["SPC Boost"],
 		"target": "ally",
-		"act": applyEffect("SPC Boost")
+		"act": applyEffect()
 	},
 
 	"Stimulant": {
@@ -1851,7 +1852,7 @@ setup.actionData = {
 		"dur":	1,
 		"effects": ["Stunned"],
 		"actText": `$subject.name throws powdered glass in your enemy's eyes. Ouch!`,
-		"act": applyEffect("Stunned",{dmg: true})
+		"act": applyEffect({dmg: true})
 	},
 
 	"Grenade": {
@@ -1866,9 +1867,10 @@ setup.actionData = {
 		"weight": 1,
 		"effweight": 0.6,
 		"dur": 5,
+		"effects": "Burning",
 		"area": "all",
 		"actText": `$subject.name bathes your enemies in flame.`,
-		"act": massAttack({target:'enemies', cut:true, content: applyEffect("Burning")}),
+		"act": massAttack({target:'enemies', cut:true, content: applyEffect()}),
 		"preview": Prev.cutAttack("Burning")
 	},
 
@@ -1876,16 +1878,17 @@ setup.actionData = {
 		"weight": 1,
 		"effweight": 0.6,
 		"dur": 5,
+		"effects": "Poisoned",
 		"area": "all",
 		"actText": `$subject.name throws a bomb filled with noxious gas.`,
-		"act": massAttack({target:'enemies', cut:true, content: applyEffect("Poisoned")}),
+		"act": massAttack({target:'enemies', cut:true, content: applyEffect()}),
 		"preview": Prev.cutAttack("Poisoned")
 	},
 
 	"Flashbang": {
 		"effects": "Stunned",
 		"area": "all",
-		"act": massAttack({target: "enemies", content: applyEffect("Stunned")}),
+		"act": massAttack({target: "enemies", content: applyEffect()}),
 		"preview": "mass"
 	},
 
@@ -1895,7 +1898,7 @@ setup.actionData = {
 		"dur": 3,
 		"effects": ["Injury","Pain","Headache"],
 		"actText": `$subject.name throws a calamity bomb.`,
-		"act": applyEffect(["Injury","Pain","Headache"],{dmg: true})
+		"act": applyEffect({dmg: true})
 	}
 
 };

@@ -212,7 +212,6 @@ setup.enemyData = {
 				V().action = new Action("Assault");
 				V().action.actText = "Finn charges in recklessly!";
 				V().action.useText = null;
-				V().action.dur = 1;
 				V().action.act = applyEffect("Off-Balance",{self: true, dmg: true});
 			}
 

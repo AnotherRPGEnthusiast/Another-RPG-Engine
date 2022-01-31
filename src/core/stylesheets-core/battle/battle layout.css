@@ -57,7 +57,7 @@
   text-align: center;
 }
 
-.actor.inactive {
+.inactive {
 	opacity: 0.5;
 }
 

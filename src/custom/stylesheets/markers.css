@@ -1,0 +1,11 @@
+/* Changes the formatting of ul elements (bullet-point lists) to look like text-adventure prompts. Useful for displaying choices in a list. */
+
+#passages:not(body.text) ul li::marker {
+  content: '>';
+  font-weight: bold;
+  font-family: monospace;
+}
+
+#passages:not(body.text) ul li {
+  padding-left: 0.5em;
+}

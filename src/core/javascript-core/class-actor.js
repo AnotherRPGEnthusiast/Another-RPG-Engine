@@ -14,6 +14,7 @@ window.Actor = class Actor {
 		this.id += (new Date().getTime() + Math.random() * 0x10000000000).toString(16);
 
 		this.name = name;
+		this.delayedAction = null;
 
 		if (this.data) {
 			this._HPregen = {
@@ -59,6 +60,7 @@ window.Actor = class Actor {
 			Number.isInteger(this.data.respawn) ?
 				this._respawn = new FillStat(this.data.respawn) : this._respawn = new FillStat(0);
 			if (typeof(this.data.respawnHP) === "number") { this._respawnHP = this.data.respawnHP; }
+			this.dmgreflection = 0;
 
 			this.battleMsg = [];	// container for popups that will appear during actions
 
@@ -70,7 +72,6 @@ window.Actor = class Actor {
 			this.onHit = [];
 			this.lastDmg = 0;
 			this.noMinimum = [];	// stats that do not have minimums for this character; used by some effects
-			this.delayCounter = 0;
 
 			this.equipment = new Map();
 			var equipData;
@@ -158,7 +159,7 @@ window.Actor = class Actor {
 				this._respawn.refill();
 			}
 			// erase delayed action on death UNLESS the action persists past user death
-			if (!this.actionReady) {
+			if (this.delayedAction instanceof Action && !this.delayedAction.delayPersist) {
 				this.delayedAction = null;
 			}
 			// reset threat (if using threat targeting)
@@ -1000,10 +1001,24 @@ window.Actor = class Actor {
 	get actionReady () {
 		//	Returns true if actor has a valid delayed action stored,
 		//	and they can perform it (not dead/held/uncontrollable, or delayPersist)
-
-		return (this.delayedAction instanceof Action && this.delayCounter <= 0 &&
-			(this.delayedAction.delayPersist ||
-				!(this.dead || this.fakedeath || this.noact || this.uncontrollable)));
+/*
+		if (this.delayedAction instanceof Action) {
+			console.log(`Checking actionReady for ${this.name}`); console.log(this.delayedAction);
+			console.log(`Active?`); console.log(this.active);
+			console.log(`Can act?`); console.log((this.delayedAction instanceof Action
+				&& this.delayedAction.delayCounter <= 0
+				&& (this.active || this.delayedAction.delayPersist)
+				&& (this.delayedAction.delayPersist ||
+					!(this.dead || this.fakedeath || this.noact || this.uncontrollable))
+				));
+		}
+*/
+		return (this.delayedAction instanceof Action
+			&& this.delayedAction.delayCounter <= 0
+			&& (this.active || this.delayedAction.delayPersist)
+			&& (this.delayedAction.delayPersist ||
+				!(this.dead || this.fakedeath || this.noact || this.uncontrollable))
+			);
 	}
 
 	effectCount (type,mods) {

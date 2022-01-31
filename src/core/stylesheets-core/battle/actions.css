@@ -74,7 +74,8 @@
 }
 
 .actionDisplay {
-	margin-bottom: 1.5em;
+	margin-bottom: 30px;
+  position: relative;
 }
 
 .compressed .actionDisplay {
@@ -93,6 +94,12 @@
   font-size:12px;
   max-height:2em;
   overflow: hidden;
+}
+
+.actionDisplay .action-tags {
+  bottom: -20px;
+  top: unset;
+  left: unset;
 }
 
 .action-tags span {
