@@ -470,6 +470,9 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 	<</if>>
 <</if>>
 
+/* Record this action as seen by the enemy */
+<<set $B.actionsSeen.pushUnique($action.name)>>
+
 <br/>
 <<include "Battle Continue Button">>
 
@@ -488,7 +491,7 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 			<<set $action._cost = setup.ITEM_COST>>
 		<</if>>
 	<</if>>
-	<<if $action.waitTime === 0>>
+	<<if (subject() instanceof Enemy) || $action.waitTime === 0>>
 		<<set $subject.en -= $action.cost>>
 	<</if>>
 <</if>>
@@ -501,11 +504,13 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 /* Prime delayed action if one exists */
 <<if typeof($action.setupAction) == "string">>
 	<<set _action = new Action($action.setupAction)>>
-	<<set _action.delayCounter = $action.setupDelay>>
-	<<set subject().delayedAction = _action>>
 	<<if setup.TURN_MODEL.toLowerCase() === "timeline">>
+		<<set _action.delayCounter = 0>>
 		<<set subject().ticks += $action.waitTime>>
+	<<else>>
+		<<set _action.delayCounter = $action.setupDelay>>
 	<</if>>
+	<<set subject().delayedAction = _action>>
 <</if>>
 
 /* For Enemies, set cooldown for the action */
@@ -620,6 +625,9 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 		<<else>>
 			<<set $target = Hitlist.targetEnemy($action.targetMod)>>
 		<</if>>
+	<</if>>
+	<<if _queue instanceof Set>>
+		<<run _queue.add($target)>>
 	<</if>>
 	<<accuracyCheck>>
 	<<if _hit === true>>
@@ -814,8 +822,9 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 		<<set $action = null>>
 		<<if setup.TURN_MODEL.toLowerCase() !== "timeline" && _enemy.isFirstAction>>
 			<<newTurn `[_enemy]`>>
+		<<elseif setup.TURN_MODEL.toLowerCase() === "timeline">>
+			<<run $B.actionsThisTurn[_enemy.id] = []>>
 		<</if>>
-		<<set _enemy.active = false>>
 
 		<<if !_enemy.fakedeath || _enemy.actionReady>>
 
@@ -829,13 +838,18 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 
 			<<else>>
 				<<set _counters = []>>
+				<<run console.log("enemy turn for "+_enemy.name+"; has delayed action?"); console.log(_enemy.delayedAction); console.log(_enemy.actionReady)>>
 				<<if _enemy.actionReady>>
 					<<set $action = _enemy.delayedAction>>
+					<<set _enemy.delayedAction = null>>
 				<<else>>
 					<<run _enemy.actions()>>
 				<</if>>
+				<<if _enemy.en < $action.cost>>
+					<<set $action = new Action("enemy rest")>>
+				<</if>>
 				<<run $B.actionsThisTurn[_enemy.id].push($action.name)>>
-				<<if $target === null && $action.targetMethod instanceof Function>>
+				<<if !($target instanceof Actor) && $action.targetMethod instanceof Function>>
 					/* If a target hasn't already been selected, use the action's targetMethod (defaults to Hitlist methods) */
 					<<set $target = $action.targetMethod()>>
 				<</if>>
@@ -850,11 +864,8 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 					/* Otherwise, noAttacks is reduced by 1, unless the action was instant. */
 					<<run _enemy.noAttacks-->>
 				<</if>>
-				<<if _enemy.noAttacks > 0>>
-					/* If the enemy still has attacks remaining, their turn isn't done; set active to true again so they will act again when this passage is re-called. */
-					<<set _enemy.active = true>>
-				<<elseif setup.TURN_MODEL.toLowerCase() === "free">>
-					/* Otherwise, the enemy is done. If the model is free-action, we need to remove their turn from the pool. */
+				<<if _enemy.noAttacks <= 0 && setup.TURN_MODEL.toLowerCase() === "free">>
+					/* If out of actions, enemy's turn is done. If the model is free-action, we need to remove their turn from the pool. */
 					<<run $B.actionsThisTurn[_enemy.id] = []>>
 					<<run $B.enemyTurns -= 1>>
 				<</if>>
@@ -866,6 +877,10 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 			<<goto "Enemy Phase">>
 		<</if>> /* end fakedeath if */
 
+		/* End turn by setting active to false. Exception: If the enemy took an action this turn (so, did not experience special clauses like stuns or fakedeath) and still has attacks remaining, keep active set to true so they get another turn when this passage is called again. */
+		<<if !($B.actionsThisTurn[_enemy.id].length > 0 && _enemy.noAttacks > 0)>>
+			<<set _enemy.active = false>>
+		<</if>>
 		<<run _enemy.decayThreat()>>
 
 	<<else>>

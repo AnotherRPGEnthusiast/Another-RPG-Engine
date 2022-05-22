@@ -57,3 +57,25 @@ function cureCheck (mods) {
 		count += p.effectCount("ailment",mods);
 	}
 }
+
+function checkActions (check=function (name) { return true; },targets=[]) {
+	//	Logic for checking if the player party has a specific action readied.
+	//	Returns number of actions the target(s) have readied that pass some logic.
+
+	//	check = filter function. Only returns true if an action passing
+	//		the condition is present.
+	//		By default, automatically returns true for any readied action.
+	//	targets = string or array of strings, names of puppets to check.
+	//		By default, all puppets are checked.
+
+	if (typeof(targets) === "string") targets = [targets];
+	var party = V().puppets;
+	var count = 0;
+	if (targets.length > 0) party = party.filter(function (puppet) { return targets.includes(puppet.name); });
+	for (let puppet of party) {
+		if (puppet.delayedAction) {
+			if (check(puppet.delayedAction.name)) count++;
+		}
+	}
+	return count;
+}

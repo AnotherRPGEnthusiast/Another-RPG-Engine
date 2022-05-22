@@ -209,7 +209,7 @@ setup.actionData = {
 			return `${subject().name} stops, and closes ${subject().their} eyes. ${subject().their.toUpperFirst()} sudden tranquility is discordant with the chaos of the battle. ${subject().they.toUpperFirst()} take a deep breath, and when ${subject().they} let it out you swear you can see a physical presence leave ${subject().them}. ${subject().they.toUpperFirst()} stand up straighter, positively glowing.`;
 		},
 		"act": removeEffect({target:'s'},
-						applyEffect({self:true},"Chi Shield",
+						applyEffect({self:true},
 						`<<set $B.heal_used = true>>`)),
 		"preview": function () {
 			if (subject().stasis) {
@@ -393,7 +393,7 @@ setup.actionData = {
 			return `With uncharacteristic unsubtlety, $subject.name charges forward, swinging their blades in a whirlwind of flashing steel. Not every swing connects, but it doesn't need to. The enemy stumbles and sways from the pressing assault, looking like they could be knocked over by a light breeze. $subject.name grins and leaps away, their job done.`;
 		},
 		"act": justdmg(),
-		"finisher": applyEffect("Off-Balance"),
+		"finisher": applyEffect(),
 		"preview": "multihit"
 	},
 
@@ -757,9 +757,9 @@ setup.actionData = {
 
 	"Ascension": {
 		"cost":		10,
+		"effects": ["Blessing"],
 		"effweight":	(10/45),
 		"dur":		5,
-		"effects": ["Blessing"],
 		"phase":	"Confirm Phase",
 		"saveMod": "Blessing",
 		"actText": function () {
@@ -885,7 +885,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name says something so random the enemy has to stop to process it. While they're doing that, $subject.name socks them in the face.`;
 		},
-		"act": applyEffect("Off-Balance",{dmg: true})
+		"act": applyEffect({dmg: true})
 	},
 
 	"Insult": {
@@ -1681,6 +1681,7 @@ setup.actionData = {
 
 	"Divine Protection": {
 		"crisis": true,
+		"effects": ["Divine Protection"],
 		"dur": -1,
 		"act": massAttack({target: "allies", content: applyEffect()}),
 		"target": "ally",
@@ -1867,7 +1868,6 @@ setup.actionData = {
 		"weight": 1,
 		"effweight": 0.6,
 		"dur": 5,
-		"effects": "Burning",
 		"area": "all",
 		"actText": `$subject.name bathes your enemies in flame.`,
 		"act": massAttack({target:'enemies', cut:true, content: applyEffect()}),
@@ -1878,7 +1878,6 @@ setup.actionData = {
 		"weight": 1,
 		"effweight": 0.6,
 		"dur": 5,
-		"effects": "Poisoned",
 		"area": "all",
 		"actText": `$subject.name throws a bomb filled with noxious gas.`,
 		"act": massAttack({target:'enemies', cut:true, content: applyEffect()}),
@@ -1898,7 +1897,7 @@ setup.actionData = {
 		"dur": 3,
 		"effects": ["Injury","Pain","Headache"],
 		"actText": `$subject.name throws a calamity bomb.`,
-		"act": applyEffect({dmg: true})
+		"act": applyEffect({dmg: true},["Injury","Pain","Headache"])
 	}
 
 };

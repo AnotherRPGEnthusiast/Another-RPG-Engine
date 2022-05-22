@@ -33,15 +33,28 @@
 		/* If there's a match, extract the current actor from the actors array. */
 		<<run _p.occupants.push($actors.shift())>>
 	<</for>>
-	<<if _p.occupants.length === 0>>
+	/* create additional array consisting only of enemies with a readied action */
+	<<set _pTest = _p.occupants.filter(function (a) { return a instanceof Enemy && a.delayedAction })>>
+	<<if _p.occupants.length === 0 || _pTest.length === _p.occupants.length>>
+		/* If tick has no occupants OR if only occupants are enemies with readied actions, display empty tick */
 		<<set _src = setup.ImagePath+"ui/tick_empty.png">>
 		<img @src=_src class="tick-empty" />
 	<<else>>
-		<<set _src = setup.ImagePath+"ui/tick_filled.png">>
+		/* Color-code filled ticks for easier reading. */
+		<<if _p.occupants.length > 1 && _pTest.length < 1>>
+			/* Multiple occupants gains mixed color. */
+			<<set _src = setup.ImagePath+"ui/tick_filled_mixed.png">>
+		<<elseif typeof(_p.occupants[0].color) === "string">>
+			/* If a character has a "color" attribute, gain tick image with that color. */
+			<<set _src = setup.ImagePath+"ui/tick_filled_"+_p.occupants[0].color.toLowerCase()+".png">>
+		<<else>>
+			/* Else, use default filled tick image. */
+			<<set _src = setup.ImagePath+"ui/tick_filled.png">>
+		<</if>>
 		<div class="tooltip timeline-tick">
 			<img @src=_src class="tick-filled" />
 			<div class="tooltiptext">
-				<<for _actor range _p.occupants>>
+				<<for _actor range _p.occupants.filter(function (a) { return a instanceof Puppet || !a.delayedAction })>>
 					<div class="tick-occupant">
 						<<if _actor.delayedAction instanceof Action>>
 							<span class="tick-action-notif">!</span>

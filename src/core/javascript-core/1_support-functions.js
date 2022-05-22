@@ -108,6 +108,12 @@ const StatName = function (statName) {
 			case 'intv':
 				statName = "Initiative";
 				break;
+			case 'eva':
+				statName = "Evasion";
+				break;
+			case 'acc':
+				statName = "Accuracy";
+				break;
 		}
 		return setup.STAT_NAMES[statName];
 	} else {

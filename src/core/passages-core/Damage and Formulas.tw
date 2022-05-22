@@ -102,10 +102,6 @@
 	<<print $target.name+" took the hit for "+_temp+"!\n">>
 <</if>>
 
-<<if _queue instanceof Set>>
-	<<set _queue.add($target)>>
-<</if>>
-
 <<if !target().dead>>
 	<<manaBurnCalc>>
 	$target.name loses $dmg Energy!
@@ -122,10 +118,6 @@
 <</if>>
 <<run console.assert($target instanceof Actor,"ERROR in echoDamage: invalid target")>>
 <<set _dmgMods = $args>>
-
-<<if _queue instanceof Set>>
-	<<set _queue.add($target)>>
-<</if>>
 
 <<if def $bestiary && target() instanceof Enemy && $action.element>>
 	<<set $bestiary.fetch(target().name).statsKnown[$action.element] = true>>

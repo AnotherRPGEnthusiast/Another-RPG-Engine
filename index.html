@@ -5670,13 +5670,13 @@ html.dyslexic .tooltiptext {
 /* twine-user-stylesheet #21: "markers.css" */
 /* Changes the formatting of ul elements (bullet-point lists) to look like text-adventure prompts. Useful for displaying choices in a list. */
 
-#passages:not(body.text) ul li::marker {
+#passages ul li::marker {
   content: '>';
   font-weight: bold;
   font-family: monospace;
 }
 
-#passages:not(body.text) ul li {
+#passages ul li {
   padding-left: 0.5em;
 }
 /* twine-user-stylesheet #22: "miscellaneous.css" */
@@ -6176,6 +6176,12 @@ const StatName = function (statName) {
 			case 'intv':
 				statName = "Initiative";
 				break;
+			case 'eva':
+				statName = "Evasion";
+				break;
+			case 'acc':
+				statName = "Accuracy";
+				break;
 		}
 		return setup.STAT_NAMES[statName];
 	} else {
@@ -6657,7 +6663,6 @@ const heal = function heal (test,extension = "") {
 		} else {
 			return `<<healCalc>>\
 			<<if setup.ANIMATIONS === true && _queue instanceof Set>>\
-				<<set _queue.add(target())>>\
 				<<set target().battleMsg.push({type: "healing", content: $heal})>>\
 			<</if>>\
 			<<run target().hp += $heal>>\
@@ -7093,14 +7098,35 @@ const cancelAction = function cancelAction (mods = {}, extension = "") {
 	return function () {
 		if (target().delayedAction instanceof Action) {
 			if (target().interruptGuard) {
+				target().battleMsg.push({shake: false, type: "block", content: "BLOCKED"});
 				result = `${target().name} held ${target().their} concentration!`;
 			} else {
 				target().delayedAction = null;
+				target().battleMsg.push({shake: false, type: "block", content: "Interrupt!"});
 				result = `${target().name}'s concentration was broken!`;
 			}
 		} else {
 			result = `${target().name} didn't have a prepared action!`
 		}
+		if (extension instanceof Function) {
+			result += extension();
+		} else {
+			result += extension;
+		}
+		return result;
+	}
+};
+
+const delayAction = function delayAction (mods = {}, extension = "") {
+	var result = "";
+
+	return function () {
+		var delay = (mods.delay || action().special || 0);
+		console.assert(Number.isInteger(delay),`ERROR in delayAction for ${action().name}: noninteger delay`);
+		target().ticks += delay;
+		target().battleMsg.push({shake: true, type: "delay", content: "Delayed"});
+		result = `${target().name} was delayed by ${delay} tick`;
+		result += (delay === 1) ? `!` : `s!`;
 		if (extension instanceof Function) {
 			result += extension();
 		} else {
@@ -8819,8 +8845,17 @@ window.Actor = class Actor {
 				this._ENregen = new Stat(setup.EN_REGEN);
 			}
 			this.stats = {};
+			for (let [pn,v] of Object.entries(setup.statInfo)) {
+				switch (pn) {
+					case 'Accuracy':
+						this.stats[pn] = new Stat(100);
+						break;
+					default:
+						this.stats[pn] = new Stat(0);
+				}
+			}
 			for (let [pn,v] of Object.entries(this.data.stats)) {
-				this.stats[pn] = new Stat(v);
+				this.setBase(pn,v);
 			}
 			if (this.data.elements) { this.setElements(Object.entries(this.data.elements),"percent"); }
 			if (this.data.tolerances) { this.setTol(Object.entries(this.data.tolerances)); }
@@ -9178,6 +9213,42 @@ window.Actor = class Actor {
 			let n = Math.round(v.current);
 			let max = setup.STAT_MAX[key];
 			let min = setup.STAT_MIN[key];
+			if (isNaN(max) || isNaN(min)) {
+				return n;
+			} else {
+				return this.noMinimum.includes(key)
+					? Math.min(n,max)
+					: Math.clamp(n,min,max);
+			}
+		} else {
+			console.log("ERROR in stat getter, target does not have requested stat");
+			return 0;
+		}
+	}
+
+	getBase (key) {
+		key = key.toUpperFirst();
+		if (this.stats[key]) {
+			let v = this.stats[key];
+			let n = Math.round(v.base);
+			let max = setup.STAT_MAX[key];
+			let min = setup.STAT_MIN[key];
+			return this.noMinimum.includes(key)
+				? Math.min(n,max)
+				: Math.clamp(n,min,max);
+		} else {
+			console.log("ERROR in base stat getter, target does not have requested stat");
+			return 0;
+		}
+	}
+
+	getBonus (key) {
+		key = key.toUpperFirst();
+		if (this.stats[key]) {
+			let v = this.stats[key];
+			let n = Math.round(v.bonus);
+			let max = setup.STAT_MAX[key];
+			let min = setup.STAT_MIN[key];
 			return this.noMinimum.includes(key)
 				? Math.min(n,max)
 				: Math.clamp(n,min,max);
@@ -9187,19 +9258,20 @@ window.Actor = class Actor {
 		}
 	}
 
-	getBase (key) {
-		key = key.toUpperFirst();
-		return this.stats[key].base;
-	}
-
-	getBonus (key) {
-		key = key.toUpperFirst();
-		return this.stats[key].bonus;
-	}
-
 	getEquipBonus (key) {
 		key = key.toUpperFirst();
-		return this.stats[key].equipBonus;
+		if (this.stats[key]) {
+			let v = this.stats[key];
+			let n = Math.round(v.equipBonus);
+			let max = setup.STAT_MAX[key];
+			let min = setup.STAT_MIN[key];
+			return this.noMinimum.includes(key)
+				? Math.min(n,max)
+				: Math.clamp(n,min,max);
+		} else {
+			console.log("ERROR in stat getter, target does not have requested stat");
+			return 0;
+		}
 	}
 
 	statRaised (key) {
@@ -9350,9 +9422,17 @@ window.Actor = class Actor {
 	}
 
 	get deathMessage () {
-		var base = (this._deathMessage || this.data.deathMessage || `${this.name} is defeated!`);
-		if (base instanceof Function) base = base(this);
-		return base+"<br/>";
+		var val = this._deathMessage;
+		if (val === undefined) {
+			val = this.data.deathMessage;
+		}
+		if (val === null) {
+			return null;
+		} else if (val === undefined) {
+			val = `${this.name} is defeated!`;
+		}
+		if (val instanceof Function) val = val(this);
+		return val+"<br/>";
 	}
 
 	// EQUIPMENT FUNCTIONS
@@ -9770,18 +9850,18 @@ window.Actor = class Actor {
 	get actionReady () {
 		//	Returns true if actor has a valid delayed action stored,
 		//	and they can perform it (not dead/held/uncontrollable, or delayPersist)
-/*
+
 		if (this.delayedAction instanceof Action) {
-			console.log(`Checking actionReady for ${this.name}`); console.log(this.delayedAction);
-			console.log(`Active?`); console.log(this.active);
-			console.log(`Can act?`); console.log((this.delayedAction instanceof Action
+//			console.log(`Checking actionReady for ${this.name}`); console.log(this.delayedAction);
+//			console.log(`Active?`); console.log(this.active);
+/*			console.log(`Can act?`); console.log((this.delayedAction instanceof Action
 				&& this.delayedAction.delayCounter <= 0
 				&& (this.active || this.delayedAction.delayPersist)
 				&& (this.delayedAction.delayPersist ||
 					!(this.dead || this.fakedeath || this.noact || this.uncontrollable))
 				));
-		}
-*/
+*/		}
+
 		return (this.delayedAction instanceof Action
 			&& this.delayedAction.delayCounter <= 0
 			&& (this.active || this.delayedAction.delayPersist)
@@ -10554,6 +10634,10 @@ window.Enemy = class Enemy extends Actor {
 		return (this.cd.get(key) <= 0);
 	}
 
+	ENcheck (key) {
+		return (this.en >= setup.actionData[key].cost);
+	}
+
 	get actions () {
 		return (this._actions || this.data.actions || null);
 	}
@@ -10619,6 +10703,29 @@ window.Enemy = class Enemy extends Actor {
 			return this.data.mercy;
 		} else {
 			return 3;
+		}
+	}
+
+	get ENrisk () {
+		//	Object with two properties: "upper" and "lower"; both are floats between 0 and 1.
+		//	Enemy rest chance is 0% when EN >= upper proportion, 100% when EN <= lower proportion, scales lineraly if between values
+		//	Defaults to values of 0 for both.
+
+		return (this._ENrisk || this.data.ENrisk || {upper: 0, lower: 0});
+	}
+
+	get HPrisk () {
+		//	Float. Default enemy rest chance (see ENrisk above) is increased by (1 - HP/maxHP) times this number. Can be negative.
+		//	For example, if this value is 1, then rest chance will steadily increase as HP drops, up to a theoretical maximum of double chance at 0 HP.
+		//	If this is a negative value, chance will decrease at lower HP instead.
+		//	If 0, HP loss will not factor into enemy rest chance.
+
+		if (this._HPrisk !== undefined) {
+			return this._HPrisk;
+		} else if (this.data.HPrisk !== undefined) {
+			return this.data.HPrisk;
+		} else {
+			return 0;
 		}
 	}
 
@@ -11652,7 +11759,7 @@ setup.actionData = {
 			return `${subject().name} stops, and closes ${subject().their} eyes. ${subject().their.toUpperFirst()} sudden tranquility is discordant with the chaos of the battle. ${subject().they.toUpperFirst()} take a deep breath, and when ${subject().they} let it out you swear you can see a physical presence leave ${subject().them}. ${subject().they.toUpperFirst()} stand up straighter, positively glowing.`;
 		},
 		"act": removeEffect({target:'s'},
-						applyEffect({self:true},"Chi Shield",
+						applyEffect({self:true},
 						`<<set $B.heal_used = true>>`)),
 		"preview": function () {
 			if (subject().stasis) {
@@ -11836,7 +11943,7 @@ setup.actionData = {
 			return `With uncharacteristic unsubtlety, $subject.name charges forward, swinging their blades in a whirlwind of flashing steel. Not every swing connects, but it doesn't need to. The enemy stumbles and sways from the pressing assault, looking like they could be knocked over by a light breeze. $subject.name grins and leaps away, their job done.`;
 		},
 		"act": justdmg(),
-		"finisher": applyEffect("Off-Balance"),
+		"finisher": applyEffect(),
 		"preview": "multihit"
 	},
 
@@ -12200,9 +12307,9 @@ setup.actionData = {
 
 	"Ascension": {
 		"cost":		10,
+		"effects": ["Blessing"],
 		"effweight":	(10/45),
 		"dur":		5,
-		"effects": ["Blessing"],
 		"phase":	"Confirm Phase",
 		"saveMod": "Blessing",
 		"actText": function () {
@@ -12328,7 +12435,7 @@ setup.actionData = {
 		"actText": function () {
 			return `$subject.name says something so random the enemy has to stop to process it. While they're doing that, $subject.name socks them in the face.`;
 		},
-		"act": applyEffect("Off-Balance",{dmg: true})
+		"act": applyEffect({dmg: true})
 	},
 
 	"Insult": {
@@ -13124,6 +13231,7 @@ setup.actionData = {
 
 	"Divine Protection": {
 		"crisis": true,
+		"effects": ["Divine Protection"],
 		"dur": -1,
 		"act": massAttack({target: "allies", content: applyEffect()}),
 		"target": "ally",
@@ -13310,7 +13418,6 @@ setup.actionData = {
 		"weight": 1,
 		"effweight": 0.6,
 		"dur": 5,
-		"effects": "Burning",
 		"area": "all",
 		"actText": `$subject.name bathes your enemies in flame.`,
 		"act": massAttack({target:'enemies', cut:true, content: applyEffect()}),
@@ -13321,7 +13428,6 @@ setup.actionData = {
 		"weight": 1,
 		"effweight": 0.6,
 		"dur": 5,
-		"effects": "Poisoned",
 		"area": "all",
 		"actText": `$subject.name throws a bomb filled with noxious gas.`,
 		"act": massAttack({target:'enemies', cut:true, content: applyEffect()}),
@@ -13341,7 +13447,7 @@ setup.actionData = {
 		"dur": 3,
 		"effects": ["Injury","Pain","Headache"],
 		"actText": `$subject.name throws a calamity bomb.`,
-		"act": applyEffect({dmg: true})
+		"act": applyEffect({dmg: true},["Injury","Pain","Headache"])
 	}
 
 };
@@ -14441,7 +14547,7 @@ setup.enemyData = {
 				V().action = new Action("Assault");
 				V().action.actText = "Finn charges in recklessly!";
 				V().action.useText = null;
-				V().action.act = applyEffect("Off-Balance",{self: true, dmg: true});
+				V().action.act = applyEffect({self: true, dmg: true},"Off-Balance");
 			}
 
 			} //end loop
@@ -14603,7 +14709,7 @@ setup.enemyData = {
 					V().action.dur = 4;
 					V().action.useText = null;
 					V().action.actText = `Princess Bubblegum douses $target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
-					V().action._act = applyEffect("Poisoned");
+					V().action._act = applyEffect({},"Poisoned");
 				}
 				this.ready = false;
 			}
@@ -14684,7 +14790,7 @@ setup.enemyData = {
 				V().action._effweight = 0.2;
 				V().action._dur = 4;
 				action()._actText = null;
-				V().action._act = applyEffect("Blessing",{self:true});
+				V().action._act = applyEffect({self:true},"Blessing");
 				this.cd.set("mass buff",4);
 			}
 			else if (this.ready) {
@@ -14702,7 +14808,7 @@ setup.enemyData = {
 					V().action._dur = 4;
 					V().action._useText = null;
 					V().action._actText = `Princess Bubblegum douses $target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
-					V().action._act = applyEffect("Poisoned");
+					V().action._act = applyEffect({},"Poisoned");
 				}
 				this.ready = false;
 			}
@@ -14796,7 +14902,7 @@ Gumball slips on a stray pebble, falls back, hits his head, and is instantly kno
 				V().action._useText = null;
 				V().action._actText = `Gumball trips over his own feet!`;
 				action()._dur = -1;
-				V().action._act = applyEffect("Knocked Down",{self:true});
+				V().action._act = applyEffect({self:true},"Knocked Down");
 			}
 			else if (!V().enemies[1].dead && !V().enemies[2].dead && !this.untargetable && act <= 20 && act > 10) {
 				console.log("Action: sneak");
@@ -14861,14 +14967,14 @@ Gumball slips on a stray pebble, falls back, hits his head, and is instantly kno
 					V().action._effweight = setup.STD_BUFF;
 					V().action._dur = 3;
 					V().action._actText = `...and retrieves a brightly-wrapped candy bar. "Oh, awesome! I forgot I had this!" He downs the whole thing in a few bites. You dread the sugar high he's going to get...`;
-					V().action._act = applyEffect("SPC Boost",{self:true});
+					V().action._act = applyEffect({self:true},"SPC Boost");
 				}
 				else if (act > 11 && act <= 16) {
 					// 5 in 20: protein bar
 					V().action._effweight = setup.STD_BUFF;
 					V().action._dur = 3;
 					V().action._actText = `...and pulls out a protein bar. He glares at it as if its existence offends him, then nonchalantly shrugs and takes a bite. "Food's food," he says.`;
-					V().action._act = applyEffect("DEF Boost",{self:true});
+					V().action._act = applyEffect({self:true},"DEF Boost");
 				}
 				else if (act > 16 && act <= 19) {
 					// 3 in 20: angry cat
@@ -14995,7 +15101,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					V().action._weight = 1;
 					V().action._dur = 3;
 					V().action._actText = `Anais lobs a grenade at you -- but to your surprise, when it explodes it leaves a massive cloud of shiny metal flakes. It just looks like silly confetti to you, but your puppets stutter and freeze up trying to see through all the flashing lights!`;
-					V().action._act = massAttack({content: applyEffect("Dizzy"), cut:true});
+					V().action._act = massAttack({content: applyEffect({},"Dizzy"), cut:true});
 					this.cd.set("Chaff",4);
 				}
 				this.ready = false;
@@ -15101,7 +15207,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action._effweight = 0.4;
 				V().action._dur = 3;
 				V().action._actText = `Darwin puts on irresistible puppy eyes and makes a seemingly-heartfelt speech about how mean you are for beating him up. You feel uncomfortable, and your puppets hesitate before attacking again.`;
-				V().action._act = massAttack({target: "enemies", content: applyEffect("Injury")}),
+				V().action._act = massAttack({target: "enemies", content: applyEffect({},"Injury")}),
 				this.cd.set("Moralize",3);
 			}
 
@@ -15365,7 +15471,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action._dur = 3;
 				V().action._useText = null;
 				V().action._actText = `Steven wails, and his gem flashes a bright pink.`;
-				V().action._act = applyEffect("Bubble",{self:true});
+				V().action._act = applyEffect({self:true},"Bubble");
 			}
 			else {
 				V().action = {useText: null, act: null, actText: `Steven clutches the gems to his chest and blubbers.`};
@@ -15432,7 +15538,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action._dur = 3;
 				V().action._useText = null;
 				V().action._actText = `"A bubble for your trouble?" Steven lifts his shirt, and you see his gem flash with a pink light.`;
-				V().action._act = applyEffect("Bubble");
+				V().action._act = applyEffect({},"Bubble");
 			}
 
 			} //end loop
@@ -15671,7 +15777,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action = new Action("Thorns");
 				action()._useText = null;
 				action()._actText = `Rose grins from ear to ear as her gem flashes a bright pink.`;
-				action()._act = applyEffect("Thorns",{self:true});
+				action()._act = applyEffect({self:true},"Thorns");
 				return;
 			}
 
@@ -15681,7 +15787,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action = new Action("Thorns");
 				action()._useText = null;
 				action()._actText = `Rose grins from ear to ear as her gem flashes a bright pink.`;
-				action()._act = applyEffect("Thorns",{self:true});
+				action()._act = applyEffect({self:true},"Thorns");
 			}
 			else if (act <= 30 && act > 5) {
 				act = random(1,100);
@@ -15760,7 +15866,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					V().action._effweight = 0.6;
 					V().action._dur = 4;
 					V().action._actText = `Rose strikes her sword along the ground, exposing a single crack. Rose closes her eyes, focusing, and a dark green vine suddenly sprouts from the earth. It grows towards your puppets like it has a will of its own, and instantly blooms into dark indigo blossoms just beneath each of your puppets' faces. With a light <i>puff</i>, they let out a strange purple powder that your puppets don't seem to like at all.`;
-					V().action._act = massAttack({target: "enemies", content: applyEffect("Poisoned")});
+					V().action._act = massAttack({target: "enemies", content: applyEffect({},"Poisoned")});
 				}
 			}
 			else if (act > 80) {
@@ -15972,7 +16078,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 						action()._targetMod = ["ignore downed"];
 						action()._dur = -1;
 						V().action._actText = `Bill turns the full force of his huge, all-consuming eye on $target.name. The schlera around the slitted pupil glows a sickly, ugly yellow, the color of rotting pus. You see Bill's gaze become a physical force, a cone of light that swallows $target.name in its entirety, and before your eyes, you see their flesh turn to stone.`;
-						V().action._act = applyEffect("Petrified");
+						V().action._act = applyEffect({},"Petrified");
 						this.cd.set("Stone Gaze",3);
 					}
 				}
@@ -16071,7 +16177,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					Then he <i>screams</i>.
 
 					You are dead certain that there is not a single creature on Earth, no, in the <i>universe</i> that could make a scream like that. You clamp your hands over your ears, but it does nothing. This isn't just a sound you hear in your bones, it is a sound you hear in your <i>soul</i>.`
-					action()._act = massAttack({target: "enemies", content: applyEffect("Stunned")});
+					action()._act = massAttack({target: "enemies", content: applyEffect({},"Stunned")});
 				}
 			}
 			else {
@@ -16236,7 +16342,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 
 						"Can you see me?" she taunts, her voice echoing around and around in the wide space of the church. "Don't worry. <i>I see you.</i>"`;
 						action()._dur = -1;
-						action()._act = applyEffect("Invisible",{self:true});
+						action()._act = applyEffect({self:true},"Invisible");
 						return;
 					case 8:
 						V().action = new Action("invisible attack");
@@ -16282,7 +16388,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					action()._actText = function () {
 						return `Marceline gets all up in ${target().name}'s face and lets out a shrill, bat-like shriek!`;
 					};
-					action()._act = applyEffect("Stunned");
+					action()._act = applyEffect({},"Stunned");
 				}
 				else {
 
@@ -16364,7 +16470,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					action()._dur = 3;
 					action()._useText = null;
 					action()._actText = `Marceline's kitchen table starts pelting you with rotten food. Gross!`;
-					action()._act = applyEffect("Poisoned");
+					action()._act = applyEffect({},"Poisoned");
 				}
 				else if (act > 35 && act <= 70) {
 					V().action = new Action("burn");
@@ -16372,7 +16478,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					action()._dur = 3;
 					action()._useText = null;
 					action()._actText = `The candles on Marceline's kitchen table suddenly flare to life before flying at ${target().name}, covering them in burning wax.`;
-					action()._act = applyEffect("Burning");
+					action()._act = applyEffect({},"Burning");
 				}
 				else {
 
@@ -16526,7 +16632,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 							V().action._weight = 1;
 							V().action._dur = 3;
 							V().action._actText = `Bonnibel lobs a grenade at you -- but to your surprise, when it explodes it leaves a massive cloud of shiny metal flakes. It just looks like silly confetti to you, but your puppets stutter and freeze up trying to see through all the flashing lights!`;
-							V().action._act = massAttack({content: applyEffect("Dizzy"), cut: true});
+							V().action._act = massAttack({content: applyEffect({},"Dizzy"), cut: true});
 						}
 					}
 				}
@@ -16986,14 +17092,14 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					V().action.effweight = V().STD_BUFF;
 					V().action.dur = 3;
 					V().action.actText = `...and retrieves a brightly-wrapped candy bar. "Oh, awesome! I forgot I had this!" He downs the whole thing in a few bites. You dread the sugar high he's going to get...`;
-					V().action.act = applyEffect("SPC Boost",{self:true});
+					V().action.act = applyEffect({self:true},"SPC Boost");
 				}
 				else if (act > 11 && act <= 16) {
 					// 5 in 20: protein bar
 					V().action.effweight = V().STD_BUFF;
 					V().action.dur = 3;
 					V().action.actText = `...and pulls out a protein bar. He glares at it as if its existence offends him, then nonchalantly shrugs and takes a bite. "Food's food," he says.`;
-					V().action.act = applyEffect("DEF Boost",{self:true});
+					V().action.act = applyEffect({self:true},"DEF Boost");
 				}
 				else if (act > 16 && act <= 19) {
 					// 3 in 20: angry cat
@@ -17071,7 +17177,7 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 				V().action = new Action("Thorns");
 				action().useText = null;
 				action().actText = `Stevonnie concentrates for a second, and their gem flashes a bright pink.`;
-				action().act = applyEffect("Thorns",{self:true});
+				action().act = applyEffect({self:true},"Thorns");
 				return;
 			}
 
@@ -17081,7 +17187,7 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 				V().action = new Action("Thorns");
 				action().useText = null;
 				action().actText = `Stevonnie concentrates for a second, and their gem flashes a bright pink.`;
-				action().act = applyEffect("Thorns",{self:true});
+				action().act = applyEffect({self:true},"Thorns");
 				return;
 			}
 			else if (!this.protector && act > 5 && act <= 55) {
@@ -17149,7 +17255,7 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 					action().actText = function () {
 						return `Stevonnie rushes forward, but at the last moment, reverses their grip on their sword to ram the pommel into ${target().name}'s face, forcing them to reel back in a daze.`;
 					};
-					action().act = applyEffect("Stunned");
+					action().act = applyEffect({},"Stunned");
 				}
 			}
 			else if (act <= 85 && act > 70) {
@@ -17491,9 +17597,6 @@ Actor.prototype.removeEffect = function (effect,mods = {}) {
     if (!V().inbattle || ((!E.ULTIMATESTICKY || mods.unsticky == "ultimate") && (!E.sticky || mods.unsticky))) {
       E.onRemove(this);
       if (!mods.noPopup) {
-        if (temporary().queue instanceof Set) {
-          temporary().queue.add(this);
-        }
         var shake = E.buff ? true : false;
         this.battleMsg.push({shake: shake, type: "removeEffect", content: "- "+E.name});
       }
@@ -17509,7 +17612,9 @@ Actor.prototype.removeEffect = function (effect,mods = {}) {
           }
         }
       }
-      return result;
+      return result === '\n'
+        ? ""
+        : result
     }
     else {
       return `${E.name} status can't be removed!<br/>`;
@@ -17577,6 +17682,28 @@ function cureCheck (mods) {
 	for (let p of party) {
 		count += p.effectCount("ailment",mods);
 	}
+}
+
+function checkActions (check=function (name) { return true; },targets=[]) {
+	//	Logic for checking if the player party has a specific action readied.
+	//	Returns number of actions the target(s) have readied that pass some logic.
+
+	//	check = filter function. Only returns true if an action passing
+	//		the condition is present.
+	//		By default, automatically returns true for any readied action.
+	//	targets = string or array of strings, names of puppets to check.
+	//		By default, all puppets are checked.
+
+	if (typeof(targets) === "string") targets = [targets];
+	var party = V().puppets;
+	var count = 0;
+	if (targets.length > 0) party = party.filter(function (puppet) { return targets.includes(puppet.name); });
+	for (let puppet of party) {
+		if (puppet.delayedAction) {
+			if (check(puppet.delayedAction.name)) count++;
+		}
+	}
+	return count;
 }
 /* twine-user-script #17: "preview-function.js" */
 const ActionProto = Object.getPrototypeOf(new Action(""));
@@ -17980,6 +18107,7 @@ Hitlist.targetEnemy = function (args) {
 	//	Targeting logic for offensive abilities.
 	//	args = string or array of strings, modifies logic
 
+//	console.log(`${subject().name} targeting`);
 	//	If all of one party are dead, there are no valid targets. Flag targetfail and return null.
 	if (deadCount() == puppets().length || enemies().filter(function (e) { return e.dead; }).length == enemies().length) {
 		temporary().targetfail = true;
@@ -18119,10 +18247,10 @@ Hitlist.prototype.addFactors = function (mods) {
 	var mostDamaging = Math.max(...this.map(function (t) { return t.target.lastDmg }));
 	var highestStat = {};
 	var lowestStat = {};
-	for (let [pn,v] in setup.statInfo) {
+	for (let pn in setup.statInfo) {
 		highestStat[pn] = Math.max(...this.map(function (t) { return t.target.get(pn) }))
 	}
-	for (let [pn,v] in setup.statInfo) {
+	for (let pn in setup.statInfo) {
 		lowestStat[pn] = Math.min(...this.map(function (t) { return t.target.get(pn) }))
 	}
 	if (mods.includes("most HP")) {
@@ -18130,12 +18258,21 @@ Hitlist.prototype.addFactors = function (mods) {
 	} else if (mods.includes("least HP")) {
 		var lowestHP = Math.min(...this.filter(function (t) { return t.chance > 0 }).map(function (t) { return t.target.hp }));
 	}
+	if (mods.includes("most EN")) {
+		var greatestEN = Math.max(...this.filter(function (t) { return t.chance > 0 }).map(function (t) { return t.target.en }));
+	} else if (mods.includes("least EN")) {
+		var lowestEN = Math.min(...this.filter(function (t) { return t.chance > 0 }).map(function (t) { return t.target.en }));
+	}
 	for (let t of this) {
 		// Exclusive mods: These will target ONLY the character with the highest or lowest parameter.
 		// As such, they are mutually exclusive and ignore other mods.
 		if (mods.includes("least HP") && t.target.hp <= lowestHP) {
 			t.chance += 1;
 		} else if (mods.includes("most HP") && t.target.hp >= greatestHP) {
+			t.chance += 1;
+		} else if (mods.includes("least EN") && t.target.en <= lowestEN) {
+			t.chance += 1;
+		} else if (mods.includes("most EN") && t.target.en >= greatestEN) {
 			t.chance += 1;
 		} else if (mods.includes("most damage") && t.target.lastDmg >= mostDamaging) {
 			t.chance += 1;
@@ -18166,6 +18303,10 @@ Hitlist.prototype.addFactors = function (mods) {
 			if (!mods.includes("ignore damaging") && t.target.lastDmg >= mostDamaging) {
 				t.chance += 1;
 			}
+			// If this action cancels a readied action, targets with a setupAction get an extra weight.
+			if (mods.includes("cancelAction") && t.target.setupAction) {
+				t.chance += 1;
+			}
 			// If this attack pierces defense, preferentially target the character with the highest defense.
 			if (mods.includes("pierce") && t.target.get(StatName("def")) >= highestStat[StatName("def")]) {
 				t.chance += 1;
@@ -18182,7 +18323,7 @@ Hitlist.prototype.addFactors = function (mods) {
 				t.chance += (1-((t.target.hp)/t.target.maxHP))*setup.RUTHLESS_FACTOR;
 			}
 			else if (!mods.includes("ignore vulnerable")) {
-				t.chance += (1-((t.target.hp)/t.target.maxHP));
+				t.chance = this.vulnerableFactor(t);
 			}
 			// If this attack applies a debuff, preferentially target characters with a SPC debuff,
 			// and ignore those with protective effects.
@@ -18192,6 +18333,12 @@ Hitlist.prototype.addFactors = function (mods) {
 			}
 		}
 	}
+};
+
+Hitlist.prototype.vulnerableFactor = function (t) {
+	console.assert(typeof(t) === "object" && t.target instanceof Actor,`ERROR in Hitlist.vulnerableFactor: invalid target passed`);
+	t.chance += (1-((t.target.hp)/t.target.maxHP));
+	return t.chance;
 };
 
 Hitlist.prototype.allyFactors = function (mods) {
@@ -18266,7 +18413,7 @@ Config.saves.isAllowed = function () {
 };
 // This will disallow saving in battle. This is probably a good idea, but make sure you keep track of your inbattle variable so you don't accidentally prevent people from saving in the main story.
 
-setup.version = "4.01";
+setup.version = "4.02";
 
 Config.saves.version = 0;
 // Records a version number for saves. Update this when you update your version. This is helpful for updating saves from older versions.
@@ -19014,6 +19161,48 @@ setup.puppetData = {
 		"defaultAction": "White Light",
 		"crisis": "Desperate Attack",
 		"portrait": "ARTST"
+	},
+
+	"Labrat": {
+		// Puppet for testing XP and level up mechanics.
+		"gender": 'N',
+		"hp": 100,
+		"en": 10,
+		"ENregen": 2,
+		"stats": {
+			"Attack"	: 30,
+			"Defense"	: 30,
+			"Special"	: 30
+		},
+		"actions": [
+			"Sword"
+		],
+		"defaultAction": "Sword",
+		"crisis": "Desperate Attack",
+		"specialInit": function (actor) {
+			actor.XPtoNext = function (level) {
+				if (level === undefined) {
+	        level = this.level;
+	      }
+	      if (level >= setup.LEVEL_CAP) {
+	        return "--";
+	      }
+	      else if (level <= 0) {
+	        return 0;
+	      }
+				else {
+					return level;
+				}
+			}
+		},
+		"statTable": function (level) {
+			switch (level) {
+				case 3:
+					return new Action("Hammer");
+				default:
+					return;
+			}
+		}
 	}
 };
 /* twine-user-script #26: "effect-manager-overwrite.js" */
@@ -19409,13 +19598,13 @@ if(!PuppetProto.crisisFactor) {
 // XPtoNext: Calculates the XP required for the next level. Pokemon's formulas are the default; change as necessary.
 if(!PuppetProto.XPtoNext) {
   Object.defineProperty(PuppetProto,'XPtoNext', {
+    writable: true,
     configurable: true,
     enumerable: true,
     value: function (level) {
       if (level === undefined) {
         level = this.level;
       }
-      var toNext;
       if (level >= setup.LEVEL_CAP) {
         return "--";
       }
@@ -21186,6 +21375,9 @@ Select a target. &lt;span class=&quot;hotkey monospace&quot;&gt;[hotkeys: 1-0] &
 	&lt;&lt;/if&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
+/* Record this action as seen by the enemy */
+&lt;&lt;set $B.actionsSeen.pushUnique($action.name)&gt;&gt;
+
 &lt;br/&gt;
 &lt;&lt;include &quot;Battle Continue Button&quot;&gt;&gt;
 
@@ -21201,7 +21393,7 @@ Select a target. &lt;span class=&quot;hotkey monospace&quot;&gt;[hotkeys: 1-0] &
 			&lt;&lt;set $action._cost = setup.ITEM_COST&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;if $action.waitTime === 0&gt;&gt;
+	&lt;&lt;if (subject() instanceof Enemy) || $action.waitTime === 0&gt;&gt;
 		&lt;&lt;set $subject.en -= $action.cost&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 &lt;&lt;/if&gt;&gt;
@@ -21214,11 +21406,13 @@ Select a target. &lt;span class=&quot;hotkey monospace&quot;&gt;[hotkeys: 1-0] &
 /* Prime delayed action if one exists */
 &lt;&lt;if typeof($action.setupAction) == &quot;string&quot;&gt;&gt;
 	&lt;&lt;set _action = new Action($action.setupAction)&gt;&gt;
-	&lt;&lt;set _action.delayCounter = $action.setupDelay&gt;&gt;
-	&lt;&lt;set subject().delayedAction = _action&gt;&gt;
 	&lt;&lt;if setup.TURN_MODEL.toLowerCase() === &quot;timeline&quot;&gt;&gt;
+		&lt;&lt;set _action.delayCounter = 0&gt;&gt;
 		&lt;&lt;set subject().ticks += $action.waitTime&gt;&gt;
+	&lt;&lt;else&gt;&gt;
+		&lt;&lt;set _action.delayCounter = $action.setupDelay&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
+	&lt;&lt;set subject().delayedAction = _action&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
 /* For Enemies, set cooldown for the action */
@@ -21327,6 +21521,9 @@ Select a target. &lt;span class=&quot;hotkey monospace&quot;&gt;[hotkeys: 1-0] &
 		&lt;&lt;else&gt;&gt;
 			&lt;&lt;set $target = Hitlist.targetEnemy($action.targetMod)&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
+	&lt;&lt;/if&gt;&gt;
+	&lt;&lt;if _queue instanceof Set&gt;&gt;
+		&lt;&lt;run _queue.add($target)&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 	&lt;&lt;accuracyCheck&gt;&gt;
 	&lt;&lt;if _hit === true&gt;&gt;
@@ -21509,8 +21706,9 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 		&lt;&lt;set $action = null&gt;&gt;
 		&lt;&lt;if setup.TURN_MODEL.toLowerCase() !== &quot;timeline&quot; &amp;&amp; _enemy.isFirstAction&gt;&gt;
 			&lt;&lt;newTurn `[_enemy]`&gt;&gt;
+		&lt;&lt;elseif setup.TURN_MODEL.toLowerCase() === &quot;timeline&quot;&gt;&gt;
+			&lt;&lt;run $B.actionsThisTurn[_enemy.id] = []&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
-		&lt;&lt;set _enemy.active = false&gt;&gt;
 
 		&lt;&lt;if !_enemy.fakedeath || _enemy.actionReady&gt;&gt;
 
@@ -21524,13 +21722,18 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 
 			&lt;&lt;else&gt;&gt;
 				&lt;&lt;set _counters = []&gt;&gt;
+				&lt;&lt;run console.log(&quot;enemy turn for &quot;+_enemy.name+&quot;; has delayed action?&quot;); console.log(_enemy.delayedAction); console.log(_enemy.actionReady)&gt;&gt;
 				&lt;&lt;if _enemy.actionReady&gt;&gt;
 					&lt;&lt;set $action = _enemy.delayedAction&gt;&gt;
+					&lt;&lt;set _enemy.delayedAction = null&gt;&gt;
 				&lt;&lt;else&gt;&gt;
 					&lt;&lt;run _enemy.actions()&gt;&gt;
 				&lt;&lt;/if&gt;&gt;
+				&lt;&lt;if _enemy.en &lt; $action.cost&gt;&gt;
+					&lt;&lt;set $action = new Action(&quot;enemy rest&quot;)&gt;&gt;
+				&lt;&lt;/if&gt;&gt;
 				&lt;&lt;run $B.actionsThisTurn[_enemy.id].push($action.name)&gt;&gt;
-				&lt;&lt;if $target === null &amp;&amp; $action.targetMethod instanceof Function&gt;&gt;
+				&lt;&lt;if !($target instanceof Actor) &amp;&amp; $action.targetMethod instanceof Function&gt;&gt;
 					/* If a target hasn&#39;t already been selected, use the action&#39;s targetMethod (defaults to Hitlist methods) */
 					&lt;&lt;set $target = $action.targetMethod()&gt;&gt;
 				&lt;&lt;/if&gt;&gt;
@@ -21545,11 +21748,8 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 					/* Otherwise, noAttacks is reduced by 1, unless the action was instant. */
 					&lt;&lt;run _enemy.noAttacks--&gt;&gt;
 				&lt;&lt;/if&gt;&gt;
-				&lt;&lt;if _enemy.noAttacks &gt; 0&gt;&gt;
-					/* If the enemy still has attacks remaining, their turn isn&#39;t done; set active to true again so they will act again when this passage is re-called. */
-					&lt;&lt;set _enemy.active = true&gt;&gt;
-				&lt;&lt;elseif setup.TURN_MODEL.toLowerCase() === &quot;free&quot;&gt;&gt;
-					/* Otherwise, the enemy is done. If the model is free-action, we need to remove their turn from the pool. */
+				&lt;&lt;if _enemy.noAttacks &lt;= 0 &amp;&amp; setup.TURN_MODEL.toLowerCase() === &quot;free&quot;&gt;&gt;
+					/* If out of actions, enemy&#39;s turn is done. If the model is free-action, we need to remove their turn from the pool. */
 					&lt;&lt;run $B.actionsThisTurn[_enemy.id] = []&gt;&gt;
 					&lt;&lt;run $B.enemyTurns -= 1&gt;&gt;
 				&lt;&lt;/if&gt;&gt;
@@ -21561,6 +21761,10 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 			&lt;&lt;goto &quot;Enemy Phase&quot;&gt;&gt;
 		&lt;&lt;/if&gt;&gt; /* end fakedeath if */
 
+		/* End turn by setting active to false. Exception: If the enemy took an action this turn (so, did not experience special clauses like stuns or fakedeath) and still has attacks remaining, keep active set to true so they get another turn when this passage is called again. */
+		&lt;&lt;if !($B.actionsThisTurn[_enemy.id].length &gt; 0 &amp;&amp; _enemy.noAttacks &gt; 0)&gt;&gt;
+			&lt;&lt;set _enemy.active = false&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
 		&lt;&lt;run _enemy.decayThreat()&gt;&gt;
 
 	&lt;&lt;else&gt;&gt;
@@ -21817,7 +22021,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 &lt;&lt;if !_a.dead &amp;&amp; !_a.healBlock&gt;&gt;
 	&lt;&lt;run _a.regenHP()&gt;&gt;
 &lt;&lt;/if&gt;&gt;
-&lt;&lt;if !_a.noENregen&gt;&gt;
+&lt;&lt;if def _a.en &amp;&amp; !_a.noENregen&gt;&gt;
 	&lt;&lt;set _a.en += _a.ENregen&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="46" name="Widget: advanceCooldown" tags="widget nobr" position="725,600" size="100,100">/* Decrements action cooldowns and refreshes used actions. */
@@ -21880,6 +22084,8 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 		&lt;&lt;advanceDelay _actor&gt;&gt;
 		&lt;&lt;advanceRespawn _actor&gt;&gt;
 		&lt;&lt;regen _actor&gt;&gt;
+	&lt;&lt;elseif _actor instanceof Enemy&gt;&gt;
+		&lt;&lt;run $B.actionsThisTurn[_enemy.id] = []&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 
 	&lt;&lt;advanceCooldown _actor&gt;&gt;
@@ -21979,29 +22185,15 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 &lt;&lt;refreshPuppets&gt;&gt;
 
 &lt;&lt;unset $B; $subject; $target; $enemies; $enemyGrid; $puppetGrid&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="52" name="initTurns" tags="widget nobr" position="225,725" size="100,100">&lt;&lt;widget &quot;initTurns&quot;&gt;&gt;
-&lt;&lt;set $actors = allActors()&gt;&gt;
-&lt;&lt;switch setup.TURN_MODEL.toLowerCase()&gt;&gt;
-	&lt;&lt;case &quot;timeline&quot;&gt;&gt;
-		&lt;&lt;initTurnsTimeline&gt;&gt;
-		&lt;&lt;set $actors = allActors(&quot;timeline&quot;)&gt;&gt;
-	&lt;&lt;default&gt;&gt;
-		/* default is free action model: everyone is always active */
-		&lt;&lt;for _actor range $actors&gt;&gt;
-			&lt;&lt;set _actor.active = true&gt;&gt;
-		&lt;&lt;/for&gt;&gt;
-&lt;&lt;/switch&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="53" name="Battle Preparation" tags="" position="350,725" size="100,100">&lt;&lt;set $inbattle = true&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="52" name="Battle Preparation" tags="" position="225,725" size="100,100">&lt;&lt;set $inbattle = true&gt;&gt;
 &lt;&lt;unset $subject, $target&gt;&gt;
-&lt;&lt;set $B = {actor: null, turn: &quot;player&quot;, turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: &quot;selection&quot;, embargo: 0, event: false, surrender: false, kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}&gt;&gt;
+&lt;&lt;set $B = {actor: null, turn: &quot;player&quot;, turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: &quot;selection&quot;, embargo: 0, event: false, surrender: false, actionsSeen: [], kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}&gt;&gt;
 &lt;&lt;callEncounter $scenario&gt;&gt;
 &lt;&lt;for _enemy range enemies()&gt;&gt;
 	&lt;&lt;set $B.actionsThisTurn[_enemy.id] = []&gt;&gt;
 &lt;&lt;/for&gt;&gt;
 &lt;&lt;refreshPuppets&gt;&gt;
-
 &lt;&lt;initTurns&gt;&gt;
-
 &lt;&lt;if typeof($B.style) == &#39;string&#39;&gt;&gt;
 	&lt;&lt;addclass &quot;html&quot; $B.style&gt;&gt;
 &lt;&lt;/if&gt;&gt;
@@ -22035,7 +22227,19 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 	&lt;&lt;goto &quot;Enemy Phase&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;goto &quot;Player Phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="54" name="Widget: damageCalc" tags="widget nobr" position="475,725" size="100,100">&lt;&lt;widget &quot;damageCalc&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="53" name="initTurns" tags="widget nobr" position="350,725" size="100,100">&lt;&lt;widget &quot;initTurns&quot;&gt;&gt;
+&lt;&lt;set $actors = allActors()&gt;&gt;
+&lt;&lt;switch setup.TURN_MODEL.toLowerCase()&gt;&gt;
+	&lt;&lt;case &quot;timeline&quot;&gt;&gt;
+		&lt;&lt;initTurnsTimeline&gt;&gt;
+		&lt;&lt;set $actors = allActors(&quot;timeline&quot;)&gt;&gt;
+	&lt;&lt;default&gt;&gt;
+		/* default is free action model: everyone is always active */
+		&lt;&lt;for _actor range $actors&gt;&gt;
+			&lt;&lt;set _actor.active = true&gt;&gt;
+		&lt;&lt;/for&gt;&gt;
+&lt;&lt;/switch&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="54" name="Widget: damageCalc" tags="widget nobr" position="475,725" size="100,100">&lt;&lt;widget &quot;damageCalc&quot;&gt;&gt;
 &lt;&lt;set _w = $action.weight&gt;&gt;
 &lt;&lt;if $args[0] instanceof Actor&gt;&gt;
 	&lt;&lt;set _target = $args[0]&gt;&gt;
@@ -22132,10 +22336,6 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 	&lt;&lt;print $target.name+&quot; took the hit for &quot;+_temp+&quot;!\n&quot;&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;if _queue instanceof Set&gt;&gt;
-	&lt;&lt;set _queue.add($target)&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-
 &lt;&lt;if !target().dead&gt;&gt;
 	&lt;&lt;manaBurnCalc&gt;&gt;
 	$target.name loses $dmg Energy!
@@ -22149,10 +22349,6 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 &lt;&lt;/if&gt;&gt;
 &lt;&lt;run console.assert($target instanceof Actor,&quot;ERROR in echoDamage: invalid target&quot;)&gt;&gt;
 &lt;&lt;set _dmgMods = $args&gt;&gt;
-
-&lt;&lt;if _queue instanceof Set&gt;&gt;
-	&lt;&lt;set _queue.add($target)&gt;&gt;
-&lt;&lt;/if&gt;&gt;
 
 &lt;&lt;if def $bestiary &amp;&amp; target() instanceof Enemy &amp;&amp; $action.element&gt;&gt;
 	&lt;&lt;set $bestiary.fetch(target().name).statsKnown[$action.element] = true&gt;&gt;
@@ -22473,10 +22669,6 @@ MegaCorp® is happy to provide you with their top-of-the-line items, provided yo
 	&quot;Initiative&quot;: &quot;Determines starting turn order.&quot;,
 	&quot;Speed&quot;: &quot;Makes you go faster.&quot;
 }&gt;&gt;
-
-/*	These stats will not be displayed in the menu or status pane even if they are core stats
-		Entries must match stat names exactly, case-sensitive */
-&lt;&lt;set setup.hiddenStats = [&quot;Skill&quot;,&quot;Accuracy&quot;,&quot;Evasion&quot;]&gt;&gt;
 
 /*	Default equipment slots. Keys are the name of the slot, value is number of subslots (only considered if &gt;1) */
 &lt;&lt;set setup.DEFAULT_EQUIP_SLOTS = {
@@ -23377,7 +23569,7 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 		&lt;&lt;run $B.specialdeath.push(_targ.specialdeath)&gt;&gt;
 	&lt;&lt;elseif !_targ.immortal&gt;&gt; /* This is necessary in the case of specialdeaths that don&#39;t actually kill the enemy, such as stage changes. If you want to run these cleanup functions, set the character&#39;s specialdeath flag to false and run deathcheck again in the special death passage. */
 		&lt;&lt;set _targ.dead to true&gt;&gt;
-		&lt;&lt;if _targ._deathMessage !== null&gt;&gt;
+		&lt;&lt;if _targ.deathMessage !== null&gt;&gt;
 			&lt;&lt;print _targ.deathMessage&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
 		&lt;&lt;if _targ instanceof Enemy&gt;&gt;
@@ -23419,7 +23611,7 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 		&lt;&lt;/if&gt;&gt;
 
 	&lt;&lt;elseif _targ.immortal&gt;&gt;
-		&lt;&lt;if _targ._deathMessage !== null&gt;&gt;
+		&lt;&lt;if _targ.deathMessage !== null&gt;&gt;
 			&lt;&lt;print _targ.deathMessage&gt;&gt;
 		&lt;&lt;/if&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
@@ -23794,6 +23986,13 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 	&lt;&lt;set _animationsToComplete += _p.battleMsg.length&gt;&gt;
 	&lt;&lt;set _p.battleMsg = []&gt;&gt;
 &lt;&lt;/for&gt;&gt;
+&lt;&lt;if _animationsToComplete &lt;= 0&gt;&gt;
+	&lt;&lt;script&gt;&gt;
+	$(&quot;#continue .macro-button&quot;).each((index, element) =&gt; {
+			element.disabled = false;
+		});
+	&lt;&lt;/script&gt;&gt;
+&lt;&lt;/if&gt;&gt;
 &lt;&lt;/timed&gt;&gt;</tw-passagedata><tw-passagedata pid="115" name="popup animation" tags="nobr" position="600,1475" size="100,100">&lt;&lt;set _animation = &quot;slideOutUp&quot;&gt;&gt;
 &lt;&lt;switch _m.type&gt;&gt;
 	&lt;&lt;case &quot;damage&quot;&gt;&gt;
@@ -23808,6 +24007,9 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 		&lt;&lt;run $(_idB).addClass(&quot;small&quot;)&gt;&gt;
 	&lt;&lt;case &quot;block&quot;&gt;&gt;
 		&lt;&lt;run $(_idB).addClass(&quot;small&quot;)&gt;&gt;
+	&lt;&lt;case &quot;delay&quot;&gt;&gt;
+		&lt;&lt;run $(_idB).addClass(&quot;small&quot;)&gt;&gt;
+		&lt;&lt;run $(_idB).addClass(&quot;gray&quot;)&gt;&gt;
 	&lt;&lt;case &quot;addEffect&quot;&gt;&gt;
 		&lt;&lt;run $(_idB).addClass(&quot;small&quot;)&gt;&gt;
 		&lt;&lt;run $(_idB).addClass(&quot;stat-raised&quot;)&gt;&gt;
@@ -23866,7 +24068,7 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 	&lt;&lt;switch $B.phase&gt;&gt;
 		&lt;&lt;case &quot;command&quot;&gt;&gt;
 			&lt;&lt;if $subject !== null&gt;&gt;
-				&lt;&lt;set _id = &quot;#restbtn a&quot;&gt;&gt;
+				&lt;&lt;set _id = &quot;#waitbtn a&quot;&gt;&gt;
 				&lt;&lt;trigger &#39;click&#39; _id&gt;&gt;
 			&lt;&lt;/if&gt;&gt;
 		&lt;&lt;case &quot;actions&quot;&gt;&gt;
@@ -23889,7 +24091,7 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 	&lt;&lt;switch $B.phase&gt;&gt;
 		&lt;&lt;case &quot;command&quot;&gt;&gt;
 			&lt;&lt;if $subject !== null&gt;&gt;
-				&lt;&lt;set _id = &quot;#itembtn a&quot;&gt;&gt;
+				&lt;&lt;set _id = &quot;#restbtn a&quot;&gt;&gt;
 				&lt;&lt;trigger &#39;click&#39; _id&gt;&gt;
 			&lt;&lt;/if&gt;&gt;
 		&lt;&lt;case &quot;actions&quot;&gt;&gt;
@@ -25670,15 +25872,28 @@ ARG 0 = equipped item
 		/* If there&#39;s a match, extract the current actor from the actors array. */
 		&lt;&lt;run _p.occupants.push($actors.shift())&gt;&gt;
 	&lt;&lt;/for&gt;&gt;
-	&lt;&lt;if _p.occupants.length === 0&gt;&gt;
+	/* create additional array consisting only of enemies with a readied action */
+	&lt;&lt;set _pTest = _p.occupants.filter(function (a) { return a instanceof Enemy &amp;&amp; a.delayedAction })&gt;&gt;
+	&lt;&lt;if _p.occupants.length === 0 || _pTest.length === _p.occupants.length&gt;&gt;
+		/* If tick has no occupants OR if only occupants are enemies with readied actions, display empty tick */
 		&lt;&lt;set _src = setup.ImagePath+&quot;ui/tick_empty.png&quot;&gt;&gt;
 		&lt;img @src=_src class=&quot;tick-empty&quot; /&gt;
 	&lt;&lt;else&gt;&gt;
-		&lt;&lt;set _src = setup.ImagePath+&quot;ui/tick_filled.png&quot;&gt;&gt;
+		/* Color-code filled ticks for easier reading. */
+		&lt;&lt;if _p.occupants.length &gt; 1 &amp;&amp; _pTest.length &lt; 1&gt;&gt;
+			/* Multiple occupants gains mixed color. */
+			&lt;&lt;set _src = setup.ImagePath+&quot;ui/tick_filled_mixed.png&quot;&gt;&gt;
+		&lt;&lt;elseif typeof(_p.occupants[0].color) === &quot;string&quot;&gt;&gt;
+			/* If a character has a &quot;color&quot; attribute, gain tick image with that color. */
+			&lt;&lt;set _src = setup.ImagePath+&quot;ui/tick_filled_&quot;+_p.occupants[0].color.toLowerCase()+&quot;.png&quot;&gt;&gt;
+		&lt;&lt;else&gt;&gt;
+			/* Else, use default filled tick image. */
+			&lt;&lt;set _src = setup.ImagePath+&quot;ui/tick_filled.png&quot;&gt;&gt;
+		&lt;&lt;/if&gt;&gt;
 		&lt;div class=&quot;tooltip timeline-tick&quot;&gt;
 			&lt;img @src=_src class=&quot;tick-filled&quot; /&gt;
 			&lt;div class=&quot;tooltiptext&quot;&gt;
-				&lt;&lt;for _actor range _p.occupants&gt;&gt;
+				&lt;&lt;for _actor range _p.occupants.filter(function (a) { return a instanceof Puppet || !a.delayedAction })&gt;&gt;
 					&lt;div class=&quot;tick-occupant&quot;&gt;
 						&lt;&lt;if _actor.delayedAction instanceof Action&gt;&gt;
 							&lt;span class=&quot;tick-action-notif&quot;&gt;!&lt;/span&gt;
@@ -27142,7 +27357,24 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 	&lt;&lt;goto &quot;Battle!&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;include &quot;action phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="186" name="Changelog" tags="text" position="725,2350" size="100,100">&lt;h3&gt;Version 4.01&lt;/h3&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="186" name="Changelog" tags="text" position="725,2350" size="100,100">&lt;h3&gt;Version 4.02&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;New logic function: &lt;code&gt;checkActions&lt;/code&gt;. Checks if target(s) have readied actions. Useful for AI code.&lt;/li&gt;
+&lt;li&gt;Fixed an error in the &lt;code&gt;deathMessage&lt;/code&gt; getter that prevented null messages from being read. A &lt;code&gt;deathMessage&lt;/code&gt; with a value of &lt;code&gt;null&lt;/code&gt; will now skip the printing of a death message, as intended.&lt;/li&gt;
+&lt;li&gt;Fixed an error in the level up functions that caused them to behave erratically if characters gained multiple levels at once. &lt;b&gt;Thanks to A_Friendly_Irin for sharing this code.&lt;/b&gt;&lt;/li&gt;
+  &lt;ul&gt;&lt;li&gt;Additionally, the victory screen will now accurately list the character&#39;s new level if they gain multiple levels.&lt;/li&gt;&lt;/ul&gt;
+&lt;li&gt;&lt;code&gt;StatTable&lt;/code&gt; and &lt;code&gt;levelcheck&lt;/code&gt; have been renamed to use camelCase, for consistency.&lt;/li&gt;
+&lt;li&gt;The &quot;Level Check&quot; passage has been renamed to &quot;Level Ups&quot; to avoid confusion with the &lt;code&gt;levelCheck&lt;/code&gt; widget.&lt;/li&gt;
+&lt;li&gt;Added entries for max HP to the default stat min/max objects.&lt;/li&gt;
+&lt;li&gt;Added new attribute to the battle controller: &lt;code&gt;actionsSeen&lt;/code&gt;. This is an array recording the names of actions used by the player during the battle. Can be used in enemy AI to react based on what they know the player can do.&lt;/li&gt;
+&lt;li&gt;Enemy Phase code has been tweaked a bit to better accommodate the timeline model: The enemy&#39;s &lt;code&gt;active&lt;/code&gt; status is now deactivated at the end of the passage rather than the start.&lt;/li&gt;
+&lt;li&gt;Added error handlers for &lt;code&gt;getBase&lt;/code&gt; and &lt;code&gt;getBonus&lt;/code&gt; for if the character does not have the requested stat. This oversight led to an error in enemy targeting logic if the Special stat was not present, which should now be fixed.&lt;/li&gt;
+&lt;li&gt;Targets are now automatically added to the animation queue in &lt;code&gt;action effects&lt;/code&gt;, rather than manually through action functions.&lt;/li&gt;
+&lt;li&gt;Added a failsafe in the animation code that re-enables the Continue button if no animations are readied.&lt;/li&gt;
+&lt;li&gt;Fixed several errors with the timeline model.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3&gt;Version 4.01&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;b&gt;NEW FEATURE:&lt;/b&gt; Full support for the &quot;timeline&quot; turn model. Documentation pending. New &lt;code&gt;Action&lt;/code&gt; properties &lt;code&gt;recoveryTime&lt;/code&gt; and &lt;code&gt;waitTime&lt;/code&gt; have been added to work with the new system. &lt;b&gt;Might be buggy. Report any issues.&lt;/b&gt;&lt;/li&gt;
 &lt;li&gt;A new variable, &lt;code&gt;TURN_MODEL&lt;/code&gt;, can now be set in &lt;code&gt;StoryInit&lt;/code&gt; to determine the turn model you want to use. Currently, only the free-action model and the timeline model are functional.&lt;/li&gt;
@@ -35769,9 +36001,17 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 
 &lt;&lt;set setup.PORTRAIT_SIZE = 50&gt;&gt; /* Portrait size in px, used for save game display */
 
+/*	These stats will not be displayed in the menu or status pane even if they are core stats
+		Entries must match stat names exactly, case-sensitive */
+&lt;&lt;set setup.hiddenStats = [&quot;Skill&quot;,&quot;Accuracy&quot;,&quot;Evasion&quot;,&quot;Initiative&quot;,&quot;Speed&quot;]&gt;&gt;
+
 &lt;&lt;set setup.STAT_MIN = {};
 	setup.STAT_MIN[StatName(&quot;atk&quot;)] = 0;
 	setup.STAT_MIN[StatName(&quot;spc&quot;)] = 0;
+	setup.STAT_MIN[StatName(&quot;spd&quot;)] = 0;
+	setup.STAT_MIN[StatName(&quot;eva&quot;)] = -100;
+	setup.STAT_MIN[StatName(&quot;acc&quot;)] = -100;
+	setup.STAT_MIN[&quot;HP&quot;] = 0;
 &gt;&gt;
 
 &lt;&lt;if setup.formula == &quot;subtractive&quot;&gt;&gt;
@@ -35784,6 +36024,10 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 	setup.STAT_MAX[StatName(&quot;atk&quot;)] = 999;
 	setup.STAT_MAX[StatName(&quot;def&quot;)] = 999;
 	setup.STAT_MAX[StatName(&quot;spc&quot;)] = 999;
+	setup.STAT_MIN[StatName(&quot;spd&quot;)] = 999;
+	setup.STAT_MIN[StatName(&quot;eva&quot;)] = 100;
+	setup.STAT_MIN[StatName(&quot;acc&quot;)] = 100;
+	setup.STAT_MAX[&quot;HP&quot;] = 99999;
 &gt;&gt;
 
 &lt;&lt;if setup.THREAT_TARGETING === true&gt;&gt;

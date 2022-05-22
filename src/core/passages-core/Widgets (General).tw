@@ -146,7 +146,7 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 		<<run $B.specialdeath.push(_targ.specialdeath)>>
 	<<elseif !_targ.immortal>> /* This is necessary in the case of specialdeaths that don't actually kill the enemy, such as stage changes. If you want to run these cleanup functions, set the character's specialdeath flag to false and run deathcheck again in the special death passage. */
 		<<set _targ.dead to true>>
-		<<if _targ._deathMessage !== null>>
+		<<if _targ.deathMessage !== null>>
 			<<print _targ.deathMessage>>
 		<</if>>
 		<<if _targ instanceof Enemy>>
@@ -188,7 +188,7 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 		<</if>>
 
 	<<elseif _targ.immortal>>
-		<<if _targ._deathMessage !== null>>
+		<<if _targ.deathMessage !== null>>
 			<<print _targ.deathMessage>>
 		<</if>>
 	<</if>>

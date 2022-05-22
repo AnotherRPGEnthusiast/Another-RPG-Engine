@@ -1,4 +1,21 @@
 :: Changelog[text]
+<h3>Version 4.02</h3>
+<ul>
+<li>New logic function: <code>checkActions</code>. Checks if target(s) have readied actions. Useful for AI code.</li>
+<li>Fixed an error in the <code>deathMessage</code> getter that prevented null messages from being read. A <code>deathMessage</code> with a value of <code>null</code> will now skip the printing of a death message, as intended.</li>
+<li>Fixed an error in the level up functions that caused them to behave erratically if characters gained multiple levels at once. <b>Thanks to A_Friendly_Irin for sharing this code.</b></li>
+  <ul><li>Additionally, the victory screen will now accurately list the character's new level if they gain multiple levels.</li></ul>
+<li><code>StatTable</code> and <code>levelcheck</code> have been renamed to use camelCase, for consistency.</li>
+<li>The "Level Check" passage has been renamed to "Level Ups" to avoid confusion with the <code>levelCheck</code> widget.</li>
+<li>Added entries for max HP to the default stat min/max objects.</li>
+<li>Added new attribute to the battle controller: <code>actionsSeen</code>. This is an array recording the names of actions used by the player during the battle. Can be used in enemy AI to react based on what they know the player can do.</li>
+<li>Enemy Phase code has been tweaked a bit to better accommodate the timeline model: The enemy's <code>active</code> status is now deactivated at the end of the passage rather than the start.</li>
+<li>Added error handlers for <code>getBase</code> and <code>getBonus</code> for if the character does not have the requested stat. This oversight led to an error in enemy targeting logic if the Special stat was not present, which should now be fixed.</li>
+<li>Targets are now automatically added to the animation queue in <code>action effects</code>, rather than manually through action functions.</li>
+<li>Added a failsafe in the animation code that re-enables the Continue button if no animations are readied.</li>
+<li>Fixed several errors with the timeline model.</li>
+</ul>
+
 <h3>Version 4.01</h3>
 <ul>
 <li><b>NEW FEATURE:</b> Full support for the "timeline" turn model. Documentation pending. New <code>Action</code> properties <code>recoveryTime</code> and <code>waitTime</code> have been added to work with the new system. <b>Might be buggy. Report any issues.</b></li>

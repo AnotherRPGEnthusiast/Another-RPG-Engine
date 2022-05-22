@@ -260,5 +260,47 @@ setup.puppetData = {
 		"defaultAction": "White Light",
 		"crisis": "Desperate Attack",
 		"portrait": "ARTST"
+	},
+
+	"Labrat": {
+		// Puppet for testing XP and level up mechanics.
+		"gender": 'N',
+		"hp": 100,
+		"en": 10,
+		"ENregen": 2,
+		"stats": {
+			"Attack"	: 30,
+			"Defense"	: 30,
+			"Special"	: 30
+		},
+		"actions": [
+			"Sword"
+		],
+		"defaultAction": "Sword",
+		"crisis": "Desperate Attack",
+		"specialInit": function (actor) {
+			actor.XPtoNext = function (level) {
+				if (level === undefined) {
+	        level = this.level;
+	      }
+	      if (level >= setup.LEVEL_CAP) {
+	        return "--";
+	      }
+	      else if (level <= 0) {
+	        return 0;
+	      }
+				else {
+					return level;
+				}
+			}
+		},
+		"statTable": function (level) {
+			switch (level) {
+				case 3:
+					return new Action("Hammer");
+				default:
+					return;
+			}
+		}
 	}
 };

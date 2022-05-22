@@ -295,9 +295,6 @@ Actor.prototype.removeEffect = function (effect,mods = {}) {
     if (!V().inbattle || ((!E.ULTIMATESTICKY || mods.unsticky == "ultimate") && (!E.sticky || mods.unsticky))) {
       E.onRemove(this);
       if (!mods.noPopup) {
-        if (temporary().queue instanceof Set) {
-          temporary().queue.add(this);
-        }
         var shake = E.buff ? true : false;
         this.battleMsg.push({shake: shake, type: "removeEffect", content: "- "+E.name});
       }
@@ -313,7 +310,9 @@ Actor.prototype.removeEffect = function (effect,mods = {}) {
           }
         }
       }
-      return result;
+      return result === '\n'
+        ? ""
+        : result
     }
     else {
       return `${E.name} status can't be removed!<br/>`;

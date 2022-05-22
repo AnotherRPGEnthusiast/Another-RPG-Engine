@@ -38,13 +38,13 @@ if(!PuppetProto.crisisFactor) {
 // XPtoNext: Calculates the XP required for the next level. Pokemon's formulas are the default; change as necessary.
 if(!PuppetProto.XPtoNext) {
   Object.defineProperty(PuppetProto,'XPtoNext', {
+    writable: true,
     configurable: true,
     enumerable: true,
     value: function (level) {
       if (level === undefined) {
         level = this.level;
       }
-      var toNext;
       if (level >= setup.LEVEL_CAP) {
         return "--";
       }

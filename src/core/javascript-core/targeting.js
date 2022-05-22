@@ -223,6 +223,7 @@ Hitlist.targetEnemy = function (args) {
 	//	Targeting logic for offensive abilities.
 	//	args = string or array of strings, modifies logic
 
+//	console.log(`${subject().name} targeting`);
 	//	If all of one party are dead, there are no valid targets. Flag targetfail and return null.
 	if (deadCount() == puppets().length || enemies().filter(function (e) { return e.dead; }).length == enemies().length) {
 		temporary().targetfail = true;
@@ -362,10 +363,10 @@ Hitlist.prototype.addFactors = function (mods) {
 	var mostDamaging = Math.max(...this.map(function (t) { return t.target.lastDmg }));
 	var highestStat = {};
 	var lowestStat = {};
-	for (let [pn,v] in setup.statInfo) {
+	for (let pn in setup.statInfo) {
 		highestStat[pn] = Math.max(...this.map(function (t) { return t.target.get(pn) }))
 	}
-	for (let [pn,v] in setup.statInfo) {
+	for (let pn in setup.statInfo) {
 		lowestStat[pn] = Math.min(...this.map(function (t) { return t.target.get(pn) }))
 	}
 	if (mods.includes("most HP")) {
@@ -373,12 +374,21 @@ Hitlist.prototype.addFactors = function (mods) {
 	} else if (mods.includes("least HP")) {
 		var lowestHP = Math.min(...this.filter(function (t) { return t.chance > 0 }).map(function (t) { return t.target.hp }));
 	}
+	if (mods.includes("most EN")) {
+		var greatestEN = Math.max(...this.filter(function (t) { return t.chance > 0 }).map(function (t) { return t.target.en }));
+	} else if (mods.includes("least EN")) {
+		var lowestEN = Math.min(...this.filter(function (t) { return t.chance > 0 }).map(function (t) { return t.target.en }));
+	}
 	for (let t of this) {
 		// Exclusive mods: These will target ONLY the character with the highest or lowest parameter.
 		// As such, they are mutually exclusive and ignore other mods.
 		if (mods.includes("least HP") && t.target.hp <= lowestHP) {
 			t.chance += 1;
 		} else if (mods.includes("most HP") && t.target.hp >= greatestHP) {
+			t.chance += 1;
+		} else if (mods.includes("least EN") && t.target.en <= lowestEN) {
+			t.chance += 1;
+		} else if (mods.includes("most EN") && t.target.en >= greatestEN) {
 			t.chance += 1;
 		} else if (mods.includes("most damage") && t.target.lastDmg >= mostDamaging) {
 			t.chance += 1;
@@ -409,6 +419,10 @@ Hitlist.prototype.addFactors = function (mods) {
 			if (!mods.includes("ignore damaging") && t.target.lastDmg >= mostDamaging) {
 				t.chance += 1;
 			}
+			// If this action cancels a readied action, targets with a setupAction get an extra weight.
+			if (mods.includes("cancelAction") && t.target.setupAction) {
+				t.chance += 1;
+			}
 			// If this attack pierces defense, preferentially target the character with the highest defense.
 			if (mods.includes("pierce") && t.target.get(StatName("def")) >= highestStat[StatName("def")]) {
 				t.chance += 1;
@@ -425,7 +439,7 @@ Hitlist.prototype.addFactors = function (mods) {
 				t.chance += (1-((t.target.hp)/t.target.maxHP))*setup.RUTHLESS_FACTOR;
 			}
 			else if (!mods.includes("ignore vulnerable")) {
-				t.chance += (1-((t.target.hp)/t.target.maxHP));
+				t.chance = this.vulnerableFactor(t);
 			}
 			// If this attack applies a debuff, preferentially target characters with a SPC debuff,
 			// and ignore those with protective effects.
@@ -435,6 +449,12 @@ Hitlist.prototype.addFactors = function (mods) {
 			}
 		}
 	}
+};
+
+Hitlist.prototype.vulnerableFactor = function (t) {
+	console.assert(typeof(t) === "object" && t.target instanceof Actor,`ERROR in Hitlist.vulnerableFactor: invalid target passed`);
+	t.chance += (1-((t.target.hp)/t.target.maxHP));
+	return t.chance;
 };
 
 Hitlist.prototype.allyFactors = function (mods) {

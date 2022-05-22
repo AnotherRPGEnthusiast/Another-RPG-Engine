@@ -48,6 +48,13 @@
 	<<set _animationsToComplete += _p.battleMsg.length>>
 	<<set _p.battleMsg = []>>
 <</for>>
+<<if _animationsToComplete <= 0>>
+	<<script>>
+	$("#continue .macro-button").each((index, element) => {
+			element.disabled = false;
+		});
+	<</script>>
+<</if>>
 <</timed>>
 
 :: popup animation [nobr]
@@ -65,6 +72,9 @@
 		<<run $(_idB).addClass("small")>>
 	<<case "block">>
 		<<run $(_idB).addClass("small")>>
+	<<case "delay">>
+		<<run $(_idB).addClass("small")>>
+		<<run $(_idB).addClass("gray")>>
 	<<case "addEffect">>
 		<<run $(_idB).addClass("small")>>
 		<<run $(_idB).addClass("stat-raised")>>

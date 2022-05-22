@@ -212,7 +212,7 @@ setup.enemyData = {
 				V().action = new Action("Assault");
 				V().action.actText = "Finn charges in recklessly!";
 				V().action.useText = null;
-				V().action.act = applyEffect("Off-Balance",{self: true, dmg: true});
+				V().action.act = applyEffect({self: true, dmg: true},"Off-Balance");
 			}
 
 			} //end loop
@@ -374,7 +374,7 @@ setup.enemyData = {
 					V().action.dur = 4;
 					V().action.useText = null;
 					V().action.actText = `Princess Bubblegum douses $target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
-					V().action._act = applyEffect("Poisoned");
+					V().action._act = applyEffect({},"Poisoned");
 				}
 				this.ready = false;
 			}
@@ -455,7 +455,7 @@ setup.enemyData = {
 				V().action._effweight = 0.2;
 				V().action._dur = 4;
 				action()._actText = null;
-				V().action._act = applyEffect("Blessing",{self:true});
+				V().action._act = applyEffect({self:true},"Blessing");
 				this.cd.set("mass buff",4);
 			}
 			else if (this.ready) {
@@ -473,7 +473,7 @@ setup.enemyData = {
 					V().action._dur = 4;
 					V().action._useText = null;
 					V().action._actText = `Princess Bubblegum douses $target.name in a stinging, sticky syrup. They cough and stagger as their skin breaks out in welts.`;
-					V().action._act = applyEffect("Poisoned");
+					V().action._act = applyEffect({},"Poisoned");
 				}
 				this.ready = false;
 			}
@@ -567,7 +567,7 @@ Gumball slips on a stray pebble, falls back, hits his head, and is instantly kno
 				V().action._useText = null;
 				V().action._actText = `Gumball trips over his own feet!`;
 				action()._dur = -1;
-				V().action._act = applyEffect("Knocked Down",{self:true});
+				V().action._act = applyEffect({self:true},"Knocked Down");
 			}
 			else if (!V().enemies[1].dead && !V().enemies[2].dead && !this.untargetable && act <= 20 && act > 10) {
 				console.log("Action: sneak");
@@ -632,14 +632,14 @@ Gumball slips on a stray pebble, falls back, hits his head, and is instantly kno
 					V().action._effweight = setup.STD_BUFF;
 					V().action._dur = 3;
 					V().action._actText = `...and retrieves a brightly-wrapped candy bar. "Oh, awesome! I forgot I had this!" He downs the whole thing in a few bites. You dread the sugar high he's going to get...`;
-					V().action._act = applyEffect("SPC Boost",{self:true});
+					V().action._act = applyEffect({self:true},"SPC Boost");
 				}
 				else if (act > 11 && act <= 16) {
 					// 5 in 20: protein bar
 					V().action._effweight = setup.STD_BUFF;
 					V().action._dur = 3;
 					V().action._actText = `...and pulls out a protein bar. He glares at it as if its existence offends him, then nonchalantly shrugs and takes a bite. "Food's food," he says.`;
-					V().action._act = applyEffect("DEF Boost",{self:true});
+					V().action._act = applyEffect({self:true},"DEF Boost");
 				}
 				else if (act > 16 && act <= 19) {
 					// 3 in 20: angry cat
@@ -766,7 +766,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					V().action._weight = 1;
 					V().action._dur = 3;
 					V().action._actText = `Anais lobs a grenade at you -- but to your surprise, when it explodes it leaves a massive cloud of shiny metal flakes. It just looks like silly confetti to you, but your puppets stutter and freeze up trying to see through all the flashing lights!`;
-					V().action._act = massAttack({content: applyEffect("Dizzy"), cut:true});
+					V().action._act = massAttack({content: applyEffect({},"Dizzy"), cut:true});
 					this.cd.set("Chaff",4);
 				}
 				this.ready = false;
@@ -872,7 +872,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action._effweight = 0.4;
 				V().action._dur = 3;
 				V().action._actText = `Darwin puts on irresistible puppy eyes and makes a seemingly-heartfelt speech about how mean you are for beating him up. You feel uncomfortable, and your puppets hesitate before attacking again.`;
-				V().action._act = massAttack({target: "enemies", content: applyEffect("Injury")}),
+				V().action._act = massAttack({target: "enemies", content: applyEffect({},"Injury")}),
 				this.cd.set("Moralize",3);
 			}
 
@@ -1136,7 +1136,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action._dur = 3;
 				V().action._useText = null;
 				V().action._actText = `Steven wails, and his gem flashes a bright pink.`;
-				V().action._act = applyEffect("Bubble",{self:true});
+				V().action._act = applyEffect({self:true},"Bubble");
 			}
 			else {
 				V().action = {useText: null, act: null, actText: `Steven clutches the gems to his chest and blubbers.`};
@@ -1203,7 +1203,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action._dur = 3;
 				V().action._useText = null;
 				V().action._actText = `"A bubble for your trouble?" Steven lifts his shirt, and you see his gem flash with a pink light.`;
-				V().action._act = applyEffect("Bubble");
+				V().action._act = applyEffect({},"Bubble");
 			}
 
 			} //end loop
@@ -1442,7 +1442,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action = new Action("Thorns");
 				action()._useText = null;
 				action()._actText = `Rose grins from ear to ear as her gem flashes a bright pink.`;
-				action()._act = applyEffect("Thorns",{self:true});
+				action()._act = applyEffect({self:true},"Thorns");
 				return;
 			}
 
@@ -1452,7 +1452,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 				V().action = new Action("Thorns");
 				action()._useText = null;
 				action()._actText = `Rose grins from ear to ear as her gem flashes a bright pink.`;
-				action()._act = applyEffect("Thorns",{self:true});
+				action()._act = applyEffect({self:true},"Thorns");
 			}
 			else if (act <= 30 && act > 5) {
 				act = random(1,100);
@@ -1531,7 +1531,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					V().action._effweight = 0.6;
 					V().action._dur = 4;
 					V().action._actText = `Rose strikes her sword along the ground, exposing a single crack. Rose closes her eyes, focusing, and a dark green vine suddenly sprouts from the earth. It grows towards your puppets like it has a will of its own, and instantly blooms into dark indigo blossoms just beneath each of your puppets' faces. With a light <i>puff</i>, they let out a strange purple powder that your puppets don't seem to like at all.`;
-					V().action._act = massAttack({target: "enemies", content: applyEffect("Poisoned")});
+					V().action._act = massAttack({target: "enemies", content: applyEffect({},"Poisoned")});
 				}
 			}
 			else if (act > 80) {
@@ -1743,7 +1743,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 						action()._targetMod = ["ignore downed"];
 						action()._dur = -1;
 						V().action._actText = `Bill turns the full force of his huge, all-consuming eye on $target.name. The schlera around the slitted pupil glows a sickly, ugly yellow, the color of rotting pus. You see Bill's gaze become a physical force, a cone of light that swallows $target.name in its entirety, and before your eyes, you see their flesh turn to stone.`;
-						V().action._act = applyEffect("Petrified");
+						V().action._act = applyEffect({},"Petrified");
 						this.cd.set("Stone Gaze",3);
 					}
 				}
@@ -1842,7 +1842,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					Then he <i>screams</i>.
 
 					You are dead certain that there is not a single creature on Earth, no, in the <i>universe</i> that could make a scream like that. You clamp your hands over your ears, but it does nothing. This isn't just a sound you hear in your bones, it is a sound you hear in your <i>soul</i>.`
-					action()._act = massAttack({target: "enemies", content: applyEffect("Stunned")});
+					action()._act = massAttack({target: "enemies", content: applyEffect({},"Stunned")});
 				}
 			}
 			else {
@@ -2007,7 +2007,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 
 						"Can you see me?" she taunts, her voice echoing around and around in the wide space of the church. "Don't worry. <i>I see you.</i>"`;
 						action()._dur = -1;
-						action()._act = applyEffect("Invisible",{self:true});
+						action()._act = applyEffect({self:true},"Invisible");
 						return;
 					case 8:
 						V().action = new Action("invisible attack");
@@ -2053,7 +2053,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					action()._actText = function () {
 						return `Marceline gets all up in ${target().name}'s face and lets out a shrill, bat-like shriek!`;
 					};
-					action()._act = applyEffect("Stunned");
+					action()._act = applyEffect({},"Stunned");
 				}
 				else {
 
@@ -2135,7 +2135,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					action()._dur = 3;
 					action()._useText = null;
 					action()._actText = `Marceline's kitchen table starts pelting you with rotten food. Gross!`;
-					action()._act = applyEffect("Poisoned");
+					action()._act = applyEffect({},"Poisoned");
 				}
 				else if (act > 35 && act <= 70) {
 					V().action = new Action("burn");
@@ -2143,7 +2143,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					action()._dur = 3;
 					action()._useText = null;
 					action()._actText = `The candles on Marceline's kitchen table suddenly flare to life before flying at ${target().name}, covering them in burning wax.`;
-					action()._act = applyEffect("Burning");
+					action()._act = applyEffect({},"Burning");
 				}
 				else {
 
@@ -2297,7 +2297,7 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 							V().action._weight = 1;
 							V().action._dur = 3;
 							V().action._actText = `Bonnibel lobs a grenade at you -- but to your surprise, when it explodes it leaves a massive cloud of shiny metal flakes. It just looks like silly confetti to you, but your puppets stutter and freeze up trying to see through all the flashing lights!`;
-							V().action._act = massAttack({content: applyEffect("Dizzy"), cut: true});
+							V().action._act = massAttack({content: applyEffect({},"Dizzy"), cut: true});
 						}
 					}
 				}
@@ -2757,14 +2757,14 @@ Without fanfare, $subject.name falls to the ground like a puppet with its stings
 					V().action.effweight = V().STD_BUFF;
 					V().action.dur = 3;
 					V().action.actText = `...and retrieves a brightly-wrapped candy bar. "Oh, awesome! I forgot I had this!" He downs the whole thing in a few bites. You dread the sugar high he's going to get...`;
-					V().action.act = applyEffect("SPC Boost",{self:true});
+					V().action.act = applyEffect({self:true},"SPC Boost");
 				}
 				else if (act > 11 && act <= 16) {
 					// 5 in 20: protein bar
 					V().action.effweight = V().STD_BUFF;
 					V().action.dur = 3;
 					V().action.actText = `...and pulls out a protein bar. He glares at it as if its existence offends him, then nonchalantly shrugs and takes a bite. "Food's food," he says.`;
-					V().action.act = applyEffect("DEF Boost",{self:true});
+					V().action.act = applyEffect({self:true},"DEF Boost");
 				}
 				else if (act > 16 && act <= 19) {
 					// 3 in 20: angry cat
@@ -2842,7 +2842,7 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 				V().action = new Action("Thorns");
 				action().useText = null;
 				action().actText = `Stevonnie concentrates for a second, and their gem flashes a bright pink.`;
-				action().act = applyEffect("Thorns",{self:true});
+				action().act = applyEffect({self:true},"Thorns");
 				return;
 			}
 
@@ -2852,7 +2852,7 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 				V().action = new Action("Thorns");
 				action().useText = null;
 				action().actText = `Stevonnie concentrates for a second, and their gem flashes a bright pink.`;
-				action().act = applyEffect("Thorns",{self:true});
+				action().act = applyEffect({self:true},"Thorns");
 				return;
 			}
 			else if (!this.protector && act > 5 && act <= 55) {
@@ -2920,7 +2920,7 @@ He yelps and throws the beeping thing up into the air, but catches it before it 
 					action().actText = function () {
 						return `Stevonnie rushes forward, but at the last moment, reverses their grip on their sword to ram the pommel into ${target().name}'s face, forcing them to reel back in a daze.`;
 					};
-					action().act = applyEffect("Stunned");
+					action().act = applyEffect({},"Stunned");
 				}
 			}
 			else if (act <= 85 && act > 70) {

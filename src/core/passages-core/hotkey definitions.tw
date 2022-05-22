@@ -34,7 +34,7 @@
 	<<switch $B.phase>>
 		<<case "command">>
 			<<if $subject !== null>>
-				<<set _id = "#restbtn a">>
+				<<set _id = "#waitbtn a">>
 				<<trigger 'click' _id>>
 			<</if>>
 		<<case "actions">>
@@ -60,7 +60,7 @@
 	<<switch $B.phase>>
 		<<case "command">>
 			<<if $subject !== null>>
-				<<set _id = "#itembtn a">>
+				<<set _id = "#restbtn a">>
 				<<trigger 'click' _id>>
 			<</if>>
 		<<case "actions">>

@@ -90,7 +90,6 @@ const heal = function heal (test,extension = "") {
 		} else {
 			return `<<healCalc>>\
 			<<if setup.ANIMATIONS === true && _queue instanceof Set>>\
-				<<set _queue.add(target())>>\
 				<<set target().battleMsg.push({type: "healing", content: $heal})>>\
 			<</if>>\
 			<<run target().hp += $heal>>\
@@ -526,14 +525,35 @@ const cancelAction = function cancelAction (mods = {}, extension = "") {
 	return function () {
 		if (target().delayedAction instanceof Action) {
 			if (target().interruptGuard) {
+				target().battleMsg.push({shake: false, type: "block", content: "BLOCKED"});
 				result = `${target().name} held ${target().their} concentration!`;
 			} else {
 				target().delayedAction = null;
+				target().battleMsg.push({shake: false, type: "block", content: "Interrupt!"});
 				result = `${target().name}'s concentration was broken!`;
 			}
 		} else {
 			result = `${target().name} didn't have a prepared action!`
 		}
+		if (extension instanceof Function) {
+			result += extension();
+		} else {
+			result += extension;
+		}
+		return result;
+	}
+};
+
+const delayAction = function delayAction (mods = {}, extension = "") {
+	var result = "";
+
+	return function () {
+		var delay = (mods.delay || action().special || 0);
+		console.assert(Number.isInteger(delay),`ERROR in delayAction for ${action().name}: noninteger delay`);
+		target().ticks += delay;
+		target().battleMsg.push({shake: true, type: "delay", content: "Delayed"});
+		result = `${target().name} was delayed by ${delay} tick`;
+		result += (delay === 1) ? `!` : `s!`;
 		if (extension instanceof Function) {
 			result += extension();
 		} else {

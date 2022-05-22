@@ -281,7 +281,7 @@
 <<if !_a.dead && !_a.healBlock>>
 	<<run _a.regenHP()>>
 <</if>>
-<<if !_a.noENregen>>
+<<if def _a.en && !_a.noENregen>>
 	<<set _a.en += _a.ENregen>>
 <</if>>
 <</widget>>
@@ -353,6 +353,8 @@
 		<<advanceDelay _actor>>
 		<<advanceRespawn _actor>>
 		<<regen _actor>>
+	<<elseif _actor instanceof Enemy>>
+		<<run $B.actionsThisTurn[_enemy.id] = []>>
 	<</if>>
 
 	<<advanceCooldown _actor>>
@@ -463,33 +465,16 @@
 <<unset $B; $subject; $target; $enemies; $enemyGrid; $puppetGrid>>
 <</widget>>
 
-:: initTurns [widget nobr]
-<<widget "initTurns">>
-<<set $actors = allActors()>>
-<<switch setup.TURN_MODEL.toLowerCase()>>
-	<<case "timeline">>
-		<<initTurnsTimeline>>
-		<<set $actors = allActors("timeline")>>
-	<<default>>
-		/* default is free action model: everyone is always active */
-		<<for _actor range $actors>>
-			<<set _actor.active = true>>
-		<</for>>
-<</switch>>
-<</widget>>
-
 :: Battle Preparation
 <<set $inbattle = true>>
 <<unset $subject, $target>>
-<<set $B = {actor: null, turn: "player", turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: "selection", embargo: 0, event: false, surrender: false, kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}>>
+<<set $B = {actor: null, turn: "player", turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: "selection", embargo: 0, event: false, surrender: false, actionsSeen: [], kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}>>
 <<callEncounter $scenario>>
 <<for _enemy range enemies()>>
 	<<set $B.actionsThisTurn[_enemy.id] = []>>
 <</for>>
 <<refreshPuppets>>
-
 <<initTurns>>
-
 <<if typeof($B.style) == 'string'>>
 	<<addclass "html" $B.style>>
 <</if>>
@@ -524,3 +509,18 @@
 <<else>>
 	<<goto "Player Phase">>
 <</if>>
+
+:: initTurns [widget nobr]
+<<widget "initTurns">>
+<<set $actors = allActors()>>
+<<switch setup.TURN_MODEL.toLowerCase()>>
+	<<case "timeline">>
+		<<initTurnsTimeline>>
+		<<set $actors = allActors("timeline")>>
+	<<default>>
+		/* default is free action model: everyone is always active */
+		<<for _actor range $actors>>
+			<<set _actor.active = true>>
+		<</for>>
+<</switch>>
+<</widget>>

@@ -40,10 +40,6 @@
 	"Speed": "Makes you go faster."
 }>>
 
-/*	These stats will not be displayed in the menu or status pane even if they are core stats
-		Entries must match stat names exactly, case-sensitive */
-<<set setup.hiddenStats = ["Skill","Accuracy","Evasion"]>>
-
 /*	Default equipment slots. Keys are the name of the slot, value is number of subslots (only considered if >1) */
 <<set setup.DEFAULT_EQUIP_SLOTS = {
   "Weapon": 1,

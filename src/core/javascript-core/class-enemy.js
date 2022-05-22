@@ -36,6 +36,10 @@ window.Enemy = class Enemy extends Actor {
 		return (this.cd.get(key) <= 0);
 	}
 
+	ENcheck (key) {
+		return (this.en >= setup.actionData[key].cost);
+	}
+
 	get actions () {
 		return (this._actions || this.data.actions || null);
 	}
@@ -101,6 +105,29 @@ window.Enemy = class Enemy extends Actor {
 			return this.data.mercy;
 		} else {
 			return 3;
+		}
+	}
+
+	get ENrisk () {
+		//	Object with two properties: "upper" and "lower"; both are floats between 0 and 1.
+		//	Enemy rest chance is 0% when EN >= upper proportion, 100% when EN <= lower proportion, scales lineraly if between values
+		//	Defaults to values of 0 for both.
+
+		return (this._ENrisk || this.data.ENrisk || {upper: 0, lower: 0});
+	}
+
+	get HPrisk () {
+		//	Float. Default enemy rest chance (see ENrisk above) is increased by (1 - HP/maxHP) times this number. Can be negative.
+		//	For example, if this value is 1, then rest chance will steadily increase as HP drops, up to a theoretical maximum of double chance at 0 HP.
+		//	If this is a negative value, chance will decrease at lower HP instead.
+		//	If 0, HP loss will not factor into enemy rest chance.
+
+		if (this._HPrisk !== undefined) {
+			return this._HPrisk;
+		} else if (this.data.HPrisk !== undefined) {
+			return this.data.HPrisk;
+		} else {
+			return 0;
 		}
 	}
 

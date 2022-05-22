@@ -50,8 +50,17 @@ window.Actor = class Actor {
 				this._ENregen = new Stat(setup.EN_REGEN);
 			}
 			this.stats = {};
+			for (let [pn,v] of Object.entries(setup.statInfo)) {
+				switch (pn) {
+					case 'Accuracy':
+						this.stats[pn] = new Stat(100);
+						break;
+					default:
+						this.stats[pn] = new Stat(0);
+				}
+			}
 			for (let [pn,v] of Object.entries(this.data.stats)) {
-				this.stats[pn] = new Stat(v);
+				this.setBase(pn,v);
 			}
 			if (this.data.elements) { this.setElements(Object.entries(this.data.elements),"percent"); }
 			if (this.data.tolerances) { this.setTol(Object.entries(this.data.tolerances)); }
@@ -409,6 +418,42 @@ window.Actor = class Actor {
 			let n = Math.round(v.current);
 			let max = setup.STAT_MAX[key];
 			let min = setup.STAT_MIN[key];
+			if (isNaN(max) || isNaN(min)) {
+				return n;
+			} else {
+				return this.noMinimum.includes(key)
+					? Math.min(n,max)
+					: Math.clamp(n,min,max);
+			}
+		} else {
+			console.log("ERROR in stat getter, target does not have requested stat");
+			return 0;
+		}
+	}
+
+	getBase (key) {
+		key = key.toUpperFirst();
+		if (this.stats[key]) {
+			let v = this.stats[key];
+			let n = Math.round(v.base);
+			let max = setup.STAT_MAX[key];
+			let min = setup.STAT_MIN[key];
+			return this.noMinimum.includes(key)
+				? Math.min(n,max)
+				: Math.clamp(n,min,max);
+		} else {
+			console.log("ERROR in base stat getter, target does not have requested stat");
+			return 0;
+		}
+	}
+
+	getBonus (key) {
+		key = key.toUpperFirst();
+		if (this.stats[key]) {
+			let v = this.stats[key];
+			let n = Math.round(v.bonus);
+			let max = setup.STAT_MAX[key];
+			let min = setup.STAT_MIN[key];
 			return this.noMinimum.includes(key)
 				? Math.min(n,max)
 				: Math.clamp(n,min,max);
@@ -418,19 +463,20 @@ window.Actor = class Actor {
 		}
 	}
 
-	getBase (key) {
-		key = key.toUpperFirst();
-		return this.stats[key].base;
-	}
-
-	getBonus (key) {
-		key = key.toUpperFirst();
-		return this.stats[key].bonus;
-	}
-
 	getEquipBonus (key) {
 		key = key.toUpperFirst();
-		return this.stats[key].equipBonus;
+		if (this.stats[key]) {
+			let v = this.stats[key];
+			let n = Math.round(v.equipBonus);
+			let max = setup.STAT_MAX[key];
+			let min = setup.STAT_MIN[key];
+			return this.noMinimum.includes(key)
+				? Math.min(n,max)
+				: Math.clamp(n,min,max);
+		} else {
+			console.log("ERROR in stat getter, target does not have requested stat");
+			return 0;
+		}
 	}
 
 	statRaised (key) {
@@ -581,9 +627,17 @@ window.Actor = class Actor {
 	}
 
 	get deathMessage () {
-		var base = (this._deathMessage || this.data.deathMessage || `${this.name} is defeated!`);
-		if (base instanceof Function) base = base(this);
-		return base+"<br/>";
+		var val = this._deathMessage;
+		if (val === undefined) {
+			val = this.data.deathMessage;
+		}
+		if (val === null) {
+			return null;
+		} else if (val === undefined) {
+			val = `${this.name} is defeated!`;
+		}
+		if (val instanceof Function) val = val(this);
+		return val+"<br/>";
 	}
 
 	// EQUIPMENT FUNCTIONS
@@ -1001,18 +1055,18 @@ window.Actor = class Actor {
 	get actionReady () {
 		//	Returns true if actor has a valid delayed action stored,
 		//	and they can perform it (not dead/held/uncontrollable, or delayPersist)
-/*
+
 		if (this.delayedAction instanceof Action) {
-			console.log(`Checking actionReady for ${this.name}`); console.log(this.delayedAction);
-			console.log(`Active?`); console.log(this.active);
-			console.log(`Can act?`); console.log((this.delayedAction instanceof Action
+//			console.log(`Checking actionReady for ${this.name}`); console.log(this.delayedAction);
+//			console.log(`Active?`); console.log(this.active);
+/*			console.log(`Can act?`); console.log((this.delayedAction instanceof Action
 				&& this.delayedAction.delayCounter <= 0
 				&& (this.active || this.delayedAction.delayPersist)
 				&& (this.delayedAction.delayPersist ||
 					!(this.dead || this.fakedeath || this.noact || this.uncontrollable))
 				));
-		}
-*/
+*/		}
+
 		return (this.delayedAction instanceof Action
 			&& this.delayedAction.delayCounter <= 0
 			&& (this.active || this.delayedAction.delayPersist)
