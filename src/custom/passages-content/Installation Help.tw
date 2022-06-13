@@ -3,18 +3,21 @@
 
 Another RPG Engine contains a lot of components. To use them all together, you will need a special compiler.
 
-I use <a href="http://www.motoslave.net/tweego/" target="_blank">Tweego</a>, which has an installer <a href="https://github.com/ChapelR/tweego-installer" target="_blank">here</a>. <b>Note the instructions regarding <code>StoryData</code> if you do not wish to use Twine to create your project.</b>
+I use <a href="http://www.motoslave.net/tweego/" target="_blank">Tweego</a>, which has an installer <a href="https://github.com/ChapelR/tweego-installer" target="_blank">here</a>. <b>Note the instructions regarding <code>StoryData</code> if you do not wish to use Twine to create your project.</b> I also recommend a code-friendly text editor that can browse directories and edit text in the same window. I use <a href="https://atom.io/" target="_blank">Atom.</a>
 
 Once you have everything set, you can open your comand prompt (search "cmd" in Windows) and use the "tweego" command to compile Twine stories. If you place your story file in a folder with JavaScript, CSS, and twee files, and target that folder with the "tweego" command, they will all be bundled together. The default download package has already lumped these into a "src" folder for you.
 
 The "src" folder is grouped into the following subfolders:
-* {{{javascript}}}, for JavaScript files
-** {{{core}}}, for core files necessary for the engine's function
-** {{{custom}}}, for user-defined elements such as character definitions
+* {{{core}}}, for core files necessary for the engine's function
+** {{{javascript-core}}}, for JavaScript files
+** {{{passages-core}}}, for Twee files
+** {{{stylesheets-core}}}, for CSS files
+* {{{custom}}}, for optional mods and content
+** {{{javascript}}}, for JavaScript files
+** {{{passages-content}}}, for story content (similar to what you would include in a Twine file)
+** {{{passages-mods}}}, for optional mods to the engine
+** {{{stylesheets}}}, for CSS files
 * {{{macros-additional}}}, third-party SugarCube macros not included in the default SugarCube package
-* {{{passages-core}}}, for Twee files necessary for the engine's function
-* {{{passages-custom}}}, for optional mods and your own Twee files
-* {{{stylesheets}}}, for CSS stylesheets
 
 In the final product, everything will become part of the same story. However, there are a few rules that you must keep in mind:
 
@@ -29,4 +32,4 @@ The engine uses ChapelR's custom SugarCube macros, the documentation for which c
 <b>Summary:</b>
 * Download Tweego <a href="http://www.motoslave.net/tweego/" target="_blank">here</a>. If you can't follow the directions, use the installer <a href="https://github.com/ChapelR/tweego-installer" target="_blank">here</a>.
 * You can compile multiple story and twee files at once, but later conflicts will overwrite earlier ones.
-* Store customized engine passages in passages-custom to avoid conflicts.
+* Store customized engine passages in {{{passages-mods}}} to avoid conflicts.

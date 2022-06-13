@@ -33,6 +33,8 @@ window.Actor = class Actor {
 					this.tolerances.set(x,new Tolerance(0));
 				}, this);
 			}
+			if (this.data.elements) { this.setElements(Object.entries(this.data.elements),"percent"); }
+			if (this.data.tolerances) { this.setTol(Object.entries(this.data.tolerances)); }
 
 			this._maxHP = new Stat(this.data.hp);
 			this._hp = this.data.hp;
@@ -62,24 +64,21 @@ window.Actor = class Actor {
 			for (let [pn,v] of Object.entries(this.data.stats)) {
 				this.setBase(pn,v);
 			}
-			if (this.data.elements) { this.setElements(Object.entries(this.data.elements),"percent"); }
-			if (this.data.tolerances) { this.setTol(Object.entries(this.data.tolerances)); }
 			Number.isInteger(this.data.retaliations) ?
 				this._retaliations = new FillStat(this.data.retaliations) : this._retaliations = new FillStat(0);
 			Number.isInteger(this.data.respawn) ?
 				this._respawn = new FillStat(this.data.respawn) : this._respawn = new FillStat(0);
 			if (typeof(this.data.respawnHP) === "number") { this._respawnHP = this.data.respawnHP; }
-			this.dmgreflection = 0;
 
 			this.battleMsg = [];	// container for popups that will appear during actions
 
 			this.active = true;
-			this.isDone = false;
 			this.dead = false;
 			this.protectedBy = null;
 			this.effects = [];
 			this.onHit = [];
 			this.lastDmg = 0;
+			this.dmgreflection = 0;
 			this.noMinimum = [];	// stats that do not have minimums for this character; used by some effects
 
 			this.equipment = new Map();

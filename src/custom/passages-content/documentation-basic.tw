@@ -4,26 +4,145 @@ Use the table of contents to navigate. You can come back to the top at any time 
 This introduction will teach you how to add content to the default engine settings. For advanced documentation and advice on customization, see [[Documentation (Advanced)]]. This documentation will assume you are familiar with SugarCube basics; see <a href="https://www.motoslave.net/sugarcube/2/docs/" target="_blank">the SugarCube documentation</a> for reference.
 
 <h1>Table of Contents</h1>
-><a href="#databases">Objects, Classes, and Databases</a>
-><a href="#data.puppets">Creating Puppets</a>
-><a href="#data.actions">Creating Actions</a>
->><a href="#actions.targeting">Targeting Logic</a>
-><a href="#data.effects">Creating Effects</a>
-><a href="#data.items">Creating Items</a>
-><a href="#data.enemies">Creating Enemies</a>
->><a href="#enemyactions">Enemy Actions</a>
->>><a href="#enemyactions.finn">Simple Example: Finn</a>
->>><a href="#enemyactions.bubblegum">Advanced Example: Princess Bubblegum</a>
->>><a href="#enemyactions.bonnibel">Complex Example: Bonnibel</a>
-><a href="#encounters">Creating Encounters</a>
-><a href="#customization">Customization</a>
->><a href="#custom.init">Initial Variables</a>
->><a href="#custom.passages">Customizing Passages</a>
+*<a href="#files">File Structure</a>
+**<a href="#files.storyData">StoryData</a>
+**<a href="#files.assets">Asset files</a>
+*<a href="#helpers">Support Functions</a>
+*<a href="#databases">Objects, Classes, and Databases</a>
+*<a href="#data.puppets">Creating Puppets</a>
+*<a href="#data.actions">Creating Actions</a>
+**<a href="#actions.targeting">Targeting Logic</a>
+*<a href="#data.effects">Creating Effects</a>
+*<a href="#data.items">Creating Items</a>
+*<a href="#data.enemies">Creating Enemies</a>
+**<a href="#enemyactions">Enemy Actions</a>
+***<a href="#enemyactions.finn">Simple Example: Finn</a>
+***<a href="#enemyactions.bubblegum">Advanced Example: Princess Bubblegum</a>
+***<a href="#enemyactions.bonnibel">Complex Example: Bonnibel</a>
+*<a href="#encounters">Creating Encounters</a>
+*<a href="#customization">Customization</a>
+**<a href="#custom.config">Configuration</a>
+**<a href="#custom.init">Initial Variables</a>
+**<a href="#custom.passages">Customizing Passages</a>
+
+<h2 id="files">File Structure</h2>
+It's important to make sure you understand the file structure of Another RPG Engine before doing anything. You'll need to know where everything is if you want to play with it, after all.
+
+The decentralized file structure may be different from what you're used to if you've previously used the Twine interface, which keeps everything in one file. I recommend editing with a program that can both process text and navigate directories from the same window, such as <a href="https://atom.io/" target="_blank">Atom.</a>
+
+In order to publish a game on itch.io, your main game file must be named <b><code>index.html</code></b>. (Other platforms may have different requirements or allowances, but we'll focus on itch.io here.) The folder containing this index file will be referred to as the <b>root directory</b>, because all other files must be accessed relative to the index file, making it the "root" of our file system.
+
+All SugarCube code is stored within the <code>src</code> (short for "source") file found in the root directory. This makes it easier to compile with tools such as Tweego, as you need only target this single folder with the compiler.
+
+<code>src</code> contains the three subfolders <code>core</code>, <code>custom</code>, and <code>macros-additional</code>, as well as a Twine data file. <code>core</code> and <code>custom</code> are further subdivided into <code>javascript</code>, <code>passages</code>, and <code>stylesheets</code> folders.
+
+<code>core</code> files are needed for the engine to work. This includes things like <a href="#databases" class="noExternal">class definitions</a> and the architecture for systems such as battles and menus. <b>These files should not be edited directly</b>, as they will be overwritten if you update to a new version of Another RPG Engine. To edit them safely, create a copy and place it in the <code>custom</code> folder.
+
+<code>custom</code> files are your files. This folder contains all of the unique files for your project, from story files to modifications to the base engine. <b>Do not copy over the <code>custom</code> folder from new versions of Another RPG Engine without backups, as this will overwrite your files.</b> (This is the purpose of separating the "core" and "custom" files, as it allows you to cleanly update the core engine without needing to disentangle your modifications.)
+
+The <code>custom</code> folder is further subdivided into <code>passages-content</code> and <code>passages-mods</code>. These folders are intended to contain story content (i.e. the content seen in a standard Twine game) and modifications to the engine files, respectively, but you can reorganize the folders as you see fit.
+
+The <code>macros-additional</code> folder is simply a storage space for third-party macros you may wish to import from other libraries. By default, it includes Chapel's custom macro set, the Click to Proceed macro, the Number Pool macro set, the Shake macro, the Live/Update macro set, and the Scrolldown macro. These macros are needed for the functioning of core files and so should not be removed, but you are free to add more.
+
+<h3 id="files.storyData">StoryData</h3>
+The file <code>0_StoryData</code> tells Twine what your story is and how it's formatted. It only requires three things: an <b><code>ifid</code></b> (a unique ID for the Interactive Fiction database), a <b><code>format</code></b> (for this engine, this should always be SugarCube), and a <b><code>StoryTitle</code></b>. Additional parameters are detailed in <a href="https://www.motoslave.net/sugarcube/2/docs/#special-passages" target="_blank">the SugarCube documentation.</a>
+
+The only thing that may give you trouble is the <code>ifid</code>. To generate an ID for your game, simply delete the current ID in <code>StoryData</code> and compile your game with Tweego. Tweego will generate a new ID automatically. Further explanation can be found in <a href="https://www.motoslave.net/tweego/docs/#special-passages-storydata" target="_blank">the Tweego documentation.</a>
+
+<h3 id="files.assets">Asset Files</h3>
+If you want to use asset files (images and sounds), you need to be aware of where they are relative to the index file. To make this easier, the access paths are defined in the config file as the variables <code>setup.SoundPath</code> and <code>setup.ImagePath</code>. Every time assets are accessed in the default code, they use these variables to determine the access path; this means that if you need to move things around, you only need to change those two variables instead of every access in your code. By default, these paths are very simple, as asset folders are placed within the root directory, making them "adjacent" to the index file.
+
+More detailed explanation on accessing asset files can be found in <a href="https://www.motoslave.net/sugarcube/2/docs/" target="_blank">the SugarCube documentation.</a>
+
+<h2 id="helpers">Support Functions</h2>
+The file <code>1_support-functions.js</code> in the <code>javascript-core</code> folder defines a number of functions that simplify various common tasks in the engine. Comments explaining these functions can be found in the JS file.
+
+The most important functions to know are the shorthand functions. These perform the same function as accessing a variable, but do so in fewer keystrokes, shortening programming time. These functions are used throughout the engine instead of accessing the variable directly, allowing you to change the name of a variable without having to change every reference in the engine. (However, be aware that <b>you cannot use a function to call a variable for assignment.</b> For example, you cannot say {{{target() = Object}}}. You must say {{{V().target = Object}}}.)
+*<code>V</code> (case-sensitive) is shorthand for <code>variables</code>, or the <code>$</code> operator in TwineScript.
+*<code>inv</code> is shorthand for player inventory.
+*<code>allActors</code> returns a concatenated array of all characters in a battle, both <code>puppets</code> and <code>enemies</code>; an additional parameter can be sent to sort the array before returning it.
+*<code>StatName</code> is shorthand for the names contained in the <code>STAT_NAME</code> object (see <a href="#custom.init" class="noExternal">Initial Variables</a>)
+*Other shorthand functions have the same name as their variable.
+
+Additional functions include:
+{{{
+setup.textWidth = function(text, bold, size) {
+    /* create the <span> to measure the text width */
+	if (bold === undefined) {
+		bold = "normal";
+	}
+	else if (bold === true) {
+		bold = "bold";
+	}
+	if (size === undefined || typeof(size) != 'number') {
+		size = "12pt";
+	} else {
+		size = Number.toString(size) + "px";
+	}
+    var tElement = jQuery(`<span style="font-weight: ${bold}">` + String(text) + "</span>");
+    /* add it (hidden) to the end of the document's body so that
+       the browser updates its width and we can save it */
+    tElement.hide().appendTo(document.body);
+    var width = tElement.width();
+    /* clean up */
+    tElement.remove();
+    return width;
+};
+
+setup.scaledTextDiv = function(text, width, bold, size, print) {
+    var tWidth = setup.textWidth(text, bold, size);
+	if (print !== undefined) {
+		text = print;
+	}
+    if (temporary().enemy !== undefined && temporary().enemy.large) {
+		return `<div>${text}</div>`;
+	} else if(tWidth < width) {
+        return `<div style="width: ${width}px; overflow: hidden;"><span style="display: inline-block; white-space: nowrap;">${text}</span></div>`;
+    } else {
+        return `<div style="width: ${width}px; overflow: hidden;"><span style="display: inline-block; white-space: nowrap; transform: translate(-50%, 0) scaleX(${width / tWidth}) translate(50%, 0);">${text}</span></div>`;
+    }
+};
+}}}
+These functions allow you to scale text to fit it within a certain width; the text will be compressed instead of overflowing or breaking its container. This is useful if you have variable elements displaying inside a container that must have a fixed width, such as the actor boxes. Though the code here is complicated, the function is simple to use: Simply pass the text you want to scale, the maximum width you wish to allow, whether or not the text is bold, its font size (in pt), and what you want the text to finally display if that's different than the original. (This is useful for, say, making links or other macros containing text we want scaled -- you can pass the text as the {{{text}}} argument and the macro as the {{{print}}} argument, and it will work.)
+{{{
+(function(window){
+  // A full compatability script from MDN:
+  var supportPageOffset = window.pageXOffset !== undefined;
+  var isCSS1Compat = ((document.compatMode || "") === "CSS1Compat");
+
+  // Set up some variables
+  var statusbar;
+  var noHorizontal;
+  var noVertical;
+  // Add an event to the window.onscroll event
+  window.addEventListener("scroll", function(e) {
+
+	statusbar = document.getElementById("status");
+	noHorizontal = document.getElementById("noHorizontal");
+	noVertical = document.getElementById("noVertical");
+
+	// A full compatability script from MDN for gathering the x and y values of scroll:
+	var x = supportPageOffset ? window.pageXOffset : isCSS1Compat ? document.documentElement.scrollLeft : document.body.scrollLeft;
+	var y = supportPageOffset ? window.pageYOffset : isCSS1Compat ? document.documentElement.scrollTop : document.body.scrollTop;
+
+	if (noHorizontal) {
+		noHorizontal.style.left = -x + 1250 + "px";
+	}
+	if (statusbar) {
+		statusbar.style.left = -x + 1020 + "px";
+	}
+	if (noVertical) {
+		noVertical.style.top = -y + 50 + "px";
+	}
+  });
+})(window);
+}}}
+This function is designed to allow the status pane to scroll with the user's viewport. Currently, the offset numbers used in this function do not automatically scale to the width of the status or battle panes, and must be tweaked manually. Don't change them or the attributes of the {{{#status}}} element unless you know what you're doing.
 
 <h2 id="databases">Objects, Classes, and Databases</h2>
 RPGs tend to involve a lot of <i>stuff</i>. Heroes, stats, items, equipment, spells, enemies... It can get dizzying quite quickly. Fortunately, the engine is set up to make creating these objects easy.
 
-An <i>object</i>, in programming, is a general term for a data structure that contains other data structures within it. Objects are very useful for keeping track of variables that have a lot of associated data. As an example, say you are the manager of a company and want to maintain a digital list of employees. You might want to keep track of various attributes like the name, age, and income of every employee. It would be tedious and confusing to have to keep track of each of these variables if they were not connected in any way. You'd have to give them names like {{{John_age}}}, {{{Jane_name}}}, {{{Jane_income}}}, and {{{John_name}}}, all floating around in a huge unconnected mess.
+An <i>object</i>, in programming, is a general term for a data structure that contains other data structures within it. Objects are very useful for keeping track of variables that have a lot of associated data. As an example, say you are the manager of a company and want to maintain a digital list of employees. You might want to keep track of various attributes like the name, age, and income of every employee. It would be tedious and confusing to have to keep track of each of these variables if they were not connected in any way. You'd have to give them names like {{{John_age}}}, {{{Jane_age}}}, {{{Jane_income}}}, and {{{John_name}}}, all floating around in a huge unconnected mess.
 
 With objects, you could simply collect all these variables under one person, using the curly brace <code>{}</code> operators:
 {{{
@@ -120,9 +239,9 @@ Actions determine what things your characters can do in battle -- attacking, cas
 	"desc": `Ah, the sword: favored weapon of heroes everywhere. In reality they're pretty impractical and hard to use, but they just look so cool!`,
 	"useText": null,
 	"actText": function () {
-		return `$subject.name swings their sword with perfect form.`;
+		return `${subject().name} swings their sword with perfect form.`;
 	},
-	"act": justdmg
+	"act": justdmg()
 }
 }}}
 This isn't what a live {{{Action}}} object looks like, but it contains all the data the {{{Action}}} constructor needs to create one. There are additional attributes not shown in this entry that are detailed below:
@@ -1283,7 +1402,9 @@ These examples should hopefully show you how to implement enemy behavior yoursel
 <h2 id="encounters">Creating Encounters</h2>
 Once you've created your enemies, you still have to bundle them into an <i>encounter</i>. An encounter is a specific battle containing a party of enemies. Each one may correspond to, for example, a particular room of a dungeon, or to one of several possible random encounters.
 
-Encounters are defined in the {{{database-encounters.tw}}} file in the {{{passages-custom}}} folder. In this file, you'll see a widget called {{{<<callEncounter>>}}} that contains a {{{<<switch>>}}} statement keyed to the variable {{{$scenario}}}. Create a case statement for your scenario id and define your {{{$enemies}}} party variable within it. You can also add other variables, such as making the encounter an ambush or defining an aesthetic style. (Any string you assign to the {{{$B.style}}} property will be added to the passage body as a class for the duration of the battle.)
+Encounters are defined in the {{{database-encounters.tw}}} file in the {{{passages-custom}}} folder. In this file, you'll see a widget called {{{<<callEncounter>>}}} that contains a {{{<<switch>>}}} statement keyed to the variable {{{$scenario}}}. Create a case statement for your scenario id and define your {{{$enemies}}} party variable within it. You can also add other variables, such as making the encounter an ambush or defining an aesthetic style.
+* It is recommended to specify a passage name in the {{{$B.destination}}} property. This is the passage where the player will end up after the battle is finished. It defaults to the name of the passage where the player entered the fight.
+* Any string you assign to the {{{$B.style}}} property will be added to the passage body as a class for the duration of the battle.
 
 There is another widget defined here, {{{<<populateEnemies>>}}}, to make your work a little easier. Instead of having to write {{{new Enemy}}} for every single enemy, just pass their names to {{{<<populateEnemies>>}}} and it'll automate that for you. Note that you will have to wrap the argument in backticks {{{`}}} for it to be read correctly.
 
@@ -1307,14 +1428,25 @@ This widget provides a quick and standardized format for battle links. Pass the 
 <h2 id="customization">Customization</h2>
 Another RPG Engine is designed to be modular and to allow the user to customize features to suit their needs. This is handled through the passages stored in the {{{passages-custom}}} folder, which are slotted into core passages when needed.
 
+<h3 id="custom.config">Configuration</h3>
+The file {{{0_config.js}}}, found in the {{{javascript}}} folder, can be used to define important configuration variables for your story such as file paths, save processing, and autosaves. (The prepended {{{0}}} is to ensure it shows up first in an alphabetical directory listing; files are compiled in directory order, so this is necessary to ensure your most important variables are defined first.)
+
+For more information on what you can do here, see the relevant portions of <a href="https://www.motoslave.net/sugarcube/2/docs/" target="_blank">the SugarCube documentation.</a>
+
 <h3 id="custom.init">Initial Variables</h3>
 <code>StoryInit</code> is a special passage that is run when the game starts. It is used to define many variables that determine several aspects of the engine, such as the color of health bars, the constants used in damage formulas, and the elements used for magic spells. These variables are set to certain defaults, but you can overwrite them with new specifications by editing {{{user storyinit.tw}}}.
 
 Most variables are explained in the comments of the <code>StoryInit</code> file, but this section will go into detail on some of the more complex ones:
 * {{{formula}}} determines the default damage formula used for attacks. A few options are provided by default. See [[Design]] for more information.
+* {{{TURN_MODEL}}} determines the turn model used in battles.
+** "{{{free}}}": <b>Default.</b> The simplest model, where players can decide their turn order freely.
+** "{{{timeline}}}": Character turns are decided by the actions they use, where every action has a custom time between its use and the next turn. (See [[Additional Features]] for details.)
+* {{{STAT_NAMES}}} matches stats as they are defined in the engine to a custom name. This allows you to customize the names of your stats without having to edit every reference in the code.
+* {{{STAT_MIN}}} and {{{STAT_MAX}}} define the minimum and maximum values allowed for every stat. This is important when considering buffs or equipment that can modify stats.
 * {{{statInfo}}} provides a tooltip description of every stat when the player hovers over its name in the party menu. This is helpful for communicating to your player what each stat does, especially if you use particularly complex or esoteric stats.
 ** {{{statInfo}}} is also considered a database of every stat used in the game, so make sure it matches the stats you define for characters.
 * {{{hiddenStats}}} is an array of stat names that will be hidden in places where stats are normally displayed, such as the party menu.
+* {{{LEVEL_CAP}}} is the highest level player characters are allowed to reach.
 * {{{ELEMENT_LIST}}} is an array of names corresponding to all the elemental properties that will be used in your game.
 ** {{{elementMessages}}} is an object containing messages that will be added to damage reports to show that an attack has hit an elemental weakness or resistance.
 * {{{MENU_OPTIONS}}} is an array of strings corresponding to what options the player can select in the party menu. For the options available in the default engine, see the "party menu" twee files. Additional options you will have to create yourself.
@@ -1327,14 +1459,17 @@ This is also where you should define the player's starting party with the {{{$pu
 
 <h3 id="custom.passages">Customizing Passages</h3>
 The passages in {{{passages-custom}}} are slotted into certain core passages through the {{{<<include>>}}} macro. By modifying these custom passages, you can customize various features without needing to alter the core passages.
+* The {{{formulas}}} folder lets you customize various formulas used by the engine, such as for determining damage or turn order.
 * {{{battle display mods actorlist}}} lets you conditionally add classes to the enemy or puppet displays in the battle layout, such as reversing the display order for certain encounters.
 * {{{battle interruptions}}} will appear during the action phase, after the action's {{{useText}}} but before its {{{actText}}}. You can make them appear conditionally based on encounter scenario or other variables. The interruptions for the Steven Universe encounter are provided as an example.
+* {{{confirm-text}}} customizes the text displayed in the confirm phase.
 * {{{custom battle preparation}}} is run at the end of the setup code before every battle. By default, it only adds the {{{<<restock>>}}} widget, which refreshes any items used during the battle.
 * {{{custom end of action effects}}} is run on every action, after followup attacks and potential surrender failure. Use it for any special action adjustments you want to make. By default, this only includes the EN refund for the "Focus" ability.
 * {{{custom end of battle}}} is run at the end of the {{{<<endofbattle>>}}} widget. By default, it only adds the {{{<<restock>>}}} widget, which refreshes any items used during the battle.
-* {{{custom newturn}}} is run at the end of the {{{<<newTurn>>}}} widget. By default, it regenerates puppet EN.
+* {{{custom newTurn}}} is run at the end of the {{{<<newTurn>>}}} widget. By default, it regenerates puppet EN.
+* {{{custom postAction}}} is run after every action is played in battle. By default, it provides functionality for the "Mark" and "Hunter" effects.
+* {{{custom refreshPuppet}}} is run at the end of <b>every loop</b> in the {{{<<refreshPuppets>>}}} widget. By default, it resets everyone's Energy to baseline and reloads Rogue's crossbow.
 * {{{damagecalc custom factors}}} is run at the end of {{{<<damageCalc>>}}}, the widget that runs damage calculation. Use it for any miscellaneous modifiers you want to apply to damage, such as the multipliers from Fighter's "Defender" and "Berserker" effects.
-* The various {{{formula}}} passages let you customize the formulas for various calculations, such as accuracy, critical rate, and damage.
 * {{{loss of control effects}}} handles the logic for loss-of-control effects, and is run at the start of every player turn. The default passage includes logic for the "Hatred", "Confusion", and "Charmed" effects, but you can add additional branches for your own effects.
 * {{{special battle lines}}} is displayed in-between the enemy and player parties in the battle screen. This is useful for displaying relevant in-battle messages, such as the progress for Mage's sunrise spell in the Marceline battle.
 * {{{special checks}}} is run at the start of the player turn, and is used to forward the player to special scenes, such as Dipper and Mabel's transformations, or to make other adjustments. By default, it includes the handler for loss-of-control effects.

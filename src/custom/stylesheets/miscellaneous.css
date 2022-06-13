@@ -1,6 +1,6 @@
 /* Styles relating to the display of the help file. You will likely wish to delete or override this for your own stories. */
 
-blockquote a.link-external::after, a.noExternal.link-external::after {
+ul a.link-external::after, a.noExternal.link-external::after {
   visibility: hidden;
   content: "";
 }
@@ -13,8 +13,10 @@ body.text {
   line-height: 1.5;
 }
 
-h1, h2, h3, h4, h5 {
+#passages h1, #passages h2, #passages h3, #passages h4, #passages h5 {
   margin: auto;
+  display: inline;
+  text-decoration: underline;
 }
 
 img {

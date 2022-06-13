@@ -73,9 +73,8 @@ Actor.prototype.testEffect = function (name,mods = {}) {
   return true;
 }
 
-Actor.prototype.addEffect = function (name,mods) {
+Actor.prototype.addEffect = function (name,mods={}) {
   console.assert(typeof(name) == "string" || name instanceof Effect,`ERROR in addEffect: no effect passed`);
-  mods = (mods || {});
   if (!action()) { V().action = new Action("") }
   var dur = (mods.dur || action().dur || 1);
   var E;
@@ -91,6 +90,7 @@ Actor.prototype.addEffect = function (name,mods) {
   }
   else {
 
+    // check if the effect will be applied; used for report functions
     if (temporary().effectApplied === undefined) {
       temporary().effectApplied = {}
     }
@@ -320,4 +320,53 @@ Actor.prototype.removeEffect = function (effect,mods = {}) {
   } else {
     return `${this.name}'s Stasis held the effect in place!<br/>`;
   }
+};
+
+setup.effectFunctions = {
+
+	add: function (actor) {
+		return `${actor.name} is <b>${this.name}</b>!`;
+	},
+	rem: function (actor) {
+		return `${actor.name} is no longer ${this.name}.`;
+	},
+	stance: function (actor) {
+		return `${actor.name} adopts the stance of a <b>${this.name}</b>.`;
+	},
+	remDebuff: function (actor) {
+		return `${actor.name}'s ${this.name} is cured.`;
+	},
+	remBuff: function (actor) {
+		var article;
+		switch (this.name.charAt(0).toLowerCase()){
+			case "a":
+			case "i":
+			case "o":
+			case "u":
+			case "e":
+				article = 'an';
+				break;
+			default:
+				article = 'a';
+		}
+		return `${actor.name} loses ${article} ${this.name}.`;
+	},
+	invisible: function () {return "";},
+
+	physical: function (puppet) {
+		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(StatName("def")))));
+	},
+	special: function (puppet) {
+		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(StatName("spc")))));
+	},
+	piercing: function (puppet) {
+		return this.weight*(setup.base + (setup.damper * this.power));
+	},
+	proportional: function (puppet) {
+		return this.weight * puppet.maxHP;
+	},
+	fixed: function (puppet) {
+		return this.power;
+	}
+
 };

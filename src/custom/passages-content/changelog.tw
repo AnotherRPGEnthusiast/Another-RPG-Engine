@@ -1,4 +1,18 @@
 :: Changelog[text]
+<h3>Version 4.03</h3>
+<ul>
+<li>Updated and improved documentation.</li>
+<ul><li>Tables of contents in the documentation now use unordered lists instead of blockquotes.</li>
+<li>Headers are now underlined and no longer have a large gap underneath them.</li></ul>
+<li>Moved <code>effectFunctions</code> to the <code>effect-manager</code> file. Renamed <code>class-actor</code>, <code>class-effect</code>, and <code>effect-manager</code> to ensure they compile in the correct order after this change.</li>
+<li>Action animations will no longer be partially transparent if the target is inactive.</li>
+</ul>
+
+<h3>Version 4.02.1</h3>
+<ul>
+<li>Fixed an error with the animation tests. They should now be updated to work with the current passage names.</li>
+</ul>
+
 <h3>Version 4.02</h3>
 <ul>
 <li>New logic function: <code>checkActions</code>. Checks if target(s) have readied actions. Useful for AI code.</li>

@@ -2,34 +2,34 @@
 This passage will discuss non-essential RPG features with only skeletal implementations in the default engine, but which may be of interest. This will contain rather advanced discussion of code and will build on the principles discussed in the design passage, so it is recommended you read [[Documentation|Documentation (Advanced)]] and [[Design]] first.
 
 <h1>Table of Contents</h1>
-><a href="#flow">Battle Flow and Turn Order</a>
->><a href="#flow.1">Method 1: Ranked Order</a>
->>><a href="#flow.1.a">Adding Variance</a>
->><a href="#flow.2">Method 2: Action Time</a>
->>><a href="#flow.2.a">Action Time with Threshold</a>
->><a href="#flow.3">Method 3: Timeline</a>
->>><a href="#flow.3.a">Duel (One-Character) Systems</a>
->><a href="#flow.4">Transparency</a>
-><a href="#progress">Progression and Leveling Up</a>
->><a href="#progress.levels">Levels</a>
->>><a href="#progress.levels.1">Calculating XP Requirements</a>
->>><a href="#progress.levels.2">What Do Levels Do?</a>
->>><a href="#progress.levels.code">Implementation</a>
->><a href="#progress.pointbuy">Point-Buy</a>
->>><a href="#progress.pointbuy.code">Implementation</a>
->><a href="#progress.equip">Equipment-Based Progression</a>
-><a href="#battlegrid">Battle Grid</a>
->><a href="#battlegrid.1">Setup</a>
->><a href="#battlegrid.2">Features</a>
-><a href="#missMechanics">Misses and Critical Hits</a>
->><a href="#misses">Accuracy and Misses</a>
->><a href="#crits">Critical Hits</a>
-><a href="#bestiaryDocs">Bestiary/Enemy Encyclopedia</a>
->><a href="#bestiaryClass">Bestiary Class</a>
->><a href="#bestiaryEntryClass">BestiaryEntry Class</a>
-><a href="#crisis">Crisis/Limit Breaks</a>
->><a href="#crisis.code">Implementation</a>
->><a href="#crisis.stash">Stash</a>
+*<a href="#flow">Battle Flow and Turn Order</a>
+**<a href="#flow.1">Method 1: Ranked Order</a>
+***<a href="#flow.1.a">Adding Variance</a>
+**<a href="#flow.2">Method 2: Action Time</a>
+***<a href="#flow.2.a">Action Time with Threshold</a>
+**<a href="#flow.3">Method 3: Timeline</a>
+***<a href="#flow.3.a">Duel (One-Character) Systems</a>
+**<a href="#flow.4">Transparency</a>
+*<a href="#progress">Progression and Leveling Up</a>
+**<a href="#progress.levels">Levels</a>
+***<a href="#progress.levels.1">Calculating XP Requirements</a>
+***<a href="#progress.levels.2">What Do Levels Do?</a>
+***<a href="#progress.levels.code">Implementation</a>
+**<a href="#progress.pointbuy">Point-Buy</a>
+***<a href="#progress.pointbuy.code">Implementation</a>
+**<a href="#progress.equip">Equipment-Based Progression</a>
+*<a href="#battlegrid">Battle Grid</a>
+**<a href="#battlegrid.1">Setup</a>
+**<a href="#battlegrid.2">Features</a>
+*<a href="#missMechanics">Misses and Critical Hits</a>
+**<a href="#misses">Accuracy and Misses</a>
+**<a href="#crits">Critical Hits</a>
+*<a href="#bestiaryDocs">Bestiary/Enemy Encyclopedia</a>
+**<a href="#bestiaryClass">Bestiary Class</a>
+**<a href="#bestiaryEntryClass">BestiaryEntry Class</a>
+*<a href="#crisis">Crisis/Limit Breaks</a>
+**<a href="#crisis.code">Implementation</a>
+**<a href="#crisis.stash">Stash</a>
 
 <h2 id="flow">Battle Flow and Turn Order</h2>
 In <i>Cartoon Battle</i>, everyone can take their turns in any order, and each party's turn happens all at once. This system is very simple to implement and balance: everyone gets the same number of actions and acts at the same rate. I recommend it to novice developers for this reason.
@@ -424,27 +424,94 @@ Turn order: <b>B, A, K, B, A, K</b>. Notice that this distribution is identical 
 The key difference here is that the simple method always resets initiative to 0 when the subject takes a turn no matter how much they accumulated, but the threshold method allows initiative to carry over if the threshold is overshot. This gives greater weight to differences in Speed stats and makes stable loops less likely. However, designing the correct threshold is itself a challenge; if we were to use a straight gain = Speed formula, anyone with 100 Speed would be able to take turns continuously! The threshold method is best suited to slow gain formulas with less dependence on stats, for this reason. You could also make the threshold flexible, such as tying it to three times the fastest or slowest character's gain rate, but this runs an even greater risk of making stat differences get out of hand.
 
 <h3 id="flow.3">Method 3: Timeline</h3>
-Characters' turns are placed at certain points in a timeline. When time advances to their point, they take their turn, and are then placed at another point.
+This system is modeled in <a href="https://anotherrpgenthusiast.itch.io/another-rpg-experiment-03-its-about-time" target="_blank" rel="nofollow">Experiment 03.</a> <i>Exalted</i> fan Jye Nicolson created <a href="https://mengtzu.github.io/exalted/sakuya.html" target="_blank">a tutorial game</a> using JavaScript that uses a similar system.
 
-This method is similar to action time, but works in reverse in terms of algorithm: we have everyone's initiative values count <i>down</i>, and characters take their turns when it hits 0.
+In the timeline model, characters' turns are placed at certain points in a timeline. When time advances to their point, they take their turn, and are then placed at another point. This method is similar to action time, but works in reverse in terms of algorithm: we have everyone's initiative values count <i>down</i>, and characters take their turns when it hits 0.
 
-We'd first need some way of creating an initial turn order. For now, let's assume whoever has the highest Speed stat goes first, and everyone lower than them goes 1 "tick" later for every point of Speed difference. So with characters of Speed 10, 8, 5, and 4, our starting timeline would look like this:
-{{{
-[A]-[B]--[C][D]
-}}}
-where dashes are empty ticks.
-
-From here, A would take an action and be placed at a later point in the timeline. This determination could be based on Speed, but it's more commonly based on action; some actions will require the characters to wait longer before they can act again. For instance, attacking with a heavy greatsword might push a character back 6 ticks, while attacking with a knife only pushes them back 4. Maybe casting a spell only pushes them back 3 ticks, but requires 2 additional ticks of wind-up time while they chant the incantation, during which time they may be vulnerable.
-
-After their action, A would be placed ahead in the timeline, and the timeline would advance; everyone's initiative would go down by 1. There's no one in the next tick space, so we'd skip it and run another iteration until the next character appears, in this case, B. They'd take an action, then get pushed ahead to a new slot. The battle would continue like this.
-
-To implement this system, you'd do something very similar to an <a class="noExternal" href="#flow.2.a">action time with threshold</a> system. Only the threshold value and incrementor system would need to be changed. An example model is provided in the "Initiative Model: Timeline" passage.
-
-This is a fairly intuitive system, and superb if you want a battle system based around timing and actions with variable speeds. This system meshes well with features such as charged attacks and delayed effects, as those features can be placed in tick squares as well. However, it's a lot to keep track of, and all the balance problems associated with an action time system still apply. You'll also have to come up with your own system for initial turn order, as I can't think of a good one off the top of my head. (Make a separate "initiative" stat that's either fixed for every character or can only be increased rarely, maybe?)
+This is a fairly intuitive system, and superb if you want a battle system based around timing and actions with variable speeds. This system meshes well with features such as charged attacks and delayed effects, as those features can be placed in tick squares as well. However, it's a lot to keep track of, and all the balance problems associated with an action time system still apply.
 
 I took this system from <i>Exalted</i>, a fantasy tabletop RPG that's very different from the popular <i>Dungeons and Dragons</i>. <i>Exalted</i>'s system is massively more complicated than the simple model I've outlined here, but could be a good jumping-off point for you to design your own system. <i>Exalted</i> players often bemoan how hard it is to keep track of all the variables at play, but that's no problem for a computer!
 
-<i>Exalted</i> fan Jye Nicolson created <a href="https://mengtzu.github.io/exalted/sakuya.html" target="_blank">a tutorial game</a> using JavaScript, if you would like to see how the system works in action. Because Twine operates in JavaScript, the game plays very similarly!
+Code for this model can be found in {{{core/passages-core/timeline.tw}}}. To set up the model, we run a special initialization widget when the battle starts.
+{{{
+<<set $timeline = new Array(setup.TIMELINE_LENGTH); $timeline.fill({occupants: []})>>
+}}}
+The first thing this widget does is create a {{{$timeline}}} array of a length specified in {{{StoryInit}}}, and fill every element with an object tracking the occupants. We will later use this object to display the timeline to the player.
+
+We then need some way of creating an initial turn order. By default, the engine uses a new stat, "Initiative". Whoever has the highest Initiative stat goes first, and everyone lower than them goes 1 tick later for every point of Initiative difference.
+{{{
+<<run $actors.sort(function(a,b) { return b.get(StatName("intv")) - a.get(StatName("intv")) })>>
+<<run _init = $actors[0].get(StatName("intv"))>>
+<<for _actor range $actors>>
+	<<set _actor.active = false>>
+	<<set _actor.ticks = _init - _actor.get(StatName("intv"))>>
+<</for>>
+<<run $actors[0].active = true>>
+}}}
+We implement this by sorting all actors in order of descending Initiative, then recording the Initiative of the 0th (highest) actor to a variable. We then run over every actor with a loop, setting their starting ticks to a value equal to their Initiative subtracted from the highest Initiative. The actors also have their {{{active}}} flags disabled so they don't act prematurely; except for our 0th actor, who is reactivated so they can go first.
+
+Now we need to jump to {{{Battle Phases.tw}}} for the next step.
+{{{
+<<switch setup.TURN_MODEL.toLowerCase()>>
+	<<case "timeline">>
+		<<if $action.waitTime > 0>>
+			<<include "Wait Formula">>
+			(...)
+			<<set subject().delayedAction = new Action($action.name)>>
+			<<set subject().delayedAction.delayCounter = 0>>
+			<<if $target instanceof Actor>>
+				<<set subject().target = $target.id>>
+			<</if>>
+			<<set subject().active = false>>
+			<<goto "Advance Timeline">>
+}}}
+The "Action Handler" passage doesn't do very much in the free action model, but here, we use it to determine the character's next position on the timeline. We read their action's {{{waitTime}}} property, and if it's greater than 0 (i.e. the action won't be performed immediately), we have to give them a new {{{ticks}}} value based on the Wait Formula and store their action in their {{{delayedAction}}} attribute. ({{{delayCounter}}} won't decrement because the timeline system doesn't use rounds, and since we'll be recycling code used in round-based systems, we also need to set the action's {{{delayCounter}}} to 0 so nothing gets confused.) If the player selected a target with this action, we also need to record the target so we can retreive it when the action executes.
+
+Now head back to {{{timeline.tw}}} to view the "Advance Timeline" passage.
+{{{
+<<set $actors = allActors("timeline")>>
+<<for $actors[0].ticks > 0>>
+	<<for _actor range $actors>>
+		<<set _actor.ticks -= 1>>
+		<<advanceRespawn _actor>>
+		<<regen _actor>>
+		<<advanceCooldown _actor>>
+		<<decayEffects _actor.effects false>>
+	<</for>>
+}}}
+This passage sorts all actors present in the battle in ascending tick order (so, the characters with fewest ticks will be first), then runs a loop that decrements every character's ticks as long as the 0th actor still has ticks. Within every iteration of this loop, we perform every time-based function we would run at the end of every round in a round-based system, so that cooldowns and effects will still decrement, etc.
+{{{
+<<if _message>>
+	<<include "Timeline">>
+	<<button "Continue..." "Advance Timeline">><</button>>
+	<<break>>
+<</if>>
+}}}
+There's one additional complication, which is that if an effect decayed (communicated by the presence of the {{{_message}}} variable), we need to communicate that to the player at the correct moment. This requires us to break the loop, stopping on the exact tick the effect decayed. The decay text will already be generated by {{{<<decayEffects>>}}}, so we just need to include a button to let the player continue, as well as a visual of the timeline so the player understands when this happened.
+
+When the loop is finished, it means at least one character has reached 0 ticks, which means they need to be marked as the active character. However, there is an edge case: Sometimes, two or more characters can land on the same tick. If this happens, we need a tiebreaker to determine who goes first.
+{{{
+<<set _actorQueue = $actors.filter(function (a) { return a && !a.dead && a.ticks <= 0 })>>
+<<if _actorQueue.length > 1>>
+	<<tiebreaker _actorQueue>>
+<</if>>
+}}}
+We check for this eventuality by filtering our actor array for only actors with ticks <= 0 (and who aren't dead). If this filter produces more than 1 element, we know we need a tiebreaker. We pass the filtered array to the {{{<<tiebreaker>>}}} widget, which is also defined in {{{timeline.tw}}}. The default tiebreaker formula is very simple: The character with the higher Initiative wins. (In the rare case that characters have equal Initiative and the tiebreaker needs a tiebreaker, the winner is determined randomly.)
+{{{
+<<set _actorQueue[0].active = true>>
+<<if _actorQueue[0] instanceof Puppet>>
+	<<goto "Player Phase">>
+<<elseif _actorQueue[0] instanceof Enemy>>
+	<<goto "Enemy Phase">>
+<</if>>
+}}}
+Returning to "Advance Timeline", we flag our winner as {{{active}}} and move the player to either the Player or Enemy Phase, depending on which type the active character is.
+{{{
+<<if setup.TURN_MODEL.toLowerCase() === "timeline">>
+	<<include "Tick Formula">>
+<</if>>
+}}}
+The final step comes in "postAction", after the action is executed. The character is given a new tick value that will count down to their next turn, determined by the Tick Formula. By default, this is the action's {{{recoveryTime}}} minus the subject's Speed stat.
 
 <h4 id="flow.3.a">Duel (One-Character) Systems</h4>
 Some RPGs, or just some parts of some RPGs, forgo a party system and only give you one player character for battles. From a narrative standpoint this can be very cool: a climactic one-on-one duel with the hero's personal nemesis! But from a gameplay perspective, it often falls flat, because a big part of RPG gameplay is the synergy between multiple characters and actions. If you and the enemy are just trading blows, your options are much more limited; you (usually) can't heal and attack at the same time, for instance.

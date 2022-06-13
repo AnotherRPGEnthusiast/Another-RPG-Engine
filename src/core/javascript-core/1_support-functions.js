@@ -8,19 +8,36 @@ predisplay['set-return-variable'] = function () {
 };
 
 window.puppets = function puppets () {
+	// Processes the puppets array before accessing it. Used in all engine code that accesses $puppets.
+	// Filters null entries from the puppets array. Useful for an earlier version of the battle grid that used null entries for empty spaces, but no longer needed with the new update.
 	return V().puppets.filter(function(p) { return p !== null });
 };
 
 window.enemies = function enemies () {
+	// Same as the puppets() function, but for enemies.
 	return V().enemies.filter(function(p) { return p !== null });
 };
 
+window.encounters = function encounters () {
+	// Shorthand access for the $encounters variable.
+	return V().encounters;
+};
+
+window.inv = function inv () {
+	// Shorthand access for player inventory variable.
+	// Called for all engine code that accesses inventory, so you can edit the name of your inventory variable here without needing to edit any core code.
+	// By default, this variable is the story variable "$inventory" and is defined in StoryInit.
+	return V().inventory;
+};
+
+// Accessor functions for $target, $subject, and $action story variables. This is simply easier than writing out the full State.variables address in JavaScript.
 const target = function target () {return State.variables.target;}
 const subject = function subject () {return State.variables.subject;}
 const action = function action () {return State.variables.action;}
 window.target = target; window.subject = subject; window.action = action;
 
 window.getActor = function getActor(x) {
+	// getActor: maintains object persistence across passages for important variables such as $target and $subject.
 	var targets = [];
 	var id;
 	var actor;
@@ -57,7 +74,22 @@ const getActorById = function (id) {
 };
 window.getActorById = getActorById;
 
+window.deadCount = function deadCount (party = puppets()) {
+	//	Returns the number of characters marked "dead" in a party.
+	//	party = array of Actors; defaults to $puppets.
+	let count = 0;
+	party.forEach(function(actor) {
+		if (actor.dead) {
+			count++;
+		}
+	});
+	return count;
+};
+
 const allActors = function allActors (sort = "") {
+	//	allActors: Shorthand for concatenating $puppets and $enemies for functions that affect both.
+	//	sort: string; determines sorting order after concatenation.
+	//		Currently has only one type, "timeline", which sorts in ascending tick order.
   let r = State.variables.puppets.concat(State.variables.enemies);
   switch (sort.toLowerCase()) {
     case "timeline":
@@ -70,6 +102,7 @@ const allActors = function allActors (sort = "") {
 window.allActors = allActors;
 
 const chainBattleGrid = function (grid) {
+	// chainBattleGrid: Used in conjunction with getActor to maintain object persistence for the battle grid.
 	console.assert(grid instanceof Array,`ERROR in chainBattleGrid: non-array passed`);
 	for (let row of grid) {
 		for (let cell of row) {
@@ -81,16 +114,15 @@ const chainBattleGrid = function (grid) {
 };
 window.chainBattleGrid = chainBattleGrid;
 
-window.encounters = function encounters () {
-	return V().encounters;
-};
-
 const animationsOn = function () {
+	// animationsOn: Returns Boolean reporting if animations should be run. Also checks for the existence of _queue as a failsafe.
 	return (setup.ANIMATIONS === true && temporary().queue instanceof Set);
 };
 window.animationsOn = animationsOn;
 
 const StatName = function (statName) {
+	// Shorthand for stat name access.
+	// Simply accesses the corresponding property in STAT_NAMES if no special case is present.
 	if (typeof(statName) === "string") {
 		switch (statName) {
 			case 'def':
@@ -123,47 +155,18 @@ const StatName = function (statName) {
 window.StatName = StatName;
 
 const StatMin = function (statName) {
+	// The same, but for STAT_MIN.
 	if (typeof(statName) === "string") {
-		switch (statName) {
-			case 'def':
-				statName = "Defense";
-				break;
-			case 'atk':
-				statName = "Attack";
-				break;
-			case 'spc':
-				statName = "Special";
-				break;
-			case 'spd':
-				statName = "Speed";
-				break;
-			case 'intv':
-				statName = "Initiative";
-				break;
-		}
 		return setup.STAT_MIN[StatName(statName)];
 	} else {
 		return setup.STAT_MIN;
 	}
 }
-window.StatMin = StatName;
+window.StatMin = StatMin;
 
 const StatMax = function (statName) {
+	// The same, but for STAT_MAX.
 	if (typeof(statName) === "string") {
-		switch (statName) {
-			case 'def':
-				statName = "Defense";
-				break;
-			case 'atk':
-				statName = "Attack";
-				break;
-			case 'spc':
-				statName = "Special";
-				break;
-			case 'spd':
-				statName = "Speed";
-				break;
-		}
 		return setup.STAT_MAX[StatName(statName)];
 	} else {
 		return setup.STAT_MAX;
@@ -172,23 +175,41 @@ const StatMax = function (statName) {
 window.StatMax = StatMax;
 
 Map.prototype.inc = function (key,amt) {
+	//	Increases the value of an entry in a Map object by amt.
+	//	Applied to the Map prototype, so will be present in all Map objects and subclasses.
 	this.set(key,this.get(key)+amt);
 	return;
 };
 
-window.deadCount = function deadCount (party = puppets()) {
-	let count = 0;
-	party.forEach(function(actor) {
-		if (actor.dead) {
-			count++;
-		}
-	});
-	return count;
-};
-
 function convertFunction (v) {
+	// If v is a function, calls v and returns its output; else, returns v unchanged.
+	// Used for action functions that can be passed either functions or text but must ultimately return text only.
 	return (v instanceof Function) ? v() : v;
 }
+
+/*
+// DEPRECIATED: Old guardCheck for the old battle grid code.
+window.guardCheck = function guardCheck (index) {
+	if (index < 0 || index >= V().enemies.length) {
+		console.log("ERROR in guardCheck: index out of bounds");
+		index = Math.clamp(index,0,V().enemies.length-1);
+	}
+	if (setup.BATTLE_GRID != true) {
+		return true;
+	}
+	else if (index >= setup.ROW_SIZE && V().enemies[index-setup.ROW_SIZE] !== null && !V().enemies[index-setup.ROW_SIZE].dead) {
+		// Guarded by character in next row up, cannot be targeted
+		return false;
+	}
+	else if (index >= setup.ROW_SIZE * 2) {
+		// No immediate guard (previous check failed), but not in front two rows, so another guard is possible. Move up a row and check again.
+		return guardCheck(index-setup.ROW_SIZE);
+	}
+	else {
+		return true;
+	}
+};
+*/
 
 /*
 	Number-To-Words module
@@ -262,37 +283,11 @@ function convertFunction (v) {
 	}
 })(window);
 
-/* Shorthand notation for player inventory. Set this to return whatever you want to call your inventory variable in-game, and it will work without needing to edit any of the code. */
-/* By default, the inventory variable is the story variable "$inventory" and is defined in StoryInit. To give characters unique inventories, you could define inventories as attributes of the Actor class and set this to return "this.inventory". */
-var inv = function inv () {return V().inventory;}
-window.inv = inv;
-
 window.reverseChildren = function reverseChildren(parent) {
 // Code by Ayman Abdel-Rahman
     for (var i = 1; i < parent.childNodes.length; i++){
         parent.insertBefore(parent.childNodes[i], parent.firstChild);
     }
-};
-
-window.guardCheck = function guardCheck (index) {
-	if (index < 0 || index >= V().enemies.length) {
-		console.log("ERROR in guardCheck: index out of bounds");
-		index = Math.clamp(index,0,V().enemies.length-1);
-	}
-	if (setup.BATTLE_GRID != true) {
-		return true;
-	}
-	else if (index >= setup.ROW_SIZE && V().enemies[index-setup.ROW_SIZE] !== null && !V().enemies[index-setup.ROW_SIZE].dead) {
-		// Guarded by character in next row up, cannot be targeted
-		return false;
-	}
-	else if (index >= setup.ROW_SIZE * 2) {
-		// No immediate guard (previous check failed), but not in front two rows, so another guard is possible. Move up a row and check again.
-		return guardCheck(index-setup.ROW_SIZE);
-	}
-	else {
-		return true;
-	}
 };
 
 // textWidth function

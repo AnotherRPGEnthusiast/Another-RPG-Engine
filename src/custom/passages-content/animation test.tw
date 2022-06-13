@@ -34,7 +34,7 @@
 <<if $subtest.includes("regen")>>
 	<<endOfRound $enemies>>
 	<<newTurn $puppets>>
-	<<goto "Battle!">>
+	<<goto "Player Phase">>
 <<else>>
-	<<include "action phase">>
+	<<include "Action Phase">>
 <</if>>

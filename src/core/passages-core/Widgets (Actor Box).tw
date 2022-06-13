@@ -40,7 +40,7 @@
   <<set _class += "large ">>
 <</if>>
 
-<<if _actor instanceof Puppet && _actor.active !== true>>
+<<if _actor instanceof Puppet && !$args.includes("dmgDisplay") && _actor.active !== true>>
 	<<set _class += "inactive ">>
 <</if>>
 
