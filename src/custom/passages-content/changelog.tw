@@ -1,6 +1,7 @@
 :: Changelog[text]
 <h3>Version 4.03</h3>
 <ul>
+<li><b>NEW FEATURE:</b> Full support for the "ranked" turn model. Functions similarly to the default free-action system, but makes characters act in a set order determined by the Initiative stat. <b>Might be buggy. Report any issues.</b> The turn order graphics are also pretty ugly, but hey, I'm not an artist.</li>
 <li>Updated and improved documentation.</li>
 <ul><li>Tables of contents in the documentation now use unordered lists instead of blockquotes.</li>
 <li>Headers are now underlined and no longer have a large gap underneath them.</li></ul>

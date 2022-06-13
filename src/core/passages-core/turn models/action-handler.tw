@@ -1,0 +1,19 @@
+:: Action Handler [nobr]
+<<switch setup.TURN_MODEL.toLowerCase()>>
+	<<case "timeline">>
+		<<if $action.waitTime > 0>>
+			<<include "Wait Formula">>
+			<<set subject().en -= $action.cost>>
+			<<set subject().delayedAction = new Action($action.name)>>
+			<<set subject().delayedAction.delayCounter = 0>>
+			<<if $target instanceof Actor>>
+				<<set subject().target = $target.id>>
+			<</if>>
+			<<set subject().active = false>>
+			<<goto "Advance Timeline">>
+		<<else>>
+			<<goto "Action Phase">>
+		<</if>>
+	<<default>>
+		<<goto "Action Phase">>
+<</switch>>

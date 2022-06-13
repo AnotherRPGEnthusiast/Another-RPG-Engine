@@ -1,0 +1,42 @@
+:: initTurnsRanked [widget nobr]
+<<widget "initTurnsRanked">>
+
+<<set $actors = allActors("ranked").filter(function (a) { return a && !a.dead })>>
+<<for _actor range $actors>>
+  <<set _actor.active = false>>
+<</for>>
+<<set $actors[0].active = true>>
+
+<</widget>>
+
+:: Turn Display [nobr]
+/* Construct an array containing each of the actors present in battle and sort in initiative order. */
+<div id="timeline">
+<div id="timeline-container">
+<span class="turn-queue-label">Turn Order:</span>
+<span class="turn-queue">
+  <<for _actor range $actors>>
+    <<set _src = setup.ImagePath+"ui/tick_filled.png">>
+    <div class="tooltip timeline-tick">
+			<img @src=_src class="tick-filled" />
+			<div class="tooltiptext tick-occupant">
+				<<print _actor.name>>
+			</div>
+		</div>
+  <</for>>
+</span>
+</div>
+</div>
+
+:: Advance Turns [nobr]
+<<run $actors.shift()>>
+<<if $actors.length === 0>>
+  <<endRound>>
+<<else>>
+  <<set getActorById($actors[0].id).active = true>>
+  <<if $actors[0] instanceof Puppet>>
+    <<goto "Player Phase">>
+  <<elseif $actors[0] instanceof Enemy>>
+    <<goto "Enemy Phase">>
+  <</if>>
+<</if>>

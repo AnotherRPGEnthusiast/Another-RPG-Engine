@@ -95,6 +95,12 @@ const allActors = function allActors (sort = "") {
     case "timeline":
       r = r.sort(function(a,b) { return (a.ticks - b.ticks) });
       break;
+		case "ranked":
+			r = r.sort(function(a,b) { return (b.speedFormula() - a.speedFormula())});
+			break;
+		case "intv":
+			r = r.sort(function(a,b) { return (b.get(StatName("intv")) - a.get(StatName("intv")))});
+			break;
     default:
   }
   return r;

@@ -32,98 +32,96 @@ This passage will discuss non-essential RPG features with only skeletal implemen
 **<a href="#crisis.stash">Stash</a>
 
 <h2 id="flow">Battle Flow and Turn Order</h2>
-In <i>Cartoon Battle</i>, everyone can take their turns in any order, and each party's turn happens all at once. This system is very simple to implement and balance: everyone gets the same number of actions and acts at the same rate. I recommend it to novice developers for this reason.
+By default, everyone can take their turns in any order, and each party's turn happens all at once. This system is very simple to implement and balance: everyone gets the same number of actions and acts at the same rate. I recommend it to novice developers for this reason.
 
-This is not the only way to structure turn order, however. Many RPGs include a "speed" or "agility" stat that makes some characters act before others.
+This is not the only way to structure turn order, however. Many RPGs include a "speed" or "agility" stat that makes some characters act before others. You can enable other turn models by changing the {{{setup.TURN_MODEL}}} variable in {{{StoryInit}}}.
 
 <h3 id="flow.1">Method 1: Ranked Order</h3>
-The simplest way to implement this is to have everyone act in order of decreasing Speed. So, for instance, if we have three characters with 10, 5, and 4 Speed and an enemy with 9 Speed, every round will go in the order of Character A - Enemy - Character B - Character C. If we boost the enemy to 11 speed, they'd now go before any player characters, which could make them quite tricky! Under this model, everyone would still get the same number of turns -- after each round, we'd just repeat the queue. This means balancing actions is still fairly simple. However, we do gain added complexity by fixing characters' positions in the turn order -- especially if there are actions that can assist or set up other characters' abilities, such as buff and debuff effects. Players will need to construct their strategy around the turn order instead of being able to change when it suits them. Assuming a gradual increase in stats over the course of the game, players are also encouraged to increase their Speed to act before enemies and gain the advantage.
+<pre style="margin-bottom:0">setup.TURN_MODEL = "ranked"</pre>
+Compared to the free-action model, the next-simplest model simplest model is to have everyone act in order of decreasing Initiative. So, for instance, if we have three characters with 10, 5, and 4 Initiative and an enemy with 9 Initiative, every round will go in the order of Character A - Enemy - Character B - Character C. If we boost the enemy to 11 Initiative, they'd now go before any player characters, which could make them quite tricky! Under this model, everyone would still get the same number of turns -- after each round, we'd just repeat the queue. This means balancing actions is still fairly simple. However, we do gain added complexity by fixing characters' positions in the turn order -- especially if there are actions that can assist or set up other characters' abilities, such as buff and debuff effects. Players will need to construct their strategy around the turn order instead of being able to change when it suits them. Assuming a gradual increase in stats over the course of the game, players are also encouraged to increase their Initiative to act before enemies and gain the advantage.
 
-Below is an example of how to implement this system in SugarCube:
+A basic implementation of this model can be found in {{{core/passages-core/turn models/ranked.tw}}}, which will be explained here.
 
-First, we will need to place every battling character into one array. In the default system, enemies and player characters are completely separate. One method that would work would be to create an <i>array of arrays</i> that links both enemy and player arrays into one object. That would look like this:
+The first thing we need to do is to place every battling character into one array. In the default system, enemies and player characters are completely separate. A helper function has been designed for this, called {{{allActors}}}, that can be found within {{{1_support-functions.js}}}. It concatenates both players and enemies into a single array.
 {{{
-<<set $actors = [$puppets,$enemies]>>
+case "ranked":
+	r = r.sort(function(a,b) { return (b.speedFormula() - a.speedFormula())});
+	break;
+case "intv":
+	r = r.sort(function(a,b) { return (b.get(StatName("intv")) - a.get(StatName("intv")))});
+	break;
 }}}
-If you run a {{{for}}} loop over {{{$actors}}}, you can iterate over both enemy and player parties at once -- as well as potential other parties, if you want to design complex multi-front battles.
+By passing the argument "ranked" to {{{allActors}}}, we can also sort everyone by our {{{speedFormula}}}, or by pure Initiative values if we pass "intv" (short for "Initiative"). (By default, {{{speedFormula}}} just sorts characters by Initiative; more on this in the next section.)
 
-Then you'd want to use the code in the "Initiative Model: Ranked Order" passage, which is copied here:
+We need to use {{{allActors}}} in-battle to generate the turn order we want. That is handled by the widget {{{<<initTurnsRanked>>}}}, which is called at the start of battle.
 {{{
-<<set _initiative = -1>>
-/* The -1 is necessary if you want a Speed of 0 to be possible. */
-<<for _i, _party range $actors>>
-	<<for _j, _actor range _party>>
-		<<if not _actor.dead and not _actor.stunned>>
-		/* If you have more paralysis effects, you'll need to add each here. Consider adding a convenient "can't act" attribute flipped by all of them if this becomes prohibitive.
-			<<if not _actor.isDone and _actor.speed > _initiative>>
-			/* (not _actor.isDone) prevents us from selecting characters who have already acted this round. They'll be skipped over, and the next-fastest character will get the initiative. */
-				<<set _subj = [_i,_j]>>
-				<<set _initiative = _actor.speed>>
-				/* This sets the current character's Speed as the new bar to clear. If no one's faster, no one else will pass the if check above and this character will remain the current subject. If someone else is faster, they'll become the subject and the _initiative variable will be updated to match their Speed. This ensures that subject status will be granted to the fastest character. */
-			<<elseif not _actor.isDone and _actor.speed == _initiative>>
-			/* You'll need a handler for this case, or else the character with the higher index order will get the initiative in the case of a match. This handler can be anything, including nothing at all. If you want to be nice, you could automatically give the player the initiative in the case of a tie. Here I've provided the fairest possible option: a coin flip. */
-				<<set _r = random(1,2)>>
-				<<if _r == 1>>
-					<<set _subj = [_i,_j]>>
-				<</if>>
-			<</if>>
-		<</if>>
-	<</for>>
+<<set $actors = allActors("ranked").filter(function (a) { return a && !a.dead })>>
+<<for _actor range $actors>>
+  <<set _actor.active = false>>
 <</for>>
+<<set $actors[0].active = true>>
+}}}
+Since passing "ranked" to {{{allActors}}} has sorted the characters for us already, we don't have to do much. We'll want to filter out {{{dead}}} characters, since they obviously shouldn't be acting, and then initialize everyone's {{{active}}} value to {{{false}}}, since only one character should be {{{active}}} at a time. We then set the 0th actor's {{{active}}} value to {{{true}}}, since according to the sorting method they should go first.
 
-<<if ndef _subj>>
-(You should write an error message here.)
-<<else>>
-	<<if _subj[0] == $actors.indexOf($puppets)>>
-		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
-	<<elseif _subj[0] == $actors.indexOf($enemies)>>
-		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
-		<<set $B.turn = "enemy">>
-	<<else>>
-		(You should write an error message here.)
-	<</if>>
+Now, remember that this is all happening before the battle starts; we can't take it as a given that a player character will act first.
+{{{
+<<switch setup.TURN_MODEL.toLowerCase()>>
+	(...)
+	<<case "ranked" "timeline">>
+		<<if $actors[0] instanceof Puppet>>
+			<<goto "Player Phase">>
+		<<else>>
+			<<goto "Enemy Phase">>
+		<</if>>
+<</switch>>
+}}}
+So, we include this {{{switch}}} statement at the end of "Battle Preparation" that directs the player to the correct phase depending on who acts first.
+
+After this character acts, we need a way to make the next character {{{active}}}. We do this through the "Advance Turns" passage, which the player is directed to at the end of every action.
+{{{
+<<run $actors.shift()>>
+}}}
+First we {{{shift}}} the {{{$actors}}} array to remove the character who just acted. Because the array is sorted, the character now in the 0th position is the next in the turn order, so we should mark them {{{active}}}...
+{{{
+<<set getActorById($actors[0].id).active = true>>
+}}}
+But wait! Remember Twine breaks object references between passages. Modifying the object in {{{$actors}}} won't do anything to the character in the battle. We need to use {{{getActorById}}} to make sure we modify the correct object.
+{{{
+<<if $actors[0] instanceof Puppet>>
+  <<goto "Player Phase">>
+<<elseif $actors[0] instanceof Enemy>>
+  <<goto "Enemy Phase">>
 <</if>>
 }}}
-(This is far more complicated than it needs to be because Twine does not preserve object references. In a proper coding engine we could just {{{
-<<set $subject = _actor>>
-}}} within the loop and be done with it, but Twine necessitates the second section.)
-
-Note that this assumes a character's Speed stat will never go below 0.
-
-You can make this a widget, or another passage that is run after every character's turn. Presumably, you would also modify the "Battle!" passage to only display commands for the active subject, with a handler in case the enemy has the active turn (probably forwarding the player to another passage for the enemy turn).
+With that done, we can forward the player to the correct passage, just as we did in the initialization widget.
+{{{
+<<if $actors.length === 0>>
+  <<endRound>>
+}}}
+However, we also need a handler for what happens after everyone has acted; i.e., the end of the round. If everyone has acted, everyone has been removed from {{{$actors}}}, so {{{$actors}}} will have a {{{length}}} of 0. We can use this as the signal to run {{{<<endRound>>}}}.
+{{{
+set dead (flag) {
+	(...)
+	if (setup.TURN_MODEL.toLowerCase() === "ranked") {
+		V().actors.deleteWith(function (a) { return a.id === this.id });
+	}
+}}}
+Finally, note that an additional quirk of the object reference breaks is that we need to manually remove dead characters from {{{$actors}}}, lest the game try to make dead characters active. A gameplay consequence of this is that if a character goes down and is revived in the same round, they'll lose their turn. I think this makes logical sense, but you can edit the code to allow revived characters to re-enter the queue if you prefer.
 
 <h4 id="flow.1.a">Adding Variance</h4>
-Unfortunately, the above model has a weakness: Speed has a binary, rather than variable, effect. With stats such as Attack and Defense, every point matters, because it contributes to a numerical value. But once you have more Speed than the enemy, there's no benefit to gaining more Speed. This can lead to Speed losing value compared to other stats, and making Speed-focused characters weaker overall.
+Unfortunately, the above model has a weakness: Initiative has a binary, rather than variable, effect. With stats such as Attack and Defense, every point matters, because it contributes to a numerical value. But once you have more Initiative than the enemy, there's no benefit to gaining more Initiative. This can lead to Initiative losing value compared to other stats, and making Initiative-focused characters weaker overall.
 
-Some games patch this problem by making the rules less rigid: instead of being determined by the absolute Speed values every time, initiative is  instead determined through a random formula influenced by the Speed stat. Some games, such as <i>Dungeons & Dragons</i>, can use quite variable formulas, but for this example I will model a simpler one, varying characters' Speed stats by a certain percentage of their base values.
+Some games patch this problem by making the rules less rigid: instead of being determined by the absolute Initiative values every time, turn order is instead determined through a random formula influenced by the Initiative stat. (Some games feel this still leaves Speed a suboptimal stat, and have it influence other aspects of battle as well, such as accuracy, evasion, and critical hit rates, but that's another topic.)
 
-In SugarCube, you could implement this feature like so:
+This variance makes Initiative focus a more optimal gameplay decision: even if you're fast, more Initiative increases the chance you'll get the upper hand, rather than ceasing to matter once you get 1 point more than your opponent.
+
+I, personally, hate this method with a burning passion, because I feel turn order is too important of a thing to leave up to chance, and makes it nigh-impossible for the player to implement long-term strategy if they cannot predict the turn order. But if you disagree, I've added a {{{speedFormula}}} function as a method of {{{Actor}}} that allows you to do this. It can be found in {{{core/passages-core/turn models/formula-speed.js}}}.
 {{{
-<<for _party range $actors>>
-	<<for _actor range _party>>
-		<<if not _actor.dead and not _actor.stunned>>
-			<<set _actor.initiative = _actor.speed>>
-			<<set _variance = random(-$VARIANCE_BOUND,$VARIANCE_BOUND)>>
-			<<set _variance /= 100>>
-			/* Twine's random() function requires integer bounds, but we (presumably) plan to vary characters' Speed stats by a small proportion. We can do this by setting $VARIANCE_BOUND to an integer percentage value (probably in StoryInit) and dividing by 100 to get the decimal value. */
-			<<set _actor.initiative += _actor.speed * _variance>>
-		<</if>>
-	<</for>>
-<</for>>
+Actor.prototype.speedFormula = function () {
+  return this.get(StatName("intv"));
+}
 }}}
-You can then use the same code as in the previous section, except you would compare {{{_initative}}} to {{{_actor.initiative}}} instead of {{{_actor.speed}}}.
-
-As an example, let us say we set {{{$VARIANCE_BOUND}}} to 10. This would give {{{_variance}}} a random value from anywhere between -10 and 10. We then convert it into a decimal, making it a random value between -.1 and .1. We then take {{{_actor.initiative}}}, which is initialized at the same value as {{{_actor.speed}}}, and add a fraction of {{{_actor.speed}}} to get the character's final initiative value. The size and sign of the fraction is determined by {{{_variance}}}.
-
-If the character had 100 Speed, their initiative value could be anywhere between 90 and 110. This means a character with 90 Speed could beat them in the turn order, if they rolled high and the 100 Speed character rolled low. However, the 100 Speed character would still get the first turn more often than not. Additionally, a character with 81 Speed would never beat them in turn order even if they got the maximum bonus and the 100 Speed character got the maximum penalty: {{{81 + (81*0.1) = 89.1}}} is less than {{{100 + (100*-0.1) = 90}}}.
-
-You can add more randomness by increasing the variance bound.
-
-This variance makes a Speed focus a more optimal gameplay decision: even if you're fast, more Speed increases the chance you'll get the initiative, rather than ceasing to matter once you get 1 point more than your opponent.
-
-I, personally, hate this method with a burning passion, because I feel turn order is too important of a thing to leave up to chance, and makes it nigh-impossible for the player to implement long-term strategy if they cannot predict the turn order.
-
-Some games feel this still leaves Speed a suboptimal stat, and have it influence other aspects of battle as well, such as accuracy, evasion, and critical hit rates. (These features are not in the default engine because I despise them, but I may include a tutorial on implementing them if there is demand.)
+By default, the formula just returns the Initiative stat, with no random variance. However, you are free to modify it however you please.
 
 <h3 id="flow.2">Method 2: Action Time</h3>
 If you've played any <i>Final Fantasy</i> game after <i>Final Fantasy III</i>, or any game made in RPG Maker 2003, you will be familiar with this system. (Yes, even <i>Final Fantasy X</i>.)
@@ -424,6 +422,7 @@ Turn order: <b>B, A, K, B, A, K</b>. Notice that this distribution is identical 
 The key difference here is that the simple method always resets initiative to 0 when the subject takes a turn no matter how much they accumulated, but the threshold method allows initiative to carry over if the threshold is overshot. This gives greater weight to differences in Speed stats and makes stable loops less likely. However, designing the correct threshold is itself a challenge; if we were to use a straight gain = Speed formula, anyone with 100 Speed would be able to take turns continuously! The threshold method is best suited to slow gain formulas with less dependence on stats, for this reason. You could also make the threshold flexible, such as tying it to three times the fastest or slowest character's gain rate, but this runs an even greater risk of making stat differences get out of hand.
 
 <h3 id="flow.3">Method 3: Timeline</h3>
+<pre style="margin-bottom:0">setup.TURN_MODEL = "timeline"</pre>
 This system is modeled in <a href="https://anotherrpgenthusiast.itch.io/another-rpg-experiment-03-its-about-time" target="_blank" rel="nofollow">Experiment 03.</a> <i>Exalted</i> fan Jye Nicolson created <a href="https://mengtzu.github.io/exalted/sakuya.html" target="_blank">a tutorial game</a> using JavaScript that uses a similar system.
 
 In the timeline model, characters' turns are placed at certain points in a timeline. When time advances to their point, they take their turn, and are then placed at another point. This method is similar to action time, but works in reverse in terms of algorithm: we have everyone's initiative values count <i>down</i>, and characters take their turns when it hits 0.
@@ -524,17 +523,7 @@ Noteworthy examples:
 <li><i><a href="https://rpgmaker.net/games/8032/" target="_blank">Red Syndrome</a></i> is a simpler example: all enemies must wait multiple turns between actions, creating a system where you have several turns to prepare for a coming onslaught.</li>
 </ul>
 <h3 id="flow.4">Transparency</h3>
-If you use a turn ordering system, it's beneficial if you can show the turn order to the player. This will allow them to plan in advance by understanding when, say, they need to guard against an enemy's attack or when they should buff a certain character.
-
-Doing this in a ranked order system is very simple: instead of running the selector every time a new character's turn comes up, make an array of all the characters in descending initiative order every round. You can display the array somewhere in the battle screen, and run through it as the round progresses.
-
-Timeline systems are also fairly straightforward: you can display everyone's initiative as "ticks until next action" in their status pane or elsewhere. Ideally, with enough knowledge of CSS, you could create a visual representation showing everyone's placement in the timeline.
-
-Action time systems are a little trickier. You'd need to simulate another round of initiative gain and use that to determine the next actor. This is both algorithmically difficult and processor-intensive to do for more than one or two predictions, so don't worry if you can't give the player an extended prognosis. This will be even tricker if you have skills that alter speed stats or initiative values, as you'll have to redo the prediction every time that happens.
-
-Simplistic models of these preview systems are proposed in the "preview model" passages, found next to the initiative model passages. However, they are untested, and may not be suitable for all your needs. You can tweak them as necessary.
-
-<i>Final Fantasy X</i> has an extremely robust preview system, with an extended prognosis and real-time feedback whenever an ability that would affect the turn order is used. You can try mimicking it if you -- and your processor -- are feeling ambitious!
+If you use a turn ordering system, it's beneficial if you can show the turn order to the player. This will allow them to plan in advance by understanding when, say, they need to guard against an enemy's attack or when they should buff a certain character. I have included rudimentary GUI elements to display turn order in the default code, but understand I'm not an artist, so they are very ugly and bare-bones. A proper visual designer could help you improve them.
 
 <h2 id="progress">Progression and Leveling Up</h2>
 Leveling up is traditionally one of the core features of the RPG. As you win battles or complete tasks, you will gain experience points that will eventually award you a new level, increasing your stats and giving you access to new abilities. This gives the player a sense of progress throughout the game, and also allows the designer to introduce new mechanics and tactical complexity at a gradual pace, ensuring that the player can become familiar with every one of their tools before they're given a new one. And, let's be honest -- it's just fun to watch numbers go up.

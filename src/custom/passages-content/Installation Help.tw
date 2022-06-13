@@ -30,6 +30,6 @@ Another resource you may find helpful is <a href="https://www.johnayliff.com/wor
 The engine uses ChapelR's custom SugarCube macros, the documentation for which can be found <a href="https://twinelab.net/custom-macros-for-sugarcube-2/#/" target="_blank">here</a>.
 
 <b>Summary:</b>
-* Download Tweego <a href="http://www.motoslave.net/tweego/" target="_blank">here</a>. If you can't follow the directions, use the installer <a href="https://github.com/ChapelR/tweego-installer" target="_blank">here</a>.
-* You can compile multiple story and twee files at once, but later conflicts will overwrite earlier ones.
-* Store customized engine passages in {{{passages-mods}}} to avoid conflicts.
+# Download Tweego <a href="http://www.motoslave.net/tweego/" target="_blank">here</a>. If you can't follow the directions, use the installer <a href="https://github.com/ChapelR/tweego-installer" target="_blank">here</a>.
+# You can compile multiple story and twee files at once, but later conflicts will overwrite earlier ones.
+# Store customized engine passages in {{{passages-mods}}} to avoid conflicts.

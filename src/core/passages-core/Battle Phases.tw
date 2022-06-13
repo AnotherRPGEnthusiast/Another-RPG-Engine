@@ -368,28 +368,8 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 <</if>>
 </span>
 <<else>>
-	<<include "Action Handler">>
+	<<include "Action Handler">> /* See turn models folder */
 <</if>>
-
-:: Action Handler [nobr]
-<<switch setup.TURN_MODEL.toLowerCase()>>
-	<<case "timeline">>
-		<<if $action.waitTime > 0>>
-			<<include "Wait Formula">>
-			<<set subject().en -= $action.cost>>
-			<<set subject().delayedAction = new Action($action.name)>>
-			<<set subject().delayedAction.delayCounter = 0>>
-			<<if $target instanceof Actor>>
-				<<set subject().target = $target.id>>
-			<</if>>
-			<<set subject().active = false>>
-			<<goto "Advance Timeline">>
-		<<else>>
-			<<goto "Action Phase">>
-		<</if>>
-	<<default>>
-		<<goto "Action Phase">>
-<</switch>>
 
 :: Battle Continue Button [nobr]
 <center id="continue">
@@ -415,6 +395,8 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 					<</if>>
 				<<case "timeline">>
 					<<goto "Advance Timeline">>
+				<<case "ranked">>
+					<<goto "Advance Turns">>
 			<</switch>>
 		<</if>>
 	<</button>>
@@ -583,6 +565,8 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 	<<switch setup.TURN_MODEL.toLowerCase()>>
 		<<case "timeline">>
 			<<goto "Advance Timeline">>
+		<<case "ranked">>
+			<<goto "Advance Turns">>
 		<<default>>
 			<<goto "Player Phase">>
 	<</switch>>
@@ -769,6 +753,8 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 
 <span id="content">
 
+<<if setup.TURN_MODEL === "free">>
+
 <<if $B.turn == "player">>
 /* If the turn reads "player", it's because the enemy round just finished. Run end of turn for enemies. */
 	/* If it's a new player turn, it's a "true" new round, so need to update and reset controller variables. */
@@ -781,13 +767,26 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 		<<goto "Player Phase">>
 	<</if>>
 
-<<elseif $B.turn eq "enemy">>
+<<elseif $B.turn == "enemy">>
 /* If the turn reads "enemy", the player turn just finished. Run end of turn for player. */
 	<<endTurn $puppets>>
 	<<if _message>>
 		<br/><<button "Continue..." "Enemy Phase">><</button>>
 	<<else>>
 		<<goto "Enemy Phase">>
+	<</if>>
+<</if>>
+
+<<elseif setup.TURN_MODEL === "ranked">>
+	<<set $B.turnCounter++; $B.embargo-->>
+	<<endTurn $puppets>>
+	<<endTurn $enemies>>
+	<<newTurn $puppets>>
+	<<initTurnsRanked>>
+	<<if _message>>
+		<<button "Continue..." "Player Phase">><</button>>
+	<<else>>
+		<<goto "Player Phase">>
 	<</if>>
 <</if>>
 </span>

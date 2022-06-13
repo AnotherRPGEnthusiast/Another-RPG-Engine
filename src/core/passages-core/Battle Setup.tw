@@ -503,12 +503,21 @@
 <</if>>
 <<include "custom battle preparation">>
 <<set $stScreen = 1>>
-<<if $B.ambush>>
-	<<set $B.turn = "enemy">>
-	<<goto "Enemy Phase">>
-<<else>>
-	<<goto "Player Phase">>
-<</if>>
+<<switch setup.TURN_MODEL.toLowerCase()>>
+	<<case "free">>
+		<<if $B.ambush>>
+			<<set $B.turn = "enemy">>
+			<<goto "Enemy Phase">>
+		<<else>>
+			<<goto "Player Phase">>
+		<</if>>
+	<<case "ranked" "timeline">>
+		<<if $actors[0] instanceof Puppet>>
+			<<goto "Player Phase">>
+		<<else>>
+			<<goto "Enemy Phase">>
+		<</if>>
+<</switch>>
 
 :: initTurns [widget nobr]
 <<widget "initTurns">>
@@ -517,6 +526,8 @@
 	<<case "timeline">>
 		<<initTurnsTimeline>>
 		<<set $actors = allActors("timeline")>>
+	<<case "ranked">>
+		<<initTurnsRanked>>
 	<<default>>
 		/* default is free action model: everyone is always active */
 		<<for _actor range $actors>>

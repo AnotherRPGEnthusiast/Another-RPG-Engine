@@ -4,4 +4,12 @@
 	<<include "menubar">>
 <</if>>
 
+<<if $inbattle && tags().includes("battle") && !tags().includes("notimeline")>>
+	<<if setup.TURN_MODEL.toLowerCase() === "timeline" && $timeline instanceof Array>>
+		<<include "Timeline">>
+	<<elseif setup.TURN_MODEL.toLowerCase() === "ranked" && $actors instanceof Array>>
+		<<include "Turn Display">>
+	<</if>>
+<</if>>
+
 <<include "PassageHeader-custom">>

@@ -24,6 +24,7 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 	setup.STAT_MIN[StatName("atk")] = 0;
 	setup.STAT_MIN[StatName("spc")] = 0;
 	setup.STAT_MIN[StatName("spd")] = 0;
+	setup.STAT_MIN[StatName("intv")] = 0;
 	setup.STAT_MIN[StatName("eva")] = -100;
 	setup.STAT_MIN[StatName("acc")] = -100;
 	setup.STAT_MIN["HP"] = 0;
@@ -40,6 +41,7 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 	setup.STAT_MAX[StatName("def")] = 999;
 	setup.STAT_MAX[StatName("spc")] = 999;
 	setup.STAT_MIN[StatName("spd")] = 999;
+	setup.STAT_MAX[StatName("intv")] = 100;
 	setup.STAT_MIN[StatName("eva")] = 100;
 	setup.STAT_MIN[StatName("acc")] = 100;
 	setup.STAT_MAX["HP"] = 99999;
@@ -109,8 +111,10 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 <<set $currentArea = "Example Area">>
 
 /* Define the starting party and area here. */
-<<set $puppets = [new Puppet("Rogue"),new Puppet("Fighter"),new Puppet("Artist")]>>
+<<set $puppets = [new Puppet("Rogue"),new Puppet("Fighter"),new Puppet("Mage")]>>
+/*
 <<set $puppets[0].col = 1; $puppets[1].col = 2; $puppets[2].col = 3>>
 <<set $puppets[0].position = [2,1]>>
+*/
 
-<<set $Reserve_Puppets = [new Puppet("Bard"),new Puppet("Archer"),new Puppet("Cleric"),new Puppet("Witch"),new Puppet("Mage")]>>
+<<set $Reserve_Puppets = [new Puppet("Bard"),new Puppet("Archer"),new Puppet("Cleric"),new Puppet("Witch"),new Puppet("Artist")]>>

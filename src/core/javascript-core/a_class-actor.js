@@ -166,9 +166,15 @@ window.Actor = class Actor {
 			if (this.respawn !== undefined) {
 				this._respawn.refill();
 			}
-			// erase delayed action on death UNLESS the action persists past user death
-			if (this.delayedAction instanceof Action && !this.delayedAction.delayPersist) {
-				this.delayedAction = null;
+			if (flag === true) {
+				// erase delayed action on death UNLESS the action persists past user death
+				if (this.delayedAction instanceof Action && !this.delayedAction.delayPersist) {
+					this.delayedAction = null;
+				}
+				// remove from $actors (if using ranked order system)
+				if (setup.TURN_MODEL.toLowerCase() === "ranked" && V().actors instanceof Array) {
+					V().actors.deleteWith(function (a) { return a.id === this.id });
+				}
 			}
 			// reset threat (if using threat targeting)
 			if (setup.THREAT_TARGETING === true && this instanceof Puppet && V().inbattle) {
