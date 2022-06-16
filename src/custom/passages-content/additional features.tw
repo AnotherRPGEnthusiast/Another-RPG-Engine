@@ -36,22 +36,31 @@ By default, everyone can take their turns in any order, and each party's turn ha
 
 This is not the only way to structure turn order, however. Many RPGs include a "speed" or "agility" stat that makes some characters act before others. You can enable other turn models by changing the {{{setup.TURN_MODEL}}} variable in {{{StoryInit}}}.
 
+<h3 id="flow.pre">Universal Functions</h3>
+There's some code that is used in all initiative models. It will be helpful to go over it in advance of the specific models.
+
+In {{{core/javascript-core/1_support-functions.js}}}, there is a function called {{{allActors}}}. This function, when used, concatenates the {{{$puppets}}} and {{{$enemies}}} parties into one array. You'll need this in order to sort both parties by initiative. This function furthermore has several case statements that will sort the actors by the rules of the currently active initiative model.
+
+In {{{core/passages-core/turn models/tiebreaker.js}}}, there is a function called {{{tiebreaker}}}. It is designed to be passed as an argument to the {{{Array.sort}}} method. This function is used to resolve cases where the standard initiative formula results in a tie. It is also split into case statements for each model. You can overwrite this function with your own tiebreaker rules by redefining it in a custom code file.
+
+In {{{core/passages-core/Battle Setup.tw}}}, there is a widget called {{{forwarder}}}, which directs the player to the Player or Enemy phase depending on the alignment of the active character. This is useful for many of these models, as unlike in the free-action model there is no guarantee that a new round will start with the player.
+
 <h3 id="flow.1">Method 1: Ranked Order</h3>
 <pre style="margin-bottom:0">setup.TURN_MODEL = "ranked"</pre>
 Compared to the free-action model, the next-simplest model simplest model is to have everyone act in order of decreasing Initiative. So, for instance, if we have three characters with 10, 5, and 4 Initiative and an enemy with 9 Initiative, every round will go in the order of Character A - Enemy - Character B - Character C. If we boost the enemy to 11 Initiative, they'd now go before any player characters, which could make them quite tricky! Under this model, everyone would still get the same number of turns -- after each round, we'd just repeat the queue. This means balancing actions is still fairly simple. However, we do gain added complexity by fixing characters' positions in the turn order -- especially if there are actions that can assist or set up other characters' abilities, such as buff and debuff effects. Players will need to construct their strategy around the turn order instead of being able to change when it suits them. Assuming a gradual increase in stats over the course of the game, players are also encouraged to increase their Initiative to act before enemies and gain the advantage.
 
 A basic implementation of this model can be found in {{{core/passages-core/turn models/ranked.tw}}}, which will be explained here.
 
-The first thing we need to do is to place every battling character into one array. In the default system, enemies and player characters are completely separate. A helper function has been designed for this, called {{{allActors}}}, that can be found within {{{1_support-functions.js}}}. It concatenates both players and enemies into a single array.
+First, here is the sort function used by {{{allActors}}}:
 {{{
 case "ranked":
-	r = r.sort(function(a,b) { return (b.speedFormula() - a.speedFormula())});
+	r = r.sort(function(a,b) { return (b.turnFormula() - a.turnFormula())});
 	break;
 case "intv":
 	r = r.sort(function(a,b) { return (b.get(StatName("intv")) - a.get(StatName("intv")))});
 	break;
 }}}
-By passing the argument "ranked" to {{{allActors}}}, we can also sort everyone by our {{{speedFormula}}}, or by pure Initiative values if we pass "intv" (short for "Initiative"). (By default, {{{speedFormula}}} just sorts characters by Initiative; more on this in the next section.)
+By passing the argument "ranked" to {{{allActors}}}, we sort everyone by our {{{turnFormula}}}, or by pure Initiative values if we pass "intv" (short for "Initiative"). (By default, {{{turnFormula}}} just sorts characters by Initiative; more on this in the next section.)
 
 We need to use {{{allActors}}} in-battle to generate the turn order we want. That is handled by the widget {{{<<initTurnsRanked>>}}}, which is called at the start of battle.
 {{{
@@ -63,20 +72,6 @@ We need to use {{{allActors}}} in-battle to generate the turn order we want. Tha
 }}}
 Since passing "ranked" to {{{allActors}}} has sorted the characters for us already, we don't have to do much. We'll want to filter out {{{dead}}} characters, since they obviously shouldn't be acting, and then initialize everyone's {{{active}}} value to {{{false}}}, since only one character should be {{{active}}} at a time. We then set the 0th actor's {{{active}}} value to {{{true}}}, since according to the sorting method they should go first.
 
-Now, remember that this is all happening before the battle starts; we can't take it as a given that a player character will act first.
-{{{
-<<switch setup.TURN_MODEL.toLowerCase()>>
-	(...)
-	<<case "ranked" "timeline">>
-		<<if $actors[0] instanceof Puppet>>
-			<<goto "Player Phase">>
-		<<else>>
-			<<goto "Enemy Phase">>
-		<</if>>
-<</switch>>
-}}}
-So, we include this {{{switch}}} statement at the end of "Battle Preparation" that directs the player to the correct phase depending on who acts first.
-
 After this character acts, we need a way to make the next character {{{active}}}. We do this through the "Advance Turns" passage, which the player is directed to at the end of every action.
 {{{
 <<run $actors.shift()>>
@@ -85,15 +80,7 @@ First we {{{shift}}} the {{{$actors}}} array to remove the character who just ac
 {{{
 <<set getActorById($actors[0].id).active = true>>
 }}}
-But wait! Remember Twine breaks object references between passages. Modifying the object in {{{$actors}}} won't do anything to the character in the battle. We need to use {{{getActorById}}} to make sure we modify the correct object.
-{{{
-<<if $actors[0] instanceof Puppet>>
-  <<goto "Player Phase">>
-<<elseif $actors[0] instanceof Enemy>>
-  <<goto "Enemy Phase">>
-<</if>>
-}}}
-With that done, we can forward the player to the correct passage, just as we did in the initialization widget.
+But wait! Remember Twine breaks object references between passages. Modifying the object in {{{$actors}}} won't do anything to the character in the battle. We need to use {{{getActorById}}} to make sure we modify the correct object before we continue the battle flow.
 {{{
 <<if $actors.length === 0>>
   <<endRound>>
@@ -115,73 +102,25 @@ Some games patch this problem by making the rules less rigid: instead of being d
 
 This variance makes Initiative focus a more optimal gameplay decision: even if you're fast, more Initiative increases the chance you'll get the upper hand, rather than ceasing to matter once you get 1 point more than your opponent.
 
-I, personally, hate this method with a burning passion, because I feel turn order is too important of a thing to leave up to chance, and makes it nigh-impossible for the player to implement long-term strategy if they cannot predict the turn order. But if you disagree, I've added a {{{speedFormula}}} function as a method of {{{Actor}}} that allows you to do this. It can be found in {{{core/passages-core/turn models/formula-speed.js}}}.
+I, personally, hate this method with a burning passion, because I feel turn order is too important of a thing to leave up to chance, and makes it nigh-impossible for the player to implement long-term strategy if they cannot predict the turn order. But if you disagree, I've added a {{{turnFormula}}} function as a method of {{{Actor}}} that allows you to do this. It can be found in {{{core/passages-core/turn models/formula-turns.js}}}.
 {{{
-Actor.prototype.speedFormula = function () {
-  return this.get(StatName("intv"));
+Actor.prototype.turnFormula = function () {
+	let actTime = this.get(StatName("intv"));
+  this.actTime = actTime;
+  return actTime;
 }
 }}}
-By default, the formula just returns the Initiative stat, with no random variance. However, you are free to modify it however you please.
+By default, the formula just sets {{{actTime}}} to the Initiative stat, with no random variance. However, you are free to modify it however you please. (Recording the value to {{{actTime}}} helps for determining tiebreakers; if you <i>do</i> have a random component, you want to be able to record what was generated.)
 
 <h3 id="flow.2">Method 2: Action Time</h3>
+<pre style="margin-bottom:0">setup.TURN_MODEL = "action"</pre>
 If you've played any <i>Final Fantasy</i> game after <i>Final Fantasy III</i>, or any game made in RPG Maker 2003, you will be familiar with this system. (Yes, even <i>Final Fantasy X</i>.)
 
-The most familiar form, seen in the examples I mentioned, is an odd method of merging turn-based RPGs with reaction-based action games: characters have gauges that fill up in real time, and characters can take an action when it's full. Usually this process pauses while you choose your action, but sometimes you have to choose quick while enemies are still getting turns.
+The most familiar form, seen in the examples I mentioned, is an odd method of merging turn-based RPGs with reaction-based action games: characters have gauges that fill up in real time based on a stat such as Speed, and characters can take an action when it's full. Usually this process pauses while you choose your action, but sometimes you have to choose quick while enemies are still getting turns. (Such a real-time, image-based system is obviously not suited for Twine. You could theoretically do it with {{{<<timed>>}}} and {{{<<repeat>>}}} macros, maybe...? But your time would almost certainly be better spent in another environment entirely. But don't worry, we can do something functionally similar with static pages.)
 
-Such a real-time, image-based system is obviously not suited for Twine. You could theoretically do it with {{{<<timed>>}}} and {{{<<repeat>>}}} macros, maybe...? But your time would almost certainly be better spent in another environment entirely.
+The main difference here is that we do not ignore characters who have acted in the round already: if someone gains more action time, they can get more turns than another character. This effectively eliminates the concept of "rounds" entirely; characters will just keep taking turns, in no fixed order.
 
-What I've described is just an abstraction, though. If we look at the variables underneath, we can create a similar system even in our static Twine.
-
-First, we're going to increment a separate "initiative" attribute based on some formula. The formula can include anything, including random variance, but for the purposes of this example let's just make the increment equal to the Speed stat:
-{{{
-<<for _party range $actors>>
-	<<for _actor range _party>>
-		<<if not _actor.dead>>
-			<<set _actor.initiative += _actor.speed>>
-		<</if>>
-	<</for>>
-<</for>>
-}}}
-We then use a modified form of our code from <a class="noExternal" href="#flow.1">Method 1</a>:
-{{{
-<<set _initiative = -1>>
-<<for _i, _party range $actors>>
-	<<for _j, _actor range _party>>
-		<<if not _actor.dead>>
-			<<if _actor.initiative > _initiative>>
-				<<set _subj = [_i,_j]>>
-				<<set _initiative = _actor.initiative>>
-			<<elseif _actor.initiative == _initiative>>
-				<<set _r = random(1,2)>>
-				<<if _r == 1>>
-					<<set _subj = [_i,_j]>>
-				<</if>>
-			<</if>>
-		<</if>>
-	<</for>>
-<</for>>
-
-<<if ndef _subj>>
-(You should write an error message here.)
-<<else>>
-	<<if _subj[0] == $actors.indexOf($puppets)>>
-		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
-	<<elseif _subj[0] == $actors.indexOf($enemies)>>
-		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
-		<<set $B.turn = "enemy">>
-	<<else>>
-		(You should write an error message here.)
-	<</if>>
-	<<set $subject[0].initiative = 0>>
-<</if>>
-}}}
-This assumes every character's "initiative" attribute is set to 0 at the start of battle.
-
-To keep things simple, the current subject's initiative is set to 0 when they take their turn. In this code, this automatically happens as soon as they're selected; you may want to make this happen in the action phase instead, if you want some actions to drain initiative by different amounts. Maybe there's a "wait" option that only halves it, for instance?
-
-The main difference here is that we do not ignore characters who have acted in the round already: if someone gains more initiative, they can get more turns than another character. This effectively eliminates the concept of "rounds" entirely; characters will just keep taking turns, in no fixed order.
-
-This system will be functionally similar to Method 1 when there is little difference between characters' Speed stats. For example, let's look at a battle where Character A has 11 Speed, Enemy B has 10 Speed, and Character C has 9 Speed:
+This system will be functionally similar to ranked order when there is little difference between characters' Speed stats. For example, let's look at a battle where Character A has 11 Speed, Enemy B has 10 Speed, and Character C has 9 Speed:
 
 Initiative at turn 0:
 A = 11
@@ -246,84 +185,68 @@ A (1 turn) = 60
 B (1 turn) = 20
 C (0 turns) = 30
 
-A gets the turn. But wait! C hasn't gotten a single turn, but A has now moved twice! That's the key difference in an action time system: faster characters will get more turns total, instead of everyone getting the same number of actions. This is much, <i>much</i> harder to balance. If A gets twice as many turns as B, they've effectively doubled all their stats by only doubling one: even if all their other stats are the same as B's, they're attacking twice as often, defending twice as often, using utility skills twice as often. If Method 1 undervalued Speed, action time <i>overvalues</i> it -- Speed can come to dominate all other stats, because more turns are almost always more desirable than fewer but stronger turns. This can be mitigated in a subtractive defense system where more attacks don't necessarily correlate with more results, but is exacerbated by skills that don't depend on other stats, such as most status effects.
+A gets the turn. But wait! C hasn't gotten a single turn, but A has now moved twice! That's the key difference in an action time system: faster characters will get more turns total, instead of everyone getting the same number of actions. This is much, <i>much</i> harder to balance. If A gets twice as many turns as B, they've effectively doubled all their stats by only doubling one: even if all their other stats are the same as B's, they're attacking twice as often, defending twice as often, using utility skills twice as often. If ranked order undervalued Speed, action time <i>overvalues</i> it -- Speed can come to dominate all other stats, because more turns are almost always more desirable than fewer but stronger turns. This can be mitigated in a subtractive defense system where more attacks don't necessarily correlate with more results, but is exacerbated by skills that don't depend on other stats, such as most status effects.
 
 You can still balance this through careful tweaking of the formulas -- maybe initiative gain is only half Speed, for instance -- but it's not a task I recommend for novice developers. It's much easier to include this sort of "multi-turn" functionality through specific actions you can control directly. For example, in <i>Cartoon Battle</i> Rogue's basic attack hits twice, but is weaker than the other basic attacks.
 
-<h4 id="flow.2.a">Action Time with Threshold</h4>
-If you're interested in more accurately modeling the version seen in <i>Final Fantasy</i>, you can choose turns based on whose initiative crosses a "finish line" first. <i>Bonfire</i> uses this method, and its algorithm is explained <a href="http://bonfire-game.wikia.com/wiki/Turn_Order" target="_blank">here</a>. Implementation in SugarCube would look something like this:
+A basic implementation of this model can be found in {{{core/passages-core/turn models/action-time.tw}}}, which will be explained here.
 {{{
-<<set _threshold = $ACTION_THRESHOLD>> /* You would set $ACTION_THRESHOLD to some constant in StoryInit. */
-<<set _pastThreshold = false>>
-
-/* check for characters already at threshold */
-
-<<for _party range $actors>>
-	<<if _pastThreshold>>
-		<<break>>
-	<</if>>
-	<<for _actor range _party>>
-		<<if not _actor.dead>>
-			<<if _actor.initiative >= _threshold>>
-				<<set _pastThreshold = true>>
-				<<break>>
-			<</if>>
-		<</if>>
-	<</for>>
+<<for _actor range $actors>>
+  <<set _actor.active = false>>
+  <<set _actor.actTime = 0>>
+  <<run _actor.timeFormula()>>
 <</for>>
+<<run $actors = allActors("action")>>
+<<set $actors[0].active = true>>
+}}}
+Our initialization widget for this model initializes everyone's {{{actTime}}} to 0, then runs the first round of {{{timeFormula}}} for each actor. This formula can be found in {{{formula-time.js}}} and customized by overwriting it in custom files. By default, {{{actTime}}} gain is equal to the Speed stat.
+{{{
+case "action":
+	r = r.sort(function(a,b) { return (b.actTime - a.actTime) })
+	break;
+}}}
+Additionally, we run the "action" sort for {{{allActors}}}, shown here. This sorts characters in decending order of {{{actTime}}}, with the highest sorted to the 0th index.
 
-/* initiative gain */
-
-<<for not _pastThreshold>>
-	<<for _party range $actors>>
-		<<for _actor range _party>>
-			<<if not _actor.dead>>
-				<<set _actor.initiative += 20 + 0.2 * _actor.speed>>
-				/* This is the Bonfire formula, but you can add your own */
-				<<if _actor.initiative >= _threshold>>
-					<<set _pastThreshold = true>>
-				<</if>>
-			<</if>>
-		<</for>>
-	<</for>>
-<</for>>
-
-/* initiative comparison */
-
-<<for _i, _party range $actors>>
-	<<for _j, _actor range _party>>
-		<<if not _actor.dead>>
-			<<if _actor.initiative > _threshold>>
-				<<set _subj = [_i,_j]>>
-				<<set _threshold = _actor.initiative>>
-			<<elseif _actor.initiative == _threshold>>
-				<<if def _subj>>
-					<<set _r = random(1,2)>>
-					<<if _r == 1>>
-						<<set _subj = [_i,_j]>>
-					<</if>>
-				<<else>>
-					<<set _subj = [_i,_j]>>
-				<</if>>
-			<</if>>
-		<</if>>
-	<</for>>
-<</for>>
-
-<<if ndef _subj>>
-(You should write an error message here.)
-<<else>>
-	<<if _subj[0] == $actors.indexOf($puppets)>>
-		<<set $subject = [$puppets[_j],"$puppets["+_j+"]"]>>
-	<<elseif _subj[0] == $actors.indexOf($enemies)>>
-		<<set $subject = [$enemies[_j],"$enemies["+_j+"]"]>>
-		<<set $B.turn = "enemy">>
-	<<else>>
-		(You should write an error message here.)
-	<</if>>
-	<<set $subject[0].initiative -= $ACTION_THRESHOLD>>
+After this first character acts, we need to run {{{timeFormula}}} again and determine the next actor. We do this with the "Advance Time" passage, which is entered after every action.
+{{{
+<<if subject() instanceof Actor>>
+  <<endTurn `[subject()]`>>
+  <<set subject().actTime = 0>>
+  <<set subject().active = false>>
 <</if>>
 }}}
+Since turns no longer occur all at once in neat rounds, we need to run {{{<<endTurn>>}}} manually for every character after they act. To do this, we pass the active subject (who just acted and will still be in memory) to {{{<<endTurn>>}}} instead of the whole party.
+
+We also reset their {{{actTime}}} and {{{active}}} flag. To keep things simple, {{{actTime}}} is set to 0 here, but you may want to make this happen in the action phase instead if you want some actions to drain initiative by different amounts. Maybe there's a "wait" option that only halves it, for instance?
+{{{
+<<set $actors = allActors().filter(function (a) { return a && !a.dead })>>
+<<for _actor range $actors>>
+  <<run _actor.timeFormula()>>
+<</for>>
+<<run $actors = allActors("action")>>
+<<newTurn `[$actors[0]]`>>
+}}}
+Next, we filter out dead characters, since they shouldn't be taking turns, update everyone's {{{timeFormula}}} again, and select the new winner. We also have to run {{{<<newTurn>>}}} for this character, since, again, that won't be run otherwise.
+{{{
+<<if !_message>>
+  <<forwarder>>
+<<else>>
+  <<button "Continue...">><<forwarder>><</button>>
+<</if>>
+}}}
+Finally, we need a quick check to see if any message was generated from effect decay and the like, just like we do in {{{roundEnd}}} in other models. With that, we have a working model.
+{{{
+set dead (flag) {
+	(...)
+	if (setup.TURN_MODEL.toLowerCase() === "action") {
+		this.actTime = 0;
+	}
+}}}
+Lastly, just like we did in the ranked model, we need to create a handler for dead characters. I chose to reset their {{{actTime}}} to 0, as I think that makes sense, but you can change this if you like.
+
+<h4 id="flow.2.a">Action Time with Threshold</h4>
+If you're interested in more accurately modeling the version seen in <i>Final Fantasy</i>, you can choose turns based on whose initiative crosses a "finish line" first. <i>Bonfire</i> uses this method, and its algorithm is explained <a href="http://bonfire-game.wikia.com/wiki/Turn_Order" target="_blank">here</a>.
+
 To show an example of what this would look like, we'll use the fastest enemy in <i>Bonfire</i>, the Bladewolf, which has 70 Speed; the fastest hero in <i>Bonfire</i>, Assassin, who starts with 40 Speed; and the slowest hero in <i>Bonfire</i>, Knight, who starts with 15 Speed.
 
 Turn 1:
@@ -420,6 +343,8 @@ K: <b>69</b>
 Turn order: <b>B, A, K, B, A, K</b>. Notice that this distribution is identical to that of turn 3, which means we have entered a stable loop. Bladewolf will never lap Knight in this scenario.
 
 The key difference here is that the simple method always resets initiative to 0 when the subject takes a turn no matter how much they accumulated, but the threshold method allows initiative to carry over if the threshold is overshot. This gives greater weight to differences in Speed stats and makes stable loops less likely. However, designing the correct threshold is itself a challenge; if we were to use a straight gain = Speed formula, anyone with 100 Speed would be able to take turns continuously! The threshold method is best suited to slow gain formulas with less dependence on stats, for this reason. You could also make the threshold flexible, such as tying it to three times the fastest or slowest character's gain rate, but this runs an even greater risk of making stat differences get out of hand.
+
+You can enable this turn model by defining the variable {{{setup.TIME_THRESHOLD}}} as an integer. This will produce branched functionality in the action time code.
 
 <h3 id="flow.3">Method 3: Timeline</h3>
 <pre style="margin-bottom:0">setup.TURN_MODEL = "timeline"</pre>

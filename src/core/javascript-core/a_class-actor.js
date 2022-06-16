@@ -53,12 +53,15 @@ window.Actor = class Actor {
 			}
 			this.stats = {};
 			for (let [pn,v] of Object.entries(setup.statInfo)) {
+				if (pn === "Speed") {
+					console.log(`generating Speed stat for ${this.name}`); console.log(StatMin(pn));
+				}
 				switch (pn) {
 					case 'Accuracy':
 						this.stats[pn] = new Stat(100);
 						break;
 					default:
-						this.stats[pn] = new Stat(0);
+						this.stats[pn] = new Stat(StatMin(pn));
 				}
 			}
 			for (let [pn,v] of Object.entries(this.data.stats)) {
@@ -174,6 +177,10 @@ window.Actor = class Actor {
 				// remove from $actors (if using ranked order system)
 				if (setup.TURN_MODEL.toLowerCase() === "ranked" && V().actors instanceof Array) {
 					V().actors.deleteWith(function (a) { return a.id === this.id });
+				}
+				// reset actTime (if using action time system)
+				if (setup.TURN_MODEL.toLowerCase() === "action") {
+					this.actTime = 0;
 				}
 			}
 			// reset threat (if using threat targeting)

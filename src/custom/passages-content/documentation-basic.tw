@@ -301,6 +301,7 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 ** {{{delayPersist}}} is a Boolean; if {{{true}}}, the delayed action will occur even if the user would otherwise be incapable of using an action (dead, stunned, etc). This must be set <b>on the action that will be performed</b>, not the setup action.
 ** {{{delayHold}}} is a Boolean; if {{{true}}}, the user will be unable to act while charging their delayed action. This must be set <b>on the action that will be performed</b>, not the setup action.
 ** {{{delayMessage}}} is a function; returns a string to be displayed at the top of rounds while an action is charging. Set to {{{null}}} to display no message. This must be set <b>on the action that will be performed</b>, not the setup action.
+** {{{unstoppable}}} is a Boolean; if {{{true}}}, the delayed action cannot be interrupted. This must be set <b>on the action that will be performed</b>, not the setup action.
 * {{{canTargetDead}}} is a Boolean; if {{{true}}}, the action can target dead characters. (By default, dead characters cannot be targeted.)
 
 <h3 id="actions.targeting">Targeting Logic</h3>

@@ -1036,6 +1036,24 @@ window.Action = class Action {
 		return val;
 	}
 
+	set unstoppable (val) {
+		console.assert(typeof(val) === "boolean",`ERROR: unstoppable must be Boolean`);
+		this._unstoppable = val;
+	}
+
+	get unstoppable () {
+		//	Boolean. If true, action cannot be interrupted.
+
+		var val = this._unstoppable;
+		if (val === undefined) {
+			val = this.actionData.unstoppable;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
 	set area (val) {
 		console.assert(typeof(val) === "string",`ERROR: area must be string`);
 		this._area = val;

@@ -165,6 +165,13 @@
 <<if def $B.actor && $B.actor !== null>>
 
 <div class="statusname">$B.actor.name</div>
+<<if setup.TURN_MODEL.toLowerCase() === "action">>
+	<span class="statname">ACT TIME:</span>
+	<span class="stat">
+		<<print $B.actor.actTime>><<if Number.isInteger(setup.TIME_THRESHOLD)>> / <<print setup.TIME_THRESHOLD>><</if>>
+	</span>
+	<br/>
+<</if>>
 <div style="float: right;">
 <<if def setup.STATUS_SCREENS.battle && setup.STATUS_SCREENS.battle.length > 0>>
 <span id="statusback">
@@ -397,6 +404,8 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 					<<goto "Advance Timeline">>
 				<<case "ranked">>
 					<<goto "Advance Turns">>
+				<<case "action">>
+					<<goto "Advance Time">>
 			<</switch>>
 		<</if>>
 	<</button>>
@@ -567,6 +576,8 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 			<<goto "Advance Timeline">>
 		<<case "ranked">>
 			<<goto "Advance Turns">>
+		<<case "action">>
+			<<goto "Advance Time">>
 		<<default>>
 			<<goto "Player Phase">>
 	<</switch>>
@@ -784,9 +795,9 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 	<<newTurn $puppets>>
 	<<initTurnsRanked>>
 	<<if _message>>
-		<<button "Continue..." "Player Phase">><</button>>
+		<<button "Continue...">><<forwarder>><</button>>
 	<<else>>
-		<<goto "Player Phase">>
+		<<forwarder>>
 	<</if>>
 <</if>>
 </span>
@@ -819,7 +830,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 		<<set $subject = _enemy>>
 		<<set $target = null>>
 		<<set $action = null>>
-		<<if setup.TURN_MODEL.toLowerCase() !== "timeline" && _enemy.isFirstAction>>
+		<<if !(setup.TURN_MODEL.toLowerCase() === "timeline" || setup.TURN_MODEL.toLowerCase() === "action") && _enemy.isFirstAction>>
 			<<newTurn `[_enemy]`>>
 		<<elseif setup.TURN_MODEL.toLowerCase() === "timeline">>
 			<<run $B.actionsThisTurn[_enemy.id] = []>>
@@ -843,9 +854,6 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 					<<set _enemy.delayedAction = null>>
 				<<else>>
 					<<run _enemy.actions()>>
-				<</if>>
-				<<if _enemy.en < $action.cost>>
-					<<set $action = new Action("enemy rest")>>
 				<</if>>
 				<<run $B.actionsThisTurn[_enemy.id].push($action.name)>>
 				<<if !($target instanceof Actor) && $action.targetMethod instanceof Function>>
@@ -887,6 +895,10 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 		<<switch setup.TURN_MODEL.toLowerCase()>>
 			<<case "timeline">>
 				<<goto "Advance Timeline">>
+			<<case "ranked">>
+				<<goto "Advance Turns">>
+			<<case "action">>
+				<<goto "Advance Time">>
 			<<case "free">>
 				<<set $B.turn = "player">>
 				<<goto "RoundEnd">>

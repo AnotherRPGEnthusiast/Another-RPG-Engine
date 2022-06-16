@@ -34,9 +34,5 @@
   <<endRound>>
 <<else>>
   <<set getActorById($actors[0].id).active = true>>
-  <<if $actors[0] instanceof Puppet>>
-    <<goto "Player Phase">>
-  <<elseif $actors[0] instanceof Enemy>>
-    <<goto "Enemy Phase">>
-  <</if>>
+  <<forwarder>>
 <</if>>

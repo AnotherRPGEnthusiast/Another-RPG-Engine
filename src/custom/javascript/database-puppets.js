@@ -25,7 +25,8 @@ setup.puppetData = {
 			"Attack"	: 10,
 			"Defense"	: 30,
 			"Special"	: 50,
-			"Initiative": 3
+			"Initiative": 3,
+			"Speed": 3
 		},
 		"actions": [
 			"Crafty",
@@ -75,7 +76,8 @@ setup.puppetData = {
 			"Attack"	: 30,
 			"Defense"	: 50,
 			"Special"	: 10,
-			"Initiative": 2
+			"Initiative": 2,
+			"Speed": 1
 		},
 		"actions": [
 			"Firefly",
@@ -106,7 +108,8 @@ setup.puppetData = {
 			"Attack"	: 50,
 			"Defense"	: 10,
 			"Special"	: 30,
-			"Initiative": 1
+			"Initiative": 1,
+			"Speed": 2
 		},
 		"actions": [
 			"Focus",

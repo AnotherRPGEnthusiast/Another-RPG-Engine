@@ -3,7 +3,7 @@
 
 <<set $timeline = new Array(setup.TIMELINE_LENGTH); $timeline.fill({occupants: []})>>
 /* sort actors in descending Initiative order (highest Initiative first) */
-<<run $actors.sort(function(a,b) { return b.get(StatName("intv")) - a.get(StatName("intv")) })>>
+<<set $actors = allActors("intv")>>
 /* set initiative bar to first actor's Initiative (highest Initiative) */
 <<run _init = $actors[0].get(StatName("intv"))>>
 /* set initial ticks to init minus each actor's Initiative */
@@ -95,26 +95,9 @@
 	<<set _actorQueue = $actors.filter(function (a) { return a && !a.dead && a.ticks <= 0 })>>
 	/* If this queue has more than 1 element, multiple characters are tied; run tiebreaker */
 	<<if _actorQueue.length > 1>>
-		<<tiebreaker _actorQueue>>
+		<<run _actorQueue.sort(tiebreaker)>>
 	<</if>>
 	/* Set first actor in queue as active */
 	<<set _actorQueue[0].active = true>>
-	<<if _actorQueue[0] instanceof Puppet>>
-		<<goto "Player Phase">>
-	<<elseif _actorQueue[0] instanceof Enemy>>
-		<<goto "Enemy Phase">>
-	<</if>>
+	<<forwarder _actorQueue[0]>>
 <</if>>
-
-:: tiebreaker [widget nobr]
-/* Determines tiebreakers in cases where multiple characters land on the same turn. */
-/* Remember that the 0th element of the queue will become the active character. */
-<<widget "tiebreaker">>
-<<run console.assert($args[0] instanceof Array,`ERROR: tiebreaker used without array`)>>
-<<set _party = $args[0]>>
-/* Default: Sort in ascending Initiative order, or randomly if that also ties. */
-<<set _party = _party.sort(function(a, b)	{
-	var val = b.get(StatName("intv")) - a.get(StatName("intv"));
-	return (val === 0) ? random(-1,1) : val;
-	}	)>>
-<</widget>>

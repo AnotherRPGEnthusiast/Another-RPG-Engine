@@ -58,7 +58,7 @@ function cureCheck (mods) {
 	}
 }
 
-function checkActions (check=function (name) { return true; },targets=[]) {
+function checkActions (check=function (action) { return true; },targets=[]) {
 	//	Logic for checking if the player party has a specific action readied.
 	//	Returns number of actions the target(s) have readied that pass some logic.
 
@@ -69,12 +69,19 @@ function checkActions (check=function (name) { return true; },targets=[]) {
 	//		By default, all puppets are checked.
 
 	if (typeof(targets) === "string") targets = [targets];
+	if (check === "interrupt") {
+		check = function (action) {
+			return !action.unstoppable;
+		}
+	} else {
+		console.assert(check instanceof Function,`ERROR in checkActions: check must be function`);
+	}
 	var party = V().puppets;
 	var count = 0;
 	if (targets.length > 0) party = party.filter(function (puppet) { return targets.includes(puppet.name); });
 	for (let puppet of party) {
 		if (puppet.delayedAction) {
-			if (check(puppet.delayedAction.name)) count++;
+			if (check(puppet.delayedAction)) count++;
 		}
 	}
 	return count;

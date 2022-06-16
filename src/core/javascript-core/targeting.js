@@ -419,8 +419,8 @@ Hitlist.prototype.addFactors = function (mods) {
 			if (!mods.includes("ignore damaging") && t.target.lastDmg >= mostDamaging) {
 				t.chance += 1;
 			}
-			// If this action cancels a readied action, targets with a setupAction get an extra weight.
-			if (mods.includes("cancelAction") && t.target.setupAction) {
+			// If this action cancels a readied action, targets with a delayedAction get an extra weight (but unstoppable actions are ignored).
+			if (mods.includes("cancelAction") && t.target.delayedAction instanceof Action && !t.target.delayedAction.unstoppable) {
 				t.chance += 1;
 			}
 			// If this attack pierces defense, preferentially target the character with the highest defense.

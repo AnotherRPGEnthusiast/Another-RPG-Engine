@@ -524,7 +524,11 @@ const cancelAction = function cancelAction (mods = {}, extension = "") {
 
 	return function () {
 		if (target().delayedAction instanceof Action) {
-			if (target().interruptGuard) {
+			if (target().delayedAction.unstoppable) {
+				target().battleMsg.push({shake: false, type: "block", content: "BLOCKED"});
+				result = `${target().name}'s action can't be stopped!`;
+			}
+			else if (target().interruptGuard) {
 				target().battleMsg.push({shake: false, type: "block", content: "BLOCKED"});
 				result = `${target().name} held ${target().their} concentration!`;
 			} else {

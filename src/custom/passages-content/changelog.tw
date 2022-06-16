@@ -1,12 +1,16 @@
 :: Changelog[text]
 <h3>Version 4.03</h3>
 <ul>
-<li><b>NEW FEATURE:</b> Full support for the "ranked" turn model. Functions similarly to the default free-action system, but makes characters act in a set order determined by the Initiative stat. <b>Might be buggy. Report any issues.</b> The turn order graphics are also pretty ugly, but hey, I'm not an artist.</li>
+<li><b>NEW FEATURE:</b> Full support for the "ranked" and "action" turn models. See [[Additional Features]] for details. <b>Might be buggy. Report any issues.</b> The turn order graphics are also pretty ugly, but hey, I'm not an artist.</li>
+<li>New <code>Action</code> property: <code>unstoppable</code>. Prevents action from being interrupted by the <code>cancelAction</code> function.</li>
 <li>Updated and improved documentation.</li>
 <ul><li>Tables of contents in the documentation now use unordered lists instead of blockquotes.</li>
 <li>Headers are now underlined and no longer have a large gap underneath them.</li></ul>
 <li>Moved <code>effectFunctions</code> to the <code>effect-manager</code> file. Renamed <code>class-actor</code>, <code>class-effect</code>, and <code>effect-manager</code> to ensure they compile in the correct order after this change.</li>
+<li>Streamlined tiebreaker functionality for initiative models. It is now a JavaScript function that can be passed to <code>Array.sort</code>, and is run after <code>allActors</code>.
 <li>Action animations will no longer be partially transparent if the target is inactive.</li>
+<li>Passing "cancelAction" to <code>targetMod</code> will now correctly identify the presence of <code>delayedAction</code>s.</li>
+<li>Tweaked the logic function <code>checkActions</code> to use actions instead of strings in its check function, as well as implementing a safeguard if a non-function was passed.</li>
 </ul>
 
 <h3>Version 4.02.1</h3>

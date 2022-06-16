@@ -9,6 +9,8 @@
 		<<include "Timeline">>
 	<<elseif setup.TURN_MODEL.toLowerCase() === "ranked" && $actors instanceof Array>>
 		<<include "Turn Display">>
+	<<elseif setup.TURN_MODEL.toLowerCase() === "action" && $actors instanceof Array>>
+		<<include "Turn Display (action time)">>
 	<</if>>
 <</if>>
 

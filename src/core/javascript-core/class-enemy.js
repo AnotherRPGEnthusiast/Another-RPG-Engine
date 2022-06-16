@@ -111,9 +111,15 @@ window.Enemy = class Enemy extends Actor {
 	get ENrisk () {
 		//	Object with two properties: "upper" and "lower"; both are floats between 0 and 1.
 		//	Enemy rest chance is 0% when EN >= upper proportion, 100% when EN <= lower proportion, scales lineraly if between values
-		//	Defaults to values of 0 for both.
+		//	Defaults to values of 1/0.
 
-		return (this._ENrisk || this.data.ENrisk || {upper: 0, lower: 0});
+		let r = (this._ENrisk || this.data.ENrisk || {upper: 1, lower: 0});
+		console.assert(typeof(r.upper) === "number" && typeof(r.lower) === "number",`ERROR in ENrisk getter for ${this.name}: non-number values`);
+		console.assert(r.upper !== 0,`ERROR in ENrisk getter for ${this.name}: upper risk cannot be 0`);
+		console.assert(r.upper <= 1,`ERROR in ENrisk getter for ${this.name}: upper risk cannot be greater than 1`);
+		console.assert(r.lower >= 0,`ERROR in ENrisk getter for ${this.name}: lower risk cannot be less than 0`);
+		console.assert(r.upper > r.lower,`ERROR in ENrisk getter for ${this.name}: upper risk must be strictly greater than lower risk`);
+		return r;
 	}
 
 	get HPrisk () {

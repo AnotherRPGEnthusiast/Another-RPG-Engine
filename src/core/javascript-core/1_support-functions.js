@@ -95,15 +95,19 @@ const allActors = function allActors (sort = "") {
     case "timeline":
       r = r.sort(function(a,b) { return (a.ticks - b.ticks) });
       break;
+		case "action":
+			r = r.sort(function(a,b) { return (b.actTime - a.actTime) })
+			break;
 		case "ranked":
-			r = r.sort(function(a,b) { return (b.speedFormula() - a.speedFormula())});
+			r = r.sort(function(a,b) { return (b.turnFormula() - a.turnFormula())});
 			break;
 		case "intv":
 			r = r.sort(function(a,b) { return (b.get(StatName("intv")) - a.get(StatName("intv")))});
 			break;
     default:
+			return r;
   }
-  return r;
+  return r.sort(tiebreaker);
 };
 window.allActors = allActors;
 
@@ -163,7 +167,7 @@ window.StatName = StatName;
 const StatMin = function (statName) {
 	// The same, but for STAT_MIN.
 	if (typeof(statName) === "string") {
-		return setup.STAT_MIN[StatName(statName)];
+		return setup.STAT_MIN[statName];
 	} else {
 		return setup.STAT_MIN;
 	}
@@ -173,7 +177,7 @@ window.StatMin = StatMin;
 const StatMax = function (statName) {
 	// The same, but for STAT_MAX.
 	if (typeof(statName) === "string") {
-		return setup.STAT_MAX[StatName(statName)];
+		return setup.STAT_MAX[statName];
 	} else {
 		return setup.STAT_MAX;
 	}

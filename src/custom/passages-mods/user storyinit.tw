@@ -12,6 +12,17 @@ rpgmaker: (a.get($AttackStat) * 4 - b.get($DefenseStat) * 2) * damper * weight
 divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 */
 
+<<set setup.TURN_MODEL = "free">>
+/*
+"Free" = Default. Select character actions in any order.
+"Ranked" = Turn order is determined by Initiative scores.
+"Action" = Turn order is determined by a stat that builds continuously every turn.
+"Timeline" = Turn order is determined by actions used.
+*/
+
+/* set TIME_THRESHOLD to an integer to enable threshold for the action time model. */
+/*<<set setup.TIME_THRESHOLD = 100>>
+*/
 <<set setup.LEVEL_CAP = 10>>
 
 <<set setup.PORTRAIT_SIZE = 50>> /* Portrait size in px, used for save game display */
@@ -23,7 +34,7 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 <<set setup.STAT_MIN = {};
 	setup.STAT_MIN[StatName("atk")] = 0;
 	setup.STAT_MIN[StatName("spc")] = 0;
-	setup.STAT_MIN[StatName("spd")] = 0;
+	setup.STAT_MIN[StatName("spd")] = 1;
 	setup.STAT_MIN[StatName("intv")] = 0;
 	setup.STAT_MIN[StatName("eva")] = -100;
 	setup.STAT_MIN[StatName("acc")] = -100;
@@ -40,10 +51,10 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 	setup.STAT_MAX[StatName("atk")] = 999;
 	setup.STAT_MAX[StatName("def")] = 999;
 	setup.STAT_MAX[StatName("spc")] = 999;
-	setup.STAT_MIN[StatName("spd")] = 999;
+	setup.STAT_MAX[StatName("spd")] = 999;
 	setup.STAT_MAX[StatName("intv")] = 100;
-	setup.STAT_MIN[StatName("eva")] = 100;
-	setup.STAT_MIN[StatName("acc")] = 100;
+	setup.STAT_MAX[StatName("eva")] = 100;
+	setup.STAT_MAX[StatName("acc")] = 100;
 	setup.STAT_MAX["HP"] = 99999;
 >>
 
