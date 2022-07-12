@@ -8249,7 +8249,7 @@ window.Actor = class Actor {
 
 	checkRestriction (item) {
 		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing.
-		return (item.equippable.restrictedTo instanceof Array)
+		return (item.equippable.restrictedTo instanceof Array && item.equippable.restrictedTo.length > 0)
 			? (item.equippable.restrictedTo.includes(this.name))
 			: true
 	}
@@ -27315,6 +27315,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;Passing &quot;cancelAction&quot; to &lt;code&gt;targetMod&lt;/code&gt; will now correctly identify the presence of &lt;code&gt;delayedAction&lt;/code&gt;s.&lt;/li&gt;
 &lt;li&gt;Tweaked the logic function &lt;code&gt;checkActions&lt;/code&gt; to use actions instead of strings in its check function, as well as implementing a safeguard if a non-function was passed.&lt;/li&gt;
 &lt;li&gt;Fixed the broken cancel button in the inventory.&lt;/li&gt;
+&lt;li&gt;Fixed an error that prevented &lt;code&gt;checkRestriction&lt;/code&gt; from working correctly with equipment that had no restrictions.&lt;/li&gt;
 &lt;li&gt;Fixed and tweaked the display of inventory item descriptions. The text area is now bigger, restriction listings are more compact, and equipment type is listed in the upper-right instead of below the item name.&lt;/li&gt;
 &lt;/ul&gt;
 

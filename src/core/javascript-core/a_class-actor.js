@@ -774,7 +774,7 @@ window.Actor = class Actor {
 
 	checkRestriction (item) {
 		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing.
-		return (item.equippable.restrictedTo instanceof Array)
+		return (item.equippable.restrictedTo instanceof Array && item.equippable.restrictedTo.length > 0)
 			? (item.equippable.restrictedTo.includes(this.name))
 			: true
 	}
