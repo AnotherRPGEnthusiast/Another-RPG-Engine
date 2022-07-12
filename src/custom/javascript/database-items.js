@@ -240,7 +240,7 @@ setup.itemData = {
 	},
 
 	"Color of Defeat": {
-		"equippable": {slot: "Accessory", tags: ["color"], restrictedTo: ["Artist"]},
+		"equippable": {slot: "Accessory", tags: ["color"], restrictedTo: ["Artist","Mage"]},
 		"onEquip": function (puppet) {
 			this.modID.HPregen = puppet._HPregen.flat.addMod("Color of Defeat",1,true);
 			this.modID.blue = puppet.elements.addMod("blue","Color of Defeat",25,true,"flat");
@@ -249,7 +249,7 @@ setup.itemData = {
 			puppet._HPregen.flat.removeMod("Color of Defeat",this.modID.HPregen);
 			puppet.elements.removeMod("blue","Color of Defeat",this.modID.blue,"flat");
 		},
-		"desc": "Something else.",
+		"desc": "Something else.<br/>Text.<br/>Text.",
 		"info": "HP regeneration +1 | Blue soak +25"
 	},
 

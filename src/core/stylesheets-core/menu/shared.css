@@ -12,13 +12,13 @@
 #menu-display {
 	border: 2px solid;
 	border-radius: 1em;
-	height: 120px;
+	height: 9em;
 	padding: 1em;
 	margin-bottom: 0.5em;
 }
 
 #display-content {
-	height: 3.5em;
+	height: 5em;
 	overflow-Y: auto;
 }
 

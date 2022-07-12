@@ -159,8 +159,9 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 	}
 
 	toString () {
-		var text = `<span class="item-name">${this.name}</span>`;
-		text += `<span class="action-tags">x${this.stock}</span>`;
+		var text = `<span class="itemstock-detail">x${this.stock}</span>`;
+		text += `<div class="item-header">`;
+		text += `<span class="item-name">${this.name}</span>`;
 		if (this.equippable) {
 			if (this.equippable.slot instanceof Set) {
 				text += `<div class="item-equippable">`;
@@ -169,21 +170,22 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 					text += slot;
 					if (s < this.equippable.slot.size-1) text += " + ";
 				}
-				text += `</div>`;
 			} else {
-				text += `<div class="item-equippable">${this.equippable.slot}</div>`;
+				text += `<div class="item-equippable">${this.equippable.slot}`;
 			}
-			if (this.restrictedTo instanceof Array && this.restrictedTo.length > 0) {
-				text += `<div class="item-equippable">Restriction:`
-				for (let [n,name] of this.restrictedTo) {
-					text += ` ${name}`;
-					if (n < this.restrictedTo.length-1) text += ",";
-				}
-				text += `</div>`;
-			}
+			text += `</div>`;
 		}
+		text += `</div>`;
 		text += `<div id="display-content">`;
 		text += `<div class="action-info">${this.info}</div>`;
+		if (this.restrictedTo instanceof Array && this.restrictedTo.length > 0) {
+			text += `<div class="item-restriction">Restriction:`;
+			this.restrictedTo.forEach(function(name,n) {
+				text += ` ${name}`;
+				if (n < this.restrictedTo.length-1) text += ",";
+			},this);
+			text += `</div>`;
+		}
 		if (this.desc !== null) text += `<div class="action-desc">${this.desc}</div>`;
 		text += `</div>`;
 		return text;

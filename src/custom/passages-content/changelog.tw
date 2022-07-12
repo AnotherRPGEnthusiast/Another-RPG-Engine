@@ -11,6 +11,8 @@
 <li>Action animations will no longer be partially transparent if the target is inactive.</li>
 <li>Passing "cancelAction" to <code>targetMod</code> will now correctly identify the presence of <code>delayedAction</code>s.</li>
 <li>Tweaked the logic function <code>checkActions</code> to use actions instead of strings in its check function, as well as implementing a safeguard if a non-function was passed.</li>
+<li>Fixed the broken cancel button in the inventory.</li>
+<li>Fixed and tweaked the display of inventory item descriptions. The text area is now bigger, restriction listings are more compact, and equipment type is listed in the upper-right instead of below the item name.</li>
 </ul>
 
 <h3>Version 4.02.1</h3>

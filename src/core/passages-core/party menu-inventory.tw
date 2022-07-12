@@ -90,7 +90,7 @@
 		<<if def _event>>
 			<span id="button1">
 				<span id="cancelbutton">
-				<<include "cancel button">>
+				<<include "inventory cancel button">>
 				</span>
 			</span>
 		<</if>>

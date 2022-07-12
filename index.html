@@ -98,7 +98,7 @@ var LZString={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234
 		<div id="init-lacking"><p>Browser lacks capabilities required to play.</p><p>Upgrade or switch to another browser.</p></div>
 		<div id="init-loading"><div>Loading&hellip;</div></div>
 	</div>
-	<!-- UUID://3F877547-9365-4513-BC93-4ADDE347D58F// --><tw-storydata name="Another RPG Engine" startnode="192" creator="Tweego" creator-version="2.1.1+81d1d71" ifid="3F877547-9365-4513-BC93-4ADDE347D58F" zoom="1" format="SugarCube" format-version="2.36.1" options="" hidden><style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css">/* twine-user-stylesheet #1: "0main.css" */
+	<!-- UUID://3F877547-9365-4513-BC93-4ADDE347D58F// --><tw-storydata name="Another RPG Engine" startnode="189" creator="Tweego" creator-version="2.1.1+81d1d71" ifid="3F877547-9365-4513-BC93-4ADDE347D58F" zoom="1" format="SugarCube" format-version="2.36.1" options="" hidden><style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css">/* twine-user-stylesheet #1: "0main.css" */
 html.dyslexic {
 	font-family: 'OpenDyslexic';
 }
@@ -5223,11 +5223,6 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 .unequip-button {
 	float: right;
 }
-
-.item-equippable {
-	font-style: italic;
-	font-size: 12px;
-}
 /* twine-user-stylesheet #15: "formation.css" */
 .actors.menu {
 	grid-template-columns: auto 1fr 1fr 1fr;
@@ -5332,6 +5327,28 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	float: right;
 }
 
+.itemstock-detail {
+  position: absolute;
+  right:2em;
+  top:1px;
+  font-size:12px;
+  max-height:2em;
+  overflow: hidden;
+}
+
+.item-equippable {
+	position: relative;
+	top: 5px;
+	float: right;
+	font-size: 12px;
+	text-align: right;
+}
+
+.item-restriction {
+	font-size: 12px;
+	line-height: 1;
+}
+
 .item-buttons {
 	display: flex;
 	justify-content: space-evenly;
@@ -5352,13 +5369,13 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 #menu-display {
 	border: 2px solid;
 	border-radius: 1em;
-	height: 120px;
+	height: 9em;
 	padding: 1em;
 	margin-bottom: 0.5em;
 }
 
 #display-content {
-	height: 3.5em;
+	height: 5em;
 	overflow-Y: auto;
 }
 
@@ -7108,7 +7125,11 @@ const cancelAction = function cancelAction (mods = {}, extension = "") {
 
 	return function () {
 		if (target().delayedAction instanceof Action) {
-			if (target().interruptGuard) {
+			if (target().delayedAction.unstoppable) {
+				target().battleMsg.push({shake: false, type: "block", content: "BLOCKED"});
+				result = `${target().name}'s action can't be stopped!`;
+			}
+			else if (target().interruptGuard) {
 				target().battleMsg.push({shake: false, type: "block", content: "BLOCKED"});
 				result = `${target().name} held ${target().their} concentration!`;
 			} else {
@@ -10471,6 +10492,24 @@ window.Action = class Action {
 		return val;
 	}
 
+	set unstoppable (val) {
+		console.assert(typeof(val) === "boolean",`ERROR: unstoppable must be Boolean`);
+		this._unstoppable = val;
+	}
+
+	get unstoppable () {
+		//	Boolean. If true, action cannot be interrupted.
+
+		var val = this._unstoppable;
+		if (val === undefined) {
+			val = this.actionData.unstoppable;
+		}
+		if (val === undefined) {
+			val = false;
+		}
+		return val;
+	}
+
 	set area (val) {
 		console.assert(typeof(val) === "string",`ERROR: area must be string`);
 		this._area = val;
@@ -11105,9 +11144,15 @@ window.Enemy = class Enemy extends Actor {
 	get ENrisk () {
 		//	Object with two properties: "upper" and "lower"; both are floats between 0 and 1.
 		//	Enemy rest chance is 0% when EN >= upper proportion, 100% when EN <= lower proportion, scales lineraly if between values
-		//	Defaults to values of 0 for both.
+		//	Defaults to values of 1/0.
 
-		return (this._ENrisk || this.data.ENrisk || {upper: 0, lower: 0});
+		let r = (this._ENrisk || this.data.ENrisk || {upper: 1, lower: 0});
+		console.assert(typeof(r.upper) === "number" && typeof(r.lower) === "number",`ERROR in ENrisk getter for ${this.name}: non-number values`);
+		console.assert(r.upper !== 0,`ERROR in ENrisk getter for ${this.name}: upper risk cannot be 0`);
+		console.assert(r.upper <= 1,`ERROR in ENrisk getter for ${this.name}: upper risk cannot be greater than 1`);
+		console.assert(r.lower >= 0,`ERROR in ENrisk getter for ${this.name}: lower risk cannot be less than 0`);
+		console.assert(r.upper > r.lower,`ERROR in ENrisk getter for ${this.name}: upper risk must be strictly greater than lower risk`);
+		return r;
 	}
 
 	get HPrisk () {
@@ -11405,8 +11450,9 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 	}
 
 	toString () {
-		var text = `<span class="item-name">${this.name}</span>`;
-		text += `<span class="action-tags">x${this.stock}</span>`;
+		var text = `<span class="itemstock-detail">x${this.stock}</span>`;
+		text += `<div class="item-header">`;
+		text += `<span class="item-name">${this.name}</span>`;
 		if (this.equippable) {
 			if (this.equippable.slot instanceof Set) {
 				text += `<div class="item-equippable">`;
@@ -11415,21 +11461,22 @@ equippable -> object, must have a "slot" attribute; can also add data for restri
 					text += slot;
 					if (s < this.equippable.slot.size-1) text += " + ";
 				}
-				text += `</div>`;
 			} else {
-				text += `<div class="item-equippable">${this.equippable.slot}</div>`;
+				text += `<div class="item-equippable">${this.equippable.slot}`;
 			}
-			if (this.restrictedTo instanceof Array && this.restrictedTo.length > 0) {
-				text += `<div class="item-equippable">Restriction:`
-				for (let [n,name] of this.restrictedTo) {
-					text += ` ${name}`;
-					if (n < this.restrictedTo.length-1) text += ",";
-				}
-				text += `</div>`;
-			}
+			text += `</div>`;
 		}
+		text += `</div>`;
 		text += `<div id="display-content">`;
 		text += `<div class="action-info">${this.info}</div>`;
+		if (this.restrictedTo instanceof Array && this.restrictedTo.length > 0) {
+			text += `<div class="item-restriction">Restriction:`;
+			this.restrictedTo.forEach(function(name,n) {
+				text += ` ${name}`;
+				if (n < this.restrictedTo.length-1) text += ",";
+			},this);
+			text += `</div>`;
+		}
 		if (this.desc !== null) text += `<div class="action-desc">${this.desc}</div>`;
 		text += `</div>`;
 		return text;
@@ -17707,7 +17754,7 @@ function cureCheck (mods) {
 	}
 }
 
-function checkActions (check=function (name) { return true; },targets=[]) {
+function checkActions (check=function (action) { return true; },targets=[]) {
 	//	Logic for checking if the player party has a specific action readied.
 	//	Returns number of actions the target(s) have readied that pass some logic.
 
@@ -17718,12 +17765,19 @@ function checkActions (check=function (name) { return true; },targets=[]) {
 	//		By default, all puppets are checked.
 
 	if (typeof(targets) === "string") targets = [targets];
+	if (check === "interrupt") {
+		check = function (action) {
+			return !action.unstoppable;
+		}
+	} else {
+		console.assert(check instanceof Function,`ERROR in checkActions: check must be function`);
+	}
 	var party = V().puppets;
 	var count = 0;
 	if (targets.length > 0) party = party.filter(function (puppet) { return targets.includes(puppet.name); });
 	for (let puppet of party) {
 		if (puppet.delayedAction) {
-			if (check(puppet.delayedAction.name)) count++;
+			if (check(puppet.delayedAction)) count++;
 		}
 	}
 	return count;
@@ -18326,8 +18380,8 @@ Hitlist.prototype.addFactors = function (mods) {
 			if (!mods.includes("ignore damaging") && t.target.lastDmg >= mostDamaging) {
 				t.chance += 1;
 			}
-			// If this action cancels a readied action, targets with a setupAction get an extra weight.
-			if (mods.includes("cancelAction") && t.target.setupAction) {
+			// If this action cancels a readied action, targets with a delayedAction get an extra weight (but unstoppable actions are ignored).
+			if (mods.includes("cancelAction") && t.target.delayedAction instanceof Action && !t.target.delayedAction.unstoppable) {
 				t.chance += 1;
 			}
 			// If this attack pierces defense, preferentially target the character with the highest defense.
@@ -18892,7 +18946,7 @@ setup.itemData = {
 	},
 
 	"Color of Defeat": {
-		"equippable": {slot: "Accessory", tags: ["color"], restrictedTo: ["Artist"]},
+		"equippable": {slot: "Accessory", tags: ["color"], restrictedTo: ["Artist","Mage"]},
 		"onEquip": function (puppet) {
 			this.modID.HPregen = puppet._HPregen.flat.addMod("Color of Defeat",1,true);
 			this.modID.blue = puppet.elements.addMod("blue","Color of Defeat",25,true,"flat");
@@ -18901,7 +18955,7 @@ setup.itemData = {
 			puppet._HPregen.flat.removeMod("Color of Defeat",this.modID.HPregen);
 			puppet.elements.removeMod("blue","Color of Defeat",this.modID.blue,"flat");
 		},
-		"desc": "Something else.",
+		"desc": "Something else.<br/>Text.<br/>Text.",
 		"info": "HP regeneration +1 | Blue soak +25"
 	},
 
@@ -21808,9 +21862,6 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 					&lt;&lt;set _enemy.delayedAction = null&gt;&gt;
 				&lt;&lt;else&gt;&gt;
 					&lt;&lt;run _enemy.actions()&gt;&gt;
-				&lt;&lt;/if&gt;&gt;
-				&lt;&lt;if _enemy.en &lt; $action.cost&gt;&gt;
-					&lt;&lt;set $action = new Action(&quot;enemy rest&quot;)&gt;&gt;
 				&lt;&lt;/if&gt;&gt;
 				&lt;&lt;run $B.actionsThisTurn[_enemy.id].push($action.name)&gt;&gt;
 				&lt;&lt;if !($target instanceof Actor) &amp;&amp; $action.targetMethod instanceof Function&gt;&gt;
@@ -25063,7 +25114,7 @@ Click on a character to select them, then click on another space to move or swap
 		&lt;&lt;if def _event&gt;&gt;
 			&lt;span id=&quot;button1&quot;&gt;
 				&lt;span id=&quot;cancelbutton&quot;&gt;
-				&lt;&lt;include &quot;cancel button&quot;&gt;&gt;
+				&lt;&lt;include &quot;inventory cancel button&quot;&gt;&gt;
 				&lt;/span&gt;
 			&lt;/span&gt;
 		&lt;&lt;/if&gt;&gt;
@@ -25735,159 +25786,7 @@ ARG 0 = equipped item
   &lt;&lt;/for&gt;&gt;
   &lt;&lt;run $actors = allActors(&quot;action&quot;)&gt;&gt;
 &lt;&lt;/for&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="Initiative Model: Action Time" tags="nobr" position="225,2225" size="100,100">/* initiative gain */
-/* Note this model assumes everyone&#39;s &quot;initiative&quot; attribute is initialized to 0 at battle start. */
-
-&lt;&lt;for _party range $actors&gt;&gt;
-	&lt;&lt;for _actor range _party.filter(function (a) { return a !== null &amp;&amp; !a.dead; })&gt;&gt;
-		&lt;&lt;set _actor.initiative += _actor.get(&quot;Speed&quot;)&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-
-/* initiative comparison */
-
-&lt;&lt;set _initiative = -1&gt;&gt;
-&lt;&lt;for _party range $actors&gt;&gt;
-	&lt;&lt;for _actor range _party.filter(function (a) { return a !== null &amp;&amp; !a.dead; })&gt;&gt;
-		&lt;&lt;if _actor.initiative &gt; _initiative&gt;&gt;
-			&lt;&lt;set _subj = _actor&gt;&gt;
-			&lt;&lt;set _initiative = _actor.initiative&gt;&gt;
-		&lt;&lt;elseif _actor.initiative == _initiative&gt;&gt;
-			&lt;&lt;set _r = random(1,2)&gt;&gt;
-			&lt;&lt;if _r == 1&gt;&gt;
-				&lt;&lt;set _subj = _actor&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-
-&lt;&lt;if ndef _subj&gt;&gt;
-(You should write an error message here.)
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;set $subject = _actor; subject().initiative = 0&gt;&gt;
-	&lt;&lt;if subject() instanceof Enemy&gt;&gt;
-		&lt;&lt;set $B.turn = &quot;enemy&quot;&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="173" name="Initiative Model: Action Time with Threshold" tags="nobr" position="350,2225" size="100,100">/* Note that this assumes everyone&#39;s &quot;initiative&quot; attribute is set to 0 at battle start. */
-
-&lt;&lt;set _threshold = setup.ACTION_THRESHOLD&gt;&gt; /* You would set ACTION_THRESHOLD to some constant in StoryInit. */
-&lt;&lt;set _pastThreshold = false&gt;&gt;
-
-/* check for characters already at threshold */
-
-&lt;&lt;for _party range $actors&gt;&gt;
-	&lt;&lt;if _pastThreshold&gt;&gt;
-		&lt;&lt;break&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;for _actor range _party.filter(function (a) { return a !== null &amp;&amp; !a.dead; })&gt;&gt;
-		&lt;&lt;if _actor.initiative &gt;= _threshold&gt;&gt;
-			&lt;&lt;set _pastThreshold = true&gt;&gt;
-			&lt;&lt;break&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-
-/* initiative gain */
-
-&lt;&lt;for not _pastThreshold&gt;&gt;
-	&lt;&lt;for _party range $actors&gt;&gt;
-		&lt;&lt;for _actor range _party.filter(function (a) { return a !== null &amp;&amp; !a.dead; })&gt;&gt;
-			&lt;&lt;set _actor.initiative += 20 + 0.2 * _actor.get(&quot;Speed&quot;)&gt;&gt;
-			/* This is the Bonfire formula, but you can add your own */
-			&lt;&lt;if _actor.initiative &gt;= _threshold&gt;&gt;
-				&lt;&lt;set _pastThreshold = true&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/for&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-
-/* initiative comparison */
-
-&lt;&lt;for _party range $actors&gt;&gt;
-	&lt;&lt;for _actor range _party.filter(function (a) { return a !== null &amp;&amp; !a.dead; })&gt;&gt;
-		&lt;&lt;if _actor.initiative &gt; _threshold&gt;&gt;
-			&lt;&lt;set _subj = _actor&gt;&gt;
-			&lt;&lt;set _threshold = _actor.initiative&gt;&gt;
-		&lt;&lt;elseif _actor.initiative == _threshold&gt;&gt;
-			&lt;&lt;if def _subj&gt;&gt;
-				&lt;&lt;set _r = random(1,2)&gt;&gt;
-				&lt;&lt;if _r == 1&gt;&gt;
-					&lt;&lt;set _subj = _actor&gt;&gt;
-				&lt;&lt;/if&gt;&gt;
-			&lt;&lt;else&gt;&gt;
-				&lt;&lt;set _subj = _actor&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-
-&lt;&lt;if ndef _subj&gt;&gt;
-(You should write an error message here.)
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;set $subject = _actor; subject().initiative -= setup.ACTION_THRESHOLD&gt;&gt;
-	&lt;&lt;if subject() instanceof Enemy&gt;&gt;
-		&lt;&lt;set $B.turn = &quot;enemy&quot;&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="174" name="Initiative Model: Timeline" tags="nobr" position="475,2225" size="100,100">/* Note that you will need to come up with a method for determining everyone&#39;s starting initiative; that is not modeled here. */
-
-&lt;&lt;set _threshold = 0&gt;&gt;
-&lt;&lt;set _pastThreshold = false&gt;&gt;
-
-/* check for characters already at threshold */
-
-&lt;&lt;for _party range $actors&gt;&gt;
-	&lt;&lt;if _pastThreshold&gt;&gt;
-		&lt;&lt;break&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;for _actor range _party.filter(function (a) { return a !== null &amp;&amp; !a.dead; })&gt;&gt;
-		&lt;&lt;if _actor.initiative &lt;= _threshold&gt;&gt;
-			&lt;&lt;set _pastThreshold = true&gt;&gt;
-			&lt;&lt;break&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-
-/* initiative gain */
-
-&lt;&lt;for not _pastThreshold&gt;&gt;
-	&lt;&lt;for _party range $actors&gt;&gt;
-		&lt;&lt;for _actor range _party.filter(function (a) { return a !== null &amp;&amp; !a.dead; })&gt;&gt;
-			&lt;&lt;set _actor.initiative -= 1&gt;&gt;
-			&lt;&lt;if _actor.initiative &lt;= _threshold&gt;&gt;
-				&lt;&lt;set _pastThreshold = true&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/for&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-
-/* initiative comparison */
-
-&lt;&lt;for _party range $actors&gt;&gt;
-	&lt;&lt;for _actor range _party.filter(function (a) { return a !== null &amp;&amp; !a.dead; })&gt;&gt;
-		&lt;&lt;if _actor.initiative &lt; _threshold&gt;&gt;
-			&lt;&lt;set _subj = _actor&gt;&gt;
-			&lt;&lt;set _threshold = _actor.initiative&gt;&gt; /* This is only necessary if it is possible to overshoot the threshold */
-		&lt;&lt;elseif _actor.initiative == _threshold&gt;&gt;
-			&lt;&lt;if def _subj&gt;&gt;
-				&lt;&lt;set _r = random(1,2)&gt;&gt;
-				&lt;&lt;if _r == 1&gt;&gt;
-					&lt;&lt;set _subj = _actor&gt;&gt;
-				&lt;&lt;/if&gt;&gt;
-			&lt;&lt;else&gt;&gt;
-				&lt;&lt;set _subj = _actor&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/for&gt;&gt;
-
-&lt;&lt;if ndef _subj&gt;&gt;
-(You should write an error message here.)
-&lt;&lt;else&gt;&gt;
-	&lt;&lt;set $subject = _actor; subject().initiative -= setup.ACTION_THRESHOLD&gt;&gt;
-	&lt;&lt;if subject() instanceof Enemy&gt;&gt;
-		&lt;&lt;set $B.turn = &quot;enemy&quot;&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="175" name="initTurnsRanked" tags="widget nobr" position="600,2225" size="100,100">&lt;&lt;widget &quot;initTurnsRanked&quot;&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="172" name="initTurnsRanked" tags="widget nobr" position="225,2225" size="100,100">&lt;&lt;widget &quot;initTurnsRanked&quot;&gt;&gt;
 
 &lt;&lt;set $actors = allActors(&quot;ranked&quot;).filter(function (a) { return a &amp;&amp; !a.dead })&gt;&gt;
 &lt;&lt;for _actor range $actors&gt;&gt;
@@ -25895,7 +25794,7 @@ ARG 0 = equipped item
 &lt;&lt;/for&gt;&gt;
 &lt;&lt;set $actors[0].active = true&gt;&gt;
 
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="176" name="Turn Display" tags="nobr" position="725,2225" size="100,100">/* Construct an array containing each of the actors present in battle and sort in initiative order. */
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="173" name="Turn Display" tags="nobr" position="350,2225" size="100,100">/* Construct an array containing each of the actors present in battle and sort in initiative order. */
 &lt;div id=&quot;timeline&quot;&gt;
 &lt;div id=&quot;timeline-container&quot;&gt;
 &lt;span class=&quot;turn-queue-label&quot;&gt;Turn Order:&lt;/span&gt;
@@ -25911,13 +25810,13 @@ ARG 0 = equipped item
   &lt;&lt;/for&gt;&gt;
 &lt;/span&gt;
 &lt;/div&gt;
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="177" name="Advance Turns" tags="nobr" position="850,2225" size="100,100">&lt;&lt;run $actors.shift()&gt;&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="174" name="Advance Turns" tags="nobr" position="475,2225" size="100,100">&lt;&lt;run $actors.shift()&gt;&gt;
 &lt;&lt;if $actors.length === 0&gt;&gt;
   &lt;&lt;endRound&gt;&gt;
 &lt;&lt;else&gt;&gt;
   &lt;&lt;set getActorById($actors[0].id).active = true&gt;&gt;
   &lt;&lt;forwarder&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="178" name="initTurnsTimeline" tags="widget nobr" position="975,2225" size="100,100">&lt;&lt;widget &quot;initTurnsTimeline&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="175" name="initTurnsTimeline" tags="widget nobr" position="600,2225" size="100,100">&lt;&lt;widget &quot;initTurnsTimeline&quot;&gt;&gt;
 
 &lt;&lt;set $timeline = new Array(setup.TIMELINE_LENGTH); $timeline.fill({occupants: []})&gt;&gt;
 /* sort actors in descending Initiative order (highest Initiative first) */
@@ -25931,7 +25830,7 @@ ARG 0 = equipped item
 &lt;&lt;/for&gt;&gt;
 &lt;&lt;run $actors[0].active = true&gt;&gt;
 
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="179" name="Timeline" tags="nobr" position="1100,2225" size="100,100">/* Construct an array of length $TIMELINE_LENGTH and fill each element with a generic object with one property, &quot;occupants&quot;, initialized to an empty array. This will be used to track a number of future ticks equal to $TIMELINE_LENGTH, with actors that land on a given tick added to the occupants for that tick. */
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="176" name="Timeline" tags="nobr" position="725,2225" size="100,100">/* Construct an array of length $TIMELINE_LENGTH and fill each element with a generic object with one property, &quot;occupants&quot;, initialized to an empty array. This will be used to track a number of future ticks equal to $TIMELINE_LENGTH, with actors that land on a given tick added to the occupants for that tick. */
 &lt;&lt;set $timeline = Array.from(
     { length : setup.TIMELINE_LENGTH },
     function () {
@@ -25982,7 +25881,7 @@ ARG 0 = equipped item
 	&lt;&lt;/if&gt;&gt;
 &lt;&lt;/for&gt;&gt;
 &lt;/div&gt;
-&lt;/div&gt;</tw-passagedata><tw-passagedata pid="180" name="Advance Timeline" tags="nobr" position="1225,2225" size="100,100">/* Grab list of all actors, sorted by tick order */
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="177" name="Advance Timeline" tags="nobr" position="850,2225" size="100,100">/* Grab list of all actors, sorted by tick order */
 &lt;&lt;set $actors = allActors(&quot;timeline&quot;)&gt;&gt;
 /* Continually decrement all actor ticks by 1 until the first actor&#39;s tick reaches 0. */
 &lt;&lt;for $actors[0].ticks &gt; 0&gt;&gt;
@@ -26012,7 +25911,7 @@ ARG 0 = equipped item
 	/* Set first actor in queue as active */
 	&lt;&lt;set _actorQueue[0].active = true&gt;&gt;
 	&lt;&lt;forwarder _actorQueue[0]&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="181" name="Victory" tags="nobr battle" position="100,2350" size="100,100">&lt;&lt;set _XPBars = []; _animationTime = &quot;1s&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="178" name="Victory" tags="nobr battle" position="975,2225" size="100,100">&lt;&lt;set _XPBars = []; _animationTime = &quot;1s&quot;&gt;&gt;
 
 &lt;center&gt;&lt;div style=&quot;font-size:20pt; font-weight:bold; margin-top:1em; margin-bottom:1em&quot;&gt;+&lt;&lt;print $B.XPreward&gt;&gt; XP&lt;/div&gt;&lt;/center&gt;
 
@@ -26080,18 +25979,18 @@ ARG 0 = equipped item
 	&lt;&lt;timed 3s&gt;&gt;
 		&lt;&lt;goto &quot;Level Check&quot;&gt;&gt;
 	&lt;&lt;/timed&gt;&gt;
-&lt;&lt;/timed&gt;&gt;</tw-passagedata><tw-passagedata pid="182" name="Level Check" tags="nobr battle" position="225,2350" size="100,100">&lt;&lt;if $LevelUps.length &gt; 0&gt;&gt;
+&lt;&lt;/timed&gt;&gt;</tw-passagedata><tw-passagedata pid="179" name="Level Check" tags="nobr battle" position="1100,2225" size="100,100">&lt;&lt;if $LevelUps.length &gt; 0&gt;&gt;
 	&lt;&lt;set _p = $LevelUps.shift()&gt;&gt;
 	&lt;center&gt;&lt;&lt;LevelUp _p&gt;&gt;&lt;/center&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;goto $B.destination&gt;&gt;
 	&lt;&lt;endofbattle&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="183" name="Defeat" tags="" position="350,2350" size="100,100">You lost! You can add a special defeat message here.
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="180" name="Defeat" tags="" position="1225,2225" size="100,100">You lost! You can add a special defeat message here.
 
 &gt;[[Retry this battle|Battle Preparation]]
 &gt;[[Return|Start]]
 
-&lt;&lt;endofbattle&gt;&gt;</tw-passagedata><tw-passagedata pid="184" name="Installation" tags="text" position="475,2350" size="100,100">&lt;b&gt;IMPORTANT NOTE: Another RPG Engine uses ES6 components and may not function on all browswers. Google Chrome and Firefox should work, but other browsers may not. If you encounter errors, make sure you are using the most current version of your browser.&lt;/b&gt;
+&lt;&lt;endofbattle&gt;&gt;</tw-passagedata><tw-passagedata pid="181" name="Installation" tags="text" position="100,2350" size="100,100">&lt;b&gt;IMPORTANT NOTE: Another RPG Engine uses ES6 components and may not function on all browswers. Google Chrome and Firefox should work, but other browsers may not. If you encounter errors, make sure you are using the most current version of your browser.&lt;/b&gt;
 
 Another RPG Engine contains a lot of components. To use them all together, you will need a special compiler.
 
@@ -26124,7 +26023,7 @@ The engine uses ChapelR&#39;s custom SugarCube macros, the documentation for whi
 &lt;b&gt;Summary:&lt;/b&gt;
 # Download Tweego &lt;a href=&quot;http://www.motoslave.net/tweego/&quot; target=&quot;_blank&quot;&gt;here&lt;/a&gt;. If you can&#39;t follow the directions, use the installer &lt;a href=&quot;https://github.com/ChapelR/tweego-installer&quot; target=&quot;_blank&quot;&gt;here&lt;/a&gt;.
 # You can compile multiple story and twee files at once, but later conflicts will overwrite earlier ones.
-# Store customized engine passages in {{{passages-mods}}} to avoid conflicts.</tw-passagedata><tw-passagedata pid="185" name="Additional Features" tags="text info" position="600,2350" size="100,100">This passage will discuss non-essential RPG features with only skeletal implementations in the default engine, but which may be of interest. This will contain rather advanced discussion of code and will build on the principles discussed in the design passage, so it is recommended you read [[Documentation|Documentation (Advanced)]] and [[Design]] first.
+# Store customized engine passages in {{{passages-mods}}} to avoid conflicts.</tw-passagedata><tw-passagedata pid="182" name="Additional Features" tags="text info" position="225,2350" size="100,100">This passage will discuss non-essential RPG features with only skeletal implementations in the default engine, but which may be of interest. This will contain rather advanced discussion of code and will build on the principles discussed in the design passage, so it is recommended you read [[Documentation|Documentation (Advanced)]] and [[Design]] first.
 
 &lt;h1&gt;Table of Contents&lt;/h1&gt;
 *&lt;a href=&quot;#flow&quot;&gt;Battle Flow and Turn Order&lt;/a&gt;
@@ -27368,7 +27267,7 @@ actor.stash.forEach(function (item) {
 }}}
 That is the purpose of this additional code. It runs through the {{{stash}}} array and modifies every action to have the {{{free}}} attribute, which will bypass the item decrement check. We also need to make them behave as Crisis abilities by flagging their {{{_crisis}}} attribute -- otherwise, they wouldn&#39;t reset the user&#39;s Crisis points!
 
-These are the additional factors you&#39;ll need to add in order for Stash to work. The principles you learned here can also be generalized to other types of submenu abilities.</tw-passagedata><tw-passagedata pid="186" name="Anim Test" tags="nobr" position="725,2350" size="100,100">&lt;&lt;set $scenario = &quot;gf1&quot;&gt;&gt;
+These are the additional factors you&#39;ll need to add in order for Stash to work. The principles you learned here can also be generalized to other types of submenu abilities.</tw-passagedata><tw-passagedata pid="183" name="Anim Test" tags="nobr" position="350,2350" size="100,100">&lt;&lt;set $scenario = &quot;gf1&quot;&gt;&gt;
 &lt;&lt;include &quot;Battle Preparation&quot;&gt;&gt;
 &lt;&lt;set $subject = $puppets[0]&gt;&gt;
 &lt;&lt;set $subject.en = 10&gt;&gt;
@@ -27397,21 +27296,26 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 	&lt;&lt;set _action = new Action($subtest)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 &lt;&lt;actionLink _action&gt;&gt;
-&lt;&lt;goto &quot;Anim Test Live&quot;&gt;&gt;</tw-passagedata><tw-passagedata pid="187" name="Anim Test Live" tags="nobr" position="850,2350" size="100,100">&lt;&lt;if $subtest.includes(&quot;regen&quot;)&gt;&gt;
+&lt;&lt;goto &quot;Anim Test Live&quot;&gt;&gt;</tw-passagedata><tw-passagedata pid="184" name="Anim Test Live" tags="nobr" position="475,2350" size="100,100">&lt;&lt;if $subtest.includes(&quot;regen&quot;)&gt;&gt;
 	&lt;&lt;endOfRound $enemies&gt;&gt;
 	&lt;&lt;newTurn $puppets&gt;&gt;
 	&lt;&lt;goto &quot;Player Phase&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;include &quot;Action Phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="188" name="Changelog" tags="text" position="975,2350" size="100,100">&lt;h3&gt;Version 4.03&lt;/h3&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="185" name="Changelog" tags="text" position="600,2350" size="100,100">&lt;h3&gt;Version 4.03&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;b&gt;NEW FEATURE:&lt;/b&gt; Full support for the &quot;ranked&quot; and &quot;action&quot; turn models. See [[Additional Features]] for details. &lt;b&gt;Might be buggy. Report any issues.&lt;/b&gt; The turn order graphics are also pretty ugly, but hey, I&#39;m not an artist.&lt;/li&gt;
+&lt;li&gt;New &lt;code&gt;Action&lt;/code&gt; property: &lt;code&gt;unstoppable&lt;/code&gt;. Prevents action from being interrupted by the &lt;code&gt;cancelAction&lt;/code&gt; function.&lt;/li&gt;
 &lt;li&gt;Updated and improved documentation.&lt;/li&gt;
 &lt;ul&gt;&lt;li&gt;Tables of contents in the documentation now use unordered lists instead of blockquotes.&lt;/li&gt;
 &lt;li&gt;Headers are now underlined and no longer have a large gap underneath them.&lt;/li&gt;&lt;/ul&gt;
 &lt;li&gt;Moved &lt;code&gt;effectFunctions&lt;/code&gt; to the &lt;code&gt;effect-manager&lt;/code&gt; file. Renamed &lt;code&gt;class-actor&lt;/code&gt;, &lt;code&gt;class-effect&lt;/code&gt;, and &lt;code&gt;effect-manager&lt;/code&gt; to ensure they compile in the correct order after this change.&lt;/li&gt;
 &lt;li&gt;Streamlined tiebreaker functionality for initiative models. It is now a JavaScript function that can be passed to &lt;code&gt;Array.sort&lt;/code&gt;, and is run after &lt;code&gt;allActors&lt;/code&gt;.
 &lt;li&gt;Action animations will no longer be partially transparent if the target is inactive.&lt;/li&gt;
+&lt;li&gt;Passing &quot;cancelAction&quot; to &lt;code&gt;targetMod&lt;/code&gt; will now correctly identify the presence of &lt;code&gt;delayedAction&lt;/code&gt;s.&lt;/li&gt;
+&lt;li&gt;Tweaked the logic function &lt;code&gt;checkActions&lt;/code&gt; to use actions instead of strings in its check function, as well as implementing a safeguard if a non-function was passed.&lt;/li&gt;
+&lt;li&gt;Fixed the broken cancel button in the inventory.&lt;/li&gt;
+&lt;li&gt;Fixed and tweaked the display of inventory item descriptions. The text area is now bigger, restriction listings are more compact, and equipment type is listed in the upper-right instead of below the item name.&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h3&gt;Version 4.02.1&lt;/h3&gt;
@@ -28444,7 +28348,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 * Protector no longer causes an error in PassageDone, and should be removed properly if the protected character dies.
 
 &lt;h3&gt;Version 0.5&lt;/h3&gt;
-* Initial release.</tw-passagedata><tw-passagedata pid="189" name="Design" tags="text info" position="1100,2350" size="100,100">RPGs are pretty complicated games, and require a lot of thought in even their most basic elements. Here I&#39;ll discuss the reasoning that went into the choices I made when designing the engine, and some potential alternatives.
+* Initial release.</tw-passagedata><tw-passagedata pid="186" name="Design" tags="text info" position="725,2350" size="100,100">RPGs are pretty complicated games, and require a lot of thought in even their most basic elements. Here I&#39;ll discuss the reasoning that went into the choices I made when designing the engine, and some potential alternatives.
 
 A look at the game &lt;i&gt;&lt;a href=&quot;http://bonfire-game.wikia.com/wiki/Bonfire_Game_Wiki&quot; target=&quot;_blank&quot;&gt;Bonfire&lt;/a&gt;&lt;/i&gt; and the elements listed in its wiki may be instructive, as I purposefully designed the engine to emulate it in many aspects. The program RPG Maker VX Ace is also worth a look, as it has great transparency and modularity in many of its core design principles, as well as a community of designers you can use as a resource. For further reading, you could check out the website &lt;a href=&quot;http://howtomakeanrpg.com&quot; target=&quot;_blank&quot;&gt;How To Make an RPG&lt;/a&gt;, which touches on these topics and others. The YouTube series &lt;a href=&quot;https://www.youtube.com/channel/UCqJ-Xo29CKyLTjn6z2XwYAw&quot; target=&quot;_blank&quot;&gt;Game Maker&#39;s Toolkit&lt;/a&gt; may also be worth viewing, though it is much more general in the topics it covers.
 
@@ -28993,7 +28897,7 @@ Another interesting feature of this system is that enemies do not coordinate. Th
 
 Finally, note a contradiction in this system: I said that a human player would prioritize targeting enemies with support skills, but under this system, enemies do not register support characters at all! This can easily lead to very unbalanced gameplay where the healers can stay back and just keep healing the tanks continuously, who will continue drawing aggro and leave the healers untouched. The easy solution to this is to make support skills draw aggro too, but too much and you may end up tipping in the other direction, with supporters getting too quickly swarmed to use their abilities effectively. You can also generate an unstable feedback loop where a healer in danger needs to heal themselves, which in turn draws more aggro and gets them attacked more...
 
-As with all things in design, this is a balancing act. How realistic do you want the enemies&#39; behavior to be? How much do you want to force the player to outwit them and balance their actions? What behaviors do you want to incentivize or disincentivize? These are complicated questions, and the difficulty in answering them may explain why so many designers choose to make the AI more random and just give enemies more power to make up the difference.</tw-passagedata><tw-passagedata pid="190" name="Documentation (Basic)" tags="text info" position="1225,2350" size="100,100">Use the table of contents to navigate. You can come back to the top at any time by pressing the &quot;home&quot; key on your keyboard.
+As with all things in design, this is a balancing act. How realistic do you want the enemies&#39; behavior to be? How much do you want to force the player to outwit them and balance their actions? What behaviors do you want to incentivize or disincentivize? These are complicated questions, and the difficulty in answering them may explain why so many designers choose to make the AI more random and just give enemies more power to make up the difference.</tw-passagedata><tw-passagedata pid="187" name="Documentation (Basic)" tags="text info" position="850,2350" size="100,100">Use the table of contents to navigate. You can come back to the top at any time by pressing the &quot;home&quot; key on your keyboard.
 
 This introduction will teach you how to add content to the default engine settings. For advanced documentation and advice on customization, see [[Documentation (Advanced)]]. This documentation will assume you are familiar with SugarCube basics; see &lt;a href=&quot;https://www.motoslave.net/sugarcube/2/docs/&quot; target=&quot;_blank&quot;&gt;the SugarCube documentation&lt;/a&gt; for reference.
 
@@ -29295,6 +29199,7 @@ This isn&#39;t what a live {{{Action}}} object looks like, but it contains all t
 ** {{{delayPersist}}} is a Boolean; if {{{true}}}, the delayed action will occur even if the user would otherwise be incapable of using an action (dead, stunned, etc). This must be set &lt;b&gt;on the action that will be performed&lt;/b&gt;, not the setup action.
 ** {{{delayHold}}} is a Boolean; if {{{true}}}, the user will be unable to act while charging their delayed action. This must be set &lt;b&gt;on the action that will be performed&lt;/b&gt;, not the setup action.
 ** {{{delayMessage}}} is a function; returns a string to be displayed at the top of rounds while an action is charging. Set to {{{null}}} to display no message. This must be set &lt;b&gt;on the action that will be performed&lt;/b&gt;, not the setup action.
+** {{{unstoppable}}} is a Boolean; if {{{true}}}, the delayed action cannot be interrupted. This must be set &lt;b&gt;on the action that will be performed&lt;/b&gt;, not the setup action.
 * {{{canTargetDead}}} is a Boolean; if {{{true}}}, the action can target dead characters. (By default, dead characters cannot be targeted.)
 
 &lt;h3 id=&quot;actions.targeting&quot;&gt;Targeting Logic&lt;/h3&gt;
@@ -30469,7 +30374,7 @@ The passages in {{{passages-custom}}} are slotted into certain core passages thr
 * {{{special checks}}} is run at the start of the player turn, and is used to forward the player to special scenes, such as Dipper and Mabel&#39;s transformations, or to make other adjustments. By default, it includes the handler for loss-of-control effects.
 * {{{user storyinit}}} is appended to {{{StoryInit}}}, as previously discussed.
 
-Additionally, if you create a passage file with the same name as an existing passage, it will be overwritten when your game is compiled. This allows you to overwrite the default widgets and passages completely with your own versions if you need to radically change things -- but make sure you know what you&#39;re doing!</tw-passagedata><tw-passagedata pid="191" name="Documentation (Advanced)" tags="text info" position="100,2475" size="100,100">Use the table of contents to navigate. You can come back to the top at any time by pressing the &quot;home&quot; key on your keyboard.
+Additionally, if you create a passage file with the same name as an existing passage, it will be overwritten when your game is compiled. This allows you to overwrite the default widgets and passages completely with your own versions if you need to radically change things -- but make sure you know what you&#39;re doing!</tw-passagedata><tw-passagedata pid="188" name="Documentation (Advanced)" tags="text info" position="975,2350" size="100,100">Use the table of contents to navigate. You can come back to the top at any time by pressing the &quot;home&quot; key on your keyboard.
 
 This documentation will assume you are familiar with the explanations detailed in [[Documentation (Basic)]]. This advanced documentation will go into detail on the code of every passage. It is recommended you load the relevant code in another window so you can follow along.
 
@@ -35612,7 +35517,7 @@ If you don&#39;t want it, though, you can pass the &quot;instant&quot; argument 
 }}}
 Finally, we refresh the music info in the sidebar to update it to display our new track.
 
-{{{&lt;&lt;clearMuisc&gt;&gt;}}} is much simpler, and just stops the current audio while erasing the {{{music}}} variable.</tw-passagedata><tw-passagedata pid="192" name="Start" tags="text" position="225,2475" size="100,100">Welcome to Another RPG Engine, an RPG engine made in Twine. This engine is designed for deterministic multi-character battles, like you might see in RPG Maker or Japanese-style RPGs. I created a simple game with this engine called &lt;i&gt;&lt;a href=&quot;https://anotherrpgenthusiast.itch.io/cartoon-battle&quot; target=&quot;_blank&quot;&gt;Cartoon Battle&lt;/a&gt;&lt;/i&gt; that I encourage you to try. I may make more complex games using this engine in the future!
+{{{&lt;&lt;clearMuisc&gt;&gt;}}} is much simpler, and just stops the current audio while erasing the {{{music}}} variable.</tw-passagedata><tw-passagedata pid="189" name="Start" tags="text" position="1100,2350" size="100,100">Welcome to Another RPG Engine, an RPG engine made in Twine. This engine is designed for deterministic multi-character battles, like you might see in RPG Maker or Japanese-style RPGs. I created a simple game with this engine called &lt;i&gt;&lt;a href=&quot;https://anotherrpgenthusiast.itch.io/cartoon-battle&quot; target=&quot;_blank&quot;&gt;Cartoon Battle&lt;/a&gt;&lt;/i&gt; that I encourage you to try. I may make more complex games using this engine in the future!
 
 Click on the links above to learn about aspects of the engine in more detail.
 
@@ -35654,7 +35559,7 @@ You can change the difficulty through the Settings button in the sidebar. Keep i
 * Hard: smart targeting will only target vulnerable characters
 * Medium: smart targeting will preferentially target vulnerable characters, but other targets can be considered
 * Easy: disables smart targeting
-&lt;/span&gt;</tw-passagedata><tw-passagedata pid="193" name="navbar" tags="nobr" position="350,2475" size="100,100">&lt;div id=&quot;navbar&quot;&gt;
+&lt;/span&gt;</tw-passagedata><tw-passagedata pid="190" name="navbar" tags="nobr" position="1225,2350" size="100,100">&lt;div id=&quot;navbar&quot;&gt;
   &lt;span&gt;&lt;b&gt;Version: &lt;&lt;print setup.version&gt;&gt;&lt;/b&gt; ([[Changelog]])&lt;/span&gt;
   &lt;div&gt;
   &lt;span style=&quot;font-weight:bold&quot;&gt;&lt;&lt;if passage() == &quot;Start&quot;&gt;&gt;Home&lt;&lt;else&gt;&gt;[[Home|Start]]&lt;&lt;/if&gt;&gt;&lt;/span&gt;
@@ -35664,15 +35569,15 @@ You can change the difficulty through the Settings button in the sidebar. Keep i
   &lt;span&gt;&lt;&lt;if passage() == &quot;Additional Features&quot;&gt;&gt;&lt;b&gt;Additional Features&lt;/b&gt;&lt;&lt;else&gt;&gt;[[Additional Features]]&lt;&lt;/if&gt;&gt;&lt;/span&gt;
   &lt;/div&gt;
 &lt;/div&gt;
-&lt;hr/&gt;</tw-passagedata><tw-passagedata pid="194" name="PassageDone-custom" tags="nobr" position="475,2475" size="100,100">/* Custom PassageDone code, appended to the core passage. */</tw-passagedata><tw-passagedata pid="195" name="PassageFooter-custom" tags="nobr" position="600,2475" size="100,100">/* Custom PassageFooter code, appended to the core passage. */
+&lt;hr/&gt;</tw-passagedata><tw-passagedata pid="191" name="PassageDone-custom" tags="nobr" position="100,2475" size="100,100">/* Custom PassageDone code, appended to the core passage. */</tw-passagedata><tw-passagedata pid="192" name="PassageFooter-custom" tags="nobr" position="225,2475" size="100,100">/* Custom PassageFooter code, appended to the core passage. */
 &lt;&lt;if tags().includes(&quot;info&quot;)&gt;&gt;
 &lt;hr/&gt;
 &lt;center&gt;&lt;a href=&quot;#navbar&quot;&gt;BACK TO TOP&lt;/a&gt;&lt;/center&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="196" name="PassageHeader-custom" tags="nobr" position="725,2475" size="100,100">/* Custom PassageHeader code, appended to the core passage. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="193" name="PassageHeader-custom" tags="nobr" position="350,2475" size="100,100">/* Custom PassageHeader code, appended to the core passage. */
 &lt;&lt;if tags().includes(&quot;text&quot;)&gt;&gt;
 	&lt;&lt;include &quot;navbar&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="197" name="PassageReady-custom" tags="" position="850,2475" size="100,100">/* Custom PassageReady code, appended to the core passage. */</tw-passagedata><tw-passagedata pid="198" name="StoryAuthor" tags="" position="975,2475" size="100,100">Made in &lt;a href=&quot;https://anotherrpgenthusiast.itch.io/another-rpg-engine&quot;&gt;Another RPG Engine&lt;/a&gt;
-/* Please keep this link if you make games in the engine! */</tw-passagedata><tw-passagedata pid="199" name="StoryCaption" tags="" position="1100,2475" size="100,100">&lt;&lt;nobr&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="194" name="PassageReady-custom" tags="" position="475,2475" size="100,100">/* Custom PassageReady code, appended to the core passage. */</tw-passagedata><tw-passagedata pid="195" name="StoryAuthor" tags="" position="600,2475" size="100,100">Made in &lt;a href=&quot;https://anotherrpgenthusiast.itch.io/another-rpg-engine&quot;&gt;Another RPG Engine&lt;/a&gt;
+/* Please keep this link if you make games in the engine! */</tw-passagedata><tw-passagedata pid="196" name="StoryCaption" tags="" position="725,2475" size="100,100">&lt;&lt;nobr&gt;&gt;
 &lt;&lt;if $debug&gt;&gt;
   &lt;&lt;if $inbattle&gt;&gt;
     &lt;&lt;for _i, _puppet range $puppets&gt;&gt;
@@ -35704,17 +35609,17 @@ You can change the difficulty through the Settings button in the sidebar. Keep i
 &lt;&lt;/if&gt;&gt;
 &lt;&lt;/nobr&gt;&gt;
 &lt;&lt;include &quot;hotkey info&quot;&gt;&gt;
-&lt;&lt;include &quot;music info&quot;&gt;&gt;</tw-passagedata><tw-passagedata pid="200" name="StoryMenu" tags="" position="1225,2475" size="100,100">&lt;&lt;nobr&gt;&gt;
+&lt;&lt;include &quot;music info&quot;&gt;&gt;</tw-passagedata><tw-passagedata pid="197" name="StoryMenu" tags="" position="850,2475" size="100,100">&lt;&lt;nobr&gt;&gt;
 &lt;a href=&quot;https://archiveofourown.org/works/19398175/chapters/46161772&quot; target=&quot;_blank&quot;&gt;AO3&lt;/a&gt;
 &lt;a href=&quot;https://github.com/AnotherRPGEnthusiast/Another-RPG-Engine&quot; target=&quot;_blank&quot;&gt;GITHUB&lt;/a&gt;
-&lt;&lt;/nobr&gt;&gt;</tw-passagedata><tw-passagedata pid="201" name="battle display mods actorlist" tags="nobr" position="100,2600" size="100,100">/* Called at the start of actorlist. Use this for any modifications you want to make to the default display, such as reversing the order of a party.
+&lt;&lt;/nobr&gt;&gt;</tw-passagedata><tw-passagedata pid="198" name="battle display mods actorlist" tags="nobr" position="975,2475" size="100,100">/* Called at the start of actorlist. Use this for any modifications you want to make to the default display, such as reversing the order of a party.
   The container class for enemies is _enemiesClass, and the container class for puppets is _puppetsClass.
   Add your class to the variable with a leading space, as the variable is one string that will contain all the classes.
 */
 
 &lt;&lt;if $scenario is &quot;reverse display&quot;&gt;&gt;
   &lt;&lt;set _enemiesClass += &quot; reverse&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="202" name="battle interruptions" tags="nobr" position="225,2600" size="100,100">/* Special scenarios that interrupt the normal display, such as the Crystal Gems defending Steven. By default, this has margins both above and below to make it its own block (see story stylesheet). You may want to adjust this if you plan to make an interruption at a different point. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="199" name="battle interruptions" tags="nobr" position="1100,2475" size="100,100">/* Special scenarios that interrupt the normal display, such as the Crystal Gems defending Steven. By default, this has margins both above and below to make it its own block (see story stylesheet). You may want to adjust this if you plan to make an interruption at a different point. */
 
 /* You may wish to make separate passages for each of these, but the example will be stored here. */
 
@@ -35758,7 +35663,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	&lt;&lt;set $bully to false&gt;&gt; /* If you didn&#39;t target Steven, lose out on Bully achievement */
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="203" name="Confirm Text" tags="nobr" position="350,2600" size="100,100">/* Displayed on the confirm phase. Recommended to repeat the action&#39;s name and provide some useful information. Custom text for certain actions can also be added. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="200" name="Confirm Text" tags="nobr" position="1225,2475" size="100,100">/* Displayed on the confirm phase. Recommended to repeat the action&#39;s name and provide some useful information. Custom text for certain actions can also be added. */
 
 &lt;&lt;print $subject.name&gt;&gt; will
 
@@ -35772,17 +35677,9 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	accept the enemy&#39;s surrender.
 &lt;&lt;else&gt;&gt;
 	use &lt;b&gt;$action.name&lt;/b&gt;&lt;&lt;if $target isnot null&gt;&gt; on &lt;b&gt;$target.name&lt;/b&gt;&lt;&lt;/if&gt;&gt;.
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="204" name="custom battle preparation" tags="" position="475,2600" size="100,100">/* Additional code to perform during battle setup. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="201" name="custom battle preparation" tags="" position="100,2600" size="100,100">/* Additional code to perform during battle setup. */
 
-&lt;&lt;restock&gt;&gt;</tw-passagedata><tw-passagedata pid="205" name="custom end of action effects" tags="nobr" position="600,2600" size="100,100">/* Appended to the action phase, immediately after mark attacks and potential surrender failure. Include any custom code or messages you want here. */
-
-&lt;&lt;if !_markActive&gt;&gt;
-	&lt;&lt;markAttack&gt;&gt;
-&lt;&lt;/if&gt;&gt;
-
-&lt;&lt;if !_counterActive&gt;&gt;
-	&lt;&lt;hunterCheck&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="206" name="custom end of battle" tags="nobr" position="725,2600" size="100,100">&lt;&lt;restock&gt;&gt;</tw-passagedata><tw-passagedata pid="207" name="custom endTurn" tags="nobr" position="850,2600" size="100,100">/* Custom code to be run at the end of the endTurn widget. */</tw-passagedata><tw-passagedata pid="208" name="custom newTurn" tags="nobr" position="975,2600" size="100,100"></tw-passagedata><tw-passagedata pid="209" name="postAction custom" tags="nobr" position="1100,2600" size="100,100">/* Appended to the Action Phase, immediately after mark attacks and potential surrender failure. Include any custom code or messages you want here. */
+&lt;&lt;restock&gt;&gt;</tw-passagedata><tw-passagedata pid="202" name="custom end of action effects" tags="nobr" position="225,2600" size="100,100">/* Appended to the action phase, immediately after mark attacks and potential surrender failure. Include any custom code or messages you want here. */
 
 &lt;&lt;if !_markActive&gt;&gt;
 	&lt;&lt;markAttack&gt;&gt;
@@ -35790,13 +35687,21 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 
 &lt;&lt;if !_counterActive&gt;&gt;
 	&lt;&lt;hunterCheck&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="210" name="custom refreshPuppet" tags="nobr" position="1225,2600" size="100,100">/* Appended to EVERY LOOP of refreshPuppets. Use variable _puppet to refer to the current puppet. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="203" name="custom end of battle" tags="nobr" position="350,2600" size="100,100">&lt;&lt;restock&gt;&gt;</tw-passagedata><tw-passagedata pid="204" name="custom endTurn" tags="nobr" position="475,2600" size="100,100">/* Custom code to be run at the end of the endTurn widget. */</tw-passagedata><tw-passagedata pid="205" name="custom newTurn" tags="nobr" position="600,2600" size="100,100"></tw-passagedata><tw-passagedata pid="206" name="postAction custom" tags="nobr" position="725,2600" size="100,100">/* Appended to the Action Phase, immediately after mark attacks and potential surrender failure. Include any custom code or messages you want here. */
+
+&lt;&lt;if !_markActive&gt;&gt;
+	&lt;&lt;markAttack&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+
+&lt;&lt;if !_counterActive&gt;&gt;
+	&lt;&lt;hunterCheck&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="207" name="custom refreshPuppet" tags="nobr" position="850,2600" size="100,100">/* Appended to EVERY LOOP of refreshPuppets. Use variable _puppet to refer to the current puppet. */
 
 &lt;&lt;set _puppet.en = 5&gt;&gt;
 &lt;&lt;set _x = _puppet.actions.find(function (a) { return a &amp;&amp; a.name == &quot;Reload&quot; })&gt;&gt;
 &lt;&lt;if def _x&gt;&gt;
   &lt;&lt;set $subject = _puppet; _x.act()&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="211" name="damageCalc custom factors" tags="nobr" position="100,2725" size="100,100">/* Any additional logic you want to add to damage calculation. Run after element logic, immediately before damage rounding. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="208" name="damageCalc custom factors" tags="nobr" position="975,2600" size="100,100">/* Any additional logic you want to add to damage calculation. Run after element logic, immediately before damage rounding. */
 
 &lt;&lt;if _target.invincible&gt;&gt;
 	&lt;&lt;set $dmg = 0; _noDmgFloor = true&gt;&gt;
@@ -35818,7 +35723,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	&lt;&lt;set $dmg *= (1-setup.SHIELD_FACTOR)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="212" name="Database: Encounters" tags="nobr widget" position="225,2725" size="100,100">/* This passage allows you to define encounters -- that is, unique parties of enemies. To define individual enemies and characters, see the database JS files. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="209" name="Database: Encounters" tags="nobr widget" position="1100,2600" size="100,100">/* This passage allows you to define encounters -- that is, unique parties of enemies. To define individual enemies and characters, see the database JS files. */
 
 &lt;&lt;widget &quot;callEncounter&quot;&gt;&gt;
 /* The order characters are added to the array matters: they are displayed in that order from left to right when the stat blocks instantiate. */
@@ -35873,7 +35778,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 		&lt;&lt;set $enemies.push(_name)&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 &lt;&lt;/for&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="213" name="accuracy formula" tags="nobr" position="350,2725" size="100,100">&lt;&lt;if $action.accuracy === true&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="210" name="accuracy formula" tags="nobr" position="1225,2600" size="100,100">&lt;&lt;if $action.accuracy === true&gt;&gt;
 	&lt;&lt;set _hit = true&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;set _acc = $action.accuracy&gt;&gt;
@@ -35889,12 +35794,12 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	&lt;&lt;else&gt;&gt;
 		&lt;&lt;set _hit = false&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="214" name="crisis formula" tags="nobr" position="475,2725" size="100,100">&lt;&lt;if Number.isInteger(_target.crisisPoints) &amp;&amp; $dmg &gt; 0&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="211" name="crisis formula" tags="nobr" position="100,2725" size="100,100">&lt;&lt;if Number.isInteger(_target.crisisPoints) &amp;&amp; $dmg &gt; 0&gt;&gt;
   &lt;&lt;switch _target.crisisMode&gt;&gt;
     &lt;&lt;default&gt;&gt;
       &lt;&lt;set _target.crisisPoints += Math.round(($dmg/_target.maxHP)*100*_target.crisisFactor)&gt;&gt;
   &lt;&lt;/switch&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="215" name="crit formula" tags="nobr" position="600,2725" size="100,100">&lt;&lt;set _critChance = $action.critRate&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="212" name="crit formula" tags="nobr" position="225,2725" size="100,100">&lt;&lt;set _critChance = $action.critRate&gt;&gt;
 &lt;&lt;set _toCrit = random(1,100)&gt;&gt;
 &lt;&lt;if subject().stats.hasOwnProperty(StatName(&quot;Skill&quot;))&gt;&gt;
   &lt;&lt;set _critChance += subject().get(StatName(&quot;Skill&quot;))&gt;&gt;
@@ -35903,7 +35808,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
   &lt;&lt;print setup.CRIT_MESSAGE+&quot; &quot;&gt;&gt;
   &lt;&lt;set $dmg *= $action.critMultiplier&gt;&gt;
   &lt;&lt;set _crit = true&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="216" name="damageCalc formula" tags="nobr" position="725,2725" size="100,100">/* Define the damage formula or formulae you want to use here. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="213" name="damageCalc formula" tags="nobr" position="350,2725" size="100,100">/* Define the damage formula or formulae you want to use here. */
 
 &lt;&lt;if !$action.formula&gt;&gt;
 /* Only use the default formula if the action does not have a custom formula (so, the formula property is falsy) */
@@ -35924,24 +35829,24 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;set $dmg = $action.formula()&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="217" name="heal formula" tags="nobr" position="850,2725" size="100,100">&lt;&lt;if Number.isInteger(action().special)&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="214" name="heal formula" tags="nobr" position="475,2725" size="100,100">&lt;&lt;if Number.isInteger(action().special)&gt;&gt;
   &lt;&lt;set $heal = action().special&gt;&gt;
 &lt;&lt;else&gt;&gt;
   &lt;&lt;set $heal = 0&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="218" name="manaBurnCalc" tags="widget nobr" position="975,2725" size="100,100">/* Formula for mana burns. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="215" name="manaBurnCalc" tags="widget nobr" position="600,2725" size="100,100">/* Formula for mana burns. */
 
 &lt;&lt;widget &quot;manaBurnCalc&quot;&gt;&gt;
   &lt;&lt;set $dmg = action().special&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="219" name="echoDamage threat gain" tags="nobr" position="1100,2725" size="100,100">/* Default: Dragon Age style. Attacker gains threat equal to the percentage of maximum HP dealt. */
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="216" name="echoDamage threat gain" tags="nobr" position="725,2725" size="100,100">/* Default: Dragon Age style. Attacker gains threat equal to the percentage of maximum HP dealt. */
 &lt;&lt;set _threatGain = 1 * ($dmg / target().maxHP)&gt;&gt;
-&lt;&lt;run target().threat.inc(subject().name,_threatGain)&gt;&gt;</tw-passagedata><tw-passagedata pid="220" name="Tick Formula" tags="nobr" position="1225,2725" size="100,100">&lt;&lt;run console.assert(subject() instanceof Actor,`ERROR in Tick Formula: no subject`)&gt;&gt;
+&lt;&lt;run target().threat.inc(subject().name,_threatGain)&gt;&gt;</tw-passagedata><tw-passagedata pid="217" name="Tick Formula" tags="nobr" position="850,2725" size="100,100">&lt;&lt;run console.assert(subject() instanceof Actor,`ERROR in Tick Formula: no subject`)&gt;&gt;
 &lt;&lt;run console.assert($action instanceof Action,`ERROR in Tick Formula: no action`)&gt;&gt;
 
-&lt;&lt;set subject().ticks += ($action.recoveryTime - subject().get(StatName(&quot;spd&quot;)))&gt;&gt;</tw-passagedata><tw-passagedata pid="221" name="Wait Formula" tags="nobr" position="100,2850" size="100,100">&lt;&lt;run console.assert(subject() instanceof Actor,`ERROR in Tick Formula: no subject`)&gt;&gt;
+&lt;&lt;set subject().ticks += ($action.recoveryTime - subject().get(StatName(&quot;spd&quot;)))&gt;&gt;</tw-passagedata><tw-passagedata pid="218" name="Wait Formula" tags="nobr" position="975,2725" size="100,100">&lt;&lt;run console.assert(subject() instanceof Actor,`ERROR in Tick Formula: no subject`)&gt;&gt;
 &lt;&lt;run console.assert($action instanceof Action,`ERROR in Tick Formula: no action`)&gt;&gt;
 
 &lt;&lt;set subject().ticks += ($action.waitTime - subject().get(StatName(&quot;spd&quot;)))&gt;&gt;
-&lt;&lt;set subject().ticks = Math.max(1,subject().ticks)&gt;&gt;</tw-passagedata><tw-passagedata pid="222" name="loss of control effects" tags="nobr" position="225,2850" size="100,100">&lt;&lt;set _u = $puppets.find(function (p) { return p &amp;&amp; (p.uncontrollable &amp;&amp; !(!p.active || p.noact || p.dead)); })&gt;&gt;
+&lt;&lt;set subject().ticks = Math.max(1,subject().ticks)&gt;&gt;</tw-passagedata><tw-passagedata pid="219" name="loss of control effects" tags="nobr" position="1100,2725" size="100,100">&lt;&lt;set _u = $puppets.find(function (p) { return p &amp;&amp; (p.uncontrollable &amp;&amp; !(!p.active || p.noact || p.dead)); })&gt;&gt;
 &lt;&lt;if def _u&gt;&gt;
 	&lt;&lt;set $subject = _u&gt;&gt;
 	&lt;&lt;if subject().name == &quot;Mage&quot;&gt;&gt;
@@ -35964,13 +35869,13 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 		&lt;&lt;/if&gt;&gt;
 		&lt;&lt;goto &quot;Action Phase&quot;&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="223" name="special battle lines" tags="nobr" position="350,2850" size="100,100">/* Displays in-between the two party listings in actorlist. */</tw-passagedata><tw-passagedata pid="224" name="Widget: Special Checks" tags="widget nobr" position="475,2850" size="100,100">&lt;&lt;widget &quot;specialcheck&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="220" name="special battle lines" tags="nobr" position="1225,2725" size="100,100">/* Displays in-between the two party listings in actorlist. */</tw-passagedata><tw-passagedata pid="221" name="Widget: Special Checks" tags="widget nobr" position="100,2850" size="100,100">&lt;&lt;widget &quot;specialcheck&quot;&gt;&gt;
 /* Called on the &quot;Player Phase&quot; passage. Use this to direct a player to any special scenes or scenarios you want to occur upon specific triggers, such as a character reacting to another character&#39;s defeat or changing into a different form. */
 
 &lt;&lt;include &quot;loss of control effects&quot;&gt;&gt;
 &lt;&lt;include &quot;delayed actions&quot;&gt;&gt;
 
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="225" name="Stash Phase" tags="battle nobr" position="600,2850" size="100,100">&lt;&lt;replace &quot;#actorlist&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="222" name="Stash Phase" tags="battle nobr" position="225,2850" size="100,100">&lt;&lt;replace &quot;#actorlist&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 &lt;br/&gt;&lt;br/&gt;
 &lt;&lt;if $COMPRESSED_ACTIONS === true&gt;&gt;
@@ -35986,7 +35891,7 @@ Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 &lt;div id=&quot;actionInfo&quot;&gt;
 	&lt;&lt;include &quot;action box default&quot;&gt;&gt;
 &lt;/div&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="226" name="Widget: stashlist" tags="widget nobr" position="725,2850" size="100,100">&lt;&lt;widget &quot;stashlist&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="223" name="Widget: stashlist" tags="widget nobr" position="350,2850" size="100,100">&lt;&lt;widget &quot;stashlist&quot;&gt;&gt;
 &lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Puppet),&quot;ERROR in stashlist: no Puppet&quot;)&gt;&gt;
 &lt;&lt;run console.assert($args[0].stash !== undefined,&quot;ERROR in stashlist: stash is undefined&quot;)&gt;&gt;
 &lt;&lt;set _char = $args[0]&gt;&gt;
@@ -36021,7 +35926,7 @@ Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 	&lt;/div&gt;
 &lt;&lt;/for&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="227" name="User-defined variables" tags="" position="850,2850" size="100,100">/* Appended to the default StoryInit passage. Add any additional code you want here. */
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="224" name="User-defined variables" tags="" position="475,2850" size="100,100">/* Appended to the default StoryInit passage. Add any additional code you want here. */
 
 &lt;&lt;cacheaudio &quot;Happy_8bit_Loop_01&quot; setup.SoundPath+&quot;8bitloop.wav&quot;&gt;&gt; /* This is to set up the audio for the example music in the engine help file. Feel free to remove it. */
 
@@ -36034,7 +35939,7 @@ rpgmaker: (a.get($AttackStat) * 4 - b.get($DefenseStat) * 2) * damper * weight
 divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 */
 
-&lt;&lt;set setup.TURN_MODEL = &quot;action&quot;&gt;&gt;
+&lt;&lt;set setup.TURN_MODEL = &quot;free&quot;&gt;&gt;
 /*
 &quot;Free&quot; = Default. Select character actions in any order.
 &quot;Ranked&quot; = Turn order is determined by Initiative scores.
@@ -36043,8 +35948,8 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 */
 
 /* set TIME_THRESHOLD to an integer to enable threshold for the action time model. */
-&lt;&lt;set setup.TIME_THRESHOLD = 100&gt;&gt;
-
+/*&lt;&lt;set setup.TIME_THRESHOLD = 100&gt;&gt;
+*/
 &lt;&lt;set setup.LEVEL_CAP = 10&gt;&gt;
 
 &lt;&lt;set setup.PORTRAIT_SIZE = 50&gt;&gt; /* Portrait size in px, used for save game display */
