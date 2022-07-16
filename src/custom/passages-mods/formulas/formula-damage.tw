@@ -14,6 +14,8 @@
 		<<set $dmg = $action.base + (setup.base*(_atk/_def))*_w>>
 	<<case "fixed">>
 		<<set $dmg = $action.base>>
+	<<case "fixed w/ mods">>
+		<<set $dmg = $action.base * (1 + (_atk/100)) * (1 - (_def/100))>>
 	<<default>>
 		/* add your own here! */
 <</switch>>

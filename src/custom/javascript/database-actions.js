@@ -31,7 +31,7 @@ Object.assign(setup.actionData, {
 			"nameCD":				null,
 		"element":				null,
 		"target": 				"enemy",
-		"phase": 					"targeting phase",
+		"phase": 					"Targeting Phase",
 		"formula":				null,
 		"info": function (action) {return ``},
 		"desc": ``,
