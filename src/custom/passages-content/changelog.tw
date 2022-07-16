@@ -30,7 +30,7 @@
 <ul><li>Tables of contents in the documentation now use unordered lists instead of blockquotes.</li>
 <li>Headers are now underlined and no longer have a large gap underneath them.</li></ul>
 <li>Moved <code>effectFunctions</code> to the <code>effect-manager</code> file. Renamed <code>class-actor</code>, <code>class-effect</code>, and <code>effect-manager</code> to ensure they compile in the correct order after this change.</li>
-<li>Streamlined tiebreaker functionality for initiative models. It is now a JavaScript function that can be passed to <code>Array.sort</code>, and is run after <code>allActors</code>.
+<li>Streamlined tiebreaker functionality for initiative models. It is now a JavaScript function that can be passed to <code>Array.sort</code>, and is run after <code>allActors</code>.</li>
 <li>Action animations will no longer be partially transparent if the target is inactive.</li>
 <li>Passing "cancelAction" to <code>targetMod</code> will now correctly identify the presence of <code>delayedAction</code>s.</li>
 <li>Tweaked the logic function <code>checkActions</code> to use actions instead of strings in its check function, as well as implementing a safeguard if a non-function was passed.</li>
