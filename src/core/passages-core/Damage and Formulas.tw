@@ -7,9 +7,6 @@
 	<<set _target = $target>>
 <</if>>
 
-<<set _atk = ($subject.get(StatName("atk")) * (1 - $action.useSpecial)) + ($subject.get(StatName("spc")) * $action.useSpecial)>>
-<<set _def = $subject.get(StatName("def"))>>
-
 /* base damage */
 <<include "damageCalc formula">>
 
@@ -119,7 +116,7 @@
 <<run console.assert($target instanceof Actor,"ERROR in echoDamage: invalid target")>>
 <<set _dmgMods = $args>>
 
-<<if def $bestiary && target() instanceof Enemy && $action.element>>
+<<if def $bestiary && def $bestiary.fetch(target().name) && $action.element>>
 	<<set $bestiary.fetch(target().name).statsKnown[$action.element] = true>>
 <</if>>
 

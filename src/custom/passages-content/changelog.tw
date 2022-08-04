@@ -11,15 +11,34 @@
   <li>New <code>setup</code> variables:</li>
   <ul><li><code>DUPLICATE_ITEMS</code>: Boolean that determines if multiple stacks of the same item are allowed in Inventories.</li>
   <li><code>REMOVE_ITEMS</code>: Boolean that determines if items falling to 0 stock are removed from Inventories.</li></ul></ul>
+<li>Equipment slots have also been restructured into an array, with corresponding tweaks to associated methods. This should (hopefully) make it easier to reference and modify equipment slots.</li>
+  <ul><li>Equipment slots can now have the <code>locked</code> property, which prevents them from being unequipped without an <code>unlock</code> argument passed to <code>unequip</code>.</li>
+  <li>The <code>slot</code> property of <code>Items</code> has been renamed to <code>slots</code>, and can now be an array naming multiple valid slots. A getter for <code>slots</code> has been added to access this property easily and guard against invalid data types.</li>
+  <li>Multi-slot equipment is now governed by a Boolean <code>multislot</code> property in <code>equippable</code>.</li>
+  <li>Equipment is now applied by selecting the desired slot, rather than the character. This allows equipment to have multiple valid slots.</li>
+  <li>New <code>Actor</code> method: <code>hasSlot</code>. Checks if the named slot is present.</li>
+  <li>New <code>Actor</code> method: <code>getEquipment</code>. Returns the equipment in the named slot.</li></ul>
+<li>Element affinities are now stored in a generic object instead of a <code>Map</code>. This will make it easier to access and modify them.</li>
+<li>New <code>Action</code> property: <code>tags</code>. This is an array that can be used to store any additional metadata you desire.</li>
 <li>Added and expanded comments for the <code>Item</code> and <code>Inventory</code> classes.</li>
+<li><code>unequip</code> now returns a value if the unequip failed due to sticky equipment.</li>
 <li>Deleted "custom end of action effects", as it was now redundant with "custom postAction".</li>
 <li>The in-battle "Item" command now generates a header reading "ITEMS" above the item list.</li>
 <li>The in-battle item listing will now display an informative message if you have no usable items.</li>
+<li>The part of the in-menu item display occupied by the use/equip buttons is now separated with a line and colored gray. This should hopefully reduce the perception of empty space for items that don't generate those buttons.</li>
+<li>Tweaked the displays for actions and items. In uncompressed form they now have an upper border to better separate them within a list; item stock is now displayed more prominently; and equipment slots are now displayed in the same manner as action tags, below the description. In compressed form, actions now have solid borders to make each entry more distinct.</li>
 <li>Character blocks in the "Party" tab of the menu will no longer display hidden stats.</li>
-<li>The Skill stat now has defined minimums and maximums in the default StoryInit.</li>
+<li>The Skill stat now has defined minimums and maximums by default.</li>
 <li>Fixed several graphical glitches involving listing items in battle.</li>
 <li>Actor boxes will no longer attempt to display EN if the actor does not have any.</li>
-<li>Long overdue fix: Folded <code>core-enemies.js</code> into <code>database-enemies.js</code>.</li>
+<li>Characters will no longer have a Crisis section in their status menu if they have no Crisis abilities.</li>
+<li>Long overdue fix: Folded <code>core-enemies.js</code> into <code>database-enemies.js</code> and <code>core-effects.js</code> into <code>database-effects.js</code>.</li>
+<li>Calculations involving the Special stat have been moved from the core damage calculation program to the custom one. This avoids creating errors if the Special stat doesn't exist.</li>
+<li>Action weight will now return 1 by default instead of 0, fixing the problem of zeroing any damage calculated if you neglected to set a weight. Not sure why I didn't do it that way to begin with.</li>
+<li>The Evasion stat will now default to 0 for new <code>Actors</code> rather than the minimum defined Evasion.</li>
+<li>Reorganized <code>StoryInit</code> to move most variables into the custom version of the file, and rearranged them into a more logical order. You should no longer have to jump back and forth between two files to figure out what has and hasn't been defined.</li>
+<li>Reorganized and compartmentalized most of the party menu widgets so that they are now stored in the same file as the relevant passages.</li>
+<li>Removed the <code>B.targeting</code> variable and replaced it with the <code>action.target</code> property.</li>
 </ul>
 
 <h3>Version 4.03</h3>

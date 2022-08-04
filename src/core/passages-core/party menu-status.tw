@@ -63,14 +63,9 @@
 <<switch setup.STATUS_SCREENS.menu[_stScreen-1]>>
 <<case "equipment">>
 	<div style="margin-left:1em;">
-	<<for _name, _slot range $subject.equipment>>
-		<<for _index, _item range _slot>>
-			<div class="menuactor-equipment-slot">_name</div>
-			<<if _item === null>><span class="menuactor-equipment-name">&nbsp;</span>
-			<<else>>
-				<div class="menuactor-equipment-name">_item.name</div>
-			<</if>>
-		<</for>>
+	<<for _slot range _puppet.equipment>>
+		<div class="menuactor-equipment-slot">_slot.name</div>
+		<<equipSlotDisplay _slot.item>>
 	<</for>>
 	</div>
 <<case "elements">>
@@ -135,7 +130,7 @@
 
 <<run console.assert($args.length > 0 && ($args[0] instanceof Puppet),"ERROR in actionListMenu: no Puppet")>>
 <<set _char = $args[0]; _actions = _char.actions>>
-<<if _char.crisis instanceof Array>>
+<<if _char.crisis instanceof Array && _char.crisis.length > 0>>
 	<div class="abilities-header">CRISIS</div>
 	<<for _action range _char.crisis>>
 		<div class="actionDisplay">
@@ -205,6 +200,18 @@
 <</if>>
 <</for>>
 <</liveblock>>
+<</widget>>
+
+:: Actor Action Use [widget nobr]
+<<widget "ActorNameUse">>
+<<set _p = $args[0]>>
+<<link _puppet.name>>
+	<<notify "menu" 3s>><<print $action.onUse(_puppet)>><</notify>>
+	<<unset $subject, $action>>
+	<<replace "#partydisplay">>
+		<<include "status party display">>
+	<</replace>>
+<</link>>
 <</widget>>
 
 :: action use puppets [nobr]

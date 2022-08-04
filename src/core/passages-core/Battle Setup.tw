@@ -1,6 +1,6 @@
 :: Widget: backbtn[widget nobr]
 <<widget "backbtn">>
-<span class="btn back right" id="battlebackbtn">[[Back [R]|Player Phase][$B.phase = "selection"; $B.targeting = null; $action = null; $target = null; $subject = null; $removed_effects = [];]]</span>
+<span class="btn back right" id="battlebackbtn">[[Back [R]|Player Phase][$B.phase = "selection"; $action = null; $target = null; $subject = null; $removed_effects = [];]]</span>
 <</widget>>
 
 :: Widget: endRound[widget nobr]
@@ -124,28 +124,30 @@
 <<widget "itemList">>
 <<set _char = ($args[0] || subject())>>
 <<run console.assert(_char instanceof Puppet,"ERROR in itemList: no Puppet")>>
-<<set _inv = (_char.inventory || inv())>>
-<<for _name, _item range _inv>>
-<<if _item.usable.includes("inbattle") && _item.action instanceof Action>>
-	<<set _action = _item.action>>
-	<<set _actionID = "item_"+_name.split(' ').join('_')>>
-	<div @id="_actionID" class="actionDisplay">
-		<<if setup.COMPRESSED_ACTIONS === true>>
-			<<print _action.printCompressed()>>
-		<<else>>
-			<<print _action>>
-		<</if>>
-		<<capture _action, _actionID>>
-		<<timed 0s>>
-			<<set _selector = "#"+_actionID+" .action-name">>
-			<<replace _selector>>
-				<<actionName _action>>
-			<</replace>>
-		<</timed>>
-		<</capture>>
-	</div>
+<<set _inv = (_char.inventory || inv()); _inv.filter(item => (item.usable.includes("inbattle") && item.action instanceof Action))>>
+<<if _inv.length === 0>>
+	<center style="font-weight:bold">No usable items!</center>
+<<else>>
+	<<for _item range _inv>>
+		<<set _action = _item.action>>
+		<<set _actionID = "item_"+_item.name.split(' ').join('_')>>
+		<div @id="_actionID" class="actionDisplay">
+			<<if setup.COMPRESSED_ACTIONS === true>>
+				<<print _action.printCompressed()>>
+			<<else>>
+				<<print _action>>
+			<</if>>
+			<<capture _action, _actionID>>
+			<<timed 0s>>
+				<<set _selector = "#"+_actionID+" .action-name">>
+				<<replace _selector>>
+					<<actionName _action>>
+				<</replace>>
+			<</timed>>
+			<</capture>>
+		</div>
+	<</for>>
 <</if>>
-<</for>>
 <</widget>>
 
 :: Widget: actionName [widget nobr]
@@ -208,14 +210,11 @@
 		<<if !$action.nosave>>
 			<<set $subject.lastAction = $action.name>>
 		<</if>>
-		<<set $B.targeting = _action.target>>
 		<<set $B.noself = _action.noself>>
 		<<if _action.phase is "Confirm Phase">>
 			<<set $target = null>>
-			<<set $B.targeting = null>>
 		<<elseif _action.phase is "Spell Phase">>
 			<<set $B.mincost = _action.cost>>
-			<<set $B.targeting = null>>
 		<</if>>
 		<<replace "#actorlist">><<include "actorlist">><</replace>>
 		<<replace "#phase">><<include _action.phase>><</replace>>

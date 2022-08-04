@@ -1,16 +1,10 @@
 :: Confirm Text [nobr]
 /* Displayed on the confirm phase. Recommended to repeat the action's name and provide some useful information. Custom text for certain actions can also be added. */
 
-<<print $subject.name>> will
-
-<<if $action.name is "rest">>
-	<b>rest</b> this turn.
-<<elseif $action.name is "struggle">>
-	spend <<print setup.STRUGGLE_COST>> Energy to get back on <<print subject().their>> feet.
+<<if $action.confirmText>>
+	<<print $action.confirmText>>
 <<elseif $action.item is true>>
-	use <<switch $action.name.first().toLowerCase()>><<case 'a' 'e' 'i' 'o' 'u'>>an<<default>>a<</switch>> $action.name.
-<<elseif $action.name is "spare">>
-	accept the enemy's surrender.
+	<<print $subject.name>> will use <<switch $action.name.first().toLowerCase()>><<case 'a' 'e' 'i' 'o' 'u'>>an<<default>>a<</switch>> $action.name.
 <<else>>
-	use <b>$action.name</b><<if $target isnot null>> on <b>$target.name</b><</if>>.
+	<<print $subject.name>> will use <b>$action.name</b><<if $target isnot null>> on <b>$target.name</b><</if>>.
 <</if>>

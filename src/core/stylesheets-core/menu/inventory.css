@@ -22,13 +22,20 @@
 	float: right;
 }
 
+#menu-display.inventory {
+	border-radius: 1em 1em 0 0;
+	height: 120px;
+	padding: 1em 1em 0 1em;
+	margin-bottom: 0;
+}
+
 .itemstock-detail {
   position: absolute;
-  right:2em;
-  top:1px;
-  font-size:12px;
-  max-height:2em;
+  right: 1em;
+  top: 1px;
+  max-height: 2em;
   overflow: hidden;
+	font-weight: bold;
 }
 
 .item-equippable {
@@ -44,8 +51,18 @@
 	line-height: 1;
 }
 
+.item-buttons-container {
+	padding-top: 4px;
+	padding-bottom: 4px;
+	height: 28px;
+	background-color: silver;
+	border: 2px solid;
+	border-top: 0;
+	border-radius: 0 0 1em 1em;
+	margin-bottom: 0.5em;
+}
+
 .item-buttons {
 	display: flex;
 	justify-content: space-evenly;
-	margin-top: 0.5em;
 }

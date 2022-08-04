@@ -21,11 +21,16 @@ window.Actor = class Actor {
 				"flat": new Stat(0),
 				"percent": new Stat(0)
 			}
-			this.elements = new Map();
+			this.elements = {};
 			if (setup.ELEMENT_LIST !== undefined){
 				setup.ELEMENT_LIST.forEach(function(x) {
-					this.elements.set(x,{"percent": new Stat(1), "flat": new Stat(0)});
+					this.elements[x] = {"percent": new Stat(1), "flat": new Stat(0)};
 				}, this);
+				if (this.data.elements) {
+					for (let [pn,v] of Object.entries(this.data.elements)) {
+						this.elements[pn].percent.base = v;
+					}
+				}
 			}
 			this.tolerances = new Map();
 			if (setup.effectData !== undefined){
@@ -33,7 +38,6 @@ window.Actor = class Actor {
 					this.tolerances.set(x,new Tolerance(0));
 				}, this);
 			}
-			if (this.data.elements) { this.setElements(Object.entries(this.data.elements),"percent"); }
 			if (this.data.tolerances) { this.setTol(Object.entries(this.data.tolerances)); }
 
 			this._maxHP = new Stat(this.data.hp);
@@ -53,12 +57,12 @@ window.Actor = class Actor {
 			}
 			this.stats = {};
 			for (let [pn,v] of Object.entries(setup.statInfo)) {
-				if (pn === "Speed") {
-					console.log(`generating Speed stat for ${this.name}`); console.log(StatMin(pn));
-				}
 				switch (pn) {
 					case 'Accuracy':
 						this.stats[pn] = new Stat(100);
+						break;
+					case 'Evasion':
+						this.stats[pn] = new Stat(0);
 						break;
 					default:
 						this.stats[pn] = new Stat(StatMin(pn));
@@ -84,14 +88,18 @@ window.Actor = class Actor {
 			this.dmgreflection = 0;
 			this.noMinimum = [];	// stats that do not have minimums for this character; used by some effects
 
-			this.equipment = new Map();
+			this.equipment = [];
 			var equipData;
 			equipData = (typeof(this.equipSlots) == "object")
 				? equipData = this.equipSlots
 				: equipData = setup.DEFAULT_EQUIP_SLOTS;
 
 			for (let [pn,v] of Object.entries(equipData)) {
-				this.equipment.set(pn,new Array(v).fill(null));
+				console.assert(Number.isInteger(v) && v > 0,`ERROR constructing Actor: equipData has non-whole numbers`);
+				for (let i = 1; i <= v; i++) {
+					let slot = { name: pn, id: i, item: null, locked: false };
+					this.equipment.push(slot);
+				}
 			}
 
 			if (pos instanceof Array) {
@@ -524,13 +532,15 @@ window.Actor = class Actor {
 
 	getElement (needle,type) {
 		if (type === undefined) {
-			return this.elements.get(needle);
+			return this.elements[needle];
 		} else {
-			return this.elements.get(needle)[type].current
+			return this.elements[needle][type].current
 		}
 	}
 
 	setElements (array,type) {
+		// DEPRECIATED as of v5.00. The new object format for elemental affinities renders this unnecessary.
+
 		// Easy way to set base elemental affinities. Takes an array of arrays that each contain two elements, the name of the effect and the base value. Pass the second argument to denote if you are setting flat or percent rates.
 		if (type === undefined || typeof(type) !== 'string') {
 			console.log("ERROR in setElements: no type defined");
@@ -654,107 +664,176 @@ window.Actor = class Actor {
 
 	// EQUIPMENT FUNCTIONS
 
-	unequip (slot,index = 0,mods = {}) {
-		console.assert(typeof(slot) == "string",`ERROR in unequip: slot must be string`);
-		console.assert(Number.isInteger(index) && index >= 0,"ERROR in unequip: index must be whole integer");
-		console.assert(this.equipment.has(slot),`ERROR in unequip: attempted to unequip nonexistent slot`);
+	hasSlot (slot,index) {
+		// Checks if the Actor has an equipment slot with the provided name.
+		// May optionally check for a subslot as well with the "index" argument.
+		// Returns Boolean based on the result of searching for the slot.
 
-		var item = this.equipment.get(slot)[index];
-		if (item instanceof Filler) {
-			console.log(this.equipment.values());
-			var multislot = Array.from(this.equipment.values()).flat().find(function (i) { return (i instanceof Item) && i.id === item.id });
-			this.unequip(Array.from(multislot.equippable.slot)[0]);
+		console.assert(typeof(slot) == "string",`ERROR in hasSlot: slot must be string`);
+		if (index !== undefined) {
+			console.assert(Number.isInteger(index) && index >= 1,"ERROR in getEquipment: index must be whole integer");
+			return this.equipment.find(e => (e.name === slot && e.id === index)) ? true : false;
+		} else {
+			return this.equipment.find(e => e.name === slot) ? true : false;
 		}
-		else if (item !== null && (!item.sticky || mods.unsticky === true)){
+	}
+
+	getEquipment (slot,index=1) {
+		console.assert(typeof(slot) == "string",`ERROR in getEquipment: slot must be string`);
+		console.assert(Number.isInteger(index) && index >= 1,"ERROR in getEquipment: index must be whole integer");
+		let eq = this.equipment.find(e => (e.name === slot && e.id === index));
+		return eq ? eq.item : null;
+	}
+
+	unequip (name,index = 1,mods = {}) {
+		console.assert(typeof(name) == "string",`ERROR in unequip: name must be string`);
+		console.assert(Number.isInteger(index) && index >= 1,"ERROR in unequip: index must be whole integer");
+		var slot = this.equipment.find(e => (e.name === name && e.id === index));
+		console.assert(slot !== undefined,`ERROR in unequip: attempted to unequip nonexistent name`);
+
+		if (slot.locked && !mods.unlock) {
+			console.log("Unequip result for "+this.name+": Slot "+name+" is locked. Remember to pass the unlock property to the mods argument if you wish to unequip a locked slot.")
+			return false;
+		}
+
+		var item = slot.item;
+		if (item instanceof Filler) {
+			// If the equipment slot holds a Filler object, it's tied to a multi-slot
+			//	item. Find the source item and unequip that instead.
+			// Filler objects hold the name of their source object for this purpose.
+			// Note that we have to check that a given slot's item exists before
+			//	we try to read its name, because attempting to access a property
+			//	of a null value will create an error.
+			let sourceSlot = this.equipment.find(e => (e.item && e.item.name === item.name));
+			// It's possible the find failed and returned undefined. Execute
+			//	an assertion to catch this case.
+			console.assert(sourceSlot !== undefined,`ERROR in unequip: Filler source does not exist`);
+			this.unequip(sourceSlot.name,sourceSlot.id);
+		}
+		else if (item instanceof Item && (!item.sticky || mods.unsticky === true)) {
+			// Standard branch. If the slot holds an Item object, as expected,
+			//	remove it from the slot and return it to inventory.
+			// Sticky items cannot be removed unless the unsticky mod is passed.
 			if (item.default === undefined && mods.destroy !== true) {
-				inv().addItem(item.id);
+				// Return the item to inventory, unless it is "default" equipment
+				//	or the destroy mod is passed.
+				(item.uses < item.maxUses)
+					? inv().addItem(item)
+					: inv().addItem(item.name);
 			}
 			if (item.onRemove !== undefined) {
 				item.onRemove(this);
 			}
-			this.equipment.get(slot)[index] = null;
+			slot.item = null;
 
-			// If your system always has to read something in an equipment slot, such as if you wish to calculate equipment effects through a call function or iterator, define default item names in DEFAULT_EQUIPMENT. Remember to define default equipment in the items database.
+			// If your system always has to read something in an equipment name, such as if you wish to calculate equipment effects through a call function or iterator, define default item names in DEFAULT_EQUIPMENT. Remember to define default equipment in the items database.
 			if (typeof(setup.DEFAULT_EQUIPMENT) === "object") {
-				console.assert(typeof(setup.DEFAULT_EQUIPMENT[slot]) === "string","ERROR in unequip: no default equipment specified for "+slot);
-				this.equipment.get(slot)[index] = new Item(setup.DEFAULT_EQUIPMENT[slot]);
+				console.assert(typeof(setup.DEFAULT_EQUIPMENT[name]) === "string","ERROR in unequip: no default equipment specified for "+name);
+				this.equip(new Item(setup.DEFAULT_EQUIPMENT[name]));
 			}
 
-			if (item.equippable.slot instanceof Set) {
+			if (item.equippable.multislot) {
 				// If item was equipped to multiple slots, we have to clear all the other slots it covered.
-				for (let slotName of item.equippable.slot) {
-					var pos = this.equipment.get(slotName);
-					for (let i = 0; i < pos.length; i++) {
-						pos[i] = null;
+				for (let s of this.equipment) {
+					if (s.item instanceof Filler && s.name === item.name) {
+						s.item = null;
+						if (typeof(setup.DEFAULT_EQUIPMENT) === "object") {
+							console.assert(typeof(setup.DEFAULT_EQUIPMENT[s.name]) === "string","ERROR in unequip: no default equipment specified for "+s.name);
+							this.equip(new Item(setup.DEFAULT_EQUIPMENT[s.name]));
+						}
 					}
 				}
 			}
+		} else {
+			// Default branch for unexpected results. Log error message.
+			console.log("Unequip result for "+this.name+": Slot "+name+" held unexpected object type or equipment was sticky. Remember to pass unsticky to the mods argument to remove sticky equipment.");
+			return false;
 		}
 	}
 
 	unequipAll (mods) {
-		this.equipment.forEach(function (slot,name) {
-			slot.forEach(function(subslot,index) {
-				this.unequip(name,index,mods);
-			}, this);
-		}, this);
+		for (let s of this.equipment) {
+			this.unequip(s.name,s.id,mods);
+		}
 	}
 
-	equip (item) {
-		// To equip an item, we also have to de-equip the existing item and return it to the inventory (unless you want players to lose replaced equipment). This function checks that the equipment slot exists and that it's filled by something. If it is, the current equipment is extracted and added to the inventory before we set the new equipment.
+	equip (item,slot) {
+		// item: Item object, to be equipped.
+		// slot [optional]: object or string.
+		//	If string, must correspond to a valid equipment slot name.
+		//	If object, it is assumed it is an equipment slot from the Actor.
+		//	If unused, will default to the first slot listed in item's "slots" property.
+		//	Item will be equipped to this slot.
+		// To equip an item, we also have to de-equip the existing item and return it to the inventory (unless you want players to lose replaced equipment). This function checks that the equipment slot exists and if it's filled by something. If it is, the current equipment is extracted and added to the inventory before we set the new equipment.
 		// If the item has any special equipment functionality, such as modifying stats, its onEquip function is passed the actor to modify.
+		console.assert(item instanceof Item,`ERROR in equip: cannot equip non-Item object`);
 		console.assert(typeof(item.equippable) == "object","ERROR in equip: Item has no equippable property");
-		if (item.equippable.slot instanceof Set) {
-			var slotList = item.equippable.slot;
-			for (let slot of slotList) {
-				console.assert(this.equipment.has(slot),"ERROR in equip: Equipment type not recognized");
+		if (item.equippable.multislot) {
+			// Multislot equipment branch: Must equip item to the first slot in
+			//	its list and fill the rest with Filler objects.
+			// Check: Does this Actor have all needed slots?
+			for (let s of item.slots) {
+				console.assert(this.hasSlot(s),`ERROR in equipping ${item.name} to ${this.name}: Equipment slot not recognized`);
 			}
-			for (let [s,slot] of Array.from(slotList).entries()) {
-				var pos = this.equipment.get(slot);
-				for (let i = 0; i < pos.length; i++) {
-					this.unequip(slot,i);
-					pos[i] = (s > 0 || i > 0) ? new Filler(item.id) : item;
-				}
+			// Check: Are any of the slots unequippable? If yes, terminate method
+			//	and return false.
+			if (this.equipment.find(e => item.slots.includes(e.name) && e.locked || (e.item && e.item.sticky))) {
+				return false;
 			}
+			this.equipment.filter(e => item.slots.includes(e.name)).forEach(function(s,i) {
+				this.unequip(s.name,s.id);
+				s.item = (i > 0) ? new Filler(item.name) : item;
+			},this);
 		} else {
-			console.assert(this.equipment.has(item.equippable.slot),"ERROR in equip: Equipment type not recognized");
-			var slot = this.equipment.get(item.equippable.slot);
-			var existing = null;
-			var subslot = -1;
-			// Run over the equipment subslots and find the first one that is empty (contains null)
-			for (let i = 0; i < slot.length; i++) {
-				if (slot[i] === null) {
-					subslot = i;
-					break;
+			var slotName;
+			if (slot === undefined) {
+				slotName = item.slots[0];
+			} else if (typeof(slot) === "object") {
+				slotName = slot.name;
+			} else if (typeof(slot) === "string") {
+				slotName = slot;
+			}
+			console.assert(this.hasSlot(slotName),`ERROR in equipping ${item.name} to ${this.name}: Equipment slot not recognized`);
+			var targetSlot;
+			if (typeof(slot) === "object") {
+				// If slot argument was an object, we'll assume it's a valid
+				//	target slot.
+				targetSlot = slot;
+			} else {
+				// Otherwise, check all slots to see if there's a valid open slot.
+				targetSlot = this.equipment.find(s => s.name === slotName && s.item === null);
+				// If this results in undefined, all slots occupied. Set target to
+				//	the last instance of slot with this name.
+				if (targetSlot === undefined) {
+					targetSlot = this.equipment.findLast(s => s.name === slotName);
 				}
 			}
-			// If no empty subslot found (still -1), all subslots are occupied. Grab the item in the last subslot so we can unequip it.
-			if (subslot === -1) {
-				subslot = slot.length-1;
-				existing = slot[subslot];
+
+			// Check if targetSlot is already occupied and unequip it if so.
+			if (targetSlot.item !== null) {
+				let test = this.unequip(targetSlot.name,targetSlot.id);
+				// Check to make sure the unequip went through. If the target slot
+				//	was sticky, it will return false. Return false here as well.
+				if (test === false) return false;
 			}
-			// If an item is already equipped in this slot, unequip it.
-			if (existing !== null) this.unequip(item.equippable.slot,subslot);
 
 			// Assign the item to the slot.
-			slot[subslot] = item;
+			targetSlot.item = item;
 		}
 
-		if (item.onEquip !== undefined){
+		if (item.onEquip instanceof Function){
 			item.onEquip(this);
 		}
-		if (inv() instanceof Inventory && inv().has(item.id)){
-			inv().decItem(item.id);
+		if (inv() instanceof Inventory && inv().getById(item.id)){
+			inv().decItem(inv().getById(item.id));
 		}
 	}
 
 	hasEquipped (name) {
 		var result = false;
-		for (let [slot,item] of this.equipment) {
-			for (let subitem of item) {
-				if (subitem !== null && subitem.id == name) {
-					return true;
-				}
+		for (let slot of this.equipment) {
+			if (slot.item instanceof Item && slot.item.name === name) {
+				return true;
 			}
 		}
 		return result;
@@ -762,13 +841,11 @@ window.Actor = class Actor {
 
 	hasCursedItem () {
 		var result = false;
-		this.equipment.forEach(function (slot,name) {
-			slot.forEach(function (subitem) {
-				if (subitem !== null && subitem.sticky === true) {
-					result = true;
-				}
-			});
-		});
+		for (let slot of this.equipment) {
+			if (slot.item instanceof Item && slot.item.sticky === true) {
+				return true;
+			}
+		}
 		return result;
 	}
 

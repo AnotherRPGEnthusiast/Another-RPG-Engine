@@ -2,7 +2,9 @@
 	overflow-y: auto;
 	padding-right: 1em;
 	max-height: 60vh;
+	border-bottom: 1px solid;
 }
+
 .menuactor-equipment-slot {
 	font-weight:bold;
 	color:gray;

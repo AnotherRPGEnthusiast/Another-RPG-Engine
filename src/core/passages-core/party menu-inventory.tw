@@ -1,11 +1,11 @@
 :: Menu: Inventory[menu battle noreturn]
 <span id="content" class="menu"><<nobr>>
 <<set _filter = "all">>
-<div id="menu-display" class="relative">
+
 <<liveblock>>
 <<include "inventory item display">>
 <</liveblock>>
-</div>
+
 <div id="itemlist">
 <<include "inventory item list">>
 </div>
@@ -42,7 +42,7 @@
 <br/>
 <div class="itemcontainer">
 <<set _p = 2>>
-<<for _name, _item range inv()>>
+<<for _item range inv()>>
 	<<if _filter == "all" || (_filter == "usable" && _item.usable.includes("inmenu")) || (_filter == "equipment" && _item.equippable)>>
 	<<if _p == 1>>
 		<<set _p = 2>>
@@ -52,7 +52,7 @@
 	<div @class="'item'+_p">
 	<b>
 	<<capture _item>>
-	<<link _item.name>>
+	<<link _item.displayName>>
 		<<set _display = _item>>
 		<<update>>
 	<</link>>
@@ -65,37 +65,45 @@
 
 :: inventory item display[nobr]
 <<if ndef _display || _display === null>>
-	<div class="centered" style="color: gray">Click on an item to see info</div>
-<<else>>
-	<<print _display>>
-	<<if _display.usable.includes('inmenu') || _display.equippable>>
-	<div class="item-buttons">
-		<<set _b = 0>>
-		<<if _display.usable.includes('inmenu') && _display.stock > 0>>
-			<<set _b++>>
-			<span @id="'button'+_b">
-				<span id="usebutton">
-				<<include "inventory use button">>
-				</span>
-			</span>
-		<</if>>
-		<<if _display.equippable && _display.stock > 0>>
-			<<set _b++>>
-			<span @id="'button'+_b">
-				<span id="equipbutton">
-				<<include "equip button">>
-				</span>
-			</span>
-		<</if>>
-		<<if def _event>>
-			<span id="button1">
-				<span id="cancelbutton">
-				<<include "inventory cancel button">>
-				</span>
-			</span>
-		<</if>>
+	<div id="menu-display" class="relative inventory">
+		<div class="centered" style="color: gray">Click on an item to see info</div>
 	</div>
-	<</if>>
+	<div class="item-buttons-container">
+	</div>
+<<else>>
+	<div id="menu-display" class="relative inventory">
+		<<print _display>>
+	</div>
+	<div class="item-buttons-container">
+		<div class="item-buttons">
+		<<if _display.usable.includes('inmenu') || _display.equippable>>
+			<<set _b = 0>>
+			<<if _display.usable.includes('inmenu') && _display.stock > 0>>
+				<<set _b++>>
+				<span @id="'button'+_b">
+					<span id="usebutton" class="white-button">
+					<<include "inventory use button">>
+					</span>
+				</span>
+			<</if>>
+			<<if _display.equippable && _display.stock > 0>>
+				<<set _b++>>
+				<span @id="'button'+_b">
+					<span id="equipbutton" class="white-button">
+					<<include "equip button">>
+					</span>
+				</span>
+			<</if>>
+			<<if def _event>>
+				<span id="button1">
+					<span id="cancelbutton">
+					<<include "inventory cancel button">>
+					</span>
+				</span>
+			<</if>>
+		<</if>>
+		</div>
+	</div>
 <</if>>
 
 :: equip button[nobr]
@@ -130,9 +138,26 @@
 <</button>>
 <span class="monospace" style="font-size:85%">[R]</span>
 
+:: Actor Display Inventory[widget nobr]
+/* On the inventory screen, characters may be displayed when EQUIPPING or USING items. When using items, the character name is clicked to perform the relevant function. The inventory screen must be updated afterwards to reflect the change. */
+<<widget "ActorNameInv">>
+<<set _puppet = $args[0]>>
+<<switch _event>>
+	<<case "use">>
+		<<link _puppet.name>>
+			<<notify "menu" 3s>><<print _display.onUse(_puppet)>><</notify>>
+			<<unset _display>><<unset _event>>
+			<<update>>
+			<<replace "#itemlist">><<include "inventory item list">><</replace>>
+		<</link>>
+	<<default>>
+		<<print _puppet.name>>
+<</switch>>
+<</widget>>
+
 :: inventory puppets[nobr]
 <<set _HPmeters = []>>
 <<set _MPmeters = []>>
-<<for _i, _p range puppets().filter(function(p) { return temporary().event != "equip" || (!p.lockEquipment && p.checkRestriction(temporary().display)); })>>
+<<for _i, _p range puppets().filter(function(p) { return temporary().event == "use" || (!p.lockEquipment && p.checkRestriction(temporary().display)); })>>
 	<<actorDisplay _p "inventory">>
 <</for>>

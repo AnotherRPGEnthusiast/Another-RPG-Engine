@@ -156,6 +156,9 @@ const StatName = function (statName) {
 			case 'acc':
 				statName = "Accuracy";
 				break;
+			case 'crt':
+				statName = "Crit";
+				break;
 		}
 		return setup.STAT_NAMES[statName];
 	} else {

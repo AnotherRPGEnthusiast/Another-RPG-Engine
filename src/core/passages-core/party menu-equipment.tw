@@ -1,12 +1,3 @@
-:: Widget: unequipAll [widget nobr]
-<<widget "unequipAll">>
-<<link "Unequip All">>
-	<<for _puppet range puppets().concat($Reserve_Puppets).filter(function(p){ return !p.lockEquipment; })>>
-		<<run _puppet.unequipAll()>>
-	<</for>>
-	<<goto `passage()`>>
-<</link>>
-<</widget>>
 :: Menu: Equipment[menu battle noreturn]
 <span id="content" class="menu"><<nobr>>
 <div id="puppets">
@@ -18,9 +9,122 @@
 <</nobr>>
 </span>
 
+:: Widget: actorEquipDisplay [widget nobr]
+<<widget "actorEquipDisplay">>
+/* Standardized display for character's entire equipment list. */
+<<set _puppet = $args[0]>>
+<div class="menuactor-equipment small-display">
+<<for _slot range _puppet.equipment>>
+	<div class="menuactor-equipment-slot">
+		<<if passage() === "Menu: Inventory" && _event == "equip" && _display.slots.includes(_slot.name)>>
+			<<capture _slot, _puppet>>
+			<<link _slot.name>>
+				<<if _slot.locked>>
+					<<notify "menu warning" 3s>><<print setup.LOCKED_SLOT_MESSAGE>><</notify>>
+				<<elseif _slot.item && _slot.item.sticky>>
+					<<notify "menu warning" 3s>><<print setup.STICKY_EQUIP_MESSAGE>><</notify>>
+				<<else>>
+					<<run _puppet.equip(_display,_slot)>>
+					<<unset _display>><<unset _event>>
+					<<update>>
+					<<replace "#itemlist">><<include "inventory item list">><</replace>>
+				<</if>>
+			<</link>>
+			<</capture>>
+		<<elseif passage() === "Menu: Equipment" && (ndef _slotToEquip || !(_slot.name === _slotToEquip.name && _slot.id === _slotToEquip.id))>>
+			<<capture _slot, _puppet>>
+			<<link _slot.name>>
+				<<if _slot.locked>>
+					<<notify "menu warning" 3s>><<print setup.LOCKED_SLOT_MESSAGE>><</notify>>
+				<<elseif _slot.item && _slot.item.sticky>>
+					<<notify "menu warning" 3s>><<print setup.STICKY_EQUIP_MESSAGE>><</notify>>
+				<<else>>
+					<<set $subject = _puppet; _slotToEquip = _slot>>
+					<<replace "#puppets">><<include "equip manager puppets">><</replace>>
+					<<replace "#equipment-list">><<include "equipment list">><</replace>>
+				<</if>>
+			<</link>>
+			<</capture>>
+		<<else>>
+			<<print _slot.name>>
+		<</if>>
+	</div>
+	<<equipSlotDisplay _slot.item>>
+<</for>>
+</div>
+<</widget>>
+
+:: Widget: equipSlotDisplay [widget nobr]
+<<widget "equipSlotDisplay">>
+/* Standardized display for a single instance of character equipment. By default, this displays below the slot name itself. Assume called within actorDisplay, and uses _displayModel for modular functionality.
+
+ARG 0 = equipped item
+*/
+
+<<run console.assert($args[0] instanceof Item || $args[0] === null || $args[0] instanceof Filler,"ERROR in equipSlotDisplay: no item passed")>>
+
+<<set _item = $args[0]>>
+
+<<if _item === null>><span class="menuactor-equipment-name">&nbsp;</span> /* if slot empty, display blank space */
+<<elseif _item instanceof Filler>><span class="menuactor-equipment-name">_item</span>
+<<else>>
+	<div class="menuactor-equipment-name">_item.name<br/>
+	<span class="action-desc">_item.info</span>
+	</div>
+	<span class="unequip-button">
+	<<switch _displayModel>>
+	/* Unequip button displayed here. By default, this is an "[X]" link at the far right of the item name. */
+		<<case "inventory">>
+		/* no unequip feature; display nothing */
+		<<case "decurse">>
+		/* In Decurse, only display unequip if the item is sticky and player can pay the cost. Deduct the cost and refresh the shop screen after click. */
+			<<if $currency >= _decurseCost && !_puppet.lockEquipment && _item.sticky>>
+				<<capture _puppet, _slot>>
+				<<link "[X]">>
+					<<run _puppet.unequip(_slot.name,_slot.id,{unsticky:true})>>
+					<<set $currency -= _decurseCost>>
+					<<update>>
+					<<replace "#business-area" t8n>><<include "decurse-remove">><</replace>>
+				<</link>>
+				<</capture>>
+			<</if>>
+		<<default>>
+		/* Default is party equipment screen. Only display unequip if the item is not sticky and the puppet does not have locked equipment. Remember to pass the subslot index too for subslot equipment. */
+			<<if !_puppet.lockEquipment && !_item.sticky>>
+				<<capture _puppet, _slot>>
+				<<link "[X]">>
+					<<run _puppet.unequip(_slot.name,_slot.id)>>
+					<<replace "#equipment-list">><<include "equipment list">><</replace>>
+					<<replace "#puppets">><<include "equip manager puppets">><</replace>>
+				<</link>>
+				<</capture>>
+			<</if>>
+	<</switch>>
+	</span>
+<</if>>
+
+<</widget>>
+
+:: Widget: unequipAll [widget nobr]
+<<widget "unequipAll">>
+<<link "Unequip All">>
+	<<for _puppet range puppets().concat($Reserve_Puppets).filter(function(p){ return !p.lockEquipment; })>>
+		<<run _puppet.unequipAll()>>
+	<</for>>
+	<<goto `passage()`>>
+<</link>>
+<</widget>>
+
 :: equip manager puppets[nobr]
 <<if def $subject>>
 	<<set _i = "null">>
+	<div style="font-size:150%; text-align:right">
+	<<link "↩">>
+		<<unset $subject>>
+		<<replace "#puppets">><<include "equip manager puppets">><</replace>>
+		<<replace "#equipment-list">><<include "equipment list">><</replace>>
+	<</link>>
+	</div>
 	<<actorDisplay $subject "equipment">>
 <<else>>
 <<for _i, _p range $puppets>>
@@ -29,33 +133,31 @@
 <</if>>
 
 :: equipment list[nobr]
-<<if def $subject && !$subject.lockEquipment>>
+<<if def $subject && def _slotToEquip && !$subject.lockEquipment>>
 	<br/>
 	<div style="line-height:1.4">
 	<<set _count = 0>>
-	<<for _k, _v range inv()>>
-		<<if _v.equippable && _v.stock > 0>>
-			<<set _count++>>
-			<<if (def $subject && $subject.checkRestriction(_v)) || ndef $subject>>
-				<<set _id = _k.split(' ').join('_')>>
-				<div @id="_id">
-				<<print _v>>
-				<<capture _v, _id>>
-				<<timed 0s>>
-				<<if def $subject>>
-					<<set _selector = "#"+_id+" .item-name">>
-					<<replace _selector>>
-						<<link _v.name>>
-							<<run $subject.equip(_v)>>
-							<<replace "#puppets">><<include "equip manager puppets">><</replace>>
-							<<replace "#equipment-list">><<include "equipment list">><</replace>>
-						<</link>>
-					<</replace>>
-				<</if>>
-				<</timed>>
-				<</capture>>
-				</div>
+	<<for _item range inv().filter(item => (item.equippable && item.stock > 0 && item.slots.includes(_slotToEquip.name)))>>
+		<<set _count++>>
+		<<if (def $subject && $subject.checkRestriction(_item)) || ndef $subject>>
+			<<set _id = _item.name.split(' ').join('_')>>
+			<div @id="_id" class="actionDisplay">
+			<<print _item>>
+			<<capture _item, _id>>
+			<<timed 0s>>
+			<<if def $subject>>
+				<<set _selector = "#"+_id+" .item-name">>
+				<<replace _selector>>
+					<<link _item.displayName>>
+						<<run $subject.equip(_item,_slotToEquip)>>
+						<<replace "#puppets">><<include "equip manager puppets">><</replace>>
+						<<replace "#equipment-list">><<include "equipment list">><</replace>>
+					<</link>>
+				<</replace>>
 			<</if>>
+			<</timed>>
+			<</capture>>
+			</div>
 		<</if>>
 	<</for>>
 	<<if _count == 0>>

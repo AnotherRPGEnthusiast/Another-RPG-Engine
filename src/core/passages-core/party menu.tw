@@ -64,53 +64,16 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 <<capture _puppet>>
 <<switch _displayModel>>
 	<<case "inventory">>
-	/* On the inventory screen, characters may be displayed when EQUIPPING or USING items. In both cases, the character name is clicked to perform the relevant function. The inventory screen must be updated afterwards to reflect the change. */
-		<<switch _event>>
-			<<case "equip">>
-					<<link _puppet.name>>
-						<<run _puppet.equip(_display)>>
-						<<unset _display>><<unset _event>>
-						<<update>>
-						<<replace "#itemlist">><<include "inventory item list">><</replace>>
-					<</link>>
-			<<case "use">>
-					<<link _puppet.name>>
-						<<notify "menu" 3s>><<print _display.onUse(_puppet)>><</notify>>
-						<<unset _display>><<unset _event>>
-						<<update>>
-						<<replace "#itemlist">><<include "inventory item list">><</replace>>
-					<</link>>
-			<<default>>
-				<<print _puppet.name>>
-		<</switch>>
+		/* See party menu-inventory.tw for details. */
+		<<ActorNameInv _puppet>>
 	<<case "action">>
-		<<link _puppet.name>>
-			<<notify "menu" 3s>><<print $action.onUse(_puppet)>><</notify>>
-			<<unset $subject, $action>>
-			<<replace "#partydisplay">>
-				<<include "status party display">>
-			<</replace>>
-		<</link>>
+		/* See party menu-status.tw for details. */
+		<<ActorNameUse _puppet>>
 	<<case "decurse">>
 	/* In the decurse menu, the name has no special functionality. Just display it normally. */
 		<<print _puppet.name>>
 	<<case "equipment">>
-	/* In the equipment menu, the character name serves two functionalities: When the full party is displayed, clicking it will select the character; if a character is selected, clicking it will deselect them and return to the full party display. */
-		<<if def $subject>> /* if selector already defined, deselect and refresh screen */
-			<<link _puppet.name>>
-				<<unset $subject>>
-				<<replace "#puppets">><<include "equip manager puppets">><</replace>>
-				<<replace "#equipment-list">><<include "equipment list">><</replace>>
-			<</link>>
-		<<else>> /* if no one selected, select this character and refresh screen */
-			<<capture _i>>
-			<<link _puppet.name>>
-				<<set $subject = _puppet>>
-				<<replace "#puppets">><<include "equip manager puppets">><</replace>>
-				<<replace "#equipment-list">><<include "equipment list">><</replace>>
-			<</link>>
-			<</capture>>
-		<</if>>
+		<<print _puppet.name>>
 	<<default>>
 	/* In the default display, the character name serves two functionalities: When the full party is displayed, clicking it will select the character; if a character is selected, clicking it will deselect them and return to the full party display. */
 		<<if def $subject>>
@@ -163,7 +126,7 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 				</span>
 		</div>
 		<<showmeter _HPmeters[puppets().indexOf(_puppet)] `_puppet.hp / _puppet.maxHP`>>
-		<<if setup.SHOW_MP === true>>
+		<<if Number.isInteger(_puppet.en) && setup.SHOW_MP === true>>
 			<div class="hpmp">
 				MP: <span style="float:right">
 					<div class="hpmpvalue">_puppet.en</div>/<div class="hpmpvalue">_puppet.maxEN</div>
@@ -173,15 +136,8 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 		<</if>>
 	</div>
 <<else>>
-/* In all other cases, display equipment on the right-hand side. */
-	<div class="menuactor-equipment small-display">
-	<<for _name, _slot range _puppet.equipment>>
-		<<for _subslot, _item range _slot>>
-			<div class="menuactor-equipment-slot">_name</div>
-			<<equipSlotDisplay _item>>
-		<</for>>
-	<</for>>
-	</div>
+/* In all other cases, display equipment on the right-hand side. See party menu-equipment.tw for details. */
+	<<actorEquipDisplay _puppet>>
 <</if>>
 <<if ndef _displayModel || _displayModel == "standard">>
 /* In the standard display, an additional XP block is displayed to the right of the previous block. */
@@ -193,57 +149,6 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 		<<set _toNext = _puppet.XPtoNext()>>
 		<div style="float:right"><<if typeof(_toNext) == 'number'>><<print (_toNext-_puppet.xp)>><<else>><<print _toNext>><</if>></div>
 	</div>
-<</if>>
-
-<</widget>>
-
-:: Widget: equipSlotDisplay [widget nobr]
-<<widget "equipSlotDisplay">>
-/* Standardized display for a single instance of character equipment. By default, this displays below the slot name itself. Assume called within actorDisplay, and uses _displayModel for modular functionality.
-
-ARG 0 = equipped item
-*/
-
-<<run console.assert($args[0] instanceof Item || $args[0] === null || $args[0] instanceof Filler,"ERROR in equipSlotDisplay: no item passed")>>
-
-<<set _item = $args[0]>>
-
-<<if _item === null>><span class="menuactor-equipment-name">&nbsp;</span> /* if slot empty, display blank space */
-<<elseif _item instanceof Filler>><span class="menuactor-equipment-name">_item</span>
-<<else>>
-	<div class="menuactor-equipment-name">_item.name<br/>
-	<span class="action-desc">_item.info</span>
-	</div>
-	<span class="unequip-button">
-	<<switch _displayModel>>
-	/* Unequip button displayed here. By default, this is an "[X]" link at the far right of the item name. */
-		<<case "inventory">>
-		/* no unequip feature; display nothing */
-		<<case "decurse">>
-		/* In Decurse, only display unequip if the item is sticky and player can pay the cost. Deduct the cost and refresh the shop screen after click. */
-			<<if $currency >= _decurseCost && !_puppet.lockEquipment && _item.sticky>>
-				<<capture _puppet, _name, _subslot>>
-				<<link "[X]">>
-					<<run _puppet.unequip(_name,_subslot,{unsticky:true})>>
-					<<set $currency -= _decurseCost>>
-					<<update>>
-					<<replace "#business-area" t8n>><<include "decurse-remove">><</replace>>
-				<</link>>
-				<</capture>>
-			<</if>>
-		<<default>>
-		/* Default is party equipment screen. Only display unequip if the item is not sticky and the puppet does not have locked equipment. Remember to pass the subslot index too for subslot equipment. */
-			<<if !_puppet.lockEquipment && !_item.sticky>>
-				<<capture _puppet, _name, _subslot>>
-				<<link "[X]">>
-					<<run _puppet.unequip(_name,_subslot)>>
-					<<replace "#equipment-list">><<include "equipment list">><</replace>>
-					<<replace "#puppets">><<include "equip manager puppets">><</replace>>
-				<</link>>
-				<</capture>>
-			<</if>>
-	<</switch>>
-	</span>
 <</if>>
 
 <</widget>>

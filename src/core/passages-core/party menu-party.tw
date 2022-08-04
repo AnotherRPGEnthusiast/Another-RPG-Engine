@@ -40,9 +40,11 @@
 	<</capture>>
 	</center><br/>
 	<<for _k, _v range _puppet.stats>>
-		<span class="statname"><<print _k>>:</span>
-		<<statOOB _k _puppet>>
-		<br/>
+		<<if !setup.hiddenStats.includes(_k)>>
+			<span class="statname"><<print _k>>:</span>
+			<<statOOB _k _puppet>>
+			<br/>
+		<</if>>
 	<</for>>
 	</div>
 	<</if>>

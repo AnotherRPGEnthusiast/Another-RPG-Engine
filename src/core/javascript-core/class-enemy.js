@@ -216,7 +216,7 @@ window.Enemy = class Enemy extends Actor {
 		//	Returns Boolean. Determination for if character can be selected by the player in Targeting Phase.
 		//	To customize, use Object.defineProperty.
 
-		if (!(V().B.targeting === "all" || V().B.targeting === "enemy")) {
+		if (!(action().target === "all" || action().target === "enemy")) {
 			//	If not targeting enemies, invalid target
 			return false;
 		} else if (this.dead && !action().canTargetDead) {

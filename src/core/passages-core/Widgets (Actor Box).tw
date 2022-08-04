@@ -96,7 +96,9 @@
   <<include "Actor Box HP">>
 
   /* Element 4: EN (Puppets only) */
-  <<include "Actor Box EN">>
+  <<if Number.isInteger(_actor.en)>>
+    <<include "Actor Box EN">>
+  <</if>>
 
   /* Element 5: Crisis points */
   <<include "Actor Box Crisis">>
@@ -147,7 +149,7 @@
 		<<capture _actor, _idx>>
     <<set _link = `<<link "_actor.fullname">>
         <<run $(document).trigger(":target-selected")>>
-  			<<set $target = _actor; $B.targeting = null>>
+  			<<set $target = _actor>>
   			<<replace "#phase">><<include "Confirm Phase">><</replace>>
   		<</link>>`>>
     <<mouseover>>

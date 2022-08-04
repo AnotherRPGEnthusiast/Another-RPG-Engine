@@ -207,7 +207,7 @@
 		<<if !setup.hiddenStats.includes(_k)>>
 			<span class="statname"><<print _k>>:</span>
 			<span class="stat">
-				<<if $B.actor.maskstats || ($B.actor instanceof Enemy && def $bestiary && !$bestiary.fetch($B.actor.name).statsKnown[_k])>>
+				<<if $B.actor.maskstats || (def $bestiary && $bestiary.fetch($B.actor.name) && !$bestiary.fetch($B.actor.name).statsKnown[_k])>>
 					<b>??</b>
 				<<else>>
 					<<stat _k>>
@@ -221,7 +221,7 @@
 	<<for _k, _v range $B.actor.elements>>
 	<span class="statname"><<print _k>></span>
 	<span style="float:right">
-		<<if def $bestiary && $B.actor instanceof Enemy && !$bestiary.fetch($B.actor.name).statsKnown[_k]>>
+		<<if def $bestiary && $bestiary.fetch($B.actor.name) && !$bestiary.fetch($B.actor.name).statsKnown[_k]>>
 			<<if setup.SOAK>>?? /<</if>><div style="display: inline-block; min-width:55px; text-align:right">???%</div>
 		<<else>>
 			<<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:55px; text-align:right"><<res _v>></div>
@@ -233,7 +233,7 @@
 	<div style="font-size: 12px;">AILMENT TOLERANCE</div><br/>
 	<<for _k, _v range $B.actor.tolerances>>
 		<<if _v.current != 0>>
-			<<if def $bestiary && $B.actor instanceof Enemy && !$bestiary.fetch($B.actor.name).tolerancesKnown[_k]>>
+			<<if def $bestiary && $bestiary.fetch($B.actor.name) && !$bestiary.fetch($B.actor.name).tolerancesKnown[_k]>>
 				<span class="tolerance">????</span>
 			<<else>>
 				<<print _k>>
@@ -319,8 +319,9 @@
 :: items [nobr battle]
 <<set $B.phase = "items">>
 
+<div class="abilities-header" style="text-align:center">ITEMS</div>
 <<if setup.COMPRESSED_ACTIONS === true>>
-	<<set _actionClass = "compressed">>
+	<<set _actionClass = "compressed itemActions">>
 	<div id="actionBox">
 	</div>
 <<else>>
@@ -336,16 +337,16 @@
 :: Targeting Phase [nobr battle]
 <<set $B.phase = "targeting">>
 <<replace "#actorlist">><<include "actorlist">><</replace>>
-<<if $B.targeting == "enemy">>
+<<if $action.target == "enemy">>
 	<<addclass "#puppets" "invisible">>
-<<elseif $B.targeting == "ally">>
+<<elseif $action.target == "ally">>
 	<<addclass "#enemies" "invisible">>
 <</if>>
 <<backbtn>>
 
 Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_display>>[enemies are displayed in reverse order]<</if>></span><br/>
 <br/>
-<<if $B.targeting == "all">>
+<<if $action.target == "all">>
 <<set _targetingEnemy = true>>
 <span class="hotkey monospace" id="target_help">
 [Hotkeys targeting <<if _targetingEnemy === true>>enemies<<else>>allies<</if>>. Press Shift to switch targets.]

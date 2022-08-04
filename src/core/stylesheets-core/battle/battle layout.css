@@ -34,7 +34,7 @@
 
 .actor {
 	position: relative;
-  min-width: 130px;
+  width: 130px;
   font-weight: bold;
   display: inline-block;
   border: solid;

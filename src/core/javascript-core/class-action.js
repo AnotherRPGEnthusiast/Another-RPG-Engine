@@ -127,6 +127,13 @@ window.Action = class Action {
 		this._actText = val;
 	}
 
+	get confirmText() {
+		//	Text to be displayed during the confirm phase.
+
+		var val = (this._confirmText || this.actionData.confirmText);
+		return (val instanceof Function) ? val(this) : val;
+	}
+
 	get act() {
 		//	Gameplay effect of the action. Usually a string of SugarCube code.
 		//	Results of this call are printed in the actEffects textbox. Note that JavaScript code cannot print to a passage.
@@ -181,6 +188,15 @@ window.Action = class Action {
 
     return (this._spellMod || this.actionData.spellMod || "ERROR SPELLMOD UNDEFINED");
   }
+
+	get tags () {
+		//	String or array of strings. If string, will be converted into a 1-element array. Identifiers used for miscellaneous purposes.
+
+		let r = (this._tags || this.actionData.tags || []);
+		if (typeof(r) === "string") r = [r];
+		console.assert(r instanceof Array,`ERROR in action ${this.name}: tags must be array`);
+		return r;
+	}
 
 	get phase () {
 		//	String. Phase that the player will be forwarded to when the action is selected.
@@ -243,7 +259,7 @@ window.Action = class Action {
 			val = this.actionData.weight;
 		}
 		if (val === undefined) {
-			val = 0;
+			val = 1;
 		}
 		return (val instanceof Function) ? val(this) : val;
 	}
@@ -719,7 +735,7 @@ window.Action = class Action {
 
 	get uses () {
 		// Assumes _uses is a FillStat
-		return this._uses === undefined ? undefined : this._uses.currentVal;
+		return this._uses instanceof FillStat ? this._uses.currentVal : undefined;
 	}
 
 	set uses (amt) {
@@ -727,7 +743,7 @@ window.Action = class Action {
 	}
 
 	get maxUses () {
-		return this._uses === undefined ? undefined : this._uses.current;
+		return this._uses instanceof FillStat ? this._uses.current : undefined;
 	}
 
 	set maxUses (amt) {
@@ -1334,10 +1350,11 @@ window.ItemAction = class ItemAction extends Action {
     if (!this.crisis) {
       tags += `x${inv().get(this.source).stock}`;
     }
-    text += `<span class="action-tags">${tags}</span>`;
+    text += `<span class="action-cost">${tags}</span>`;
     var data = new Item(this.source);
     text += `<div class="action-info">${data.info}</div>`;
     if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
+		console.log(text);
     return text;
   }
 
@@ -1350,7 +1367,7 @@ window.ItemAction = class ItemAction extends Action {
     if (!this.crisis) {
       tags += `x${inv().get(this.source).stock}`;
     }
-    text += `<span class="action-tags">${tags}</span>`;
+    text += `<span class="battle-stock">${tags}</span>`;
 		return text;
 	}
 

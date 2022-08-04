@@ -1,11 +1,3 @@
-:: Widget: restock [widget nobr]
-/* Restock: sets starting inventory values for each battle. */
-<<widget "restock">>
-<<for _k, _v range $inventory>>
-	<<set _v.stock = _v.maxstock>>
-<</for>>
-<</widget>>
-
 :: Widget: itemDrop [widget nobr]
 <<widget "itemDrop">>
 <<if def $args[1] && typeof($args[1]) == 'number'>>

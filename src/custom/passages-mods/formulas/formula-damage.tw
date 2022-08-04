@@ -1,6 +1,9 @@
 :: damageCalc formula[nobr]
 /* Define the damage formula or formulae you want to use here. */
 
+<<set _atk = ($subject.get(StatName("atk")) * (1 - $action.useSpecial)) + ($subject.get(StatName("spc")) * $action.useSpecial)>>
+<<set _def = $subject.get(StatName("def"))>>
+
 <<if !$action.formula>>
 /* Only use the default formula if the action does not have a custom formula (so, the formula property is falsy) */
 <<switch setup.formula>>

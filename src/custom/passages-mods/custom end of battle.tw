@@ -1,2 +1,2 @@
 :: custom end of battle[nobr]
-<<restock>>
+<<set inv() = $B.invBefore>>

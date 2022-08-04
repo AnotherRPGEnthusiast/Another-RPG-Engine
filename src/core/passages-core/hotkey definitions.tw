@@ -220,7 +220,7 @@
 				<<trigger 'click' _id>>
 			<</if>>
 		<<case "targeting">>
-			<<switch $B.targeting>>
+			<<switch $action.target>>
 				<<case "enemy">>
 					<<if !$enemies[_n].hidden>>
 						<<set _party = $enemies>>
