@@ -293,7 +293,6 @@ html.redLinks a:hover {
 	margin-bottom: 0.5em;
   border: 2px solid;
   padding-left: 5px;
-  padding-right: 5px;
   border-radius: 5px;
   border-color: darkblue;
 }
@@ -4598,7 +4597,7 @@ html.redLinks a:hover {
 
 .actor {
 	position: relative;
-  width: 130px;
+  min-width: 130px;
   font-weight: bold;
   display: inline-block;
   border: solid;
@@ -4939,16 +4938,19 @@ button {
   text-align: center;
 }
 
+.statBlock {
+	display:grid;
+	grid-template-columns: 6em 3em 1em;
+}
+
 .statname {
-  display: inline-block;
-  min-width: 6em;
   text-transform: uppercase;
+  grid-column: 1;
 }
 
 .stat {
-	display: inline-block;
-	min-width: 4em;
 	text-align: right;
+  grid-column: 2;
 }
 
 .effectdesc {
@@ -7589,6 +7591,8 @@ window.Actor = class Actor {
 			Number.isInteger(this.data.respawn) ?
 				this._respawn = new FillStat(this.data.respawn) : this._respawn = new FillStat(0);
 			if (typeof(this.data.respawnHP) === "number") { this._respawnHP = this.data.respawnHP; }
+			typeof(this.data.threatMod) === "number" && this.data.threatMod > 0 ?
+				this._threatMod = new Stat(this.data.threatMod) : this._threatMod = new Stat(1);
 
 			this.battleMsg = [];	// container for popups that will appear during actions
 
@@ -8041,6 +8045,11 @@ window.Actor = class Actor {
 		} else {
 			this.stats.get(k).Temp += v;
 		}
+	}
+
+	get threatMod () {
+		console.assert(this._threatMod instanceof Stat,`ERROR accessing threatMod for ${this.name}: threatMod is not a Stat`);
+		return this._threatMod.current;
 	}
 
 	getElement (needle,type) {
@@ -11655,6 +11664,13 @@ window.Item = class Item {
 			: undefined;
 	}
 
+	get tags () {
+		let r = (this._tags || this.itemData.tags || []);
+		if (typeof(r) === "string") r = [r];
+		console.assert(r instanceof Array,`ERROR in item ${this.name}: tags must be array`);
+		return r;
+	}
+
 	checkRestriction (puppet) {
 		//	DEPRECIATED as of v1.18. Use the Actor version instead.
 		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing or if the restricted listing is empty.
@@ -14699,6 +14715,7 @@ window.Hitlist = class Hitlist extends Array {
 		//	Automatically adjusts chances based on Firefly, Wallflower, and untargetable.
 		//	Set bypass to true to ignore these factors (e.g. if you populated the hitlist with unique logic)
 
+//		console.log("returnTarget running");
 		mods = (mods || []);
 		console.assert(mods instanceof Array,`ERROR in returnTarget: mods must be array`);
 
@@ -14711,14 +14728,8 @@ window.Hitlist = class Hitlist extends Array {
 			if (t.target.dead || (t.target.untargetable && !(mods.includes("ignore untargetable") || mods.includes("ally")))) {
 				t.chance = 0;
 			} else if (bypass !== true) {
-				// fireflies have their chances multiplied (default by 2)
-				if (t.target.firefly) {
-					t.chance *= setup.FIREFLY_FACTOR;
-				}
-				// wallflowers have their chances multiplied (default by 0.5)
-				if (t.target.wallflower) {
-					t.chance *= setup.WALLFLOWER_FACTOR;
-				}
+				// adjust chance by threatMod
+				t.chance *= t.target.threatMod;
 			}
 		}
 
@@ -15209,7 +15220,7 @@ Config.saves.isAllowed = function () {
 };
 // This will disallow saving in battle. This is probably a good idea, but make sure you keep track of your inbattle variable so you don't accidentally prevent people from saving in the main story.
 
-setup.version = "5.00";
+setup.version = "5.00.1";
 
 Config.saves.version = 0;
 // Records a version number for saves. Update this when you update your version. This is helpful for updating saves from older versions.
@@ -19377,7 +19388,8 @@ setup.itemData = {
 	// Kudos if you recognize where I got the default items' naming scheme from.
 
 	"Example Equipment": {
-		"equippable": {slot: "", tags: [], restrictedTo: []},
+		"equippable": {slot: "", restrictedTo: []},
+		"tags": [],
 		"onEquip": function (puppet) {
 
 		},
@@ -19390,19 +19402,28 @@ setup.itemData = {
 
 
 	"Symbol of Destruction": {
-		"equippable": {slot: "Weapon", tags: ["symbol"], restrictedTo: []},
+		"equippable": {slots: "Weapon", restrictedTo: []},
+		"tags": ["symbol"],
+		"special": {
+			"Attack": 5,
+		},
 		"onEquip": function (puppet) {
-			puppet.stats["Attack"].addMod("Symbol of Destruction",5,true);
+			for (let [pn,v] of Object.entries(this.special)) {
+				puppet.stats[pn].addMod("Symbol of Destruction",v,true);
+			}
 		},
 		"onRemove": function (puppet) {
-			puppet.stats["Attack"].removeMod("Symbol of Destruction");
+			for (let [pn,v] of Object.entries(this.special)) {
+				puppet.stats[pn].removeMod("Symbol of Destruction");
+			}
 		},
 		"desc": "A weapon.",
 		"info": "ATK +5"
 	},
 
 	"Aura of Protection": {
-		"equippable": {slot: "Armor", tags: ["aura"], restrictedTo: []},
+		"equippable": {slots: "Armor", restrictedTo: []},
+		"tags": ["aura"],
 		"onEquip": function (puppet) {
 			puppet.tolerances.addMod("Stunned","Aura of Protection",{ immune: true });
 			puppet.tolerances.addMod("Off-Balance","Aura of Protection",1);
@@ -19416,7 +19437,8 @@ setup.itemData = {
 	},
 
 	"Color of Defeat": {
-		"equippable": {slot: "Accessory", tags: ["color"], restrictedTo: ["Artist","Mage"]},
+		"equippable": {slots: "Accessory", restrictedTo: ["Artist","Mage"]},
+		"tags": ["color"],
 		"onEquip": function (puppet) {
 			this.modID.HPregen = puppet._HPregen.flat.addMod("Color of Defeat",1,true);
 			this.modID.blue = puppet.elements.addMod("blue","Color of Defeat",25,true,"flat");
@@ -19430,7 +19452,8 @@ setup.itemData = {
 	},
 
 	"Color of Growth": {
-		"equippable": {slot: "Accessory", tags: ["color"], restrictedTo: []},
+		"equippable": {slots: "Accessory", restrictedTo: []},
+		"tags": ["color"],
 		"onEquip": function (puppet) {
 			this.modID.HPregen = puppet._HPregen.percent.addMod("Color of Defeat",0.01,true);
 			this.modID.red = puppet.elements.addMod("red","Color of Defeat",-0.25,true,"percent");
@@ -19444,7 +19467,8 @@ setup.itemData = {
 	},
 
 	"Cursed Ring": {
-		"equippable": {slot: "Accessory", tags: ["ring"], restrictedTo: []},
+		"equippable": {slots: "Accessory", restrictedTo: []},
+		"tags": ["ring"],
 		"sticky": true,
 		"fakeName": "Mysterious Ring",
 		"onEquip": function (puppet) {
@@ -21724,63 +21748,7 @@ Click a space to move there or swap positions. Click BACK when done.</tw-passage
 &lt;&lt;/if&gt;&gt;
 &lt;/div&gt;
 &lt;br/&gt;
-&lt;&lt;if $stScreen == 1&gt;&gt;
-/* 1 = stat screen, default, unlinked to STATUS_SCREENS and always available */
-	&lt;&lt;for _k, _v range $B.actor.stats&gt;&gt;
-		&lt;&lt;if !setup.hiddenStats.includes(_k)&gt;&gt;
-			&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
-			&lt;span class=&quot;stat&quot;&gt;
-				&lt;&lt;if $B.actor.maskstats || (def $bestiary &amp;&amp; $bestiary.fetch($B.actor.name) &amp;&amp; !$bestiary.fetch($B.actor.name).statsKnown[_k])&gt;&gt;
-					&lt;b&gt;??&lt;/b&gt;
-				&lt;&lt;else&gt;&gt;
-					&lt;&lt;stat _k&gt;&gt;
-				&lt;&lt;/if&gt;&gt;
-			&lt;/span&gt;
-			&lt;br/&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;elseif setup.STATUS_SCREENS.battle[$stScreen-2] == &quot;elements&quot;&gt;&gt;
-	&lt;div style=&quot;font-size: 12px;&quot;&gt;ELEMENTAL RESISTANCE&lt;/div&gt;&lt;br/&gt;
-	&lt;&lt;for _k, _v range $B.actor.elements&gt;&gt;
-	&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;&lt;/span&gt;
-	&lt;span style=&quot;float:right&quot;&gt;
-		&lt;&lt;if def $bestiary &amp;&amp; $bestiary.fetch($B.actor.name) &amp;&amp; !$bestiary.fetch($B.actor.name).statsKnown[_k]&gt;&gt;
-			&lt;&lt;if setup.SOAK&gt;&gt;?? /&lt;&lt;/if&gt;&gt;&lt;div style=&quot;display: inline-block; min-width:55px; text-align:right&quot;&gt;???%&lt;/div&gt;
-		&lt;&lt;else&gt;&gt;
-			&lt;&lt;if setup.SOAK&gt;&gt;&lt;&lt;soak _v&gt;&gt; /&lt;&lt;/if&gt;&gt;&lt;div style=&quot;display: inline-block; min-width:55px; text-align:right&quot;&gt;&lt;&lt;res _v&gt;&gt;&lt;/div&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;/span&gt;
-	&lt;br/&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;elseif setup.STATUS_SCREENS.battle[$stScreen-2] == &quot;ailments&quot;&gt;&gt;
-	&lt;div style=&quot;font-size: 12px;&quot;&gt;AILMENT TOLERANCE&lt;/div&gt;&lt;br/&gt;
-	&lt;&lt;for _k, _v range $B.actor.tolerances&gt;&gt;
-		&lt;&lt;if _v.current != 0&gt;&gt;
-			&lt;&lt;if def $bestiary &amp;&amp; $bestiary.fetch($B.actor.name) &amp;&amp; !$bestiary.fetch($B.actor.name).tolerancesKnown[_k]&gt;&gt;
-				&lt;span class=&quot;tolerance&quot;&gt;????&lt;/span&gt;
-			&lt;&lt;else&gt;&gt;
-				&lt;&lt;print _k&gt;&gt;
-				&lt;&lt;tol _v&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-			&lt;br/&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;elseif setup.STATUS_SCREENS.battle[$stScreen-2] == &quot;aggression&quot;&gt;&gt;
-	&lt;div style=&quot;font-size: 12px;&quot;&gt;AGGRESSION&lt;/div&gt;&lt;br/&gt;
-	&lt;&lt;set _totalThreat = 0&gt;&gt;
-	&lt;&lt;for _k, _v range $B.actor.threat&gt;&gt;
-		&lt;&lt;set _totalThreat += _v&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;&lt;if _totalThreat == 0&gt;&gt;
-		&lt;&lt;set _totalThreat = 1&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;for _k, _v range $B.actor.threat&gt;&gt;
-		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;&lt;/span&gt;
-		&lt;&lt;set _value = (_v / _totalThreat)*100; _value = _value.toFixed(0)&gt;&gt;
-		&lt;span class=&quot;right&quot;&gt;&lt;&lt;print _value+&quot;%&quot;&gt;&gt;&lt;/span&gt;
-		&lt;br/&gt;
-	&lt;&lt;/for&gt;&gt;
-&lt;&lt;/if&gt;&gt;
+&lt;&lt;include &quot;Status Screens&quot;&gt;&gt;
 &lt;br/&gt;
 &lt;&lt;effectinfo&gt;&gt;
 
@@ -27623,7 +27591,12 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 	&lt;&lt;goto &quot;Player Phase&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;include &quot;Action Phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="187" name="Changelog" tags="text" position="850,2350" size="100,100">&lt;h3&gt;Version 5.00&lt;/h3&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="187" name="Changelog" tags="text" position="850,2350" size="100,100">&lt;h3&gt;Version 5.00.1&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Fixed a typo in the targeting code that caused a fatal error when attempting to reference &lt;code&gt;threatMod&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3&gt;Version 5.00&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;b&gt;INVENTORY OVERHAUL:&lt;/b&gt; Inventory objects are now &lt;code&gt;Arrays&lt;/code&gt; rather than &lt;code&gt;Maps&lt;/code&gt;. This allows multiple instances of the same item to appear in an Inventory. &lt;b&gt;This change is incompatible with earlier versions of the engine.&lt;/b&gt;&lt;/li&gt;
   &lt;ul&gt;&lt;li&gt;New &lt;code&gt;Inventory&lt;/code&gt; property: &lt;code&gt;size&lt;/code&gt;. Determines the maximum number of stacks an Inventory can hold. If 0 or less, the Inventory is considered limitless.&lt;/li&gt;
@@ -27643,7 +27616,8 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
   &lt;li&gt;New &lt;code&gt;Actor&lt;/code&gt; method: &lt;code&gt;hasSlot&lt;/code&gt;. Checks if the named slot is present.&lt;/li&gt;
   &lt;li&gt;New &lt;code&gt;Actor&lt;/code&gt; method: &lt;code&gt;getEquipment&lt;/code&gt;. Returns the equipment in the named slot.&lt;/li&gt;&lt;/ul&gt;
 &lt;li&gt;Element affinities are now stored in a generic object instead of a &lt;code&gt;Map&lt;/code&gt;. This will make it easier to access and modify them.&lt;/li&gt;
-&lt;li&gt;New &lt;code&gt;Action&lt;/code&gt; property: &lt;code&gt;tags&lt;/code&gt;. This is an array that can be used to store any additional metadata you desire.&lt;/li&gt;
+&lt;li&gt;New property for &lt;code&gt;Action&lt;/code&gt; and &lt;code&gt;Item&lt;/code&gt; classes: &lt;code&gt;tags&lt;/code&gt;. This is an array that can be used to store any additional metadata you desire.&lt;/li&gt;
+&lt;li&gt;New &lt;code&gt;Actor&lt;/code&gt; property: &lt;code&gt;threatMod&lt;/code&gt;. This is a &lt;code&gt;Stat&lt;/code&gt; against which a characters&#39; chances of being targeted by attacks will be multiplied. (This replaces the old code for Firefly and Wallflower.)&lt;/li&gt;
 &lt;li&gt;Added and expanded comments for the &lt;code&gt;Item&lt;/code&gt; and &lt;code&gt;Inventory&lt;/code&gt; classes.&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;unequip&lt;/code&gt; now returns a value if the unequip failed due to sticky equipment.&lt;/li&gt;
 &lt;li&gt;Deleted &quot;custom end of action effects&quot;, as it was now redundant with &quot;custom postAction&quot;.&lt;/li&gt;
@@ -27663,6 +27637,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;Reorganized &lt;code&gt;StoryInit&lt;/code&gt; to move most variables into the custom version of the file, and rearranged them into a more logical order. You should no longer have to jump back and forth between two files to figure out what has and hasn&#39;t been defined.&lt;/li&gt;
 &lt;li&gt;Reorganized and compartmentalized most of the party menu widgets so that they are now stored in the same file as the relevant passages.&lt;/li&gt;
 &lt;li&gt;Removed the &lt;code&gt;B.targeting&lt;/code&gt; variable and replaced it with the &lt;code&gt;action.target&lt;/code&gt; property.&lt;/li&gt;
+&lt;li&gt;Moved the formatting for in-battle status screens to a custom passage. Display code has been tweaked to better accommodate modular changes.&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h3&gt;Version 4.03&lt;/h3&gt;
@@ -29431,6 +29406,8 @@ The details of how our classes are defined are explained in [[Documentation (Adv
 
 Each database is handled similarly. We create a database object as the attribute of the {{{setup}}} variable, which is a special variable used by SugarCube. (Assigning databases to {{{setup}}} is important for reasons &lt;a href=&quot;https://www.motoslave.net/sugarcube/2/docs/#guide-state-sessions-and-saving-refreshing-and-restarting&quot; target=&quot;_blank&quot;&gt;explained in the SugarCube documentation&lt;/a&gt;.) Each property of this database object corresponds to a single object we want to define, and contains data that will be read to create an instance of the object when the game is up and running. Once you have a fully-defined database entry, you need only pass the entry&#39;s name as the argument to the object constructor, and you&#39;ll create a live instance of that object.
 
+Note that in addition to the properties described here, most of the engine&#39;s classes feature a {{{tags}}} property, which is an array of strings that can be used to store any additional metadata not covered by existing properties.
+
 &lt;h2 id=&quot;data.puppets&quot;&gt;Creating Puppets&lt;/h2&gt;
 The class for playable characters is called &quot;Puppet&quot;, as a carry-over joke from &lt;i&gt;Cartoon Battle&lt;/i&gt;. As such, the database object is called {{{puppetData}}}.
 
@@ -29484,11 +29461,10 @@ This isn&#39;t what a live {{{Puppet}}} object looks like, but it contains all t
 * {{{large}}} is a Boolean; if {{{true}}}, the character&#39;s actor box will span the full width of the screen.
 * {{{maskhp}}} is a Boolean; if {{{true}}}, the character&#39;s HP bar and HP total will not be displayed in their actor box.
 * {{{loadBearing}}} is a Boolean; if {{{true}}}, the battle will end when this character is defeated, regardless of the status of their teammates.
+* {{{threatMod}}} is a positive number. A character&#39;s chance of being targeted by AI attacks will be multiplied by this number.
 * {{{specialInit}}} is a function that is run at the end of the {{{Puppet}}} constructor. This is a catchall that allows you to tweak any other variables you want that aren&#39;t specified by the regular attributes. (Due to a coding quirk, the object under construction needs to pass itself as an argument to this function, so assign your code to {{{actor}}} rather than {{{this}}}.) In addition to custom variables, it supports the assignment of the following properties:
 ** {{{showMaxHP}}} is a Boolean; if {{{true}}}, the character&#39;s max HP will be displayed alongside their current HP in their actor box.
 ** {{{caps}}} is a Boolean; if {{{true}}}, the character&#39;s name will be capitalized in their actor box.
-** {{{firefly}}} is a Boolean; if {{{true}}}, the character will have a higher chance of being targeted by enemies.
-** {{{wallflower}}} is a Boolean; if {{{true}}}, the character will have a lower chance of being targeted by enemies.
 
 &lt;h2 id=&quot;data.actions&quot;&gt;Creating Actions&lt;/h2&gt;
 Actions determine what things your characters can do in battle -- attacking, casting spells, etc. The database object for actions is called {{{actionData}}}, and its entries look like this:
@@ -29663,33 +29639,41 @@ Items are objects that characters can obtain during gameplay. They may be consum
 }}}
 This isn&#39;t what a live {{{Item}}} object looks like, but it contains all the data the {{{Item}}} constructor needs to create one. There are additional attributes not shown in this entry that are detailed below:
 * {{{info}}} and {{{desc}}} function exactly like they do in &lt;a class=&quot;noExternal&quot; href=&quot;#data.actions&quot;&gt;Actions&lt;/a&gt;.
-* {{{stackSize}}} is an integer; determines the max number of copies of this item that can exist in an inventory. Defaults to the value of {{{ITEM_MAX}}} in {{{setup}}}.
+* {{{stackSize}}} is an integer; determines the max number of copies of this item that can exist in an inventory. Defaults to the value of {{{ITEM_MAX}}} in {{{setup}}}. By necessity, items with greater than 1 use are limited to a stack size of 1.
 * {{{usable}}} is an array that can have up to two elements: &quot;inmenu&quot; and &quot;inbattle&quot;. This determines if the item can be used in the party menu, in battle, or both (if both strings are included in the array). Optional.
 ** {{{onUse}}} is a function that determines what happens when the item is used in the party menu.
 ** {{{action}}} is a string; name of the action the item will generate if used in-battle. This defaults to the item&#39;s name.
 ** {{{instantUse}}} is a Boolean; if {{{true}}}, the item&#39;s {{{onUse}}} will execute as soon as it is selected, rather than requiring a target first. (This is useful for e.g. items that affect the whole party or which take the player to another passage for more detailed interaction.)
 * {{{value}}} is an integer; determines the units of currency the item can be bought and sold for at shops.
 * {{{fakeName}}} is a string; alternate name that will be displayed until the item is used or equipped. Optional.
+* {{{uses}}} is an integer; determines number of times an item can be used before being depleted. Defaults to 1.
 
 Equippable items have several additional properties. An example entry looks like this:
 {{{
 &quot;Symbol of Destruction&quot;: {
-	&quot;equippable&quot;: {slot: &quot;Weapon&quot;, tags: [&quot;symbol&quot;], restrictedTo: []},
-	&quot;onEquip&quot;: function (puppet) {
-		puppet.stats[&quot;Attack&quot;].addMod(&quot;Symbol of Destruction&quot;,5,true);
-	},
-	&quot;onRemove&quot;: function (puppet) {
-		puppet.stats[&quot;Attack&quot;].removeMod(&quot;Symbol of Destruction&quot;);
-	},
-	&quot;desc&quot;: &quot;A weapon.&quot;,
-	&quot;info&quot;: &quot;ATK +5&quot;
-}
+  &quot;equippable&quot;: {slots: &quot;Weapon&quot;, restrictedTo: []},
+  &quot;tags&quot;: [&quot;symbol&quot;],
+  &quot;special&quot;: {
+    &quot;Attack&quot;: 5,
+  },
+  &quot;onEquip&quot;: function (puppet) {
+    for (let [pn,v] of Object.entries(this.special)) {
+      puppet.stats[pn].addMod(&quot;Symbol of Destruction&quot;,v,true);
+    }
+  },
+  &quot;onRemove&quot;: function (puppet) {
+    for (let [pn,v] of Object.entries(this.special)) {
+      puppet.stats[pn].removeMod(&quot;Symbol of Destruction&quot;);
+    }
+  },
+  &quot;desc&quot;: &quot;A weapon.&quot;,
+  &quot;info&quot;: &quot;ATK +5&quot;
+},
 }}}
 * {{{equippable}}} is an object with three sub-properties. Its existence is checked to determine if an item can be equipped.
-** {{{slot}}} is a string; states what slot the item will be equipped to. Must match a character equipment slot.
+** {{{slots}}} is a string or array of strings; states which slots the item can be equipped to. Must match a character equipment slot.
 ** {{{restrictedTo}}} is an array; contains the names of characters who can equip the item. Make the array empty for no restrictions.
-** {{{tags}}} is an array; stores any additional metadata, such as e.g. equipment restrictions by character class. Optional.
-* {{{onEquip}}} and {{{onRemove}}} are functions determining the behavior of the item when it is equipped and removed, respectively.
+* {{{onEquip}}} and {{{onRemove}}} are functions determining the behavior of the item when it is equipped and removed, respectively. (Referencing a {{{special}}} property is not required, but recommended to make it easier to keep track of things.)
 * {{{sticky}}} is a Boolean; if {{{true}}}, the item is considered cursed and can only be removed through a decurse station.
 
 Note that items are stored in an {{{Inventory}}} object, the code for which can be found in {{{class-item.js}}}. Use the {{{addItem}}} and {{{removeItem}}} functions when adding or removing items to an inventory.
@@ -30701,9 +30685,12 @@ For more information on what you can do here, see the relevant portions of &lt;a
 
 Most variables are explained in the comments of the &lt;code&gt;StoryInit&lt;/code&gt; file, but this section will go into detail on some of the more complex ones:
 * {{{formula}}} determines the default damage formula used for attacks. A few options are provided by default. See [[Design]] for more information.
-* {{{TURN_MODEL}}} determines the turn model used in battles.
+* {{{TURN_MODEL}}} determines the turn model used in battles. (See [[Additional Features]] for details.)
 ** &quot;{{{free}}}&quot;: &lt;b&gt;Default.&lt;/b&gt; The simplest model, where players can decide their turn order freely.
-** &quot;{{{timeline}}}&quot;: Character turns are decided by the actions they use, where every action has a custom time between its use and the next turn. (See [[Additional Features]] for details.)
+** &quot;{{{timeline}}}&quot;: Character turns are decided by the actions they use, where every action has a custom time between its use and the next turn.
+** &quot;{{{ranked}}}&quot;: Combat is split into &quot;rounds&quot; consisting of one turn each for every participant. Turn order is determined by the {{{Actor}}} method {{{turnFormula}}}, defined in the {{{formula-turns.js}}} file.
+** &quot;{{{action}}}&quot;: Characters continually gain &quot;action time&quot; based on the {{{Actor}}} method {{{timeFormula}}}, defined in the {{{formula-time.js}}} file; characters with the highest action time move first.
+*** {{{TIME_THRESHOLD}}} is an additional variable that can be used to modify this model. If defined as a positive integer, action time must meet or exceed the threshold before characters can get a turn.
 * {{{STAT_NAMES}}} matches stats as they are defined in the engine to a custom name. This allows you to customize the names of your stats without having to edit every reference in the code.
 * {{{STAT_MIN}}} and {{{STAT_MAX}}} define the minimum and maximum values allowed for every stat. This is important when considering buffs or equipment that can modify stats.
 * {{{statInfo}}} provides a tooltip description of every stat when the player hovers over its name in the party menu. This is helpful for communicating to your player what each stat does, especially if you use particularly complex or esoteric stats.
@@ -30716,6 +30703,8 @@ Most variables are explained in the comments of the &lt;code&gt;StoryInit&lt;/co
 * {{{STATUS_SCREENS}}} is an object of arrays of strings corresponding to what options the player can select in status panes. There are separate lists for the status menu, the in-battle status pane, and the bestiary. Additional options you will have to create yourself.
 * {{{DEFAULT_EQUIP_SLOTS}}} is an object that will be read to generate default equipment slots if no {{{equipSlots}}} object is provided in the character database entry. Keys correspond to equipment slots, values correspond to the number of subslots.
 * {{{THREAT_TARGETING}}} and {{{BATTLE_GRID}}} are Booleans that allow you to activate alternate gameplay styles. See [[Documentation (Advanced)]] for details on threat targeting and [[Additional Features]] for details on the battle grid.
+* {{{DUPLICATE_ITEMS}}} is a Boolean; determines whether or not inventories can contain multiple stacks of the same item.
+* {{{REMOVE_ITEMS}}} is a Boolean; determines whether or not item stacks are removed from inventory when they are used up. If not, &quot;ghost&quot; stacks of 0 stock will stick around.
 * The various animation variables determine the length of the battle popup animations, in milliseconds.
 
 This is also where you should define the player&#39;s starting party with the {{{$puppets}}} variable, and their starting inventory with the {{{$inventory}}} variable.
@@ -30727,7 +30716,6 @@ The passages in {{{passages-custom}}} are slotted into certain core passages thr
 * {{{battle interruptions}}} will appear during the action phase, after the action&#39;s {{{useText}}} but before its {{{actText}}}. You can make them appear conditionally based on encounter scenario or other variables. The interruptions for the Steven Universe encounter are provided as an example.
 * {{{confirm-text}}} customizes the text displayed in the confirm phase.
 * {{{custom battle preparation}}} is run at the end of the setup code before every battle. By default, it only adds the {{{&lt;&lt;restock&gt;&gt;}}} widget, which refreshes any items used during the battle.
-* {{{custom end of action effects}}} is run on every action, after followup attacks and potential surrender failure. Use it for any special action adjustments you want to make. By default, this only includes the EN refund for the &quot;Focus&quot; ability.
 * {{{custom end of battle}}} is run at the end of the {{{&lt;&lt;endofbattle&gt;&gt;}}} widget. By default, it only adds the {{{&lt;&lt;restock&gt;&gt;}}} widget, which refreshes any items used during the battle.
 * {{{custom newTurn}}} is run at the end of the {{{&lt;&lt;newTurn&gt;&gt;}}} widget. By default, it regenerates puppet EN.
 * {{{custom postAction}}} is run after every action is played in battle. By default, it provides functionality for the &quot;Mark&quot; and &quot;Hunter&quot; effects.
@@ -30762,6 +30750,9 @@ The opening sections will be quite technical, and deal with external script. If 
 **&lt;a href=&quot;#JS.enemies&quot;&gt;Enemy Class&lt;/a&gt;
 **&lt;a href=&quot;#JS.actions&quot;&gt;Action Class&lt;/a&gt;
 **&lt;a href=&quot;#JS.items&quot;&gt;Inventory and Items&lt;/a&gt;
+***&lt;a href=&quot;#JS.items.constructor&quot;&gt;Constructor&lt;/a&gt;
+***&lt;a href=&quot;#JS.items.get&quot;&gt;{{{get}}}&lt;/a&gt;
+***&lt;a href=&quot;#JS.items.add&quot;&gt;{{{addItem}}}&lt;/a&gt;
 **&lt;a href=&quot;#effects&quot;&gt;Status Effects&lt;/a&gt;
 ***&lt;a href=&quot;#effects1&quot;&gt;Applying effects&lt;/a&gt;
 ****&lt;a href=&quot;#effects1.1&quot;&gt;Accounting for protective effects&lt;/a&gt;
@@ -30922,22 +30913,21 @@ this._HPregen = {
 	&quot;flat&quot;: new Stat(0),
 	&quot;percent&quot;: new Stat(0)
 }
-this.elements = new Map();
+this.elements = {};
 if (setup.ELEMENT_LIST !== undefined){
 	setup.ELEMENT_LIST.forEach(function(x) {
-		this.elements.set(x,{&quot;percent&quot;: new Stat(1), &quot;flat&quot;: new Stat(0)});
+		this.elements[x] = {&quot;percent&quot;: new Stat(1), &quot;flat&quot;: new Stat(0)};
 	}, this);
-}
-this.tolerances = new Map();
-if (setup.effectData !== undefined){
-	Object.keys(setup.effectData).forEach(function(x) {
-		this.tolerances.set(x,new Tolerance(0));
-	}, this);
+	if (this.data.elements) {
+		for (let [pn,v] of Object.entries(this.data.elements)) {
+			this.elements[pn].percent.base = v;
+		}
+	}
 }
 }}}
 Then three properties are initialized to default valies: HP regeneration (which contains both flat and percentage rates), elemental affinities, and ailment tolerances. {{{ELEMENT_LIST}}} is a story variable you can define in StoryInit to list all the elements you want in your game. This code checks to make sure it exists, and if it does, runs across it to create elemental affinity values for each. (By default, they are all neutral: 1 for the proportional multiplier and 0 for flat reduction.) This will prevent the game from throwing an error when a character is attacked with an elemental ability; if the game tries to read a value and there&#39;s nothing there, it may create problems. Similarly, {{{tolerances}}} generates ailment resistances by running over {{{effectData}}}, the database of all status effects in your game (see &lt;a class=&quot;noExternal&quot; href=&quot;#effects&quot;&gt;Status Effects&lt;/a&gt;), and creating resistances based on the name values it extracts.
 
-The {{{elements}}} and {{{tolerances}}} attributes are defined as a Map object rather than an array. Maps are very similar to arrays, but their index values can be anything, not just numbers. To extract a value from a Map, you use {{{&lt;var&gt;.get(&lt;key&gt;)}}}, similarly to how you use {{{&lt;var&gt;[index]}}} to extract values from arrays. This makes it much easier to call an affinity in response to an elemental attack, as you can just input the name and the program will pull up the corresponding value, instead of having to remember the order of the array.
+The {{{tolerances}}} attribute is defined as a Map object rather than an array. Maps are very similar to arrays, but their index values can be anything, not just numbers. To extract a value from a Map, you use {{{&lt;var&gt;.get(&lt;key&gt;)}}}, similarly to how you use {{{&lt;var&gt;[index]}}} to extract values from arrays. This makes it much easier to call a tolerance in response to an effect application, as you can just input the name and the program will pull up the corresponding value, instead of having to remember the order of the array.
 {{{
 if (this.data.elements) { this.setElements(Object.entries(this.data.elements),&quot;percent&quot;); }
 if (this.data.tolerances) { this.setTol(Object.entries(this.data.tolerances)); }
@@ -30965,8 +30955,11 @@ for (let [pn,v] of Object.entries(setup.statInfo)) {
 		case &#39;Accuracy&#39;:
 			this.stats[pn] = new Stat(100);
 			break;
-		default:
+		case &#39;Evasion&#39;:
 			this.stats[pn] = new Stat(0);
+			break;
+		default:
+			this.stats[pn] = new Stat(StatMin(pn));
 	}
 }
 for (let [pn,v] of Object.entries(this.data.stats)) {
@@ -30987,14 +30980,18 @@ this.dmgreflection = 0;
 }}}
 Next we initialize some important flags. &lt;code&gt;active&lt;/code&gt; will be used to determine if a character has finished their turn, &lt;code&gt;effects&lt;/code&gt; holds status effects, and the others are used for a few niche effects.
 {{{
-this.equipment = new Map();
+this.equipment = [];
 var equipData;
 equipData = (typeof(this.equipSlots) == &quot;object&quot;)
 	? equipData = this.equipSlots
 	: equipData = setup.DEFAULT_EQUIP_SLOTS;
 
 for (let [pn,v] of Object.entries(equipData)) {
-	this.equipment.set(pn,new Array(v).fill(null));
+	console.assert(Number.isInteger(v) &amp;&amp; v &gt; 0,`ERROR constructing Actor: equipData has non-whole numbers`);
+	for (let i = 1; i &lt;= v; i++) {
+		let slot = { name: pn, id: i, item: null, locked: false };
+		this.equipment.push(slot);
+	}
 }
 }}}
 Next, we define equipment slots. These can be defined either by a database entry (which will be read by {{{this.equipSlots}}}) or by {{{DEFAULT_EQUIP_SLOTS}}}, which can be defined in {{{StoryInit}}}. These are discussed more in &lt;a class=&quot;noExternal&quot; href=&quot;#JS.items&quot;&gt;the Item Database&lt;/a&gt;.
@@ -31113,77 +31110,109 @@ We also have some special getters and setters for handling elemental affinities 
 
 &lt;h4 id=&quot;JS.actor.equipFunctions&quot;&gt;Equipment Functions&lt;/h4&gt;
 {{{
-unequip (slot,index,mods) {
-	mods = (mods || {});
-	if (this.equipment.has(slot)) {
-		var item = null;
-		if (this.equipment.get(slot) instanceof Array) {
-			if (typeof(index) == &#39;number&#39;) {
-				item = this.equipment.get(slot)[index];
-			} else { console.log(&quot;ERROR in unequip: Invalid item index.&quot;); return; }
-		} else {
-			item = this.equipment.get(slot);
-		}
-		if (item !== null){
-			if (item.default === undefined &amp;&amp; mods.destroy !== true) {
-				inv().addItem(item.name);
-			}
-			if (item.onRemove !== undefined) {
-				item.onRemove(this);
-			}
-			(this.equipment.get(slot) instanceof Array) ? this.equipment.get(slot)[index] = null : this.equipment.set(slot,null);
-			//this.equipment.set(slot,new Item(&quot;Default &quot;+slot));
-		}
+unequip (slot,index = 1,mods = {}) {
+	var slot = this.equipment.find(e =&gt; (e.name === name &amp;&amp; e.id === index));
+	console.assert(slot !== undefined,`ERROR in unequip: attempted to unequip nonexistent name`);
+
+	if (slot.locked &amp;&amp; !mods.unlock) {
+		console.log(&quot;Unequip result for &quot;+this.name+&quot;: Slot &quot;+name+&quot; is locked. Remember to pass the unlock property to the mods argument if you wish to unequip a locked slot.&quot;)
+		return false;
 	}
-	else { console.log(&quot;Attempted to unequip nonexistent slot.&quot;); return; }
+
+	var item = slot.item;
+	if (item instanceof Filler) {
+		let sourceSlot = this.equipment.find(e =&gt; (e.item &amp;&amp; e.item.name === item.name));
+		console.assert(sourceSlot !== undefined,`ERROR in unequip: Filler source does not exist`);
+		this.unequip(sourceSlot.name,sourceSlot.id);
+	}
+	else if (item instanceof Item &amp;&amp; (!item.sticky || mods.unsticky === true)) {
+		if (item.default === undefined &amp;&amp; mods.destroy !== true) {
+			(item.uses &lt; item.maxUses)
+				? inv().addItem(item)
+				: inv().addItem(item.name);
+		}
+		if (item.onRemove !== undefined) {
+			item.onRemove(this);
+		}
+		slot.item = null;
+		[...]
+	} else {
+		console.log(&quot;Unequip result for &quot;+this.name+&quot;: Slot &quot;+name+&quot; held unexpected object type or equipment was sticky. Remember to pass unsticky to the mods argument to remove sticky equipment.&quot;);
+		return false;
+	}
 }
 }}}
-There are similar functions for handling equipment, though in this case we define the removal function first. {{{unequip}}} is straightforward in most cases: it is passed the slot to unequip, and the item in that slot is removed. We require a common-sense check to ensure the given slot exists and isn&#39;t already empty. We also want to store the unequipped item and place it back in the player&#39;s inventory, as the {{{set}}} function will simply overwrite what was originally in the slot. (If we &lt;i&gt;do&lt;/i&gt; want the player to permanently lose the item, we can set the {{{destroy}}} flag to {{{true}}}.)
+There are similar functions for handling equipment, though in this case we define the removal function first. {{{unequip}}} is straightforward in most cases: it is passed the slot to unequip, and the item in that slot is removed. We require a common-sense check at the start to ensure the given slot exists and isn&#39;t already empty. We also want to store the unequipped item and place it back in the player&#39;s inventory, as the {{{set}}} function will simply overwrite what was originally in the slot. (If we &lt;i&gt;do&lt;/i&gt; want the player to permanently lose the item, we can set the {{{destroy}}} flag to {{{true}}}.)
 
-Things become slightly more complex if we are looking at an equipment slot with multiple subslots, such as &quot;Accessory&quot; in the default engine. If we&#39;re unequipping from such a slot, the function must be passed an {{{index}}} value so it knows which subslot to unequip. It will then check at the beginning if the slot is an array; if it is, it will assign the item at the index value to {{{item}}}, instead of the slot itself. The function checks once more at the end so that it can correctly target the slot to set to {{{null}}}.
+There is also a special case for if the slot is filled by a &quot;Filler&quot; object. This is used to show that there is equipment occupying multiple slots. Fortunately, Filler objects store the name of their source equipment, so we just search for that name among the character&#39;s equipment and unequip that.
 
+Things become slightly more complex if we are looking at an equipment slot with multiple subslots, such as &quot;Accessory&quot; in the default engine. If we&#39;re unequipping from such a slot, the function must be passed an {{{index}}} value so it knows which subslot to unequip.
+{{{
+if (typeof(setup.DEFAULT_EQUIPMENT) === &quot;object&quot;) {
+	console.assert(typeof(setup.DEFAULT_EQUIPMENT[name]) === &quot;string&quot;,&quot;ERROR in unequip: no default equipment specified for &quot;+name);
+	this.equip(new Item(setup.DEFAULT_EQUIPMENT[name]));
+}
+}}}
 There is an optional statement here for systems that cannot function with a {{{null}}} equipment slot; for instance, most versions of &lt;i&gt;Dungeons &amp; Dragons&lt;/i&gt; must read the statistics of the equipped weapon for attacks. In this case, instead of setting the slot to {{{null}}}, you would want to replace it with another object. These default objects can be defined in the item database like any other.
 
 There is also an {{{unequipAll}}} function, which simply runs through the Actor&#39;s {{{equipment}}} and calls this on each item.
 {{{
-equip (item) {
-	if (this.equipment.has(item.equippable.slot)) {
-		var slot = this.equipment.get(item.equippable.slot);
-		var existing = null;
-		var subslot = undefined;
-		if (slot instanceof Array) {
-			for (let i = 0; i &lt; slot.length; i++) {
-				if (slot[i] === null) {
-					subslot = i;
-					break;
-				}
+equip (item,slot) {
+	if (item.equippable.multislot) {
+		[...]
+	} else {
+		var slotName;
+		if (slot === undefined) {
+			slotName = item.slots[0];
+		} else if (typeof(slot) === &quot;object&quot;) {
+			slotName = slot.name;
+		} else if (typeof(slot) === &quot;string&quot;) {
+			slotName = slot;
+		}
+		console.assert(this.hasSlot(slotName),`ERROR in equipping ${item.name} to ${this.name}: Equipment slot not recognized`);
+		var targetSlot;
+		if (typeof(slot) === &quot;object&quot;) {
+			targetSlot = slot;
+		} else {
+			targetSlot = this.equipment.find(s =&gt; s.name === slotName &amp;&amp; s.item === null);
+			if (targetSlot === undefined) {
+				targetSlot = this.equipment.findLast(s =&gt; s.name === slotName);
 			}
-			if (subslot === undefined) {
-				subslot = slot.length-1;
-				existing = slot[subslot];
-			}
 		}
-		else {
-			existing = slot;
+
+		if (targetSlot.item !== null) {
+			let test = this.unequip(targetSlot.name,targetSlot.id);
+			if (test === false) return false;
 		}
-		if (existing !== null){
-			this.unequip(item.equippable.slot,subslot);
-		}
-		(slot instanceof Array) ? slot[subslot] = item : this.equipment.set(item.equippable.slot,item);
-		if (item.onEquip !== undefined){
-			item.onEquip(this);
-		}
-		if (inv() !== undefined &amp;&amp; inv().has(item.name)){
-			inv().decItem(item.name);
-		}
-	} else { console.log(&quot;ERROR: Equipment type not recognized&quot;); return; }
+
+		targetSlot.item = item;
+	}
+
+	if (item.onEquip instanceof Function){
+		item.onEquip(this);
+	}
+	if (inv() instanceof Inventory &amp;&amp; inv().getById(item.id)){
+		inv().decItem(inv().getById(item.id));
+	}
 }
 }}}
-The {{{equip}}} function is similar; however, to equip something we have to unequip what was already there! Fortunately, we&#39;ve defined {{{unequip}}} already, so we can simply call it (after making common-sense checks that the slot exists and isn&#39;t empty). Then we assign the item to the slot and run any {{{onEquip}}} functionality, if it exists. We will also want to remove the item from the player&#39;s inventory; the {{{set}}} statement creates a new copy, so if we didn&#39;t remove the original we&#39;d be duplicating the item!
+The {{{equip}}} function is similar; however, to equip something we have to unequip what was already there! Fortunately, we&#39;ve defined {{{unequip}}} already, so we can simply call it (after confirming the slot exists and isn&#39;t empty). Then we assign the item to the slot and run any {{{onEquip}}} functionality, if it exists. We will also want to remove the item from the player&#39;s inventory; the {{{set}}} statement creates a new copy, so if we didn&#39;t remove the original we&#39;d be duplicating the item!
 
-Subslot compatibility is more complicated for this function. If the slot is an array, we need to search through it with a {{{for}}} loop to find the first available subslot (the first slot with contents {{{null}}}). As soon as it finds an empty slot, we {{{break}}} out of the loop to save processing power. This ensures that equipping additional items to this slot will fill the subslots in ascending order.
-
-What if there are no empty subslots? In this case, {{{subslot}}} remains {{{undefined}}} and the {{{if}}} statement triggers, targeting the last subslot to swap with the new item.
+{{{equip}}} can be passed a specific slot to equip, but if not, it will default to the first slot listed in the equipment&#39;s {{{slots}}} property. If that slot is already occupied, it&#39;ll check to see if there are any subslots with the same name, and assign the equipment to the last available one.
+{{{
+if (item.equippable.multislot) {
+for (let s of item.slots) {
+	console.assert(this.hasSlot(s),`ERROR in equipping ${item.name} to ${this.name}: Equipment slot not recognized`);
+}
+if (this.equipment.find(e =&gt; item.slots.includes(e.name) &amp;&amp; e.locked || (e.item &amp;&amp; e.item.sticky))) {
+	return false;
+}
+this.equipment.filter(e =&gt; item.slots.includes(e.name)).forEach(function(s,i) {
+	this.unequip(s.name,s.id);
+	s.item = (i &gt; 0) ? new Filler(item.name) : item;
+},this);
+}}}
+{{{multislot}}} equipment is a special case that requires more robust checks. We need to make sure the character has &lt;i&gt;all&lt;/i&gt; the necessary slots, and that none of them are locked or contain unequippable items. If the answer to any of those questions is no, we need to terminate the method and return {{{false}}} to communicate the equip didn&#39;t go through. If everything checks out, we still need to clear every slot with {{{unequip}}}, assign the item to the first slot, and fill the rest with {{{Filler}}} objects referencing the item.
 
 &lt;h4 id=&quot;JS.actor.toleranceFunctions&quot;&gt;Tolerance Functions&lt;/h4&gt;
 {{{
@@ -31609,65 +31638,41 @@ window.inv = function inv () {return V().inv;}
 }}}
 When working with items, the very first thing we want to do is define our inventory. We need an inventory to put items in, right? A lot of code references the inventory, so we need a standardized way to refer to it. That&#39;s this: the {{{inv()}}} function returns whatever your actual inventory variable is. By default, it&#39;s a story variable, but you could rename it or tie it to specific characters.
 {{{
-class Inventory extends Map {
-	constructor(ItemArray){
-		var m = [];
-		ItemArray.forEach(function(item){
-			m.push([item.name,item]);
-		});
-		super(m);
-	}
-
-	addItem (name,amt) {
-		if (amt === undefined){
-			amt = 1;
-		}
-		if (this.has(name)){
-			if (this.get(name).stock + amt &gt; setup.ITEM_MAX) {
-				let s = 1;
-				while (((this.get(name).stock + 1) &lt; setup.ITEM_MAX) &amp;&amp; s &lt; amt) {
-					this.get(name).stock += 1;
-					s++;
-				}
-				return false;
-			} else {
-				this.get(name).stock += amt;
-				return true;
-			}
-		} else {
-			this.set(name,new Item(name,amt));
-			return true;
-		}
-	}
-
-	decItem (name,amt) {
-		if (this.has(name)){
-			if (amt === undefined){
-				amt = 1;
-			}
-			var v = this.get(name);
-			v.stock -= amt;
-			if (v.stock &lt;= 0){
-				this.delete(name);
-			}
-			return;
-		} else {
-			return &quot;ERROR in decItem: item name not found in inventory\n&quot;;
-		}
-	}
-}
+class Inventory extends Array
 }}}
-Then, we should probably define what functionality we want our &quot;inventory&quot; to have. The {{{Inventory}}} class extends the {{{Map}}} object, meaning it functions the same way: if you need to reference an item, you can just call up its name. However, we&#39;ve also added some method functions, and modified the constructor.
+Then, we should probably define what functionality we want our &quot;inventory&quot; to have. The {{{Inventory}}} class extends the {{{Array}}} class, meaning it functions the same way: a single {{{Inventory}}} contains a list of {{{Item}}} objects. However, we&#39;ve also added some method functions, and modified the constructor.
+
+&lt;h4 id=&quot;JS.items.constructor&quot;&gt;Constructor&lt;/h4&gt;
 {{{
-constructor(ItemArray){
-	var m = [];
+constructor(ItemArray=[],size=0){
+	[...]
+	super(0);
+	console.assert(size &lt;= 0 || ItemArray.length &lt;= size,`ERROR constructing Inventory: ItemArray must not exceed size`);
 	ItemArray.forEach(function(item){
-		m.push([item.name,item]);
-	});
-	super(m);
+		this.push(item);
+	},this);
+	console.assert(Number.isInteger(size),`ERROR constructing Inventory: size must be integer`);
+	this.size = size;
 }
 }}}
-Instead of how you would normally construct a {{{Map}}} (an array of key/value pairs), you can construct an {{{Inventory}}} with just an array of items. The constructor will automatically extract the {{{name}}} attribute from the item and turn it into the key for that entry.
+You can construct an {{{Inventory}}} by creating a standard array of {{{Item}}} objects and passing it to the constructor; it will then become the {{{Inventory}}}&#39;s contents. Optionally, you can also pass a {{{size}}} argument, which determines the maximum number of stacks the {{{Inventory}}} can hold. If {{{size}}} is 0 (the default), the {{{Inventory}}} is considered limitless.
+
+&lt;h4 id=&quot;JS.items.get&quot;&gt;{{{get}}}&lt;/h4&gt;
+{{{
+get(name) {
+	console.assert(typeof(name) === &quot;string&quot;,`ERROR in Inventory.get: ${name} is not a string`);
+	return this.find(item =&gt; item.name === name);
+}
+}}}
+Note that {{{Inventory}}} is an array and not a Map. This is useful because it allows us to have multiple copies of the same item, but it also means we can&#39;t just access the items by name. To correct for this, we replicate a similar functionality with this {{{get}}} method, which finds and returns an item based on a passed name. Note, however, that due to the way {{{Array.find()}}} works, &lt;b&gt;this will only ever return the &lt;i&gt;first&lt;/i&gt; of multiple item stacks.&lt;/b&gt;
+{{{
+getById(id) {
+	return this.find(item =&gt; item.id === id);
+}
+}}}
+To deal with &lt;i&gt;that&lt;/i&gt; problem, we also have another variant, {{{getById}}}. This will find an item based on an ID value, which is unique to each item stack.
+
+&lt;h4 id=&quot;JS.items.add&quot;&gt;{{{addItem}}}&lt;/h4&gt;
 {{{
 addItem (name,amt) {
 	if (amt === undefined){
@@ -36027,7 +36032,81 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	&lt;&lt;set $bully to false&gt;&gt; /* If you didn&#39;t target Steven, lose out on Bully achievement */
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="202" name="Confirm Text" tags="nobr" position="225,2600" size="100,100">/* Displayed on the confirm phase. Recommended to repeat the action&#39;s name and provide some useful information. Custom text for certain actions can also be added. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="202" name="Status Screens" tags="nobr" position="225,2600" size="100,100">&lt;&lt;if $stScreen == 1&gt;&gt;
+/* 1 = stat screen, default, unlinked to STATUS_SCREENS and always available */
+	&lt;div class=&quot;statBlock&quot;&gt;
+	&lt;&lt;for _k, _v range $B.actor.stats&gt;&gt;
+		&lt;&lt;if !setup.hiddenStats.includes(_k)&gt;&gt;
+			&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
+			&lt;&lt;if $B.actor.maskstats || (def $bestiary &amp;&amp; $bestiary.fetch($B.actor.name) &amp;&amp; !$bestiary.fetch($B.actor.name).statsKnown[_k])&gt;&gt;
+				&lt;span class=&quot;stat&quot;&gt;
+					&lt;b&gt;??&lt;/b&gt;
+				&lt;/span&gt;
+			&lt;&lt;else&gt;&gt;
+				&lt;span class=&quot;stat&quot;&gt;
+				&lt;&lt;switch _k&gt;&gt;
+					&lt;&lt;case &quot;percentile stat&quot;&gt;&gt;
+						&lt;&lt;if _v &gt; 0&gt;&gt;
+							+
+						&lt;&lt;elseif _v === 0&gt;&gt;
+							±
+						&lt;&lt;/if&gt;&gt;
+				&lt;&lt;/switch&gt;&gt;
+				&lt;&lt;stat _k&gt;&gt;
+				&lt;/span&gt;
+			&lt;&lt;/if&gt;&gt;
+			&lt;&lt;switch _k&gt;&gt;
+	      &lt;&lt;case &quot;percentile stat&quot;&gt;&gt;
+					&lt;span style=&quot;grid-column:3&quot;&gt;
+	        %
+					&lt;/span&gt;
+	    &lt;&lt;/switch&gt;&gt;
+			&lt;br/&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;/div&gt;
+&lt;&lt;elseif setup.STATUS_SCREENS.battle[$stScreen-2] == &quot;elements&quot;&gt;&gt;
+	&lt;div style=&quot;font-size: 12px;&quot;&gt;ELEMENTAL RESISTANCE&lt;/div&gt;&lt;br/&gt;
+	&lt;&lt;for _k, _v range $B.actor.elements&gt;&gt;
+	&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;&lt;/span&gt;
+	&lt;span style=&quot;float:right&quot;&gt;
+		&lt;&lt;if def $bestiary &amp;&amp; $bestiary.fetch($B.actor.name) &amp;&amp; !$bestiary.fetch($B.actor.name).statsKnown[_k]&gt;&gt;
+			&lt;&lt;if setup.SOAK&gt;&gt;?? /&lt;&lt;/if&gt;&gt;&lt;div style=&quot;display: inline-block; min-width:55px; text-align:right&quot;&gt;???%&lt;/div&gt;
+		&lt;&lt;else&gt;&gt;
+			&lt;&lt;if setup.SOAK&gt;&gt;&lt;&lt;soak _v&gt;&gt; /&lt;&lt;/if&gt;&gt;&lt;div style=&quot;display: inline-block; min-width:55px; text-align:right&quot;&gt;&lt;&lt;res _v&gt;&gt;&lt;/div&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;/span&gt;
+	&lt;br/&gt;
+	&lt;&lt;/for&gt;&gt;
+&lt;&lt;elseif setup.STATUS_SCREENS.battle[$stScreen-2] == &quot;ailments&quot;&gt;&gt;
+	&lt;div style=&quot;font-size: 12px;&quot;&gt;AILMENT TOLERANCE&lt;/div&gt;&lt;br/&gt;
+	&lt;&lt;for _k, _v range $B.actor.tolerances&gt;&gt;
+		&lt;&lt;if _v.current != 0&gt;&gt;
+			&lt;&lt;if def $bestiary &amp;&amp; $bestiary.fetch($B.actor.name) &amp;&amp; !$bestiary.fetch($B.actor.name).tolerancesKnown[_k]&gt;&gt;
+				&lt;span class=&quot;tolerance&quot;&gt;????&lt;/span&gt;
+			&lt;&lt;else&gt;&gt;
+				&lt;&lt;print _k&gt;&gt;
+				&lt;&lt;tol _v&gt;&gt;
+			&lt;&lt;/if&gt;&gt;
+			&lt;br/&gt;
+		&lt;&lt;/if&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+&lt;&lt;elseif setup.STATUS_SCREENS.battle[$stScreen-2] == &quot;aggression&quot;&gt;&gt;
+	&lt;div style=&quot;font-size: 12px;&quot;&gt;AGGRESSION&lt;/div&gt;&lt;br/&gt;
+	&lt;&lt;set _totalThreat = 0&gt;&gt;
+	&lt;&lt;for _k, _v range $B.actor.threat&gt;&gt;
+		&lt;&lt;set _totalThreat += _v&gt;&gt;
+	&lt;&lt;/for&gt;&gt;
+	&lt;&lt;if _totalThreat == 0&gt;&gt;
+		&lt;&lt;set _totalThreat = 1&gt;&gt;
+	&lt;&lt;/if&gt;&gt;
+	&lt;&lt;for _k, _v range $B.actor.threat&gt;&gt;
+		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;&lt;/span&gt;
+		&lt;&lt;set _value = (_v / _totalThreat)*100; _value = _value.toFixed(0)&gt;&gt;
+		&lt;span class=&quot;right&quot;&gt;&lt;&lt;print _value+&quot;%&quot;&gt;&gt;&lt;/span&gt;
+		&lt;br/&gt;
+	&lt;&lt;/for&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="203" name="Confirm Text" tags="nobr" position="350,2600" size="100,100">/* Displayed on the confirm phase. Recommended to repeat the action&#39;s name and provide some useful information. Custom text for certain actions can also be added. */
 
 &lt;&lt;if $action.confirmText&gt;&gt;
 	&lt;&lt;print $action.confirmText&gt;&gt;
@@ -36035,9 +36114,9 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	&lt;&lt;print $subject.name&gt;&gt; will use &lt;&lt;switch $action.name.first().toLowerCase()&gt;&gt;&lt;&lt;case &#39;a&#39; &#39;e&#39; &#39;i&#39; &#39;o&#39; &#39;u&#39;&gt;&gt;an&lt;&lt;default&gt;&gt;a&lt;&lt;/switch&gt;&gt; $action.name.
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;print $subject.name&gt;&gt; will use &lt;b&gt;$action.name&lt;/b&gt;&lt;&lt;if $target isnot null&gt;&gt; on &lt;b&gt;$target.name&lt;/b&gt;&lt;&lt;/if&gt;&gt;.
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="203" name="custom battle preparation" tags="" position="350,2600" size="100,100">/* Additional code to perform during battle setup. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="204" name="custom battle preparation" tags="" position="475,2600" size="100,100">/* Additional code to perform during battle setup. */
 
-&lt;&lt;set $B.invBefore = clone(inv())&gt;&gt;</tw-passagedata><tw-passagedata pid="204" name="custom end of battle" tags="nobr" position="475,2600" size="100,100">&lt;&lt;set inv() = $B.invBefore&gt;&gt;</tw-passagedata><tw-passagedata pid="205" name="custom endTurn" tags="nobr" position="600,2600" size="100,100">/* Custom code to be run at the end of the endTurn widget. */</tw-passagedata><tw-passagedata pid="206" name="custom newTurn" tags="nobr" position="725,2600" size="100,100"></tw-passagedata><tw-passagedata pid="207" name="postAction custom" tags="nobr" position="850,2600" size="100,100">/* Appended to the Action Phase, immediately after mark attacks and potential surrender failure. Include any custom code or messages you want here. */
+&lt;&lt;set $B.invBefore = clone(inv())&gt;&gt;</tw-passagedata><tw-passagedata pid="205" name="custom end of battle" tags="nobr" position="600,2600" size="100,100">&lt;&lt;set inv() = $B.invBefore&gt;&gt;</tw-passagedata><tw-passagedata pid="206" name="custom endTurn" tags="nobr" position="725,2600" size="100,100">/* Custom code to be run at the end of the endTurn widget. */</tw-passagedata><tw-passagedata pid="207" name="custom newTurn" tags="nobr" position="850,2600" size="100,100"></tw-passagedata><tw-passagedata pid="208" name="postAction custom" tags="nobr" position="975,2600" size="100,100">/* Appended to the Action Phase, immediately after mark attacks and potential surrender failure. Include any custom code or messages you want here. */
 
 &lt;&lt;if !_markActive&gt;&gt;
 	&lt;&lt;markAttack&gt;&gt;
@@ -36045,13 +36124,13 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 
 &lt;&lt;if !_counterActive&gt;&gt;
 	&lt;&lt;hunterCheck&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="208" name="custom refreshPuppet" tags="nobr" position="975,2600" size="100,100">/* Appended to EVERY LOOP of refreshPuppets. Use variable _puppet to refer to the current puppet. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="209" name="custom refreshPuppet" tags="nobr" position="1100,2600" size="100,100">/* Appended to EVERY LOOP of refreshPuppets. Use variable _puppet to refer to the current puppet. */
 
 &lt;&lt;set _puppet.en = 5&gt;&gt;
 &lt;&lt;set _x = _puppet.actions.find(function (a) { return a &amp;&amp; a.name == &quot;Reload&quot; })&gt;&gt;
 &lt;&lt;if def _x&gt;&gt;
   &lt;&lt;set $subject = _puppet; _x.act()&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="209" name="damageCalc custom factors" tags="nobr" position="1100,2600" size="100,100">/* Any additional logic you want to add to damage calculation. Run after element logic, immediately before damage rounding. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="210" name="damageCalc custom factors" tags="nobr" position="1225,2600" size="100,100">/* Any additional logic you want to add to damage calculation. Run after element logic, immediately before damage rounding. */
 
 &lt;&lt;if _target.invincible&gt;&gt;
 	&lt;&lt;set $dmg = 0; _noDmgFloor = true&gt;&gt;
@@ -36073,7 +36152,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	&lt;&lt;set $dmg *= (1-setup.SHIELD_FACTOR)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="210" name="Database: Encounters" tags="nobr widget" position="1225,2600" size="100,100">/* This passage allows you to define encounters -- that is, unique parties of enemies. To define individual enemies and characters, see the database JS files. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="211" name="Database: Encounters" tags="nobr widget" position="100,2725" size="100,100">/* This passage allows you to define encounters -- that is, unique parties of enemies. To define individual enemies and characters, see the database JS files. */
 
 &lt;&lt;widget &quot;callEncounter&quot;&gt;&gt;
 /* The order characters are added to the array matters: they are displayed in that order from left to right when the stat blocks instantiate. */
@@ -36128,7 +36207,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 		&lt;&lt;set $enemies.push(_name)&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 &lt;&lt;/for&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="211" name="accuracy formula" tags="nobr" position="100,2725" size="100,100">&lt;&lt;if $action.accuracy === true&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="212" name="accuracy formula" tags="nobr" position="225,2725" size="100,100">&lt;&lt;if $action.accuracy === true&gt;&gt;
 	&lt;&lt;set _hit = true&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;set _acc = $action.accuracy&gt;&gt;
@@ -36144,12 +36223,12 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 	&lt;&lt;else&gt;&gt;
 		&lt;&lt;set _hit = false&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="212" name="crisis formula" tags="nobr" position="225,2725" size="100,100">&lt;&lt;if Number.isInteger(_target.crisisPoints) &amp;&amp; $dmg &gt; 0&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="213" name="crisis formula" tags="nobr" position="350,2725" size="100,100">&lt;&lt;if Number.isInteger(_target.crisisPoints) &amp;&amp; $dmg &gt; 0&gt;&gt;
   &lt;&lt;switch _target.crisisMode&gt;&gt;
     &lt;&lt;default&gt;&gt;
       &lt;&lt;set _target.crisisPoints += Math.round(($dmg/_target.maxHP)*100*_target.crisisFactor)&gt;&gt;
   &lt;&lt;/switch&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="213" name="crit formula" tags="nobr" position="350,2725" size="100,100">&lt;&lt;set _critChance = $action.critRate&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="214" name="crit formula" tags="nobr" position="475,2725" size="100,100">&lt;&lt;set _critChance = $action.critRate&gt;&gt;
 &lt;&lt;set _toCrit = random(1,100)&gt;&gt;
 &lt;&lt;if subject().stats.hasOwnProperty(StatName(&quot;Skill&quot;))&gt;&gt;
   &lt;&lt;set _critChance += subject().get(StatName(&quot;Skill&quot;))&gt;&gt;
@@ -36158,7 +36237,7 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
   &lt;&lt;print setup.CRIT_MESSAGE+&quot; &quot;&gt;&gt;
   &lt;&lt;set $dmg *= $action.critMultiplier&gt;&gt;
   &lt;&lt;set _crit = true&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="214" name="damageCalc formula" tags="nobr" position="475,2725" size="100,100">/* Define the damage formula or formulae you want to use here. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="215" name="damageCalc formula" tags="nobr" position="600,2725" size="100,100">/* Define the damage formula or formulae you want to use here. */
 
 &lt;&lt;set _atk = ($subject.get(StatName(&quot;atk&quot;)) * (1 - $action.useSpecial)) + ($subject.get(StatName(&quot;spc&quot;)) * $action.useSpecial)&gt;&gt;
 &lt;&lt;set _def = $subject.get(StatName(&quot;def&quot;))&gt;&gt;
@@ -36184,24 +36263,24 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;set $dmg = $action.formula()&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="215" name="heal formula" tags="nobr" position="600,2725" size="100,100">&lt;&lt;if Number.isInteger(action().special)&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="216" name="heal formula" tags="nobr" position="725,2725" size="100,100">&lt;&lt;if Number.isInteger(action().special)&gt;&gt;
   &lt;&lt;set $heal = action().special&gt;&gt;
 &lt;&lt;else&gt;&gt;
   &lt;&lt;set $heal = 0&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="216" name="manaBurnCalc" tags="widget nobr" position="725,2725" size="100,100">/* Formula for mana burns. */
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="217" name="manaBurnCalc" tags="widget nobr" position="850,2725" size="100,100">/* Formula for mana burns. */
 
 &lt;&lt;widget &quot;manaBurnCalc&quot;&gt;&gt;
   &lt;&lt;set $dmg = action().special&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="217" name="echoDamage threat gain" tags="nobr" position="850,2725" size="100,100">/* Default: Dragon Age style. Attacker gains threat equal to the percentage of maximum HP dealt. */
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="218" name="echoDamage threat gain" tags="nobr" position="975,2725" size="100,100">/* Default: Dragon Age style. Attacker gains threat equal to the percentage of maximum HP dealt. */
 &lt;&lt;set _threatGain = 1 * ($dmg / target().maxHP)&gt;&gt;
-&lt;&lt;run target().threat.inc(subject().name,_threatGain)&gt;&gt;</tw-passagedata><tw-passagedata pid="218" name="Tick Formula" tags="nobr" position="975,2725" size="100,100">&lt;&lt;run console.assert(subject() instanceof Actor,`ERROR in Tick Formula: no subject`)&gt;&gt;
+&lt;&lt;run target().threat.inc(subject().name,_threatGain)&gt;&gt;</tw-passagedata><tw-passagedata pid="219" name="Tick Formula" tags="nobr" position="1100,2725" size="100,100">&lt;&lt;run console.assert(subject() instanceof Actor,`ERROR in Tick Formula: no subject`)&gt;&gt;
 &lt;&lt;run console.assert($action instanceof Action,`ERROR in Tick Formula: no action`)&gt;&gt;
 
-&lt;&lt;set subject().ticks += ($action.recoveryTime - subject().get(StatName(&quot;spd&quot;)))&gt;&gt;</tw-passagedata><tw-passagedata pid="219" name="Wait Formula" tags="nobr" position="1100,2725" size="100,100">&lt;&lt;run console.assert(subject() instanceof Actor,`ERROR in Tick Formula: no subject`)&gt;&gt;
+&lt;&lt;set subject().ticks += ($action.recoveryTime - subject().get(StatName(&quot;spd&quot;)))&gt;&gt;</tw-passagedata><tw-passagedata pid="220" name="Wait Formula" tags="nobr" position="1225,2725" size="100,100">&lt;&lt;run console.assert(subject() instanceof Actor,`ERROR in Tick Formula: no subject`)&gt;&gt;
 &lt;&lt;run console.assert($action instanceof Action,`ERROR in Tick Formula: no action`)&gt;&gt;
 
 &lt;&lt;set subject().ticks += ($action.waitTime - subject().get(StatName(&quot;spd&quot;)))&gt;&gt;
-&lt;&lt;set subject().ticks = Math.max(1,subject().ticks)&gt;&gt;</tw-passagedata><tw-passagedata pid="220" name="loss of control effects" tags="nobr" position="1225,2725" size="100,100">&lt;&lt;set _u = $puppets.find(function (p) { return p &amp;&amp; (p.uncontrollable &amp;&amp; !(!p.active || p.noact || p.dead)); })&gt;&gt;
+&lt;&lt;set subject().ticks = Math.max(1,subject().ticks)&gt;&gt;</tw-passagedata><tw-passagedata pid="221" name="loss of control effects" tags="nobr" position="100,2850" size="100,100">&lt;&lt;set _u = $puppets.find(function (p) { return p &amp;&amp; (p.uncontrollable &amp;&amp; !(!p.active || p.noact || p.dead)); })&gt;&gt;
 &lt;&lt;if def _u&gt;&gt;
 	&lt;&lt;set $subject = _u&gt;&gt;
 	&lt;&lt;if subject().name == &quot;Mage&quot;&gt;&gt;
@@ -36224,13 +36303,13 @@ $enemies[2].name yells, &quot;Pick on someone your own size!&quot; and throws he
 		&lt;&lt;/if&gt;&gt;
 		&lt;&lt;goto &quot;Action Phase&quot;&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="221" name="special battle lines" tags="nobr" position="100,2850" size="100,100">/* Displays in-between the two party listings in actorlist. */</tw-passagedata><tw-passagedata pid="222" name="Widget: Special Checks" tags="widget nobr" position="225,2850" size="100,100">&lt;&lt;widget &quot;specialcheck&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="222" name="special battle lines" tags="nobr" position="225,2850" size="100,100">/* Displays in-between the two party listings in actorlist. */</tw-passagedata><tw-passagedata pid="223" name="Widget: Special Checks" tags="widget nobr" position="350,2850" size="100,100">&lt;&lt;widget &quot;specialcheck&quot;&gt;&gt;
 /* Called on the &quot;Player Phase&quot; passage. Use this to direct a player to any special scenes or scenarios you want to occur upon specific triggers, such as a character reacting to another character&#39;s defeat or changing into a different form. */
 
 &lt;&lt;include &quot;loss of control effects&quot;&gt;&gt;
 &lt;&lt;include &quot;delayed actions&quot;&gt;&gt;
 
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="223" name="Stash Phase" tags="battle nobr" position="350,2850" size="100,100">&lt;&lt;replace &quot;#actorlist&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="224" name="Stash Phase" tags="battle nobr" position="475,2850" size="100,100">&lt;&lt;replace &quot;#actorlist&quot;&gt;&gt;&lt;&lt;/replace&gt;&gt;
 Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 &lt;br/&gt;&lt;br/&gt;
 &lt;&lt;if $COMPRESSED_ACTIONS === true&gt;&gt;
@@ -36246,7 +36325,7 @@ Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 &lt;div id=&quot;actionInfo&quot;&gt;
 	&lt;&lt;include &quot;action box default&quot;&gt;&gt;
 &lt;/div&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="224" name="Widget: stashlist" tags="widget nobr" position="475,2850" size="100,100">&lt;&lt;widget &quot;stashlist&quot;&gt;&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="225" name="Widget: stashlist" tags="widget nobr" position="600,2850" size="100,100">&lt;&lt;widget &quot;stashlist&quot;&gt;&gt;
 &lt;&lt;run console.assert($args.length &gt; 0 &amp;&amp; ($args[0] instanceof Puppet),&quot;ERROR in stashlist: no Puppet&quot;)&gt;&gt;
 &lt;&lt;run console.assert($args[0].stash !== undefined,&quot;ERROR in stashlist: stash is undefined&quot;)&gt;&gt;
 &lt;&lt;set _char = $args[0]&gt;&gt;
@@ -36281,7 +36360,7 @@ Select an item to use from stash. &lt;&lt;backbtn&gt;&gt;
 	&lt;&lt;/if&gt;&gt;
 	&lt;/div&gt;
 &lt;&lt;/for&gt;&gt;
-&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="225" name="User-defined variables" tags="" position="600,2850" size="100,100">/* Appended to the default StoryInit passage. Add any additional code you want here. */
+&lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="226" name="User-defined variables" tags="" position="725,2850" size="100,100">/* Appended to the default StoryInit passage. Add any additional code you want here. */
 
 &lt;&lt;run customMods()&gt;&gt;
 

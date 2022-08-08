@@ -169,6 +169,8 @@ The details of how our classes are defined are explained in [[Documentation (Adv
 
 Each database is handled similarly. We create a database object as the attribute of the {{{setup}}} variable, which is a special variable used by SugarCube. (Assigning databases to {{{setup}}} is important for reasons <a href="https://www.motoslave.net/sugarcube/2/docs/#guide-state-sessions-and-saving-refreshing-and-restarting" target="_blank">explained in the SugarCube documentation</a>.) Each property of this database object corresponds to a single object we want to define, and contains data that will be read to create an instance of the object when the game is up and running. Once you have a fully-defined database entry, you need only pass the entry's name as the argument to the object constructor, and you'll create a live instance of that object.
 
+Note that in addition to the properties described here, most of the engine's classes feature a {{{tags}}} property, which is an array of strings that can be used to store any additional metadata not covered by existing properties.
+
 <h2 id="data.puppets">Creating Puppets</h2>
 The class for playable characters is called "Puppet", as a carry-over joke from <i>Cartoon Battle</i>. As such, the database object is called {{{puppetData}}}.
 
@@ -222,11 +224,10 @@ This isn't what a live {{{Puppet}}} object looks like, but it contains all the d
 * {{{large}}} is a Boolean; if {{{true}}}, the character's actor box will span the full width of the screen.
 * {{{maskhp}}} is a Boolean; if {{{true}}}, the character's HP bar and HP total will not be displayed in their actor box.
 * {{{loadBearing}}} is a Boolean; if {{{true}}}, the battle will end when this character is defeated, regardless of the status of their teammates.
+* {{{threatMod}}} is a positive number. A character's chance of being targeted by AI attacks will be multiplied by this number.
 * {{{specialInit}}} is a function that is run at the end of the {{{Puppet}}} constructor. This is a catchall that allows you to tweak any other variables you want that aren't specified by the regular attributes. (Due to a coding quirk, the object under construction needs to pass itself as an argument to this function, so assign your code to {{{actor}}} rather than {{{this}}}.) In addition to custom variables, it supports the assignment of the following properties:
 ** {{{showMaxHP}}} is a Boolean; if {{{true}}}, the character's max HP will be displayed alongside their current HP in their actor box.
 ** {{{caps}}} is a Boolean; if {{{true}}}, the character's name will be capitalized in their actor box.
-** {{{firefly}}} is a Boolean; if {{{true}}}, the character will have a higher chance of being targeted by enemies.
-** {{{wallflower}}} is a Boolean; if {{{true}}}, the character will have a lower chance of being targeted by enemies.
 
 <h2 id="data.actions">Creating Actions</h2>
 Actions determine what things your characters can do in battle -- attacking, casting spells, etc. The database object for actions is called {{{actionData}}}, and its entries look like this:
@@ -401,33 +402,41 @@ Items are objects that characters can obtain during gameplay. They may be consum
 }}}
 This isn't what a live {{{Item}}} object looks like, but it contains all the data the {{{Item}}} constructor needs to create one. There are additional attributes not shown in this entry that are detailed below:
 * {{{info}}} and {{{desc}}} function exactly like they do in <a class="noExternal" href="#data.actions">Actions</a>.
-* {{{stackSize}}} is an integer; determines the max number of copies of this item that can exist in an inventory. Defaults to the value of {{{ITEM_MAX}}} in {{{setup}}}.
+* {{{stackSize}}} is an integer; determines the max number of copies of this item that can exist in an inventory. Defaults to the value of {{{ITEM_MAX}}} in {{{setup}}}. By necessity, items with greater than 1 use are limited to a stack size of 1.
 * {{{usable}}} is an array that can have up to two elements: "inmenu" and "inbattle". This determines if the item can be used in the party menu, in battle, or both (if both strings are included in the array). Optional.
 ** {{{onUse}}} is a function that determines what happens when the item is used in the party menu.
 ** {{{action}}} is a string; name of the action the item will generate if used in-battle. This defaults to the item's name.
 ** {{{instantUse}}} is a Boolean; if {{{true}}}, the item's {{{onUse}}} will execute as soon as it is selected, rather than requiring a target first. (This is useful for e.g. items that affect the whole party or which take the player to another passage for more detailed interaction.)
 * {{{value}}} is an integer; determines the units of currency the item can be bought and sold for at shops.
 * {{{fakeName}}} is a string; alternate name that will be displayed until the item is used or equipped. Optional.
+* {{{uses}}} is an integer; determines number of times an item can be used before being depleted. Defaults to 1.
 
 Equippable items have several additional properties. An example entry looks like this:
 {{{
 "Symbol of Destruction": {
-	"equippable": {slot: "Weapon", tags: ["symbol"], restrictedTo: []},
-	"onEquip": function (puppet) {
-		puppet.stats["Attack"].addMod("Symbol of Destruction",5,true);
-	},
-	"onRemove": function (puppet) {
-		puppet.stats["Attack"].removeMod("Symbol of Destruction");
-	},
-	"desc": "A weapon.",
-	"info": "ATK +5"
-}
+  "equippable": {slots: "Weapon", restrictedTo: []},
+  "tags": ["symbol"],
+  "special": {
+    "Attack": 5,
+  },
+  "onEquip": function (puppet) {
+    for (let [pn,v] of Object.entries(this.special)) {
+      puppet.stats[pn].addMod("Symbol of Destruction",v,true);
+    }
+  },
+  "onRemove": function (puppet) {
+    for (let [pn,v] of Object.entries(this.special)) {
+      puppet.stats[pn].removeMod("Symbol of Destruction");
+    }
+  },
+  "desc": "A weapon.",
+  "info": "ATK +5"
+},
 }}}
 * {{{equippable}}} is an object with three sub-properties. Its existence is checked to determine if an item can be equipped.
-** {{{slot}}} is a string; states what slot the item will be equipped to. Must match a character equipment slot.
+** {{{slots}}} is a string or array of strings; states which slots the item can be equipped to. Must match a character equipment slot.
 ** {{{restrictedTo}}} is an array; contains the names of characters who can equip the item. Make the array empty for no restrictions.
-** {{{tags}}} is an array; stores any additional metadata, such as e.g. equipment restrictions by character class. Optional.
-* {{{onEquip}}} and {{{onRemove}}} are functions determining the behavior of the item when it is equipped and removed, respectively.
+* {{{onEquip}}} and {{{onRemove}}} are functions determining the behavior of the item when it is equipped and removed, respectively. (Referencing a {{{special}}} property is not required, but recommended to make it easier to keep track of things.)
 * {{{sticky}}} is a Boolean; if {{{true}}}, the item is considered cursed and can only be removed through a decurse station.
 
 Note that items are stored in an {{{Inventory}}} object, the code for which can be found in {{{class-item.js}}}. Use the {{{addItem}}} and {{{removeItem}}} functions when adding or removing items to an inventory.
@@ -1439,9 +1448,12 @@ For more information on what you can do here, see the relevant portions of <a hr
 
 Most variables are explained in the comments of the <code>StoryInit</code> file, but this section will go into detail on some of the more complex ones:
 * {{{formula}}} determines the default damage formula used for attacks. A few options are provided by default. See [[Design]] for more information.
-* {{{TURN_MODEL}}} determines the turn model used in battles.
+* {{{TURN_MODEL}}} determines the turn model used in battles. (See [[Additional Features]] for details.)
 ** "{{{free}}}": <b>Default.</b> The simplest model, where players can decide their turn order freely.
-** "{{{timeline}}}": Character turns are decided by the actions they use, where every action has a custom time between its use and the next turn. (See [[Additional Features]] for details.)
+** "{{{timeline}}}": Character turns are decided by the actions they use, where every action has a custom time between its use and the next turn.
+** "{{{ranked}}}": Combat is split into "rounds" consisting of one turn each for every participant. Turn order is determined by the {{{Actor}}} method {{{turnFormula}}}, defined in the {{{formula-turns.js}}} file.
+** "{{{action}}}": Characters continually gain "action time" based on the {{{Actor}}} method {{{timeFormula}}}, defined in the {{{formula-time.js}}} file; characters with the highest action time move first.
+*** {{{TIME_THRESHOLD}}} is an additional variable that can be used to modify this model. If defined as a positive integer, action time must meet or exceed the threshold before characters can get a turn.
 * {{{STAT_NAMES}}} matches stats as they are defined in the engine to a custom name. This allows you to customize the names of your stats without having to edit every reference in the code.
 * {{{STAT_MIN}}} and {{{STAT_MAX}}} define the minimum and maximum values allowed for every stat. This is important when considering buffs or equipment that can modify stats.
 * {{{statInfo}}} provides a tooltip description of every stat when the player hovers over its name in the party menu. This is helpful for communicating to your player what each stat does, especially if you use particularly complex or esoteric stats.
@@ -1454,6 +1466,8 @@ Most variables are explained in the comments of the <code>StoryInit</code> file,
 * {{{STATUS_SCREENS}}} is an object of arrays of strings corresponding to what options the player can select in status panes. There are separate lists for the status menu, the in-battle status pane, and the bestiary. Additional options you will have to create yourself.
 * {{{DEFAULT_EQUIP_SLOTS}}} is an object that will be read to generate default equipment slots if no {{{equipSlots}}} object is provided in the character database entry. Keys correspond to equipment slots, values correspond to the number of subslots.
 * {{{THREAT_TARGETING}}} and {{{BATTLE_GRID}}} are Booleans that allow you to activate alternate gameplay styles. See [[Documentation (Advanced)]] for details on threat targeting and [[Additional Features]] for details on the battle grid.
+* {{{DUPLICATE_ITEMS}}} is a Boolean; determines whether or not inventories can contain multiple stacks of the same item.
+* {{{REMOVE_ITEMS}}} is a Boolean; determines whether or not item stacks are removed from inventory when they are used up. If not, "ghost" stacks of 0 stock will stick around.
 * The various animation variables determine the length of the battle popup animations, in milliseconds.
 
 This is also where you should define the player's starting party with the {{{$puppets}}} variable, and their starting inventory with the {{{$inventory}}} variable.
@@ -1465,7 +1479,6 @@ The passages in {{{passages-custom}}} are slotted into certain core passages thr
 * {{{battle interruptions}}} will appear during the action phase, after the action's {{{useText}}} but before its {{{actText}}}. You can make them appear conditionally based on encounter scenario or other variables. The interruptions for the Steven Universe encounter are provided as an example.
 * {{{confirm-text}}} customizes the text displayed in the confirm phase.
 * {{{custom battle preparation}}} is run at the end of the setup code before every battle. By default, it only adds the {{{<<restock>>}}} widget, which refreshes any items used during the battle.
-* {{{custom end of action effects}}} is run on every action, after followup attacks and potential surrender failure. Use it for any special action adjustments you want to make. By default, this only includes the EN refund for the "Focus" ability.
 * {{{custom end of battle}}} is run at the end of the {{{<<endofbattle>>}}} widget. By default, it only adds the {{{<<restock>>}}} widget, which refreshes any items used during the battle.
 * {{{custom newTurn}}} is run at the end of the {{{<<newTurn>>}}} widget. By default, it regenerates puppet EN.
 * {{{custom postAction}}} is run after every action is played in battle. By default, it provides functionality for the "Mark" and "Hunter" effects.

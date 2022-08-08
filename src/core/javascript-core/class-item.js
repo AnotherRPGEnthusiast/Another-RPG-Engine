@@ -232,6 +232,13 @@ window.Item = class Item {
 			: undefined;
 	}
 
+	get tags () {
+		let r = (this._tags || this.itemData.tags || []);
+		if (typeof(r) === "string") r = [r];
+		console.assert(r instanceof Array,`ERROR in item ${this.name}: tags must be array`);
+		return r;
+	}
+
 	checkRestriction (puppet) {
 		//	DEPRECIATED as of v1.18. Use the Actor version instead.
 		// Shorthand for checking equipment restrictions. Returns true if puppet's name is in the restricted listing or if the restricted listing is empty.

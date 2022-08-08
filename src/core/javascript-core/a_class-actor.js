@@ -76,6 +76,8 @@ window.Actor = class Actor {
 			Number.isInteger(this.data.respawn) ?
 				this._respawn = new FillStat(this.data.respawn) : this._respawn = new FillStat(0);
 			if (typeof(this.data.respawnHP) === "number") { this._respawnHP = this.data.respawnHP; }
+			typeof(this.data.threatMod) === "number" && this.data.threatMod > 0 ?
+				this._threatMod = new Stat(this.data.threatMod) : this._threatMod = new Stat(1);
 
 			this.battleMsg = [];	// container for popups that will appear during actions
 
@@ -528,6 +530,11 @@ window.Actor = class Actor {
 		} else {
 			this.stats.get(k).Temp += v;
 		}
+	}
+
+	get threatMod () {
+		console.assert(this._threatMod instanceof Stat,`ERROR accessing threatMod for ${this.name}: threatMod is not a Stat`);
+		return this._threatMod.current;
 	}
 
 	getElement (needle,type) {

@@ -1,4 +1,9 @@
 :: Changelog[text]
+<h3>Version 5.00.1</h3>
+<ul>
+<li>Fixed a typo in the targeting code that caused a fatal error when attempting to reference <code>threatMod</code>.</li>
+</ul>
+
 <h3>Version 5.00</h3>
 <ul>
 <li><b>INVENTORY OVERHAUL:</b> Inventory objects are now <code>Arrays</code> rather than <code>Maps</code>. This allows multiple instances of the same item to appear in an Inventory. <b>This change is incompatible with earlier versions of the engine.</b></li>
@@ -19,7 +24,8 @@
   <li>New <code>Actor</code> method: <code>hasSlot</code>. Checks if the named slot is present.</li>
   <li>New <code>Actor</code> method: <code>getEquipment</code>. Returns the equipment in the named slot.</li></ul>
 <li>Element affinities are now stored in a generic object instead of a <code>Map</code>. This will make it easier to access and modify them.</li>
-<li>New <code>Action</code> property: <code>tags</code>. This is an array that can be used to store any additional metadata you desire.</li>
+<li>New property for <code>Action</code> and <code>Item</code> classes: <code>tags</code>. This is an array that can be used to store any additional metadata you desire.</li>
+<li>New <code>Actor</code> property: <code>threatMod</code>. This is a <code>Stat</code> against which a characters' chances of being targeted by attacks will be multiplied. (This replaces the old code for Firefly and Wallflower.)</li>
 <li>Added and expanded comments for the <code>Item</code> and <code>Inventory</code> classes.</li>
 <li><code>unequip</code> now returns a value if the unequip failed due to sticky equipment.</li>
 <li>Deleted "custom end of action effects", as it was now redundant with "custom postAction".</li>
@@ -39,6 +45,7 @@
 <li>Reorganized <code>StoryInit</code> to move most variables into the custom version of the file, and rearranged them into a more logical order. You should no longer have to jump back and forth between two files to figure out what has and hasn't been defined.</li>
 <li>Reorganized and compartmentalized most of the party menu widgets so that they are now stored in the same file as the relevant passages.</li>
 <li>Removed the <code>B.targeting</code> variable and replaced it with the <code>action.target</code> property.</li>
+<li>Moved the formatting for in-battle status screens to a custom passage. Display code has been tweaked to better accommodate modular changes.</li>
 </ul>
 
 <h3>Version 4.03</h3>

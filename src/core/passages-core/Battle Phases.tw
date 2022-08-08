@@ -201,63 +201,7 @@
 <</if>>
 </div>
 <br/>
-<<if $stScreen == 1>>
-/* 1 = stat screen, default, unlinked to STATUS_SCREENS and always available */
-	<<for _k, _v range $B.actor.stats>>
-		<<if !setup.hiddenStats.includes(_k)>>
-			<span class="statname"><<print _k>>:</span>
-			<span class="stat">
-				<<if $B.actor.maskstats || (def $bestiary && $bestiary.fetch($B.actor.name) && !$bestiary.fetch($B.actor.name).statsKnown[_k])>>
-					<b>??</b>
-				<<else>>
-					<<stat _k>>
-				<</if>>
-			</span>
-			<br/>
-		<</if>>
-	<</for>>
-<<elseif setup.STATUS_SCREENS.battle[$stScreen-2] == "elements">>
-	<div style="font-size: 12px;">ELEMENTAL RESISTANCE</div><br/>
-	<<for _k, _v range $B.actor.elements>>
-	<span class="statname"><<print _k>></span>
-	<span style="float:right">
-		<<if def $bestiary && $bestiary.fetch($B.actor.name) && !$bestiary.fetch($B.actor.name).statsKnown[_k]>>
-			<<if setup.SOAK>>?? /<</if>><div style="display: inline-block; min-width:55px; text-align:right">???%</div>
-		<<else>>
-			<<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:55px; text-align:right"><<res _v>></div>
-		<</if>>
-	</span>
-	<br/>
-	<</for>>
-<<elseif setup.STATUS_SCREENS.battle[$stScreen-2] == "ailments">>
-	<div style="font-size: 12px;">AILMENT TOLERANCE</div><br/>
-	<<for _k, _v range $B.actor.tolerances>>
-		<<if _v.current != 0>>
-			<<if def $bestiary && $bestiary.fetch($B.actor.name) && !$bestiary.fetch($B.actor.name).tolerancesKnown[_k]>>
-				<span class="tolerance">????</span>
-			<<else>>
-				<<print _k>>
-				<<tol _v>>
-			<</if>>
-			<br/>
-		<</if>>
-	<</for>>
-<<elseif setup.STATUS_SCREENS.battle[$stScreen-2] == "aggression">>
-	<div style="font-size: 12px;">AGGRESSION</div><br/>
-	<<set _totalThreat = 0>>
-	<<for _k, _v range $B.actor.threat>>
-		<<set _totalThreat += _v>>
-	<</for>>
-	<<if _totalThreat == 0>>
-		<<set _totalThreat = 1>>
-	<</if>>
-	<<for _k, _v range $B.actor.threat>>
-		<span class="statname"><<print _k>></span>
-		<<set _value = (_v / _totalThreat)*100; _value = _value.toFixed(0)>>
-		<span class="right"><<print _value+"%">></span>
-		<br/>
-	<</for>>
-<</if>>
+<<include "Status Screens">>
 <br/>
 <<effectinfo>>
 

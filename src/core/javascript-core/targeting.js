@@ -57,6 +57,7 @@ window.Hitlist = class Hitlist extends Array {
 		//	Automatically adjusts chances based on Firefly, Wallflower, and untargetable.
 		//	Set bypass to true to ignore these factors (e.g. if you populated the hitlist with unique logic)
 
+//		console.log("returnTarget running");
 		mods = (mods || []);
 		console.assert(mods instanceof Array,`ERROR in returnTarget: mods must be array`);
 
@@ -69,14 +70,8 @@ window.Hitlist = class Hitlist extends Array {
 			if (t.target.dead || (t.target.untargetable && !(mods.includes("ignore untargetable") || mods.includes("ally")))) {
 				t.chance = 0;
 			} else if (bypass !== true) {
-				// fireflies have their chances multiplied (default by 2)
-				if (t.target.firefly) {
-					t.chance *= setup.FIREFLY_FACTOR;
-				}
-				// wallflowers have their chances multiplied (default by 0.5)
-				if (t.target.wallflower) {
-					t.chance *= setup.WALLFLOWER_FACTOR;
-				}
+				// adjust chance by threatMod
+				t.chance *= t.target.threatMod;
 			}
 		}
 

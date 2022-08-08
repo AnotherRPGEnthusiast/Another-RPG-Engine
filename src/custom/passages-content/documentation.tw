@@ -23,6 +23,9 @@ The opening sections will be quite technical, and deal with external script. If 
 **<a href="#JS.enemies">Enemy Class</a>
 **<a href="#JS.actions">Action Class</a>
 **<a href="#JS.items">Inventory and Items</a>
+***<a href="#JS.items.constructor">Constructor</a>
+***<a href="#JS.items.get">{{{get}}}</a>
+***<a href="#JS.items.add">{{{addItem}}}</a>
 **<a href="#effects">Status Effects</a>
 ***<a href="#effects1">Applying effects</a>
 ****<a href="#effects1.1">Accounting for protective effects</a>
@@ -183,22 +186,21 @@ this._HPregen = {
 	"flat": new Stat(0),
 	"percent": new Stat(0)
 }
-this.elements = new Map();
+this.elements = {};
 if (setup.ELEMENT_LIST !== undefined){
 	setup.ELEMENT_LIST.forEach(function(x) {
-		this.elements.set(x,{"percent": new Stat(1), "flat": new Stat(0)});
+		this.elements[x] = {"percent": new Stat(1), "flat": new Stat(0)};
 	}, this);
-}
-this.tolerances = new Map();
-if (setup.effectData !== undefined){
-	Object.keys(setup.effectData).forEach(function(x) {
-		this.tolerances.set(x,new Tolerance(0));
-	}, this);
+	if (this.data.elements) {
+		for (let [pn,v] of Object.entries(this.data.elements)) {
+			this.elements[pn].percent.base = v;
+		}
+	}
 }
 }}}
 Then three properties are initialized to default valies: HP regeneration (which contains both flat and percentage rates), elemental affinities, and ailment tolerances. {{{ELEMENT_LIST}}} is a story variable you can define in StoryInit to list all the elements you want in your game. This code checks to make sure it exists, and if it does, runs across it to create elemental affinity values for each. (By default, they are all neutral: 1 for the proportional multiplier and 0 for flat reduction.) This will prevent the game from throwing an error when a character is attacked with an elemental ability; if the game tries to read a value and there's nothing there, it may create problems. Similarly, {{{tolerances}}} generates ailment resistances by running over {{{effectData}}}, the database of all status effects in your game (see <a class="noExternal" href="#effects">Status Effects</a>), and creating resistances based on the name values it extracts.
 
-The {{{elements}}} and {{{tolerances}}} attributes are defined as a Map object rather than an array. Maps are very similar to arrays, but their index values can be anything, not just numbers. To extract a value from a Map, you use {{{<var>.get(<key>)}}}, similarly to how you use {{{<var>[index]}}} to extract values from arrays. This makes it much easier to call an affinity in response to an elemental attack, as you can just input the name and the program will pull up the corresponding value, instead of having to remember the order of the array.
+The {{{tolerances}}} attribute is defined as a Map object rather than an array. Maps are very similar to arrays, but their index values can be anything, not just numbers. To extract a value from a Map, you use {{{<var>.get(<key>)}}}, similarly to how you use {{{<var>[index]}}} to extract values from arrays. This makes it much easier to call a tolerance in response to an effect application, as you can just input the name and the program will pull up the corresponding value, instead of having to remember the order of the array.
 {{{
 if (this.data.elements) { this.setElements(Object.entries(this.data.elements),"percent"); }
 if (this.data.tolerances) { this.setTol(Object.entries(this.data.tolerances)); }
@@ -226,8 +228,11 @@ for (let [pn,v] of Object.entries(setup.statInfo)) {
 		case 'Accuracy':
 			this.stats[pn] = new Stat(100);
 			break;
-		default:
+		case 'Evasion':
 			this.stats[pn] = new Stat(0);
+			break;
+		default:
+			this.stats[pn] = new Stat(StatMin(pn));
 	}
 }
 for (let [pn,v] of Object.entries(this.data.stats)) {
@@ -248,14 +253,18 @@ this.dmgreflection = 0;
 }}}
 Next we initialize some important flags. <code>active</code> will be used to determine if a character has finished their turn, <code>effects</code> holds status effects, and the others are used for a few niche effects.
 {{{
-this.equipment = new Map();
+this.equipment = [];
 var equipData;
 equipData = (typeof(this.equipSlots) == "object")
 	? equipData = this.equipSlots
 	: equipData = setup.DEFAULT_EQUIP_SLOTS;
 
 for (let [pn,v] of Object.entries(equipData)) {
-	this.equipment.set(pn,new Array(v).fill(null));
+	console.assert(Number.isInteger(v) && v > 0,`ERROR constructing Actor: equipData has non-whole numbers`);
+	for (let i = 1; i <= v; i++) {
+		let slot = { name: pn, id: i, item: null, locked: false };
+		this.equipment.push(slot);
+	}
 }
 }}}
 Next, we define equipment slots. These can be defined either by a database entry (which will be read by {{{this.equipSlots}}}) or by {{{DEFAULT_EQUIP_SLOTS}}}, which can be defined in {{{StoryInit}}}. These are discussed more in <a class="noExternal" href="#JS.items">the Item Database</a>.
@@ -374,77 +383,109 @@ We also have some special getters and setters for handling elemental affinities 
 
 <h4 id="JS.actor.equipFunctions">Equipment Functions</h4>
 {{{
-unequip (slot,index,mods) {
-	mods = (mods || {});
-	if (this.equipment.has(slot)) {
-		var item = null;
-		if (this.equipment.get(slot) instanceof Array) {
-			if (typeof(index) == 'number') {
-				item = this.equipment.get(slot)[index];
-			} else { console.log("ERROR in unequip: Invalid item index."); return; }
-		} else {
-			item = this.equipment.get(slot);
-		}
-		if (item !== null){
-			if (item.default === undefined && mods.destroy !== true) {
-				inv().addItem(item.name);
-			}
-			if (item.onRemove !== undefined) {
-				item.onRemove(this);
-			}
-			(this.equipment.get(slot) instanceof Array) ? this.equipment.get(slot)[index] = null : this.equipment.set(slot,null);
-			//this.equipment.set(slot,new Item("Default "+slot));
-		}
+unequip (slot,index = 1,mods = {}) {
+	var slot = this.equipment.find(e => (e.name === name && e.id === index));
+	console.assert(slot !== undefined,`ERROR in unequip: attempted to unequip nonexistent name`);
+
+	if (slot.locked && !mods.unlock) {
+		console.log("Unequip result for "+this.name+": Slot "+name+" is locked. Remember to pass the unlock property to the mods argument if you wish to unequip a locked slot.")
+		return false;
 	}
-	else { console.log("Attempted to unequip nonexistent slot."); return; }
+
+	var item = slot.item;
+	if (item instanceof Filler) {
+		let sourceSlot = this.equipment.find(e => (e.item && e.item.name === item.name));
+		console.assert(sourceSlot !== undefined,`ERROR in unequip: Filler source does not exist`);
+		this.unequip(sourceSlot.name,sourceSlot.id);
+	}
+	else if (item instanceof Item && (!item.sticky || mods.unsticky === true)) {
+		if (item.default === undefined && mods.destroy !== true) {
+			(item.uses < item.maxUses)
+				? inv().addItem(item)
+				: inv().addItem(item.name);
+		}
+		if (item.onRemove !== undefined) {
+			item.onRemove(this);
+		}
+		slot.item = null;
+		[...]
+	} else {
+		console.log("Unequip result for "+this.name+": Slot "+name+" held unexpected object type or equipment was sticky. Remember to pass unsticky to the mods argument to remove sticky equipment.");
+		return false;
+	}
 }
 }}}
-There are similar functions for handling equipment, though in this case we define the removal function first. {{{unequip}}} is straightforward in most cases: it is passed the slot to unequip, and the item in that slot is removed. We require a common-sense check to ensure the given slot exists and isn't already empty. We also want to store the unequipped item and place it back in the player's inventory, as the {{{set}}} function will simply overwrite what was originally in the slot. (If we <i>do</i> want the player to permanently lose the item, we can set the {{{destroy}}} flag to {{{true}}}.)
+There are similar functions for handling equipment, though in this case we define the removal function first. {{{unequip}}} is straightforward in most cases: it is passed the slot to unequip, and the item in that slot is removed. We require a common-sense check at the start to ensure the given slot exists and isn't already empty. We also want to store the unequipped item and place it back in the player's inventory, as the {{{set}}} function will simply overwrite what was originally in the slot. (If we <i>do</i> want the player to permanently lose the item, we can set the {{{destroy}}} flag to {{{true}}}.)
 
-Things become slightly more complex if we are looking at an equipment slot with multiple subslots, such as "Accessory" in the default engine. If we're unequipping from such a slot, the function must be passed an {{{index}}} value so it knows which subslot to unequip. It will then check at the beginning if the slot is an array; if it is, it will assign the item at the index value to {{{item}}}, instead of the slot itself. The function checks once more at the end so that it can correctly target the slot to set to {{{null}}}.
+There is also a special case for if the slot is filled by a "Filler" object. This is used to show that there is equipment occupying multiple slots. Fortunately, Filler objects store the name of their source equipment, so we just search for that name among the character's equipment and unequip that.
 
+Things become slightly more complex if we are looking at an equipment slot with multiple subslots, such as "Accessory" in the default engine. If we're unequipping from such a slot, the function must be passed an {{{index}}} value so it knows which subslot to unequip.
+{{{
+if (typeof(setup.DEFAULT_EQUIPMENT) === "object") {
+	console.assert(typeof(setup.DEFAULT_EQUIPMENT[name]) === "string","ERROR in unequip: no default equipment specified for "+name);
+	this.equip(new Item(setup.DEFAULT_EQUIPMENT[name]));
+}
+}}}
 There is an optional statement here for systems that cannot function with a {{{null}}} equipment slot; for instance, most versions of <i>Dungeons & Dragons</i> must read the statistics of the equipped weapon for attacks. In this case, instead of setting the slot to {{{null}}}, you would want to replace it with another object. These default objects can be defined in the item database like any other.
 
 There is also an {{{unequipAll}}} function, which simply runs through the Actor's {{{equipment}}} and calls this on each item.
 {{{
-equip (item) {
-	if (this.equipment.has(item.equippable.slot)) {
-		var slot = this.equipment.get(item.equippable.slot);
-		var existing = null;
-		var subslot = undefined;
-		if (slot instanceof Array) {
-			for (let i = 0; i < slot.length; i++) {
-				if (slot[i] === null) {
-					subslot = i;
-					break;
-				}
+equip (item,slot) {
+	if (item.equippable.multislot) {
+		[...]
+	} else {
+		var slotName;
+		if (slot === undefined) {
+			slotName = item.slots[0];
+		} else if (typeof(slot) === "object") {
+			slotName = slot.name;
+		} else if (typeof(slot) === "string") {
+			slotName = slot;
+		}
+		console.assert(this.hasSlot(slotName),`ERROR in equipping ${item.name} to ${this.name}: Equipment slot not recognized`);
+		var targetSlot;
+		if (typeof(slot) === "object") {
+			targetSlot = slot;
+		} else {
+			targetSlot = this.equipment.find(s => s.name === slotName && s.item === null);
+			if (targetSlot === undefined) {
+				targetSlot = this.equipment.findLast(s => s.name === slotName);
 			}
-			if (subslot === undefined) {
-				subslot = slot.length-1;
-				existing = slot[subslot];
-			}
 		}
-		else {
-			existing = slot;
+
+		if (targetSlot.item !== null) {
+			let test = this.unequip(targetSlot.name,targetSlot.id);
+			if (test === false) return false;
 		}
-		if (existing !== null){
-			this.unequip(item.equippable.slot,subslot);
-		}
-		(slot instanceof Array) ? slot[subslot] = item : this.equipment.set(item.equippable.slot,item);
-		if (item.onEquip !== undefined){
-			item.onEquip(this);
-		}
-		if (inv() !== undefined && inv().has(item.name)){
-			inv().decItem(item.name);
-		}
-	} else { console.log("ERROR: Equipment type not recognized"); return; }
+
+		targetSlot.item = item;
+	}
+
+	if (item.onEquip instanceof Function){
+		item.onEquip(this);
+	}
+	if (inv() instanceof Inventory && inv().getById(item.id)){
+		inv().decItem(inv().getById(item.id));
+	}
 }
 }}}
-The {{{equip}}} function is similar; however, to equip something we have to unequip what was already there! Fortunately, we've defined {{{unequip}}} already, so we can simply call it (after making common-sense checks that the slot exists and isn't empty). Then we assign the item to the slot and run any {{{onEquip}}} functionality, if it exists. We will also want to remove the item from the player's inventory; the {{{set}}} statement creates a new copy, so if we didn't remove the original we'd be duplicating the item!
+The {{{equip}}} function is similar; however, to equip something we have to unequip what was already there! Fortunately, we've defined {{{unequip}}} already, so we can simply call it (after confirming the slot exists and isn't empty). Then we assign the item to the slot and run any {{{onEquip}}} functionality, if it exists. We will also want to remove the item from the player's inventory; the {{{set}}} statement creates a new copy, so if we didn't remove the original we'd be duplicating the item!
 
-Subslot compatibility is more complicated for this function. If the slot is an array, we need to search through it with a {{{for}}} loop to find the first available subslot (the first slot with contents {{{null}}}). As soon as it finds an empty slot, we {{{break}}} out of the loop to save processing power. This ensures that equipping additional items to this slot will fill the subslots in ascending order.
-
-What if there are no empty subslots? In this case, {{{subslot}}} remains {{{undefined}}} and the {{{if}}} statement triggers, targeting the last subslot to swap with the new item.
+{{{equip}}} can be passed a specific slot to equip, but if not, it will default to the first slot listed in the equipment's {{{slots}}} property. If that slot is already occupied, it'll check to see if there are any subslots with the same name, and assign the equipment to the last available one.
+{{{
+if (item.equippable.multislot) {
+for (let s of item.slots) {
+	console.assert(this.hasSlot(s),`ERROR in equipping ${item.name} to ${this.name}: Equipment slot not recognized`);
+}
+if (this.equipment.find(e => item.slots.includes(e.name) && e.locked || (e.item && e.item.sticky))) {
+	return false;
+}
+this.equipment.filter(e => item.slots.includes(e.name)).forEach(function(s,i) {
+	this.unequip(s.name,s.id);
+	s.item = (i > 0) ? new Filler(item.name) : item;
+},this);
+}}}
+{{{multislot}}} equipment is a special case that requires more robust checks. We need to make sure the character has <i>all</i> the necessary slots, and that none of them are locked or contain unequippable items. If the answer to any of those questions is no, we need to terminate the method and return {{{false}}} to communicate the equip didn't go through. If everything checks out, we still need to clear every slot with {{{unequip}}}, assign the item to the first slot, and fill the rest with {{{Filler}}} objects referencing the item.
 
 <h4 id="JS.actor.toleranceFunctions">Tolerance Functions</h4>
 {{{
@@ -870,65 +911,41 @@ window.inv = function inv () {return V().inv;}
 }}}
 When working with items, the very first thing we want to do is define our inventory. We need an inventory to put items in, right? A lot of code references the inventory, so we need a standardized way to refer to it. That's this: the {{{inv()}}} function returns whatever your actual inventory variable is. By default, it's a story variable, but you could rename it or tie it to specific characters.
 {{{
-class Inventory extends Map {
-	constructor(ItemArray){
-		var m = [];
-		ItemArray.forEach(function(item){
-			m.push([item.name,item]);
-		});
-		super(m);
-	}
-
-	addItem (name,amt) {
-		if (amt === undefined){
-			amt = 1;
-		}
-		if (this.has(name)){
-			if (this.get(name).stock + amt > setup.ITEM_MAX) {
-				let s = 1;
-				while (((this.get(name).stock + 1) < setup.ITEM_MAX) && s < amt) {
-					this.get(name).stock += 1;
-					s++;
-				}
-				return false;
-			} else {
-				this.get(name).stock += amt;
-				return true;
-			}
-		} else {
-			this.set(name,new Item(name,amt));
-			return true;
-		}
-	}
-
-	decItem (name,amt) {
-		if (this.has(name)){
-			if (amt === undefined){
-				amt = 1;
-			}
-			var v = this.get(name);
-			v.stock -= amt;
-			if (v.stock <= 0){
-				this.delete(name);
-			}
-			return;
-		} else {
-			return "ERROR in decItem: item name not found in inventory\n";
-		}
-	}
-}
+class Inventory extends Array
 }}}
-Then, we should probably define what functionality we want our "inventory" to have. The {{{Inventory}}} class extends the {{{Map}}} object, meaning it functions the same way: if you need to reference an item, you can just call up its name. However, we've also added some method functions, and modified the constructor.
+Then, we should probably define what functionality we want our "inventory" to have. The {{{Inventory}}} class extends the {{{Array}}} class, meaning it functions the same way: a single {{{Inventory}}} contains a list of {{{Item}}} objects. However, we've also added some method functions, and modified the constructor.
+
+<h4 id="JS.items.constructor">Constructor</h4>
 {{{
-constructor(ItemArray){
-	var m = [];
+constructor(ItemArray=[],size=0){
+	[...]
+	super(0);
+	console.assert(size <= 0 || ItemArray.length <= size,`ERROR constructing Inventory: ItemArray must not exceed size`);
 	ItemArray.forEach(function(item){
-		m.push([item.name,item]);
-	});
-	super(m);
+		this.push(item);
+	},this);
+	console.assert(Number.isInteger(size),`ERROR constructing Inventory: size must be integer`);
+	this.size = size;
 }
 }}}
-Instead of how you would normally construct a {{{Map}}} (an array of key/value pairs), you can construct an {{{Inventory}}} with just an array of items. The constructor will automatically extract the {{{name}}} attribute from the item and turn it into the key for that entry.
+You can construct an {{{Inventory}}} by creating a standard array of {{{Item}}} objects and passing it to the constructor; it will then become the {{{Inventory}}}'s contents. Optionally, you can also pass a {{{size}}} argument, which determines the maximum number of stacks the {{{Inventory}}} can hold. If {{{size}}} is 0 (the default), the {{{Inventory}}} is considered limitless.
+
+<h4 id="JS.items.get">{{{get}}}</h4>
+{{{
+get(name) {
+	console.assert(typeof(name) === "string",`ERROR in Inventory.get: ${name} is not a string`);
+	return this.find(item => item.name === name);
+}
+}}}
+Note that {{{Inventory}}} is an array and not a Map. This is useful because it allows us to have multiple copies of the same item, but it also means we can't just access the items by name. To correct for this, we replicate a similar functionality with this {{{get}}} method, which finds and returns an item based on a passed name. Note, however, that due to the way {{{Array.find()}}} works, <b>this will only ever return the <i>first</i> of multiple item stacks.</b>
+{{{
+getById(id) {
+	return this.find(item => item.id === id);
+}
+}}}
+To deal with <i>that</i> problem, we also have another variant, {{{getById}}}. This will find an item based on an ID value, which is unique to each item stack.
+
+<h4 id="JS.items.add">{{{addItem}}}</h4>
 {{{
 addItem (name,amt) {
 	if (amt === undefined){

@@ -201,7 +201,8 @@ setup.itemData = {
 	// Kudos if you recognize where I got the default items' naming scheme from.
 
 	"Example Equipment": {
-		"equippable": {slot: "", tags: [], restrictedTo: []},
+		"equippable": {slot: "", restrictedTo: []},
+		"tags": [],
 		"onEquip": function (puppet) {
 
 		},
@@ -214,19 +215,28 @@ setup.itemData = {
 
 
 	"Symbol of Destruction": {
-		"equippable": {slot: "Weapon", tags: ["symbol"], restrictedTo: []},
+		"equippable": {slots: "Weapon", restrictedTo: []},
+		"tags": ["symbol"],
+		"special": {
+			"Attack": 5,
+		},
 		"onEquip": function (puppet) {
-			puppet.stats["Attack"].addMod("Symbol of Destruction",5,true);
+			for (let [pn,v] of Object.entries(this.special)) {
+				puppet.stats[pn].addMod("Symbol of Destruction",v,true);
+			}
 		},
 		"onRemove": function (puppet) {
-			puppet.stats["Attack"].removeMod("Symbol of Destruction");
+			for (let [pn,v] of Object.entries(this.special)) {
+				puppet.stats[pn].removeMod("Symbol of Destruction");
+			}
 		},
 		"desc": "A weapon.",
 		"info": "ATK +5"
 	},
 
 	"Aura of Protection": {
-		"equippable": {slot: "Armor", tags: ["aura"], restrictedTo: []},
+		"equippable": {slots: "Armor", restrictedTo: []},
+		"tags": ["aura"],
 		"onEquip": function (puppet) {
 			puppet.tolerances.addMod("Stunned","Aura of Protection",{ immune: true });
 			puppet.tolerances.addMod("Off-Balance","Aura of Protection",1);
@@ -240,7 +250,8 @@ setup.itemData = {
 	},
 
 	"Color of Defeat": {
-		"equippable": {slot: "Accessory", tags: ["color"], restrictedTo: ["Artist","Mage"]},
+		"equippable": {slots: "Accessory", restrictedTo: ["Artist","Mage"]},
+		"tags": ["color"],
 		"onEquip": function (puppet) {
 			this.modID.HPregen = puppet._HPregen.flat.addMod("Color of Defeat",1,true);
 			this.modID.blue = puppet.elements.addMod("blue","Color of Defeat",25,true,"flat");
@@ -254,7 +265,8 @@ setup.itemData = {
 	},
 
 	"Color of Growth": {
-		"equippable": {slot: "Accessory", tags: ["color"], restrictedTo: []},
+		"equippable": {slots: "Accessory", restrictedTo: []},
+		"tags": ["color"],
 		"onEquip": function (puppet) {
 			this.modID.HPregen = puppet._HPregen.percent.addMod("Color of Defeat",0.01,true);
 			this.modID.red = puppet.elements.addMod("red","Color of Defeat",-0.25,true,"percent");
@@ -268,7 +280,8 @@ setup.itemData = {
 	},
 
 	"Cursed Ring": {
-		"equippable": {slot: "Accessory", tags: ["ring"], restrictedTo: []},
+		"equippable": {slots: "Accessory", restrictedTo: []},
+		"tags": ["ring"],
 		"sticky": true,
 		"fakeName": "Mysterious Ring",
 		"onEquip": function (puppet) {

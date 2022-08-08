@@ -3,16 +3,19 @@
   text-align: center;
 }
 
+.statBlock {
+	display:grid;
+	grid-template-columns: 6em 3em 1em;
+}
+
 .statname {
-  display: inline-block;
-  min-width: 6em;
   text-transform: uppercase;
+  grid-column: 1;
 }
 
 .stat {
-	display: inline-block;
-	min-width: 4em;
 	text-align: right;
+  grid-column: 2;
 }
 
 .effectdesc {
