@@ -354,10 +354,7 @@ window.Action = class Action {
 
 		var val = this._basic;
 		if (val === undefined) {
-			val = this.actionData.basic;
-		}
-		if (val === undefined) {
-			val = this instanceof ItemAction ? true : false;
+			val = this.tags.includes("basic");
 		}
 		return (val instanceof Function) ? val(this) : val;
 	}
@@ -371,10 +368,7 @@ window.Action = class Action {
 
 		var val = this._instant;
 		if (val === undefined) {
-			val = this.actionData.instant;
-		}
-		if (val === undefined) {
-			val = false;
+			val = this.tags.includes("instant");
 		}
 		return (val instanceof Function) ? val(this) : val;
 	}
@@ -589,7 +583,7 @@ window.Action = class Action {
 			val = this.actionData.element;
 		}
 		if (val === undefined) {
-			val = null;
+			val = setup.DEFAULT_ELEMENT;
 		} else if (val instanceof Function) {
 			val = val();
 		}
@@ -1213,10 +1207,12 @@ window.Action = class Action {
 	toString () {
 		//	Determines the default way actions are displayed in-game. Used with actionList.
 		var subj = subject() || temporary().display;
+		var energyPic = typeof(setup.energyPic) === "string" ? setup.energyPic : "energy.png";
 
 	  var cRef = `<img src="${setup.ImagePath}/ui/waittime.png" />`;
 	  var rRef = `<img src="${setup.ImagePath}/ui/recovertime.png" />`;
-	  var eRef = `<img src="${setup.ImagePath}/ui/energy.png" />`;
+		var hRef = `<img src="${setup.ImagePath}/ui/hp_cost.png" />`;
+	  var eRef = `<img src="${setup.ImagePath}/ui/${energyPic}" />`;
 
 	  var text = `<span class="action-name">${this.name}</span>`;
 	  if (typeof(this.cd) === "number" && this.cd !== 0) text += ` <span class="action-cooldown">[CD ${this.cd}]</span>`
@@ -1224,8 +1220,9 @@ window.Action = class Action {
 	  var tags = "";
 	  var cost = "";
 	  if (this.crisis) tags += `<span class="crisis-tag">Crisis</span>`;
-	  if (this.basic) tags += `<span>Basic</span>`;
-	  if (this.instant) tags += `<span>Instant</span>`;
+		for (let tag of this.tags) {
+	    if (!setup.HIDDEN_TAGS.includes(tag)) tags += `<span>${tag.toUpperFirst()}</span>`;
+	  }
 	  if (this.passive) tags += `<span>Passive</span>`;
 	  if (!V().inbattle && subj.defaultAction === this.name) tags += `<span><b>Default</b></span>`;
 	  text += `<div class="action-tags">${tags}</div>`;
@@ -1237,6 +1234,9 @@ window.Action = class Action {
 	  } else {
 	    cost = `<div><br/></div>`;
 	  }
+		if (this.hpcost > 0) {
+			cost += `<div>${hRef} ${this.hpcost}</div>`
+		}
 	  if (Number.isInteger(this.waitTime) && this.waitTime > 0) {
 	    let waitTime = this.waitTime;
 	    let css = "";
@@ -1253,7 +1253,7 @@ window.Action = class Action {
 	  if (Number.isInteger(this.recoveryTime) && this.recoveryTime > 0) {
 	    cost += `<div>${rRef} ${this.recoveryTime}s</div>`;
 	  }
-	  text += `<div class="action-cost">${cost}</div>`
+	  text += `<div class="action-cost">${cost}</div>`;
 	  var data = this;
 	  text += `<div class="action-info">${data.info}</div>`;
 	  if (data.desc !== null) text += `<div class="action-desc">${data.desc}</div>`;
@@ -1264,7 +1264,8 @@ window.Action = class Action {
 		//	Determines the display for compressed actions.
 		//	By default, this strips tags, info, and description.
 
-		var eRef = `<img src="${setup.ImagePath}/ui/energy.png" />`;
+		var energyPic = typeof(setup.energyPic) === "string" ? setup.energyPic : "energy.png";
+		var eRef = `<img src="${setup.ImagePath}/ui/${energyPic}" />`;
 
 	  var text = `<span class="action-name">${this.name}</span>`;
 	  var cost = "";

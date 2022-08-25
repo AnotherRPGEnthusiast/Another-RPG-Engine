@@ -425,8 +425,8 @@ window.Effect = class Effect {
 	damage (actor) {
 		console.assert(this.dot,`ERROR in effect ${this.name}: damage function called on non-DoT`);
 		var dmg = Math.round(this.dmgtype(actor));
-		if (dmg < setup.min_DoT){
-			dmg = setup.min_DoT;
+		if (dmg < setup.FORMULA_INFO.minDoT){
+			dmg = setup.FORMULA_INFO.minDoT;
 		}
 		return dmg;
 	}

@@ -57,7 +57,6 @@ window.Hitlist = class Hitlist extends Array {
 		//	Automatically adjusts chances based on Firefly, Wallflower, and untargetable.
 		//	Set bypass to true to ignore these factors (e.g. if you populated the hitlist with unique logic)
 
-//		console.log("returnTarget running");
 		mods = (mods || []);
 		console.assert(mods instanceof Array,`ERROR in returnTarget: mods must be array`);
 

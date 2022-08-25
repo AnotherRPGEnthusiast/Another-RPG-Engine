@@ -212,11 +212,26 @@
 
 :: Actor Box Status [nobr]
 <<if !$args.includes("dmgDisplay")>>
-	<<set _class = "statusbutton">>
-	<<if _actor.large>>
-		<<set _class += " absolute">>
-	<</if>>
-	<<capture _actor>><span @class=_class><<status _actor>></span><</capture>>
+	<<capture _actor>>
+    <span class="statusbutton tooltip">
+    <<link "<img src='images/ui/info.png' />">>
+    	<<if _actor == $B.actor>>
+    		<<set $B.actor = null>>
+    	<<else>>
+    		<<set $B.actor = _actor>>
+    		<<if ndef $stScreen>>
+    			<<set $stScreen = 1>>
+    		<</if>>
+    	<</if>>
+    	<<replace "#status">><<include "Status Pane">><</replace>>
+    <</link>>
+    <span class="tooltiptext">
+      <<include "Stat Screen">>
+      <br/>
+      <div class="status-help">Click for more info</div>
+    </span>
+    </span>
+  <</capture>>
 <</if>>
 
 :: Actor Box HP [nobr]

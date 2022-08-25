@@ -7,7 +7,7 @@
 <</if>>
 
 <span id="status">
-<<include status>>
+<<include "Status Pane">>
 </span>
 
 <span id="content">

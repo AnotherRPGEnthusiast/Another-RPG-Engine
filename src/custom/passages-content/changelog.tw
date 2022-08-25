@@ -1,4 +1,37 @@
 :: Changelog[text]
+/*
+  TODO:
+  -Fix multislot unequip bug
+*/
+<h3>Version 5.01</h3>
+<ul>
+<li>Restructured <code>statInfo</code>. Each attribute is now an object containing all the data previously stored in <code>STAT_MIN</code>, <code>STAT_MAX</code>, <code>hiddenStats</code>, and the old <code>statInfo</code>, which have all been depreciated. All existing references to the old objects (should) have been updated, so no code changes should be necessary.</li>
+<ul><li>In addition to descriptions and min/max values, the new objects also contain properties for "short" (three-character) names, and default values for cases where you do not want the minimum value to be the default.</li>
+<li>The new <code>statInfo</code> also includes the Boolean attribute <code>percentile</code>, which will add a percent sign after displaying the stat.</li>
+<li>A similar object named <code>SECONDARY_STATS</code> has also been created. This object contains corresponding info for all non-core stats, such as HP, Energy, and regeneration values. <b>You <i>must</i> define an entry for HP or there will be problems.</b> Other secondary stats can be deleted if you do not wish to use them.</li>
+<li>The <code>Actor</code> constructor has been slightly tweaked to account for these changes. It is now possible to create an Actor without any <code>stats</code> property in its database entry, for instance.</li></ul>
+<li>The code block defining various damage formula constants (<code>base</code>, <code>damper</code>, etc.) has now been condensed into a single object. All existing referents should have been updated.</li>
+<li>Tweaked <code>Actor</code> methods for getting and setting stat data. There are more checks for invalid data types, and the code no longer requires stats to have defined minimums and maximums.</li>
+<li>Long-overdue change: HP and EN are now <code>FillStats</code>, rather than current HP/EN being separate variables. Getters and setters have been adjusted, so there should be no need to change game code.</li>
+<li>The in-battle status pane now displays the short forms of stat names, and displays them in monospace font. This provides more space for the status pane and standardizes the width of the stat list.</li>
+<li><code>instant</code> and <code>basic</code> properties for <code>Actions</code> have now been folded into the <code>tags</code> property. Just include the strings "instant" and "basic" in the tag list and they'll work as before. The getters for these properties have been updated, so this update will be compatible with existing code.</li>
+<li>Streamlined action tag display. <code>Action.toString</code> now prints every tag in the <code>tags</code> property.</li>
+<ul><li>If you want some tags to be invisible to the player and used only in internal code, include them in the new <code>setup</code> variable <code>HIDDEN_TAGS</code>.</li></ul>
+<li>New <code>Actor</code> methods: <code>standardEquip</code> and <code>standardRemove</code>. This provides a shorthand for the most common forms of <code>onEquip</code> and <code>onRemove</code> code (direct stat modification). It draws data from the item's <code>special</code> property and automatically detects if the property names refer to an affinity, tolerance, or core stat.</li>
+<li><code>Actor.equip</code> and <code>Actor.unequip</code> will now only reference inventory items if the <code>Actor</code> is a <code>Puppet</code>. This allows enemies and NPCs to have equipment without interfering with the player's inventory.</li>
+<li>It is now possible to define both <code>flat</code> and <code>percent</code> values for elemental affinities via the database and equipment mods. Simply define the element's entry as an object with the properties <code>flat</code> and <code>percent</code>. If the entry is only a number, it will be assumed to refer to the percent affinity.</li>
+<li>You can now define a custom filename for the image used for Energy costs via the <code>setup</code> variable <code>energyPic</code>.</li>
+<li>Actions will now display their HP costs on the right-hand side, below Energy costs.</li>
+<li>The status button and status pane have been reworked. The status button is now a small image in the upper-right of the actor box, rather than a link, and displays stat information as a mouseover tooltip. The status pane no longer displays stat information, and displays effects in a dedicated screen rather than underneath all screens. Additionally, the status pane has been modularized with separate passages for each screen, stored in the new file <code>status battle screens.tw</code>.</li>
+<ul><li>The <code>status</code> widget has been depreciated with this change. The functionality for the status button is now contained in the "Actor Box Status" passage instead, located in the file <code>Widgets (Actor Box).tw</code>.</li></ul>
+<li><code>Widgets (Misc).tw</code> has been depreciated. The widgets for stat, soak, resistance, and tolerance display code have all been moved to <code>status battle screens.tw</code> and the widget for menu stat display has been moved to <code>party menu-status.tw</code>. This should help keep relevant code together.</li>
+<ul><li>The <code>res</code> and <code>tol</code> widgets have been given the full names of <code>resistance</code> and <code>tolerance</code> for clarity. Existing referents should have been updated; tell me if you see any bugs.</li>
+<li>Additionally, the menu stat display widget has been tweaked to allow you to eschew the base + mod format. If the stat's <code>statInfo</code> entry has the <code>noBase</code> property set to <code>true</code>, the stat will just be displayed as one number.</li></ul>
+<li>Given how many changes I've been making to <code>user storyinit</code>, I decided to move the file to the core folder and mark it as an example page. It will give you an idea of what variables you can modify and will be updated regularly, but shouldn't be used as an actual custom page because it will be overwritten by new updates. Copy the file and place it in your custom folder to carry out any changes.</li>
+<li>Fixed the unequip button erroneously appearing in the status page.</li>
+<li>The Zweihander in the default database should no longer break the inventory. (I forgot to update it for the recent changes to equipment data; sorry about that.)</li>
+</ul>
+
 <h3>Version 5.00.1</h3>
 <ul>
 <li>Fixed a typo in the targeting code that caused a fatal error when attempting to reference <code>threatMod</code>.</li>

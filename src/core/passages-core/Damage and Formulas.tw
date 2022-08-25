@@ -63,8 +63,8 @@
 <<elseif _noDmgFloor && $dmg < 0>>
 	<<set $dmg = 0>>
 	<<set _noDmgFloor = false>> /* preventing data bleed */
-<<elseif $dmg < setup.MIN_DMG>>
-	<<set $dmg = setup.MIN_DMG>>
+<<elseif $dmg < setup.FORMULA_INFO.minDMG>>
+	<<set $dmg = setup.FORMULA_INFO.minDMG>>
 <</if>>
 
 /* Round to integer */
@@ -262,14 +262,14 @@
 <<widget "effectcalc">>
 <<switch $args[0]>>
 	<<case "debuff">>
-		<<set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get(StatName("spc"))-_target.get(StatName("spc"))))*$action.effweight)>>
-		<<if _power < setup.min_debuff>>
-			<<set _power = setup.min_debuff>>
+		<<set _power = Math.round((setup.FORMULA_INFO.effbase+setup.FORMULA_INFO.effdamper*(_subject.get(StatName("spc"))-_target.get(StatName("spc"))))*$action.effweight)>>
+		<<if _power < setup.FORMULA_INFO.minDebuff>>
+			<<set _power = setup.FORMULA_INFO.minDebuff>>
 		<</if>>
 	<<case "buff">>
-		<<set _power = Math.round((setup.effbase+setup.effdamper*(_subject.get(StatName("spc"))))*$action.effweight)>>
-		<<if _power < setup.min_buff>>
-			<<set _power = setup.min_buff>>
+		<<set _power = Math.round((setup.FORMULA_INFO.effbase+setup.FORMULA_INFO.effdamper*(_subject.get(StatName("spc"))))*$action.effweight)>>
+		<<if _power < setup.FORMULA_INFO.minBuff>>
+			<<set _power = setup.FORMULA_INFO.minBuff>>
 		<</if>>
 <</switch>>
 <</widget>>

@@ -282,9 +282,7 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 * {{{warmup}}} is a nonnegative integer; determines how many turns must elapse from the start of a battle before the action can be used. Requires a defined {{{cooldown}}} attribute. If not defined, this attribute will not be set. Optional.
 * {{{area}}} is a string; denotes the type of area-of-effect this action has, if any. If not defined, the action will be assumed to be single-target. Optional.
 * {{{formula}}} is a function; if defined, it will be used in place of the regular formula when calculating attack damage.
-* {{{basic}}} is a Boolean; if {{{true}}}, the action can be used when the character is under a skill lock effect.
 * {{{pierce}}} is a Boolean; if {{{true}}}, the attack ignores the target's {{{Defense}}} stat when calculating damage.
-* {{{instant}}} is a Boolean; if {{{true}}}, the action will not end the user's turn.
 * {{{counter}}} is a Boolean; if {{{true}}}, the action is considered a counterattack action.
 * {{{noself}}} is a Boolean; if {{{true}}}, the user cannot target themselves with this action.
 * {{{oncePerTurn}}} is a Boolean; if {{{true}}}, the action can only be used once per turn, even if it is instant.
@@ -304,6 +302,10 @@ This isn't what a live {{{Action}}} object looks like, but it contains all the d
 ** {{{delayMessage}}} is a function; returns a string to be displayed at the top of rounds while an action is charging. Set to {{{null}}} to display no message. This must be set <b>on the action that will be performed</b>, not the setup action.
 ** {{{unstoppable}}} is a Boolean; if {{{true}}}, the delayed action cannot be interrupted. This must be set <b>on the action that will be performed</b>, not the setup action.
 * {{{canTargetDead}}} is a Boolean; if {{{true}}}, the action can target dead characters. (By default, dead characters cannot be targeted.)
+
+Additionally, there are canonical tags that will change the action's behavior if included in the {{{tags}}} property:
+* {{{"basic"}}}: The action can be used when the character is under a skill lock effect.
+* {{{"instant"}}}: The action will not end the user's turn.
 
 <h3 id="actions.targeting">Targeting Logic</h3>
 There are also parameters we can add to actions that will influence the logic used to select a target when the action is used by a computer-controlled character, such as an enemy. This is handled by two properties: {{{targetMethod}}} and {{{targetMod}}}. With {{{targetMethod}}}, you can define your own targeting function to completely customize your targeting logic. It must return the object you want to be the target of the action. If this property is unset, the action will use the default logic in {{{Hitlist.targetEnemy}}}. (See the {{{targeting.js}}} file for details.)
@@ -1447,7 +1449,15 @@ For more information on what you can do here, see the relevant portions of <a hr
 <code>StoryInit</code> is a special passage that is run when the game starts. It is used to define many variables that determine several aspects of the engine, such as the color of health bars, the constants used in damage formulas, and the elements used for magic spells. These variables are set to certain defaults, but you can overwrite them with new specifications by editing {{{user storyinit.tw}}}.
 
 Most variables are explained in the comments of the <code>StoryInit</code> file, but this section will go into detail on some of the more complex ones:
-* {{{formula}}} determines the default damage formula used for attacks. A few options are provided by default. See [[Design]] for more information.
+* {{{FORMULA_INFO}}} defines information for the default damage formula used for attacks, such as the formula model and any constants. See [[Design]] for more information.
+* {{{statInfo}}} defines information for all <b>core stats</code> (stats that appear in standard stat blocks). You can define the following properties:
+** {{{desc}}}: String. Description of what the stat does, to appear via tooltip in the status menu.
+** {{{short}}}: String. Shortened stat name, for displaying in areas where space is at a premium. It is recommended to make all short names the same character length.
+** {{{min}}} and {{{max}}} (optional): Integers. Minimum and maximum allowed values of the stat. ({{{min}}} is only optional if {{{default}}} is defined.)
+** {{{default}}} (optional): Integer. Default value for the stat assigned during Actor creation. (Only optional if {{{min}}} is defined; in absence of a {{{default}}} value, will fall back to {{{min}}}.)
+** {{{hidden}}}: Boolean. If {{{true}}}, will not appear in standard stat listings.
+** {{{percentile}}}: Boolean. If {{{true}}}, a percent sign (%) will be appended to the stat value in stat listings.
+* {{{SECONDARY_STATS}}} is similar to {{{statInfo}}}, but defines <b>non-core stats</b>. This typically includes HP, Energy, and any regeneration stats. Entries use the same properties as {{{statInfo}}}.
 * {{{TURN_MODEL}}} determines the turn model used in battles. (See [[Additional Features]] for details.)
 ** "{{{free}}}": <b>Default.</b> The simplest model, where players can decide their turn order freely.
 ** "{{{timeline}}}": Character turns are decided by the actions they use, where every action has a custom time between its use and the next turn.
@@ -1455,10 +1465,6 @@ Most variables are explained in the comments of the <code>StoryInit</code> file,
 ** "{{{action}}}": Characters continually gain "action time" based on the {{{Actor}}} method {{{timeFormula}}}, defined in the {{{formula-time.js}}} file; characters with the highest action time move first.
 *** {{{TIME_THRESHOLD}}} is an additional variable that can be used to modify this model. If defined as a positive integer, action time must meet or exceed the threshold before characters can get a turn.
 * {{{STAT_NAMES}}} matches stats as they are defined in the engine to a custom name. This allows you to customize the names of your stats without having to edit every reference in the code.
-* {{{STAT_MIN}}} and {{{STAT_MAX}}} define the minimum and maximum values allowed for every stat. This is important when considering buffs or equipment that can modify stats.
-* {{{statInfo}}} provides a tooltip description of every stat when the player hovers over its name in the party menu. This is helpful for communicating to your player what each stat does, especially if you use particularly complex or esoteric stats.
-** {{{statInfo}}} is also considered a database of every stat used in the game, so make sure it matches the stats you define for characters.
-* {{{hiddenStats}}} is an array of stat names that will be hidden in places where stats are normally displayed, such as the party menu.
 * {{{LEVEL_CAP}}} is the highest level player characters are allowed to reach.
 * {{{ELEMENT_LIST}}} is an array of names corresponding to all the elemental properties that will be used in your game.
 ** {{{elementMessages}}} is an object containing messages that will be added to damage reports to show that an attack has hit an elemental weakness or resistance.

@@ -9,13 +9,13 @@ Effect.prototype.calculatePower = function (effectTarget,effectSubject) {
   console.assert(effectSubject instanceof Actor,`ERROR in calculatePower: invalid effectSubject`);
 
   let power;
-  let check = this.buff ? setup.min_buff : setup.min_debuff;
+  let check = this.buff ? setup.FORMULA_INFO.minBuff : setup.FORMULA_INFO.minDebuff;
 
   if (effectSubject.stats[StatName("spc")] !== undefined) {
     if (this.statmod) {
       let def = this.buff ? 0 : effectTarget.get(StatName("spc"));
       power = Math.round(
-        (setup.effbase + setup.effdamper * (effectSubject.get(StatName("spc")) - def)) * action().effweight);
+        (setup.FORMULA_INFO.effbase + setup.FORMULA_INFO.effdamper * (effectSubject.get(StatName("spc")) - def)) * action().effweight);
     } else if (this.dot) {
       return effectSubject.get(StatName("spc"));
     }
@@ -354,13 +354,13 @@ setup.effectFunctions = {
 	invisible: function () {return "";},
 
 	physical: function (puppet) {
-		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(StatName("def")))));
+		return this.weight*(setup.FORMULA_INFO.base + (setup.FORMULA_INFO.damper * (this.power - puppet.get(StatName("def")))));
 	},
 	special: function (puppet) {
-		return this.weight*(setup.base + (setup.damper * (this.power - puppet.get(StatName("spc")))));
+		return this.weight*(setup.FORMULA_INFO.base + (setup.FORMULA_INFO.damper * (this.power - puppet.get(StatName("spc")))));
 	},
 	piercing: function (puppet) {
-		return this.weight*(setup.base + (setup.damper * this.power));
+		return this.weight*(setup.FORMULA_INFO.base + (setup.FORMULA_INFO.damper * this.power));
 	},
 	proportional: function (puppet) {
 		return this.weight * puppet.maxHP;

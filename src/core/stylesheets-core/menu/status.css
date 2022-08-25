@@ -103,7 +103,7 @@
   font-weight: bold;
   font-size: 12pt;
   grid-auto-rows: max-content;
-  grid-template-columns: 50% 6em 4em;
+  grid-template-columns: 50% 5em 1em 4em;
   border-right: 1px solid;
   padding-top: 1em;
   padding-bottom: 0.4em;
@@ -130,8 +130,8 @@
 }
 
 .menuactor-statmod {
-	grid-column:3;
-    margin-left:1em;
+	grid-column:4;
+    margin-left:0.5em;
 }
 
 #menuactor-special {

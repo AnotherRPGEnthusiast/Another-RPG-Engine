@@ -14,6 +14,8 @@ The opening sections will be quite technical, and deal with external script. If 
 ***<a href="#JS.actor.constructor">Constructor</a>
 ***<a href="#JS.actor.getters">Getters and Setters</a>
 ***<a href="#JS.actor.equipFunctions">Equipment Functions</a>
+****<a href="#JS.actor.unequip">{{{unequip}}}</a>
+****<a href="#JS.actor.equip">{{{equip}}}</a>
 ***<a href="#JS.actor.toleranceFunctions">Tolerance Functions</a>
 ***<a href="#JS.actor.misc">Miscellaneous Functions</a>
 **<a href="#JS.stats">Stat Class</a>
@@ -382,6 +384,9 @@ setTol (array) {
 We also have some special getters and setters for handling elemental affinities and ailment tolerances. Because these are complicated structures stored in large maps, it's difficult to access and modify them directly. {{{getElement}}} lets you specify if you want the flat soak or the proportional resistance associated with that element and returns the {{{current}}} value (see <a class="noExternal" href="#JS.stats>the Stat class</a>) of the associated property, making it very easy to plug it into in-game calculations; {{{getTol}}} does the same for tolerances, but is less complicated since tolerances don't have sub-properties for flat and proportional. (Note that these are not normal "getter" functions, as they do not actually access the maps' raw values. You will need to use {{{.get(key)}}} for that.) {{{setElements}}} lets you quickly set base values for elemental affinities, and {{{setTol}}} does the same for tolerances.
 
 <h4 id="JS.actor.equipFunctions">Equipment Functions</h4>
+These method functions govern how equipment interacts with {{{Actors}}}.
+
+<h5 id="JS.actor.unequip">{{{unequip}}}</h5>
 {{{
 unequip (slot,index = 1,mods = {}) {
 	var slot = this.equipment.find(e => (e.name === name && e.id === index));
@@ -415,7 +420,7 @@ unequip (slot,index = 1,mods = {}) {
 	}
 }
 }}}
-There are similar functions for handling equipment, though in this case we define the removal function first. {{{unequip}}} is straightforward in most cases: it is passed the slot to unequip, and the item in that slot is removed. We require a common-sense check at the start to ensure the given slot exists and isn't already empty. We also want to store the unequipped item and place it back in the player's inventory, as the {{{set}}} function will simply overwrite what was originally in the slot. (If we <i>do</i> want the player to permanently lose the item, we can set the {{{destroy}}} flag to {{{true}}}.)
+{{{unequip}}} is straightforward in most cases: it is passed the slot to unequip, and the item in that slot is removed. We require a common-sense check at the start to ensure the given slot exists and isn't already empty. We also want to store the unequipped item and place it back in the player's inventory, as the {{{set}}} function will simply overwrite what was originally in the slot. (If we <i>do</i> want the player to permanently lose the item, we can set the {{{destroy}}} flag to {{{true}}}.)
 
 There is also a special case for if the slot is filled by a "Filler" object. This is used to show that there is equipment occupying multiple slots. Fortunately, Filler objects store the name of their source equipment, so we just search for that name among the character's equipment and unequip that.
 
@@ -429,6 +434,8 @@ if (typeof(setup.DEFAULT_EQUIPMENT) === "object") {
 There is an optional statement here for systems that cannot function with a {{{null}}} equipment slot; for instance, most versions of <i>Dungeons & Dragons</i> must read the statistics of the equipped weapon for attacks. In this case, instead of setting the slot to {{{null}}}, you would want to replace it with another object. These default objects can be defined in the item database like any other.
 
 There is also an {{{unequipAll}}} function, which simply runs through the Actor's {{{equipment}}} and calls this on each item.
+
+<h5 id="JS.actor.unequip">{{{equip}}}</h5>
 {{{
 equip (item,slot) {
 	if (item.equippable.multislot) {
@@ -486,6 +493,33 @@ this.equipment.filter(e => item.slots.includes(e.name)).forEach(function(s,i) {
 },this);
 }}}
 {{{multislot}}} equipment is a special case that requires more robust checks. We need to make sure the character has <i>all</i> the necessary slots, and that none of them are locked or contain unequippable items. If the answer to any of those questions is no, we need to terminate the method and return {{{false}}} to communicate the equip didn't go through. If everything checks out, we still need to clear every slot with {{{unequip}}}, assign the item to the first slot, and fill the rest with {{{Filler}}} objects referencing the item.
+
+<h5 id="JS.actor.standardEquip">{{{standardEquip}}} and {{{standardRemove}}}</h5>
+{{{
+standardEquip (item) {
+	for (let [pn,v] of Object.entries(item.special)) {
+		if (this.stats.hasOwnProperty(pn)) {
+			this.stats[pn].addMod(item.name,v,true);
+		}
+		else if (this.elements.hasOwnProperty(pn)) {
+			if (typeof(v) === "number") {
+				this.elements[pn].percent.addMod(item.name,v,true);
+			} else if (typeof(v) === "object") {
+				this.elements[pn].flat.addMod(item.name,v.flat,true);
+				this.elements[pn].percent.addMod(item.name,v.percent,true);
+			} else {
+				console.log(`ERROR in standardEquip for ${item.name}: invalid elements entry`);
+			}
+		}
+		else if (this.tolerances.has(pn)) {
+			this.tolerances.get(pn).addMod(item.name,v,true);
+		}
+	}
+}
+}}}
+This code standardizes the code for the most common form of equipment (stat modifications). It reads from the equipment's {{{special}}} property (assumed to be a generic object) and automatically detects if the property name matches an affinity, tolerance, or core stat, and adds the mod appropriately.
+
+There is also a corresponding {{{standardRemove}}} method with congruent structure.
 
 <h4 id="JS.actor.toleranceFunctions">Tolerance Functions</h4>
 {{{

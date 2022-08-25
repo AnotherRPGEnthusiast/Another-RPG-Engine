@@ -3,7 +3,7 @@
 /* 1 = stat screen, default, unlinked to STATUS_SCREENS and always available */
 	<div class="statBlock">
 	<<for _k, _v range $B.actor.stats>>
-		<<if !setup.hiddenStats.includes(_k)>>
+		<<if !setup.statInfo[_k].hidden>>
 			<span class="statname"><<print _k>>:</span>
 			<<if $B.actor.maskstats || (def $bestiary && $bestiary.fetch($B.actor.name) && !$bestiary.fetch($B.actor.name).statsKnown[_k])>>
 				<span class="stat">

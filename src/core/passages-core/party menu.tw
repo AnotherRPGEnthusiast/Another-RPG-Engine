@@ -8,7 +8,7 @@ ARG 1 = special case modifier [optional]
 Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot of loops, and errors can occur if they overwrite temporary variables used elsewhere. */
 
 <<run console.assert($args[0] instanceof Puppet,"ERROR: No puppet passed to actorDisplay")>>
-
+<<run console.log("actorDisplay rendering, arguments = "); console.log($args)>>
 <<set _puppet = $args[0]>>
 <<set _displayModel = $args[1]>>
 <<set _style = "">>
@@ -43,7 +43,7 @@ Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot 
 				/* In these menus, the character's stats are displayed below their name. */
 					<div @class="'menuactor-stats monospace'+_classMod">
 					<<for _k, _v range _puppet.stats>>
-						<<include "menu stat display">>
+						<<statDisplayMenu _k _puppet>>
 					<</for>>
 					</div>
 				<<default>>

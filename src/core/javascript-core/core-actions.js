@@ -704,7 +704,7 @@ setup.actionData = {
 								<</if>>\
 			<</for>>`;
 		},
-		"preview": `<<set _d = (setup.base + $subject.get(StatName("atk")))*$action.weight>>\
+		"preview": `<<set _d = (setup.FORMULA_INFO.base + $subject.get(StatName("atk")))*$action.weight>>\
 			A judgment upon those who would defy you. This will inflict _d base damage and strip all buffs from every enemy.`
 	},
 

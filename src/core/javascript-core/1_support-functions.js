@@ -168,22 +168,16 @@ const StatName = function (statName) {
 window.StatName = StatName;
 
 const StatMin = function (statName) {
-	// The same, but for STAT_MIN.
-	if (typeof(statName) === "string") {
-		return setup.STAT_MIN[statName];
-	} else {
-		return setup.STAT_MIN;
-	}
+	// Quick access for stat minimums.
+	console.assert(typeof(statName) === "string" && setup.statInfo[statName],`ERROR in StatMin: stat undefined in statInfo`);
+	return setup.statInfo[statName].min;
 }
 window.StatMin = StatMin;
 
 const StatMax = function (statName) {
-	// The same, but for STAT_MAX.
-	if (typeof(statName) === "string") {
-		return setup.STAT_MAX[statName];
-	} else {
-		return setup.STAT_MAX;
-	}
+	// Quick access for stat maximums.
+	console.assert(typeof(statName) === "string" && setup.statInfo[statName],`ERROR in StatMin: stat undefined in statInfo`);
+	return setup.statInfo[statName].max;
 }
 window.StatMax = StatMax;
 

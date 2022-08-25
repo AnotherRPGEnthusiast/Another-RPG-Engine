@@ -40,7 +40,7 @@
 	<</capture>>
 	</center><br/>
 	<<for _k, _v range _puppet.stats>>
-		<<if !setup.hiddenStats.includes(_k)>>
+		<<if !setup.statInfo[_k].hidden>>
 			<span class="statname"><<print _k>>:</span>
 			<<statOOB _k _puppet>>
 			<br/>

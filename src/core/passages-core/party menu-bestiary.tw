@@ -156,7 +156,7 @@ BESTIARY<br/>
 			<<print _display.get("hp")>>
 		</div>
 		<<for _k, _v range setup.statInfo>>
-			<<if !setup.hiddenStats.includes(_k)>>
+			<<if !setup.statInfo[_k].hidden>>
 				<div style="text-transform:uppercase"><<print _k>>:</div>
 				<div style="text-align:right">
 					<<print _display.get(_k)>>

@@ -10,6 +10,7 @@
 <<goto "RoundEnd">>
 <</widget>>
 
+/*
 :: Widget: status[widget nobr]
 <<widget "status">>
 <<link setup.STATUS_BUTTON>>
@@ -21,9 +22,10 @@
 			<<set $stScreen = 1>>
 		<</if>>
 	<</if>>
-	<<replace "#status">><<include "status">><</replace>>
+	<<replace "#status">><<include "Status Pane">><</replace>>
 <</link>>
 <</widget>>
+*/
 
 :: Widget: act command[widget nobr]
 <<widget "act">>

@@ -1,0 +1,47 @@
+.statusbutton {
+	position: absolute !important;
+	top: 1px;
+	right: 1px;
+}
+
+.statusbutton img {
+	width: 20px;
+	height: 20px;
+	opacity: 0.5;
+}
+
+.statusbutton.tooltip {
+	border: none;
+}
+
+.statusbutton span.tooltiptext {
+	width: auto;
+	text-align: left;
+	padding: 10px;
+	top: 80%;
+	left: -200%;
+}
+
+.status-help {
+	text-align: center;
+	font-weight: bold;
+	font-style: italic;
+	color: gray;
+	font-size: 75%;
+}
+
+.statBlock {
+	display:grid;
+	grid-template-columns: 2em 3em 1em;
+	font-weight: bold;
+}
+
+.statname {
+  text-transform: uppercase;
+  grid-column: 1;
+}
+
+.stat {
+	text-align: right;
+  grid-column: 2;
+}

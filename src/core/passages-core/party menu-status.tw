@@ -6,25 +6,127 @@
 <</nobr>>
 </span>
 
-:: menu stat display[nobr]
-<<if !setup.hiddenStats.includes(_k)>>
-	<<if def setup.statInfo[_k]>>
+:: status party display[nobr]
+<<if def $subject>>
+	<<actorDisplay $subject "standard">>
+	<div class="menuactor-detail">
+		<<if def setup.STATUS_SCREENS.menu && setup.STATUS_SCREENS.menu.length > 0>>
+			<<set _style = "">>
+		<<else>>
+			<<set _style = "border-right: none">>
+		<</if>>
+		<div class="menuactor-stats monospace" @style=_style>
+		<<for _k, _v range $subject.stats>>
+			<<statDisplayMenu _k $subject>>
+		<</for>>
+		<<if def $subject.HPregen && $subject.HPregen !== null>>
+			<div class="menuactor-statname">HP regen</div>
+			<div class="menuactor-statvalue"><<print $subject.HPregenFlat>> / <<print $subject.HPregenPercent*100>>%</div>
+		<</if>>
+		</div>
+		<<if def setup.STATUS_SCREENS.menu && setup.STATUS_SCREENS.menu.length > 0>>
+		<div id="menuactor-special">
+			<<include "status special detail">>
+		</div>
+		<</if>>
+	</div>
+	<br/>
+	<div id="menuActionList">
+	<<actionListMenu $subject>>
+	</div>
+<<elseif ndef $subject>>
+	<<set _HPmeters = []>>
+	<<set _MPmeters = []>>
+	<<for _i, _p range puppets()>>
+		<<actorDisplay _p>>
+	<</for>>
+<</if>>
+
+:: Widget: statDisplayMenu [widget nobr]
+<<widget "statDisplayMenu">>
+<<run console.assert($args.length > 0 && typeof($args[0] === "string"))>>
+<<set _k = $args[0]; _subj = ($args[1] instanceof Actor) ? $args[1] : $subject>>
+<<run console.assert(_subj instanceof Actor)>>
+<<if _displayModel === "standard">>
+	<<set _name = _k>>
+<<else>>
+	<<set _name = setup.statInfo[_k].short>>
+<</if>>
+<<if !setup.statInfo[_k].hidden>>
+	<<if def setup.statInfo[_k].desc>>
 		<<set _class = "tooltip">>
 	<<else>>
 		<<set _class = "">>
 	<</if>>
-	<div class="menuactor-statname"><span @class=_class>_k<<if def setup.statInfo[_k]>><span class="tooltiptext"><<print setup.statInfo[_k]>></span><</if>></span></div>
-	<div class="menuactor-statvalue">_v.base</div>
-	<<if _v.bonus != 0>>
-		<div class="menuactor-statmod">
-		<<if _v.bonus > 0>>
-			@@.green;<<print "\+"+_v.bonus>>@@
-		<<elseif _v.bonus < 0>>
-			@@.stat-lowered;<<print "-"+_v.bonus>>@@
-		<</if>>
-		</div>
-	<</if>>
+	<div class="menuactor-statname"><span @class=_class>_name<<if def setup.statInfo[_k]>><span class="tooltiptext"><<print setup.statInfo[_k].desc>></span><</if>></span></div>
+	<<statOOB _k _subj>>
 <</if>>
+<</widget>>
+
+:: Widget: statOOB [widget nobr]
+<<widget "statOOB">>
+/* For displaying stats outside of battle. Base and equipment mods are displayed separately here. If you wish for effect mods to persist outside of battle, you could include them as well. */
+
+	<<if $args.length is 0>>
+		ERROR
+	<<else>>
+		<<run console.log("rendering stat, arguments = "); console.log($args)>>
+		<<set _stat = $args[0]>>
+		<<set _a = ($args[1] instanceof Actor) ? $args[1] : $subject>>
+
+		<<if setup.statInfo[_stat].noBase>>
+			/*	If stat has noBase property, just display the current stat value
+					directly. Useful for stats that only change from bonuses. */
+			<div class="menuactor-statvalue">
+			<<if setup.statInfo[_stat].percentile>>
+				<<if _a.get(_stat) > 0>>
+					+
+				<<elseif _a.get(_stat) === 0>>
+					±
+				<</if>>
+			<</if>>
+			<<print _a.get(_stat)>>
+			</div>
+			<<if setup.statInfo[_stat].percentile>>
+				<span style="grid-column:3">
+				%
+				</span>
+			<</if>>
+		<<else>>
+			<<run console.log("showing stat base")>>
+			/* Otherwise, show both the base and any bonuses separately. */
+			<<set _mod to _a.bonus>>
+			<<set _base to _a.getBase(_stat)>>
+			<div class="menuactor-statvalue">
+			<<if setup.statInfo[_stat].percentile>>
+				<<if _base > 0>>
+					+
+				<<elseif _base === 0>>
+					±
+				<</if>>
+			<</if>>
+			<<print _base>>
+			</div>
+			<<if setup.statInfo[_stat].percentile>>
+				<span style="grid-column:3">
+				%
+				</span>
+			<</if>>
+			<<if _mod !== 0>>
+				<div class="menuactor-statmod">
+				/* Check if equipment mod is positive. */
+				<<if _mod > 0 >>
+					@@.green;<<print "\+"+_mod>>@@
+				/* Check if equipment mod is negative. */
+				<<elseif _mod < 0 >>
+					@@.stat-lowered;<<print "-"+_mod>>@@
+				<</if>>
+				</div>
+			<</if>>
+		<</if>>
+
+	<</if>>
+<</widget>>
 
 :: status special detail[nobr]
 <div style="position:relative">
@@ -72,7 +174,7 @@
 	<div style="margin-left:1em; width:75%; font-weight:bold">
 	<<for _k, _v range $subject.elements>>
 		<span class="statname"><<print _k>></span>
-		<span class="elementdisplay monospace"><<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:45px; text-align:right"><<res _v>></div></span>
+		<span class="elementdisplay monospace"><<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:45px; text-align:right"><<resistance _v>></div></span>
 		<br/>
 	<</for>>
 	</div>
@@ -81,48 +183,12 @@
 	<<for _k, _v range $subject.tolerances>>
 		<<if _v.current != 0>>
 			<<print _k>>
-			<<tol _v>>
+			<<tolerance _v>>
 			<br/>
 		<</if>>
 	<</for>>
 	</div>
 <</switch>>
-
-:: status party display[nobr]
-<<if def $subject>>
-	<<actorDisplay $subject>>
-	<div class="menuactor-detail">
-		<<if def setup.STATUS_SCREENS.menu && setup.STATUS_SCREENS.menu.length > 0>>
-			<<set _style = "">>
-		<<else>>
-			<<set _style = "border-right: none">>
-		<</if>>
-		<div class="menuactor-stats monospace" @style=_style>
-		<<for _k, _v range $subject.stats>>
-			<<include "menu stat display">>
-		<</for>>
-		<<if def $subject.HPregen && $subject.HPregen !== null>>
-			<div class="menuactor-statname">HP regen</div>
-			<div class="menuactor-statvalue"><<print $subject.HPregenFlat>> / <<print $subject.HPregenPercent*100>>%</div>
-		<</if>>
-		</div>
-		<<if def setup.STATUS_SCREENS.menu && setup.STATUS_SCREENS.menu.length > 0>>
-		<div id="menuactor-special">
-			<<include "status special detail">>
-		</div>
-		<</if>>
-	</div>
-	<br/>
-	<div id="menuActionList">
-	<<actionListMenu $subject>>
-	</div>
-<<elseif ndef $subject>>
-	<<set _HPmeters = []>>
-	<<set _MPmeters = []>>
-	<<for _i, _p range puppets()>>
-		<<actorDisplay _p>>
-	<</for>>
-<</if>>
 
 :: Widget: actionListMenu [widget nobr]
 <<widget "actionListMenu">>

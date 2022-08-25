@@ -3,21 +3,6 @@
   text-align: center;
 }
 
-.statBlock {
-	display:grid;
-	grid-template-columns: 6em 3em 1em;
-}
-
-.statname {
-  text-transform: uppercase;
-  grid-column: 1;
-}
-
-.stat {
-	text-align: right;
-  grid-column: 2;
-}
-
 .effectdesc {
   font-weight: normal;
 }
@@ -26,4 +11,12 @@
   color: gray;
   font-style: italic;
   float: right;
+}
+
+.pane-header {
+  text-transform: uppercase;
+  font-size: 12px;
+  margin-bottom: 1em;
+  text-align: center;
+  border-bottom: 1px solid;
 }

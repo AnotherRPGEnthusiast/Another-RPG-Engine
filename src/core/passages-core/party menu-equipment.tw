@@ -74,7 +74,7 @@ ARG 0 = equipped item
 	<span class="unequip-button">
 	<<switch _displayModel>>
 	/* Unequip button displayed here. By default, this is an "[X]" link at the far right of the item name. */
-		<<case "inventory">>
+		<<case "inventory" "standard">>
 		/* no unequip feature; display nothing */
 		<<case "decurse">>
 		/* In Decurse, only display unequip if the item is sticky and player can pay the cost. Deduct the cost and refresh the shop screen after click. */

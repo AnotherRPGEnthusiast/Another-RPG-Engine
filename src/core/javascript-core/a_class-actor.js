@@ -21,6 +21,14 @@ window.Actor = class Actor {
 				"flat": new Stat(0),
 				"percent": new Stat(0)
 			}
+			if (setup.SECONDARY_STATS["Regen HP Flat"]
+				&& Number.isInteger(setup.SECONDARY_STATS["Regen HP Flat"].default)) {
+				this._HPregen.flat.base = setup.SECONDARY_STATS["Regen HP Flat"].default;
+			}
+			if (setup.SECONDARY_STATS["Regen HP Percent"]
+				&& Number.isInteger(setup.SECONDARY_STATS["Regen HP Percent"].default)) {
+				this._HPregen.flat.base = setup.SECONDARY_STATS["Regen HP Percent"].default;
+			}
 			this.elements = {};
 			if (setup.ELEMENT_LIST !== undefined){
 				setup.ELEMENT_LIST.forEach(function(x) {
@@ -28,7 +36,14 @@ window.Actor = class Actor {
 				}, this);
 				if (this.data.elements) {
 					for (let [pn,v] of Object.entries(this.data.elements)) {
-						this.elements[pn].percent.base = v;
+						if (typeof(v) === "number") {
+							this.elements[pn].percent.base = v;
+						} else if (typeof(v) === "object") {
+							this.elements[pn].flat.base = v.flat;
+							this.elements[pn].percent.base = v.percent;
+						} else {
+							console.log(`ERROR constructing Actor ${name}: invalid elements entry`);
+						}
 					}
 				}
 			}
@@ -40,36 +55,42 @@ window.Actor = class Actor {
 			}
 			if (this.data.tolerances) { this.setTol(Object.entries(this.data.tolerances)); }
 
-			this._maxHP = new Stat(this.data.hp);
-			this._hp = this.data.hp;
-			if (Number.isInteger(this.data.en)) {
-				this._maxEN = new Stat(this.data.en);
-				this._en = this.data.en;
-			} else if (Number.isInteger(setup.MAX_EN)) {
-				this._maxEN = new Stat(setup.MAX_EN);
-				this._en = setup.MAX_EN;
+			if (Number.isInteger(this.data.hp)) {
+				this._maxHP = new FillStat(this.data.hp);
+			} else if (Number.isInteger(setup.SECONDARY_STATS["HP"].default)) {
+				this._maxHP = new FillStat(setup.SECONDARY_STATS["HP"].default);
+			} else {
+				console.log(`ERROR constructing HP for ${name}: Default HP is not defined in database or SECONDARY_STATS.`);
+				this._maxHP = new FillStat(0);
 			}
-			this._ENregen = new Stat(0);
-			if (Number.isInteger(this.data.ENregen)) {
-				this._ENregen = new Stat(this.data.ENregen);
-			} else if (Number.isInteger(setup.EN_REGEN)) {
-				this._ENregen = new Stat(setup.EN_REGEN);
+			if (setup.SECONDARY_STATS[StatName("Energy")]) {
+				if (Number.isInteger(this.data.en)) {
+					this._maxEN = new FillStat(this.data.en);
+				} else if (Number.isInteger(setup.SECONDARY_STATS[StatName("Energy")].default)) {
+					this._maxEN = new FillStat(setup.SECONDARY_STATS[StatName("Energy")].default);
+				}
+				this._ENregen = new Stat(0);
+				if (setup.SECONDARY_STATS["Regen EN"]) {
+					if (Number.isInteger(this.data.ENregen)) {
+						this._ENregen = new Stat(this.data.ENregen);
+					} else if (Number.isInteger(setup.SECONDARY_STATS["Regen EN"].default)) {
+						this._ENregen = new Stat(setup.SECONDARY_STATS["Regen EN"].default);
+					}
+				}
 			}
 			this.stats = {};
 			for (let [pn,v] of Object.entries(setup.statInfo)) {
-				switch (pn) {
-					case 'Accuracy':
-						this.stats[pn] = new Stat(100);
-						break;
-					case 'Evasion':
-						this.stats[pn] = new Stat(0);
-						break;
-					default:
-						this.stats[pn] = new Stat(StatMin(pn));
+				if (Number.isInteger(v.default)) {
+					this.stats[pn] = new Stat(v.default);
+				} else {
+					this.stats[pn] = new Stat(v.min);
 				}
 			}
-			for (let [pn,v] of Object.entries(this.data.stats)) {
-				this.setBase(pn,v);
+			if (this.data.stats) {
+				for (let [pn,v] of Object.entries(this.data.stats)) {
+					console.assert(this.stats.hasOwnProperty(pn),`ERROR constructing Actor ${name}: Database entry contains invalid stat`);
+					this.setBase(pn,v);
+				}
 			}
 			Number.isInteger(this.data.retaliations) ?
 				this._retaliations = new FillStat(this.data.retaliations) : this._retaliations = new FillStat(0);
@@ -279,7 +300,7 @@ window.Actor = class Actor {
 	}
 
 	get hp () {
-		return this._hp;
+		return this._maxHP.currentVal;
 	}
 
 	set hp (amt) {
@@ -287,7 +308,7 @@ window.Actor = class Actor {
 		if (setup.ANIMATIONS && V().inbattle && this.displayHP === this.hp) {
 			this.displayHP = this.hp;
 		}
-		this._hp = Math.clamp(amt,0,this.maxHP);
+		this._maxHP.currentVal = Math.clamp(amt,0,this.maxHP);
 	}
 
 	get maxHP () {
@@ -302,7 +323,7 @@ window.Actor = class Actor {
 	updateHP () {
 		// used for matching current HP to changes in max HP, e.g. HP-boosting equipment
 		if (!(this instanceof Puppet && V().lastingDamage)) {
-			this.hp = this.maxHP;
+			this.maxHP.refill();
 		}
 	}
 
@@ -336,17 +357,17 @@ window.Actor = class Actor {
 
 	//  en: number; Energy points spent to use actions
 	get en () {
-		return this._en;
+		return (this._maxEN instanceof FillStat) ? this._maxEN.currentVal : undefined;
 	}
 
 	set en (amt) {
 		console.assert(Number.isInteger(amt),`ERROR in EN setter: EN must be integer`);
-		this._en = Math.clamp(amt,0,this.maxEN);
+		this._maxEN.currentVal = Math.clamp(amt,0,this.maxEN);
 	}
 
 	//  maxEN: number; maximum Energy points Puppet can hold
 	get maxEN () {
-		return this._maxEN.current;
+		return (this._maxEN instanceof FillStat) ? this._maxEN.current : undefined;
 	}
 
 	set maxEN (amt) {
@@ -438,14 +459,16 @@ window.Actor = class Actor {
 		if (this.stats[key]) {
 			let v = this.stats[key];
 			let n = Math.round(v.current);
-			let max = setup.STAT_MAX[key];
-			let min = setup.STAT_MIN[key];
-			if (isNaN(max) || isNaN(min)) {
+			let max = setup.statInfo[key].max;
+			let min = setup.statInfo[key].min;
+			if (isNaN(max) && isNaN(min)) {
 				return n;
+			} else if (isNaN(max)) {
+				return Math.max(n,min);
+			} else if (isNaN(min) || this.noMinimum.includes(key)) {
+				return Math.min(n,max);
 			} else {
-				return this.noMinimum.includes(key)
-					? Math.min(n,max)
-					: Math.clamp(n,min,max);
+				return Math.clamp(n,min,max);
 			}
 		} else {
 			console.log("ERROR in stat getter, target does not have requested stat");
@@ -454,15 +477,12 @@ window.Actor = class Actor {
 	}
 
 	getBase (key) {
+		console.assert(typeof(key) === "string",`ERROR in getBase for ${this.name}: key must be string`);
 		key = key.toUpperFirst();
 		if (this.stats[key]) {
 			let v = this.stats[key];
 			let n = Math.round(v.base);
-			let max = setup.STAT_MAX[key];
-			let min = setup.STAT_MIN[key];
-			return this.noMinimum.includes(key)
-				? Math.min(n,max)
-				: Math.clamp(n,min,max);
+			return n;
 		} else {
 			console.log("ERROR in base stat getter, target does not have requested stat");
 			return 0;
@@ -474,11 +494,7 @@ window.Actor = class Actor {
 		if (this.stats[key]) {
 			let v = this.stats[key];
 			let n = Math.round(v.bonus);
-			let max = setup.STAT_MAX[key];
-			let min = setup.STAT_MIN[key];
-			return this.noMinimum.includes(key)
-				? Math.min(n,max)
-				: Math.clamp(n,min,max);
+			return n;
 		} else {
 			console.log("ERROR in stat getter, target does not have requested stat");
 			return 0;
@@ -490,11 +506,7 @@ window.Actor = class Actor {
 		if (this.stats[key]) {
 			let v = this.stats[key];
 			let n = Math.round(v.equipBonus);
-			let max = setup.STAT_MAX[key];
-			let min = setup.STAT_MIN[key];
-			return this.noMinimum.includes(key)
-				? Math.min(n,max)
-				: Math.clamp(n,min,max);
+			return n;
 		} else {
 			console.log("ERROR in stat getter, target does not have requested stat");
 			return 0;
@@ -511,8 +523,26 @@ window.Actor = class Actor {
 		return (this.get(key) < this.getBase(key));
 	}
 
-	setBase (k,v){
-		this.stats[k].base = v;
+	setBase (key,v) {
+		console.assert(typeof(key) === "string",`ERROR in setBase for ${this.name}: key must be string`);
+		console.assert(Number.isInteger(v),`ERROR in setBase for ${this.name}: v must be integer`);
+		key = key.toUpperFirst();
+		if (this.stats[key]) {
+			let max = setup.statInfo[key].max;
+			let min = setup.statInfo[key].min;
+			if (isNaN(max) && isNaN(min)) {
+				this.stats[key].base = v;
+			} else if (isNaN(max)) {
+				this.stats[key].base = Math.max(v,min);
+			} else if (isNaN(min)) {
+				this.stats[key].base = Math.min(v,max);
+			} else {
+				this.stats[key].base = Math.clamp(v,min,max);
+			}
+		} else {
+			console.log(`ERROR in setBase: ${this.name} does not have requested stat`);
+			return 0;
+		}
 	}
 
 	addMod (key, id, mod, equipment) {
@@ -721,7 +751,7 @@ window.Actor = class Actor {
 			// Standard branch. If the slot holds an Item object, as expected,
 			//	remove it from the slot and return it to inventory.
 			// Sticky items cannot be removed unless the unsticky mod is passed.
-			if (item.default === undefined && mods.destroy !== true) {
+			if (this instanceof Puppet && item.default === undefined && mods.destroy !== true) {
 				// Return the item to inventory, unless it is "default" equipment
 				//	or the destroy mod is passed.
 				(item.uses < item.maxUses)
@@ -831,7 +861,7 @@ window.Actor = class Actor {
 		if (item.onEquip instanceof Function){
 			item.onEquip(this);
 		}
-		if (inv() instanceof Inventory && inv().getById(item.id)){
+		if (this instanceof Puppet && inv() instanceof Inventory && inv().getById(item.id)){
 			inv().decItem(inv().getById(item.id));
 		}
 	}
@@ -861,6 +891,50 @@ window.Actor = class Actor {
 		return (item.equippable.restrictedTo instanceof Array && item.equippable.restrictedTo.length > 0)
 			? (item.equippable.restrictedTo.includes(this.name))
 			: true
+	}
+
+	standardEquip (item) {
+		console.assert(typeof(item.special) === "object",`ERROR in standardEquip of ${item.name}: special property is not object`);
+		for (let [pn,v] of Object.entries(item.special)) {
+			if (this.stats.hasOwnProperty(pn)) {
+				this.stats[pn].addMod(item.name,v,true);
+			}
+			else if (this.elements.hasOwnProperty(pn)) {
+				if (typeof(v) === "number") {
+					this.elements[pn].percent.addMod(item.name,v,true);
+				} else if (typeof(v) === "object") {
+					this.elements[pn].flat.addMod(item.name,v.flat,true);
+					this.elements[pn].percent.addMod(item.name,v.percent,true);
+				} else {
+					console.log(`ERROR in standardEquip for ${item.name}: invalid elements entry`);
+				}
+			}
+			else if (this.tolerances.has(pn)) {
+				this.tolerances.get(pn).addMod(item.name,v,true);
+			}
+		}
+	}
+
+	standardRemove (item) {
+		console.assert(typeof(item.special) === "object",`ERROR in standardRemove of ${item.name}: special property is not object`);
+		for (let [pn,v] of Object.entries(item.special)) {
+			if (this.stats.hasOwnProperty(pn)) {
+				this.stats[pn].removeMod(item.name);
+			}
+			else if (this.elements.hasOwnProperty(pn)) {
+				if (typeof(v) === "number") {
+					this.elements[pn].percent.removeMod(item.name);
+				} else if (typeof(v) === "object") {
+					this.elements[pn].flat.removeMod(item.name);
+					this.elements[pn].percent.removeMod(item.name);
+				} else {
+					console.log(`ERROR in standardRemove for ${item.name}: invalid elements entry`);
+				}
+			}
+			else if (this.tolerances.has(pn)) {
+				this.tolerances.get(pn).removeMod(item.name);
+			}
+		}
 	}
 
 	// TOLERANCE FUNCTIONS

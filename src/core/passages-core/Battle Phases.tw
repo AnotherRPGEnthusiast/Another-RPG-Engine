@@ -31,7 +31,7 @@
 <</if>>
 
 <span id="status">
-<<include status>>
+<<include "Status Pane">>
 </span>
 
 <<liveblock>>
@@ -160,52 +160,6 @@
 	<</if>>
 </div>
 </div>
-
-:: status [nobr]
-<<if def $B.actor && $B.actor !== null>>
-
-<div class="statusname">$B.actor.name</div>
-<<if setup.TURN_MODEL.toLowerCase() === "action">>
-	<span class="statname">ACT TIME:</span>
-	<span class="stat">
-		<<print $B.actor.actTime>><<if Number.isInteger(setup.TIME_THRESHOLD)>> / <<print setup.TIME_THRESHOLD>><</if>>
-	</span>
-	<br/>
-<</if>>
-<div style="float: right;">
-<<if def setup.STATUS_SCREENS.battle && setup.STATUS_SCREENS.battle.length > 0>>
-<span id="statusback">
-<<link "<">>
-	<<set $stScreen-->>
-	<<if $stScreen < 1>>
-		<<set $stScreen = setup.STATUS_SCREENS.battle.length+1>>
-	<</if>>
-	<<if setup.STATUS_SCREENS.battle[$stScreen-2] == "aggression" && $B.actor instanceof Puppet>>
-		<<set $stScreen-->>
-	<</if>>
-	<<replace "#status">><<include "status">><</replace>>
-<</link>>
-</span>
-<span id="statusforward">
-<<link ">">>
-	<<set $stScreen++>>
-	<<if setup.STATUS_SCREENS.battle[$stScreen-2] == "aggression" && $B.actor instanceof Puppet>>
-		<<set $stScreen++>>
-	<</if>>
-	<<if $stScreen > setup.STATUS_SCREENS.battle.length+1>>
-		<<set $stScreen = 1>>
-	<</if>>
-	<<replace "#status">><<include "status">><</replace>>
-<</link>>
-</span>
-<</if>>
-</div>
-<br/>
-<<include "Status Screens">>
-<br/>
-<<effectinfo>>
-
-<</if>>
 
 :: actions [nobr battle]
 <<set $B.phase = "actions">>
@@ -362,7 +316,7 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 <<set $B.phase = null>>
 <<run $(document).trigger(":action-performed")>>
 <span id="status">
-<<include "status">>
+<<include "Status Pane">>
 </span>
 <span id="content">
 
@@ -704,7 +658,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 
 :: RoundEnd [nobr battle]
 <span id="status">
-<<include status>>
+<<include "Status Pane">>
 </span>
 
 <span id="content">
@@ -751,7 +705,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 <<victorycheck>>
 
 <span id="status">
-<<include status>>
+<<include "Status Pane">>
 </span>
 
 <span id="content">

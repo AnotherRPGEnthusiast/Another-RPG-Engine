@@ -765,7 +765,7 @@ const Prev = {
 	},
 	cutAttack: function (type) {
 		return function () {
-			return `<<set _d = (setup.base + $subject.get(StatName("spc")))*$action.weight>>\
+			return `<<set _d = (setup.FORMULA_INFO.base + $subject.get(StatName("spc")))*$action.weight>>\
 			This will inflict _d base damage and ${type} status, divided across the current number of enemies.`;
 		}
 	}

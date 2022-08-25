@@ -301,7 +301,7 @@ setup.itemData = {
 	},
 
 	"Zweihander": {
-		"equippable": {slot: new Set(["Weapon","Armor"]), restrictedTo: []},
+		"equippable": {slots: ["Weapon","Armor"], restrictedTo: [], multislot: true},
 		"onEquip": function (actor) {
 			actor.stats["Attack"].addMod("Zweihander",{add: 20},true);
 		},
