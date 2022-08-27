@@ -163,6 +163,7 @@
 
 :: actions [nobr battle]
 <<set $B.phase = "actions">>
+<div class="abilities-header">ABILITIES</div>
 <span class="hotkey monospace">
 [Q] = basic action
 <<if typeof(subject().lastAction) === "string">> |
@@ -408,8 +409,18 @@ Select a target. <span class="hotkey monospace">[hotkeys: 1-0] <<if $B.reverse_d
 	<<run subject().cd.set($action.nameCD,$action.enemyCD)>>
 <</if>>
 
-<<set $target = Hitlist.protectionCheck($target,$action.targetMod)>>
+<<if $target instanceof Actor>>
+	<<set $target = Hitlist.protectionCheck($target,$action.targetMod)>>
+<</if>>
+
+/* Failsafe because code doesn't like an undefined target. */
+<<if !($target instanceof Actor)>>
+	<<set $target = $subject>>
+<</if>>
+
 /* see targeting.js for protectionCheck details */
+
+<<include "preAction custom">>
 
 :: postAction [nobr]
 /* Run in "action effects". Variable adjustments made before action execution. */

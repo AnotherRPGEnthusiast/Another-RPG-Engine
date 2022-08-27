@@ -100,6 +100,7 @@
 .compressed .battle-stock {
   float:right;
   margin-left: 0.5em;
+  font-weight: bold;
 }
 
 .action-tags {

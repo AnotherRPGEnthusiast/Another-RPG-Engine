@@ -70,7 +70,6 @@
 	<<if $args.length is 0>>
 		ERROR
 	<<else>>
-		<<run console.log("rendering stat, arguments = "); console.log($args)>>
 		<<set _stat = $args[0]>>
 		<<set _a = ($args[1] instanceof Actor) ? $args[1] : $subject>>
 
@@ -93,7 +92,6 @@
 				</span>
 			<</if>>
 		<<else>>
-			<<run console.log("showing stat base")>>
 			/* Otherwise, show both the base and any bonuses separately. */
 			<<set _mod to _a.bonus>>
 			<<set _base to _a.getBase(_stat)>>

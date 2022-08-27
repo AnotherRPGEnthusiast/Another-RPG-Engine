@@ -46,7 +46,7 @@
 			<</link>>
 			<</capture>>
 		<<else>>
-			<<print _slot.name>>
+			<span style="color:initial"><<print _slot.name>></span>
 		<</if>>
 	</div>
 	<<equipSlotDisplay _slot.item>>

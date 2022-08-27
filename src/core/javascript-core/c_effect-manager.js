@@ -180,8 +180,8 @@ Actor.prototype.addEffect = function (name,mods={}) {
         found = this.effects.find(function (e) { return e && e.name === name});
         if (found instanceof Effect) {
           //  If the effect was found, we need to update it.
-          //  Extend the existing effect's duration by the duration of this application.
-          found.duration += dur;
+          //  If extendable, extend the existing effect's duration by the duration of this application. Else, set duration to the higher of new or existing duration.
+          (E.extendable) ? found.duration += dur : found.duration = Math.max(found.duration,dur);
           if (found.dot) {
             //  If existing effect is DoT, calculate if applied effect's damage is stronger; if yes, overwrite both power and weight.
             E = new Effect(name,dur,power,{weight: action().effweight});

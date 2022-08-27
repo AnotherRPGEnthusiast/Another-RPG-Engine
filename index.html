@@ -5583,6 +5583,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	width:100%;
 	position:relative;
 	top:5px;
+  margin-bottom: 2px;
 }
 
 .hpmpvalue {
@@ -5662,6 +5663,7 @@ input:not(:disabled):focus, input:not(:disabled):hover, select:not(:disabled):fo
 	border-bottom: 1px solid;
 	text-transform: uppercase;
 	margin-bottom: 1em;
+  text-align: center;
 }
 
 .menuactor-equipment.small-display, .menuactor-equipment.inventory-display {
@@ -8107,6 +8109,11 @@ window.Actor = class Actor {
 		return this._threatMod.current;
 	}
 
+	set threatMod (num) {
+		console.assert(typeof(num) === "number",`ERROR setting threatMod for ${this.name}: non-number passed`);
+		this._threatMod.base = num;
+	}
+
 	getElement (needle,type) {
 		if (type === undefined) {
 			return this.elements[needle];
@@ -8282,10 +8289,12 @@ window.Actor = class Actor {
 			//	we try to read its name, because attempting to access a property
 			//	of a null value will create an error.
 			let sourceSlot = this.equipment.find(e => (e.item && e.item.name === item.name));
+			console.log(sourceSlot);
 			// It's possible the find failed and returned undefined. Execute
 			//	an assertion to catch this case.
 			console.assert(sourceSlot !== undefined,`ERROR in unequip: Filler source does not exist`);
 			this.unequip(sourceSlot.name,sourceSlot.id);
+			slot.item = null;
 		}
 		else if (item instanceof Item && (!item.sticky || mods.unsticky === true)) {
 			// Standard branch. If the slot holds an Item object, as expected,
@@ -8312,7 +8321,7 @@ window.Actor = class Actor {
 			if (item.equippable.multislot) {
 				// If item was equipped to multiple slots, we have to clear all the other slots it covered.
 				for (let s of this.equipment) {
-					if (s.item instanceof Filler && s.name === item.name) {
+					if (s.item instanceof Filler && s.item.name === item.name) {
 						s.item = null;
 						if (typeof(setup.DEFAULT_EQUIPMENT) === "object") {
 							console.assert(typeof(setup.DEFAULT_EQUIPMENT[s.name]) === "string","ERROR in unequip: no default equipment specified for "+s.name);
@@ -8321,6 +8330,10 @@ window.Actor = class Actor {
 					}
 				}
 			}
+		} else if (item === null) {
+			//	Attempting to unequip an empty slot. This can happen as part of
+			//	a blanket unequip function. Not a problem, just end method.
+			return;
 		} else {
 			// Default branch for unexpected results. Log error message.
 			console.log("Unequip result for "+this.name+": Slot "+name+" held unexpected object type or equipment was sticky. Remember to pass unsticky to the mods argument to remove sticky equipment.");
@@ -8382,7 +8395,7 @@ window.Actor = class Actor {
 				// If this results in undefined, all slots occupied. Set target to
 				//	the last instance of slot with this name.
 				if (targetSlot === undefined) {
-					targetSlot = this.equipment.findLast(s => s.name === slotName);
+					targetSlot = this.equipment.find(s => s.name === slotName);
 				}
 			}
 
@@ -8925,6 +8938,19 @@ window.Effect = class Effect {
 		return val;
 	}
 
+	get extendable () {
+		//	Boolean. If true, duration will be extended by future applications.
+		//	true by default.
+		var val = this._extendable;
+		if (val === undefined) {
+			val = this.effectData.extendable;
+		}
+		if (val === undefined) {
+			val = true;
+		}
+		return val;
+	}
+
 	get exclusive () {
 		var val = this._exclusive;
 		if (val === undefined) {
@@ -9150,7 +9176,7 @@ window.Effect = class Effect {
 
 	get onDecay () {
 		//	String. Name of action to be added to the action queue when effect decays, if any.
-		
+
 		return (this._onDecay || this.effectData.onDecay);
 	}
 
@@ -9486,8 +9512,8 @@ Actor.prototype.addEffect = function (name,mods={}) {
         found = this.effects.find(function (e) { return e && e.name === name});
         if (found instanceof Effect) {
           //  If the effect was found, we need to update it.
-          //  Extend the existing effect's duration by the duration of this application.
-          found.duration += dur;
+          //  If extendable, extend the existing effect's duration by the duration of this application. Else, set duration to the higher of new or existing duration.
+          (E.extendable) ? found.duration += dur : found.duration = Math.max(found.duration,dur);
           if (found.dot) {
             //  If existing effect is DoT, calculate if applied effect's damage is stronger; if yes, overwrite both power and weight.
             E = new Effect(name,dur,power,{weight: action().effweight});
@@ -21809,6 +21835,7 @@ Click a space to move there or swap positions. Click BACK when done.</tw-passage
 	&lt;&lt;/if&gt;&gt;
 &lt;/div&gt;
 &lt;/div&gt;</tw-passagedata><tw-passagedata pid="14" name="actions" tags="nobr battle" position="475,225" size="100,100">&lt;&lt;set $B.phase = &quot;actions&quot;&gt;&gt;
+&lt;div class=&quot;abilities-header&quot;&gt;ABILITIES&lt;/div&gt;
 &lt;span class=&quot;hotkey monospace&quot;&gt;
 [Q] = basic action
 &lt;&lt;if typeof(subject().lastAction) === &quot;string&quot;&gt;&gt; |
@@ -22030,8 +22057,18 @@ Select a target. &lt;span class=&quot;hotkey monospace&quot;&gt;[hotkeys: 1-0] &
 	&lt;&lt;run subject().cd.set($action.nameCD,$action.enemyCD)&gt;&gt;
 &lt;&lt;/if&gt;&gt;
 
-&lt;&lt;set $target = Hitlist.protectionCheck($target,$action.targetMod)&gt;&gt;
-/* see targeting.js for protectionCheck details */</tw-passagedata><tw-passagedata pid="23" name="postAction" tags="nobr" position="350,350" size="100,100">/* Run in &quot;action effects&quot;. Variable adjustments made before action execution. */
+&lt;&lt;if $target instanceof Actor&gt;&gt;
+	&lt;&lt;set $target = Hitlist.protectionCheck($target,$action.targetMod)&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+
+/* Failsafe because code doesn&#39;t like an undefined target. */
+&lt;&lt;if !($target instanceof Actor)&gt;&gt;
+	&lt;&lt;set $target = $subject&gt;&gt;
+&lt;&lt;/if&gt;&gt;
+
+/* see targeting.js for protectionCheck details */
+
+&lt;&lt;include &quot;preAction custom&quot;&gt;&gt;</tw-passagedata><tw-passagedata pid="23" name="postAction" tags="nobr" position="350,350" size="100,100">/* Run in &quot;action effects&quot;. Variable adjustments made before action execution. */
 
 /* If action was a Crisis, reset crisis points */
 &lt;&lt;if $action.crisis &amp;&amp; def subject().crisisPoints&gt;&gt;
@@ -22515,7 +22552,7 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)&lt;br
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="37" name="Widget: itemList" tags="widget nobr" position="850,475" size="100,100">&lt;&lt;widget &quot;itemList&quot;&gt;&gt;
 &lt;&lt;set _char = ($args[0] || subject())&gt;&gt;
 &lt;&lt;run console.assert(_char instanceof Puppet,&quot;ERROR in itemList: no Puppet&quot;)&gt;&gt;
-&lt;&lt;set _inv = (_char.inventory || inv()); _inv.filter(item =&gt; (item.usable.includes(&quot;inbattle&quot;) &amp;&amp; item.action instanceof Action))&gt;&gt;
+&lt;&lt;set _inv = (_char.inventory || inv()); _inv = _inv.filter(item =&gt; (item.usable.includes(&quot;inbattle&quot;) &amp;&amp; item.action instanceof Action))&gt;&gt;
 &lt;&lt;if _inv.length === 0&gt;&gt;
 	&lt;center style=&quot;font-weight:bold&quot;&gt;No usable items!&lt;/center&gt;
 &lt;&lt;else&gt;&gt;
@@ -23341,6 +23378,11 @@ divisive: (base * (a.get($AttackStat)/b.get($DefenseStat))) * weight
 	minDebuff:	5
 }&gt;&gt;
 
+&lt;&lt;set setup.ACCURACY_RATE = true&gt;&gt; /* default accuracy of attacks in percent value or Boolean, default always-accurate */
+&lt;&lt;set setup.MIN_ACCURACY = 0&gt;&gt; /* minimum accuracy rate if reduced by e.g. evasion stat */
+&lt;&lt;set setup.CRITICAL_RATE = 0&gt;&gt; /* default critical hit rate in percent value, default 0% (no crits) */
+&lt;&lt;set setup.CRITICAL_MULTIPLIER = 1.5&gt;&gt; /* default multiplier for critical hit damage */
+
 &lt;&lt;set setup.TURN_MODEL = &quot;free&quot;&gt;&gt;
 /*
 &quot;Free&quot; = Default. Select character actions in any order.
@@ -23638,10 +23680,6 @@ Easy: no smart targeting
 &lt;&lt;set setup.RESPAWN_HP = 1&gt;&gt; /* proportion of HP that respawned characters will revive at */
 &lt;&lt;set setup.THREAT_DECAY = 0.10&gt;&gt; /* threat decay per round */
 &lt;&lt;set setup.PARTY_SIZE = 3&gt;&gt;
-&lt;&lt;set setup.ACCURACY_RATE = true&gt;&gt; /* default accuracy of attacks in percent value or Boolean, default always-accurate */
-&lt;&lt;set setup.MIN_ACCURACY = 0&gt;&gt; /* minimum accuracy rate if reduced by e.g. evasion stat */
-&lt;&lt;set setup.CRITICAL_RATE = 0&gt;&gt; /* default critical hit rate in percent value, default 0% (no crits) */
-&lt;&lt;set setup.CRITICAL_MULTIPLIER = 1.5&gt;&gt; /* default multiplier for critical hit damage */
 &lt;&lt;set setup.CRISIS_FACTOR = (10/7)&gt;&gt; /* multiplied by dmg/maxHP to get crisis points per hit, at 1 target must take 100% max HP to fill Crisis */
 &lt;&lt;set setup.DURATION_MAX = 9&gt;&gt; /* maximum turns a status effect can last */
 &lt;&lt;set setup.FIREFLY_FACTOR = 2&gt;&gt; /* targeting probability multiplier for characters with Firefly */
@@ -24807,79 +24845,14 @@ You are victorious! /* this is a reference to an old game, cookies if you recogn
 &lt;&lt;include &quot;Status Screens&quot;&gt;&gt;
 
 &lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="110" name="Status Screens" tags="nobr" position="1225,1350" size="100,100">&lt;&lt;if $stScreen == 1&gt;&gt;
-/* 1 = stat screen, default, unlinked to STATUS_SCREENS and always available */
-	&lt;div class=&quot;statBlock&quot;&gt;
-	&lt;&lt;for _k, _v range $B.actor.stats&gt;&gt;
-		&lt;&lt;if !setup.statInfo[_k].hidden&gt;&gt;
-			&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;:&lt;/span&gt;
-			&lt;&lt;if $B.actor.maskstats || (def $bestiary &amp;&amp; $bestiary.fetch($B.actor.name) &amp;&amp; !$bestiary.fetch($B.actor.name).statsKnown[_k])&gt;&gt;
-				&lt;span class=&quot;stat&quot;&gt;
-					&lt;b&gt;??&lt;/b&gt;
-				&lt;/span&gt;
-			&lt;&lt;else&gt;&gt;
-				&lt;span class=&quot;stat&quot;&gt;
-				&lt;&lt;switch _k&gt;&gt;
-					&lt;&lt;case &quot;percentile stat&quot;&gt;&gt;
-						&lt;&lt;if _v &gt; 0&gt;&gt;
-							+
-						&lt;&lt;elseif _v === 0&gt;&gt;
-							±
-						&lt;&lt;/if&gt;&gt;
-				&lt;&lt;/switch&gt;&gt;
-				&lt;&lt;stat _k&gt;&gt;
-				&lt;/span&gt;
-			&lt;&lt;/if&gt;&gt;
-			&lt;&lt;switch _k&gt;&gt;
-	      &lt;&lt;case &quot;percentile stat&quot;&gt;&gt;
-					&lt;span style=&quot;grid-column:3&quot;&gt;
-	        %
-					&lt;/span&gt;
-	    &lt;&lt;/switch&gt;&gt;
-			&lt;br/&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;/div&gt;
+/* 1 = effect screen, default, unlinked to STATUS_SCREENS and always available */
+	&lt;&lt;include &quot;Status Pane: Effects&quot;&gt;&gt;
 &lt;&lt;elseif setup.STATUS_SCREENS.battle[$stScreen-2] == &quot;elements&quot;&gt;&gt;
-	&lt;div style=&quot;font-size: 12px;&quot;&gt;ELEMENTAL RESISTANCE&lt;/div&gt;&lt;br/&gt;
-	&lt;&lt;for _k, _v range $B.actor.elements&gt;&gt;
-	&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;&lt;/span&gt;
-	&lt;span style=&quot;float:right&quot;&gt;
-		&lt;&lt;if def $bestiary &amp;&amp; $bestiary.fetch($B.actor.name) &amp;&amp; !$bestiary.fetch($B.actor.name).statsKnown[_k]&gt;&gt;
-			&lt;&lt;if setup.SOAK&gt;&gt;?? /&lt;&lt;/if&gt;&gt;&lt;div style=&quot;display: inline-block; min-width:55px; text-align:right&quot;&gt;???%&lt;/div&gt;
-		&lt;&lt;else&gt;&gt;
-			&lt;&lt;if setup.SOAK&gt;&gt;&lt;&lt;soak _v&gt;&gt; /&lt;&lt;/if&gt;&gt;&lt;div style=&quot;display: inline-block; min-width:55px; text-align:right&quot;&gt;&lt;&lt;res _v&gt;&gt;&lt;/div&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;/span&gt;
-	&lt;br/&gt;
-	&lt;&lt;/for&gt;&gt;
+	&lt;&lt;include &quot;Status Pane: Elements&quot;&gt;&gt;
 &lt;&lt;elseif setup.STATUS_SCREENS.battle[$stScreen-2] == &quot;ailments&quot;&gt;&gt;
-	&lt;div style=&quot;font-size: 12px;&quot;&gt;AILMENT TOLERANCE&lt;/div&gt;&lt;br/&gt;
-	&lt;&lt;for _k, _v range $B.actor.tolerances&gt;&gt;
-		&lt;&lt;if _v.current != 0&gt;&gt;
-			&lt;&lt;if def $bestiary &amp;&amp; $bestiary.fetch($B.actor.name) &amp;&amp; !$bestiary.fetch($B.actor.name).tolerancesKnown[_k]&gt;&gt;
-				&lt;span class=&quot;tolerance&quot;&gt;????&lt;/span&gt;
-			&lt;&lt;else&gt;&gt;
-				&lt;&lt;print _k&gt;&gt;
-				&lt;&lt;tol _v&gt;&gt;
-			&lt;&lt;/if&gt;&gt;
-			&lt;br/&gt;
-		&lt;&lt;/if&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
+	&lt;&lt;include &quot;Status Pane: Tolerances&quot;&gt;&gt;
 &lt;&lt;elseif setup.STATUS_SCREENS.battle[$stScreen-2] == &quot;aggression&quot;&gt;&gt;
-	&lt;div style=&quot;font-size: 12px;&quot;&gt;AGGRESSION&lt;/div&gt;&lt;br/&gt;
-	&lt;&lt;set _totalThreat = 0&gt;&gt;
-	&lt;&lt;for _k, _v range $B.actor.threat&gt;&gt;
-		&lt;&lt;set _totalThreat += _v&gt;&gt;
-	&lt;&lt;/for&gt;&gt;
-	&lt;&lt;if _totalThreat == 0&gt;&gt;
-		&lt;&lt;set _totalThreat = 1&gt;&gt;
-	&lt;&lt;/if&gt;&gt;
-	&lt;&lt;for _k, _v range $B.actor.threat&gt;&gt;
-		&lt;span class=&quot;statname&quot;&gt;&lt;&lt;print _k&gt;&gt;&lt;/span&gt;
-		&lt;&lt;set _value = (_v / _totalThreat)*100; _value = _value.toFixed(0)&gt;&gt;
-		&lt;span class=&quot;right&quot;&gt;&lt;&lt;print _value+&quot;%&quot;&gt;&gt;&lt;/span&gt;
-		&lt;br/&gt;
-	&lt;&lt;/for&gt;&gt;
+	&lt;&lt;include &quot;Status Pane: Aggression&quot;&gt;&gt;
 &lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="111" name="Stat Screen" tags="nobr" position="100,1475" size="100,100">&lt;div class=&quot;statBlock&quot;&gt;
 &lt;&lt;for _k, _v range _actor.stats&gt;&gt;
 	&lt;&lt;if !setup.statInfo[_k].hidden&gt;&gt;
@@ -25758,7 +25731,7 @@ BESTIARY&lt;br/&gt;
 			&lt;&lt;/link&gt;&gt;
 			&lt;&lt;/capture&gt;&gt;
 		&lt;&lt;else&gt;&gt;
-			&lt;&lt;print _slot.name&gt;&gt;
+			&lt;span style=&quot;color:initial&quot;&gt;&lt;&lt;print _slot.name&gt;&gt;&lt;/span&gt;
 		&lt;&lt;/if&gt;&gt;
 	&lt;/div&gt;
 	&lt;&lt;equipSlotDisplay _slot.item&gt;&gt;
@@ -26260,7 +26233,6 @@ Click on a character to select them, then click on another space to move or swap
 	&lt;&lt;if $args.length is 0&gt;&gt;
 		ERROR
 	&lt;&lt;else&gt;&gt;
-		&lt;&lt;run console.log(&quot;rendering stat, arguments = &quot;); console.log($args)&gt;&gt;
 		&lt;&lt;set _stat = $args[0]&gt;&gt;
 		&lt;&lt;set _a = ($args[1] instanceof Actor) ? $args[1] : $subject&gt;&gt;
 
@@ -26283,7 +26255,6 @@ Click on a character to select them, then click on another space to move or swap
 				&lt;/span&gt;
 			&lt;&lt;/if&gt;&gt;
 		&lt;&lt;else&gt;&gt;
-			&lt;&lt;run console.log(&quot;showing stat base&quot;)&gt;&gt;
 			/* Otherwise, show both the base and any bonuses separately. */
 			&lt;&lt;set _mod to _a.bonus&gt;&gt;
 			&lt;&lt;set _base to _a.getBase(_stat)&gt;&gt;
@@ -26488,7 +26459,6 @@ ARG 1 = special case modifier [optional]
 Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot of loops, and errors can occur if they overwrite temporary variables used elsewhere. */
 
 &lt;&lt;run console.assert($args[0] instanceof Puppet,&quot;ERROR: No puppet passed to actorDisplay&quot;)&gt;&gt;
-&lt;&lt;run console.log(&quot;actorDisplay rendering, arguments = &quot;); console.log($args)&gt;&gt;
 &lt;&lt;set _puppet = $args[0]&gt;&gt;
 &lt;&lt;set _displayModel = $args[1]&gt;&gt;
 &lt;&lt;set _style = &quot;&quot;&gt;&gt;
@@ -28261,11 +28231,7 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 	&lt;&lt;goto &quot;Player Phase&quot;&gt;&gt;
 &lt;&lt;else&gt;&gt;
 	&lt;&lt;include &quot;Action Phase&quot;&gt;&gt;
-&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="193" name="Changelog" tags="text" position="350,2475" size="100,100">/*
-  TODO:
-  -
-*/
-&lt;h3&gt;Version 5.01&lt;/h3&gt;
+&lt;&lt;/if&gt;&gt;</tw-passagedata><tw-passagedata pid="193" name="Changelog" tags="text" position="350,2475" size="100,100">&lt;h3&gt;Version 5.01&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;Restructured &lt;code&gt;statInfo&lt;/code&gt;. Each attribute is now an object containing all the data previously stored in &lt;code&gt;STAT_MIN&lt;/code&gt;, &lt;code&gt;STAT_MAX&lt;/code&gt;, &lt;code&gt;hiddenStats&lt;/code&gt;, and the old &lt;code&gt;statInfo&lt;/code&gt;, which have all been depreciated. All existing references to the old objects (should) have been updated, so no code changes should be necessary.&lt;/li&gt;
 &lt;ul&gt;&lt;li&gt;In addition to descriptions and min/max values, the new objects also contain properties for &quot;short&quot; (three-character) names, and default values for cases where you do not want the minimum value to be the default.&lt;/li&gt;
@@ -28275,7 +28241,6 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;The code block defining various damage formula constants (&lt;code&gt;base&lt;/code&gt;, &lt;code&gt;damper&lt;/code&gt;, etc.) has now been condensed into a single object. All existing referents should have been updated.&lt;/li&gt;
 &lt;li&gt;Tweaked &lt;code&gt;Actor&lt;/code&gt; methods for getting and setting stat data. There are more checks for invalid data types, and the code no longer requires stats to have defined minimums and maximums.&lt;/li&gt;
 &lt;li&gt;Long-overdue change: HP and EN are now &lt;code&gt;FillStats&lt;/code&gt;, rather than current HP/EN being separate variables. Getters and setters have been adjusted, so there should be no need to change game code.&lt;/li&gt;
-&lt;li&gt;The in-battle status pane now displays the short forms of stat names, and displays them in monospace font. This provides more space for the status pane and standardizes the width of the stat list.&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;instant&lt;/code&gt; and &lt;code&gt;basic&lt;/code&gt; properties for &lt;code&gt;Actions&lt;/code&gt; have now been folded into the &lt;code&gt;tags&lt;/code&gt; property. Just include the strings &quot;instant&quot; and &quot;basic&quot; in the tag list and they&#39;ll work as before. The getters for these properties have been updated, so this update will be compatible with existing code.&lt;/li&gt;
 &lt;li&gt;Streamlined action tag display. &lt;code&gt;Action.toString&lt;/code&gt; now prints every tag in the &lt;code&gt;tags&lt;/code&gt; property.&lt;/li&gt;
 &lt;ul&gt;&lt;li&gt;If you want some tags to be invisible to the player and used only in internal code, include them in the new &lt;code&gt;setup&lt;/code&gt; variable &lt;code&gt;HIDDEN_TAGS&lt;/code&gt;.&lt;/li&gt;&lt;/ul&gt;
@@ -28289,8 +28254,15 @@ These are the additional factors you&#39;ll need to add in order for Stash to wo
 &lt;li&gt;&lt;code&gt;Widgets (Misc).tw&lt;/code&gt; has been depreciated. The widgets for stat, soak, resistance, and tolerance display code have all been moved to &lt;code&gt;status battle screens.tw&lt;/code&gt; and the widget for menu stat display has been moved to &lt;code&gt;party menu-status.tw&lt;/code&gt;. This should help keep relevant code together.&lt;/li&gt;
 &lt;ul&gt;&lt;li&gt;The &lt;code&gt;res&lt;/code&gt; and &lt;code&gt;tol&lt;/code&gt; widgets have been given the full names of &lt;code&gt;resistance&lt;/code&gt; and &lt;code&gt;tolerance&lt;/code&gt; for clarity. Existing referents should have been updated; tell me if you see any bugs.&lt;/li&gt;
 &lt;li&gt;Additionally, the menu stat display widget has been tweaked to allow you to eschew the base + mod format. If the stat&#39;s &lt;code&gt;statInfo&lt;/code&gt; entry has the &lt;code&gt;noBase&lt;/code&gt; property set to &lt;code&gt;true&lt;/code&gt;, the stat will just be displayed as one number.&lt;/li&gt;&lt;/ul&gt;
+&lt;li&gt;New &lt;code&gt;Effect&lt;/code&gt; property: &lt;code&gt;extendable&lt;/code&gt;. This is a Boolean determining whether duration will be extended by new applications or remain the same. True by default.&lt;/li&gt;
 &lt;li&gt;Given how many changes I&#39;ve been making to &lt;code&gt;user storyinit&lt;/code&gt;, I decided to move the file to the core folder and mark it as an example page. It will give you an idea of what variables you can modify and will be updated regularly, but shouldn&#39;t be used as an actual custom page because it will be overwritten by new updates. Copy the file and place it in your custom folder to carry out any changes.&lt;/li&gt;
 &lt;li&gt;Fixed the unequip button erroneously appearing in the status page.&lt;/li&gt;
+&lt;li&gt;The Zweihander in the default database should no longer break the inventory. (I forgot to update it for the recent changes to equipment data; sorry about that.)&lt;/li&gt;
+&lt;li&gt;Fixing the Zweihander bug revealed another bug that prevented filler objects from being removed when multi-slot equipment was removed; this has also been fixed.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;unequip&lt;/code&gt; will no longer log an error message if it is run on an empty equipment slot.&lt;/li&gt;
+&lt;li&gt;The HP/MP listing in the party menu now has a slight bottom margin to keep it from overlapping with the HP/MP meters.&lt;/li&gt;
+&lt;li&gt;Selecting a slot in the equipment menu will now turn it black instead of gray.&lt;/li&gt;
+&lt;li&gt;Discovered some actions are &lt;i&gt;still&lt;/i&gt; throwing errors about undefined targets. I&#39;ve officially thrown my hands up and just hardcoded the battle logic to copy the subject to the target if the target is undefined. There&#39;s just too much stuff that references a target and I can&#39;t make control branches for them all. Hopefully this doesn&#39;t cause more problems down the line.&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h3&gt;Version 5.00.1&lt;/h3&gt;
@@ -31388,7 +31360,15 @@ For more information on what you can do here, see the relevant portions of &lt;a
 &lt;code&gt;StoryInit&lt;/code&gt; is a special passage that is run when the game starts. It is used to define many variables that determine several aspects of the engine, such as the color of health bars, the constants used in damage formulas, and the elements used for magic spells. These variables are set to certain defaults, but you can overwrite them with new specifications by editing {{{user storyinit.tw}}}.
 
 Most variables are explained in the comments of the &lt;code&gt;StoryInit&lt;/code&gt; file, but this section will go into detail on some of the more complex ones:
-* {{{formula}}} determines the default damage formula used for attacks. A few options are provided by default. See [[Design]] for more information.
+* {{{FORMULA_INFO}}} defines information for the default damage formula used for attacks, such as the formula model and any constants. See [[Design]] for more information.
+* {{{statInfo}}} defines information for all &lt;b&gt;core stats&lt;/code&gt; (stats that appear in standard stat blocks). You can define the following properties:
+** {{{desc}}}: String. Description of what the stat does, to appear via tooltip in the status menu.
+** {{{short}}}: String. Shortened stat name, for displaying in areas where space is at a premium. It is recommended to make all short names the same character length.
+** {{{min}}} and {{{max}}} (optional): Integers. Minimum and maximum allowed values of the stat. ({{{min}}} is only optional if {{{default}}} is defined.)
+** {{{default}}} (optional): Integer. Default value for the stat assigned during Actor creation. (Only optional if {{{min}}} is defined; in absence of a {{{default}}} value, will fall back to {{{min}}}.)
+** {{{hidden}}}: Boolean. If {{{true}}}, will not appear in standard stat listings.
+** {{{percentile}}}: Boolean. If {{{true}}}, a percent sign (%) will be appended to the stat value in stat listings.
+* {{{SECONDARY_STATS}}} is similar to {{{statInfo}}}, but defines &lt;b&gt;non-core stats&lt;/b&gt;. This typically includes HP, Energy, and any regeneration stats. Entries use the same properties as {{{statInfo}}}.
 * {{{TURN_MODEL}}} determines the turn model used in battles. (See [[Additional Features]] for details.)
 ** &quot;{{{free}}}&quot;: &lt;b&gt;Default.&lt;/b&gt; The simplest model, where players can decide their turn order freely.
 ** &quot;{{{timeline}}}&quot;: Character turns are decided by the actions they use, where every action has a custom time between its use and the next turn.
@@ -31396,10 +31376,6 @@ Most variables are explained in the comments of the &lt;code&gt;StoryInit&lt;/co
 ** &quot;{{{action}}}&quot;: Characters continually gain &quot;action time&quot; based on the {{{Actor}}} method {{{timeFormula}}}, defined in the {{{formula-time.js}}} file; characters with the highest action time move first.
 *** {{{TIME_THRESHOLD}}} is an additional variable that can be used to modify this model. If defined as a positive integer, action time must meet or exceed the threshold before characters can get a turn.
 * {{{STAT_NAMES}}} matches stats as they are defined in the engine to a custom name. This allows you to customize the names of your stats without having to edit every reference in the code.
-* {{{STAT_MIN}}} and {{{STAT_MAX}}} define the minimum and maximum values allowed for every stat. This is important when considering buffs or equipment that can modify stats.
-* {{{statInfo}}} provides a tooltip description of every stat when the player hovers over its name in the party menu. This is helpful for communicating to your player what each stat does, especially if you use particularly complex or esoteric stats.
-** {{{statInfo}}} is also considered a database of every stat used in the game, so make sure it matches the stats you define for characters.
-* {{{hiddenStats}}} is an array of stat names that will be hidden in places where stats are normally displayed, such as the party menu.
 * {{{LEVEL_CAP}}} is the highest level player characters are allowed to reach.
 * {{{ELEMENT_LIST}}} is an array of names corresponding to all the elemental properties that will be used in your game.
 ** {{{elementMessages}}} is an object containing messages that will be added to damage reports to show that an attack has hit an elemental weakness or resistance.

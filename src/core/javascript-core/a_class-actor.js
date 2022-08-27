@@ -567,6 +567,11 @@ window.Actor = class Actor {
 		return this._threatMod.current;
 	}
 
+	set threatMod (num) {
+		console.assert(typeof(num) === "number",`ERROR setting threatMod for ${this.name}: non-number passed`);
+		this._threatMod.base = num;
+	}
+
 	getElement (needle,type) {
 		if (type === undefined) {
 			return this.elements[needle];
@@ -742,10 +747,12 @@ window.Actor = class Actor {
 			//	we try to read its name, because attempting to access a property
 			//	of a null value will create an error.
 			let sourceSlot = this.equipment.find(e => (e.item && e.item.name === item.name));
+			console.log(sourceSlot);
 			// It's possible the find failed and returned undefined. Execute
 			//	an assertion to catch this case.
 			console.assert(sourceSlot !== undefined,`ERROR in unequip: Filler source does not exist`);
 			this.unequip(sourceSlot.name,sourceSlot.id);
+			slot.item = null;
 		}
 		else if (item instanceof Item && (!item.sticky || mods.unsticky === true)) {
 			// Standard branch. If the slot holds an Item object, as expected,
@@ -772,7 +779,7 @@ window.Actor = class Actor {
 			if (item.equippable.multislot) {
 				// If item was equipped to multiple slots, we have to clear all the other slots it covered.
 				for (let s of this.equipment) {
-					if (s.item instanceof Filler && s.name === item.name) {
+					if (s.item instanceof Filler && s.item.name === item.name) {
 						s.item = null;
 						if (typeof(setup.DEFAULT_EQUIPMENT) === "object") {
 							console.assert(typeof(setup.DEFAULT_EQUIPMENT[s.name]) === "string","ERROR in unequip: no default equipment specified for "+s.name);
@@ -781,6 +788,10 @@ window.Actor = class Actor {
 					}
 				}
 			}
+		} else if (item === null) {
+			//	Attempting to unequip an empty slot. This can happen as part of
+			//	a blanket unequip function. Not a problem, just end method.
+			return;
 		} else {
 			// Default branch for unexpected results. Log error message.
 			console.log("Unequip result for "+this.name+": Slot "+name+" held unexpected object type or equipment was sticky. Remember to pass unsticky to the mods argument to remove sticky equipment.");
@@ -842,7 +853,7 @@ window.Actor = class Actor {
 				// If this results in undefined, all slots occupied. Set target to
 				//	the last instance of slot with this name.
 				if (targetSlot === undefined) {
-					targetSlot = this.equipment.findLast(s => s.name === slotName);
+					targetSlot = this.equipment.find(s => s.name === slotName);
 				}
 			}
 

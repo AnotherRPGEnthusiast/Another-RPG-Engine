@@ -82,6 +82,19 @@ window.Effect = class Effect {
 		return val;
 	}
 
+	get extendable () {
+		//	Boolean. If true, duration will be extended by future applications.
+		//	true by default.
+		var val = this._extendable;
+		if (val === undefined) {
+			val = this.effectData.extendable;
+		}
+		if (val === undefined) {
+			val = true;
+		}
+		return val;
+	}
+
 	get exclusive () {
 		var val = this._exclusive;
 		if (val === undefined) {
@@ -307,7 +320,7 @@ window.Effect = class Effect {
 
 	get onDecay () {
 		//	String. Name of action to be added to the action queue when effect decays, if any.
-		
+
 		return (this._onDecay || this.effectData.onDecay);
 	}
 

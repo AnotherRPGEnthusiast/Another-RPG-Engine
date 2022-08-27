@@ -1,8 +1,4 @@
 :: Changelog[text]
-/*
-  TODO:
-  -Fix multislot unequip bug
-*/
 <h3>Version 5.01</h3>
 <ul>
 <li>Restructured <code>statInfo</code>. Each attribute is now an object containing all the data previously stored in <code>STAT_MIN</code>, <code>STAT_MAX</code>, <code>hiddenStats</code>, and the old <code>statInfo</code>, which have all been depreciated. All existing references to the old objects (should) have been updated, so no code changes should be necessary.</li>
@@ -13,7 +9,6 @@
 <li>The code block defining various damage formula constants (<code>base</code>, <code>damper</code>, etc.) has now been condensed into a single object. All existing referents should have been updated.</li>
 <li>Tweaked <code>Actor</code> methods for getting and setting stat data. There are more checks for invalid data types, and the code no longer requires stats to have defined minimums and maximums.</li>
 <li>Long-overdue change: HP and EN are now <code>FillStats</code>, rather than current HP/EN being separate variables. Getters and setters have been adjusted, so there should be no need to change game code.</li>
-<li>The in-battle status pane now displays the short forms of stat names, and displays them in monospace font. This provides more space for the status pane and standardizes the width of the stat list.</li>
 <li><code>instant</code> and <code>basic</code> properties for <code>Actions</code> have now been folded into the <code>tags</code> property. Just include the strings "instant" and "basic" in the tag list and they'll work as before. The getters for these properties have been updated, so this update will be compatible with existing code.</li>
 <li>Streamlined action tag display. <code>Action.toString</code> now prints every tag in the <code>tags</code> property.</li>
 <ul><li>If you want some tags to be invisible to the player and used only in internal code, include them in the new <code>setup</code> variable <code>HIDDEN_TAGS</code>.</li></ul>
@@ -27,9 +22,17 @@
 <li><code>Widgets (Misc).tw</code> has been depreciated. The widgets for stat, soak, resistance, and tolerance display code have all been moved to <code>status battle screens.tw</code> and the widget for menu stat display has been moved to <code>party menu-status.tw</code>. This should help keep relevant code together.</li>
 <ul><li>The <code>res</code> and <code>tol</code> widgets have been given the full names of <code>resistance</code> and <code>tolerance</code> for clarity. Existing referents should have been updated; tell me if you see any bugs.</li>
 <li>Additionally, the menu stat display widget has been tweaked to allow you to eschew the base + mod format. If the stat's <code>statInfo</code> entry has the <code>noBase</code> property set to <code>true</code>, the stat will just be displayed as one number.</li></ul>
+<li>New <code>Effect</code> property: <code>extendable</code>. This is a Boolean determining whether duration will be extended by new applications or remain the same. True by default.</li>
 <li>Given how many changes I've been making to <code>user storyinit</code>, I decided to move the file to the core folder and mark it as an example page. It will give you an idea of what variables you can modify and will be updated regularly, but shouldn't be used as an actual custom page because it will be overwritten by new updates. Copy the file and place it in your custom folder to carry out any changes.</li>
 <li>Fixed the unequip button erroneously appearing in the status page.</li>
 <li>The Zweihander in the default database should no longer break the inventory. (I forgot to update it for the recent changes to equipment data; sorry about that.)</li>
+<li>Fixing the Zweihander bug revealed another bug that prevented filler objects from being removed when multi-slot equipment was removed; this has also been fixed.</li>
+<li><code>unequip</code> will no longer log an error message if it is run on an empty equipment slot.</li>
+<li>The HP/MP listing in the party menu now has a slight bottom margin to keep it from overlapping with the HP/MP meters.</li>
+<li>Selecting a slot in the equipment menu will now turn it black instead of gray.</li>
+<li>Discovered some actions are <i>still</i> throwing errors about undefined targets. I've officially thrown my hands up and just hardcoded the battle logic to copy the subject to the target if the target is undefined. There's just too much stuff that references a target and I can't make control branches for them all. Hopefully this doesn't cause more problems down the line.</li>
+<li>Also just now discovered the in-battle item list broke thanks to me forgetting <code>Array.filter</code> doesn't modify the original array. Should be fixed now.</li>
+<li>The stock marker for in-battle items is now bold.</li>
 </ul>
 
 <h3>Version 5.00.1</h3>

@@ -73,6 +73,7 @@
 	width:100%;
 	position:relative;
 	top:5px;
+  margin-bottom: 2px;
 }
 
 .hpmpvalue {
@@ -152,6 +153,7 @@
 	border-bottom: 1px solid;
 	text-transform: uppercase;
 	margin-bottom: 1em;
+  text-align: center;
 }
 
 .menuactor-equipment.small-display, .menuactor-equipment.inventory-display {

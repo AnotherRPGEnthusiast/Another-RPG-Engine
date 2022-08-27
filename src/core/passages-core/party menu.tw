@@ -8,7 +8,6 @@ ARG 1 = special case modifier [optional]
 Be VERY CAREFUL about labeling your temporary variables. This widget uses a lot of loops, and errors can occur if they overwrite temporary variables used elsewhere. */
 
 <<run console.assert($args[0] instanceof Puppet,"ERROR: No puppet passed to actorDisplay")>>
-<<run console.log("actorDisplay rendering, arguments = "); console.log($args)>>
 <<set _puppet = $args[0]>>
 <<set _displayModel = $args[1]>>
 <<set _style = "">>

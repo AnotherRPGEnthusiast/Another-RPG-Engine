@@ -126,7 +126,7 @@
 <<widget "itemList">>
 <<set _char = ($args[0] || subject())>>
 <<run console.assert(_char instanceof Puppet,"ERROR in itemList: no Puppet")>>
-<<set _inv = (_char.inventory || inv()); _inv.filter(item => (item.usable.includes("inbattle") && item.action instanceof Action))>>
+<<set _inv = (_char.inventory || inv()); _inv = _inv.filter(item => (item.usable.includes("inbattle") && item.action instanceof Action))>>
 <<if _inv.length === 0>>
 	<center style="font-weight:bold">No usable items!</center>
 <<else>>
