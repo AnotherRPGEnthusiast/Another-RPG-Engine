@@ -135,15 +135,17 @@
 :: Status Pane: Elements [nobr]
 <div class="pane-header">ELEMENTAL RESISTANCE</div>
 <<for _k, _v range $B.actor.elements>>
-<span class="statname"><<print _k>></span>
-<span style="float:right">
-	<<if def $bestiary && $bestiary.fetch($B.actor.name) && !$bestiary.fetch($B.actor.name).statsKnown[_k]>>
-		<<if setup.SOAK>>?? /<</if>><div style="display: inline-block; min-width:55px; text-align:right">???%</div>
-	<<else>>
-		<<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:55px; text-align:right"><<resistance _v>></div>
-	<</if>>
-</span>
-<br/>
+<<if (setup.HIDDEN_ELEMENTS instanceof Array) && !setup.HIDDEN_ELEMENTS.includes(_k)>>
+	<span class="statname"><<print _k>></span>
+	<span style="float:right">
+		<<if def $bestiary && $bestiary.fetch($B.actor.name) && !$bestiary.fetch($B.actor.name).statsKnown[_k]>>
+			<<if setup.SOAK>>?? /<</if>><div style="display: inline-block; min-width:55px; text-align:right">???%</div>
+		<<else>>
+			<<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:55px; text-align:right"><<resistance _v>></div>
+		<</if>>
+	</span>
+	<br/>
+<</if>>
 <</for>>
 
 :: Widget: resistance display [widget nobr]

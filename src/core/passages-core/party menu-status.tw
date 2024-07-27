@@ -171,9 +171,11 @@
 <<case "elements">>
 	<div style="margin-left:1em; width:75%; font-weight:bold">
 	<<for _k, _v range $subject.elements>>
-		<span class="statname"><<print _k>></span>
-		<span class="elementdisplay monospace"><<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:45px; text-align:right"><<resistance _v>></div></span>
-		<br/>
+		<<if (setup.HIDDEN_ELEMENTS instanceof Array) && !setup.HIDDEN_ELEMENTS.includes(_k)>>
+			<span class="statname"><<print _k>></span>
+			<span class="elementdisplay monospace"><<if setup.SOAK>><<soak _v>> /<</if>><div style="display: inline-block; min-width:45px; text-align:right"><<resistance _v>></div></span>
+			<br/>
+		<</if>>
 	<</for>>
 	</div>
 <<case "ailments">>

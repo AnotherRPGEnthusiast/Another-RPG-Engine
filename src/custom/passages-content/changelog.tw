@@ -1,4 +1,21 @@
 :: Changelog[text]
+<h3>Version 6.01</h3>
+<ul>
+<li>Added a <code>HIDDEN_ELEMENTS</code> variable. It works the same as the other "hidden" arrays: any elements that are included in the array won't appear where elements would normally be displayed. Element display code in the status panes has been updated to reflect this.</li>
+<li>Promoted <code>hasAction</code> from a <code>Puppet</code> method to an <code>Actor</code> method in accordance with enemies now having an <code>actions</code> property.
+</ul>
+<h3>Version 6.00</h3>
+<ul>
+<li>Renamed Enemies' <code>actions</code> property to <code>logic</code> to reduce confusion and free up the <code>actions</code> property for something else.</li>
+<li>Enemies' <code>actions</code> property now holds an array of strings, like the database entries for Puppets' <code>actions</code> property. By default this property is unused, but it may be useful if you ever want to algorithmically list an enemy's actions, such as for a bestiary entry.</li>
+<li>You can now bypass an enemy's AI routine and force them to use a particular action by assigning a valid action name to a new Enemy property, <code>forcedAction</code>.</li>
+<li>Added an attribute to the battle controller: <code>atrKnown</code>. This is a generic object that tracks the enemy's knowledge of the player party's elemental attributes. All are initially unknown, but are updated whenever a character is hit by an elemental attack.</li>
+<li>Added a new logic function: <code>elementCheck</code>. This returns an array of all Puppets who resist or are weak against a given element.</li>
+<li>Added element affinity logic to the targeting function.</li>
+<li>Actors now have a <code>tags</code> property.</li>
+<li>Added more comments to <code>echoDamage</code> to make it easier to follow.</li>
+<li>Finally disentangled the default actions/items/characters from the custom database files, so you won't need to overwrite them for new projects anymore. The data is still included in separate files so that the game can compile under the default initialization rules, but if your game doesn't use them they can be safely deleted.</li>
+</ul>
 <h3>Version 5.01</h3>
 <ul>
 <li>Restructured <code>statInfo</code>. Each attribute is now an object containing all the data previously stored in <code>STAT_MIN</code>, <code>STAT_MAX</code>, <code>hiddenStats</code>, and the old <code>statInfo</code>, which have all been depreciated. All existing references to the old objects (should) have been updated, so no code changes should be necessary.</li>

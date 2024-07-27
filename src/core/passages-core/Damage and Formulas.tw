@@ -110,28 +110,43 @@
 
 :: Widget: echoDamage [widget nobr]
 <<widget "echoDamage">>
+/* setup and integrity checks: 0th arg -> target and target must be an Actor */
 <<if $args.length > 0 && $args[0] instanceof Actor>>
 	<<set $target = $args[0]>>
 <</if>>
 <<run console.assert($target instanceof Actor,"ERROR in echoDamage: invalid target")>>
 <<set _dmgMods = $args>>
 
-<<if def $bestiary && def $bestiary.fetch(target().name) && $action.element>>
-	<<set $bestiary.fetch(target().name).statsKnown[$action.element] = true>>
+/* if the action has an element, reveal target's affinity to that element */
+<<if $action.element>>
+	<<if $target instanceof Enemy && def $bestiary && def $bestiary.fetch(target().name)>>
+		/* if target is Enemy, update bestiary entry */
+		<<set $bestiary.fetch(target().name).statsKnown[$action.element] = true>>
+	<<elseif $target instanceof Puppet && $B.atrKnown[$target.name]>>
+		/* if target is Puppet, update enemy party's knowledge */
+		<<set $B.atrKnown[$target.name] = true>>
+	<</if>>
 <</if>>
 
+/* calculate damage unless mods say not to */
 <<if !(_dmgMods.includes("nocalc") || _dmgMods.includes("indirect"))>>
-	<<damageCalc>>
+	<<damageCalc>> /* defines $dmg, _elntmsg, and _crit */
 <</if>>
 
 <<if !target().dead>>
 	<<set _continue = true>>
+
+	/* message handler */
 	<<if def _elntmsg>><b><<print _elntmsg+" ">></b><</if>>
 	<<if $dmg < 0>>
+		/* if damage was negative, attack was absorbed, necessitating special message */
 		$target.name feeds on the energy, and recovers <<print $dmg*-1>> HP.
 		<<set target().battleMsg.push({shake: false, type: "healing", content:$dmg*-1})>>
 	<<else>>
+		/* print standard damage message */
 		$target.name takes $dmg damage!
+
+		/* damage popup handler */
 		<<if !(_dmgMods.includes("indirect") || !(_queue instanceof Set) || setup.ANIMATIONS === false)>>
 			<<set target().battleMsg.push({shake: true, type: "damage", content:$dmg})>>
 			<<if _elntmsg == setup.elementMessages.weakpoint && typeof(setup.popupMod.weakpoint) == "string">>
@@ -146,20 +161,30 @@
 					target().battleMsg.last().type = "block">>
 			<</if>>
 		<</if>>
+
+		/* increment crisis based on damage taken */
 		<<if !_dmgMods.includes("indirect")>>
 			<<include "crisis formula">>
 		<</if>>
+
 	<</if>><br />
+
+	/* update target HP */
 	<<set $target.hp -= $dmg>>
+
+	/* track subject's running total damage inflicted (used for some AI calculations) */
 	<<if subject() instanceof Actor>>
 		<<set subject().lastDmg += $dmg>>
 	<</if>>
+
+	/* special cases (only applies to direct damage): threat, damage reflection, and onHit */
 	<<if !_dmgMods.includes("indirect")>>
 		<<if setup.THREAT_TARGETING === true && subject() instanceof Puppet && target() instanceof Enemy>>
 			<<include "echoDamage threat gain">>
 		<</if>>
-		<<if (!$action.noReflection || target().absreflect) && target().dmgreflection > 0 && !_dmgreflecting && target() !== subject() && $dmg > 0>>
+
 		/* If target has defined damage reflection, they reflect the attack's damage times their damage reflection value onto their attacker. Note that this code is executed before deathcheck, meaning damage will be reflected even if the attack defeats the enemy. You can change this by moving deathcheck above this section and including a check that disallows damage reflection if the target is dead. */
+		<<if (!$action.noReflection || target().absreflect) && target().dmgreflection > 0 && !_dmgreflecting && target() !== subject() && $dmg > 0>>
 			<<set $dmg = Math.round($dmg * target().dmgreflection)>>
 			<<set _OG = {target: $target, subject: $subject}>>
 			<<set $target = _OG.subject; $subject = _OG.target>>
@@ -167,9 +192,10 @@
 			<<echoDamage "nocalc">>
 			<<set $target = _OG.target; $subject = _OG.subject>>
 			<<unset _OG; _dmgreflecting>>
-		<</if>> /* end dmgreflection block */
-		<<if target().onHit instanceof Array && target().onHit.length > 0 && !_dmgreflecting && target().id !== subject().id>>
+		<</if>>
+
 		/* If target has onHit functions, they are executed here. Note that the target and subject are not reversed here, so if you want the effect to target the attacker, use "subject" as the selector, and vice versa. */
+		<<if target().onHit instanceof Array && target().onHit.length > 0 && !_dmgreflecting && target().id !== subject().id>>
 			<<for _action range target().onHit>>
 				<<if _action instanceof Function>>
 					<<print _action()>>
@@ -177,10 +203,15 @@
 					<<run console.log("ERROR in onHit: onHit elements must be functions")>>
 				<</if>>
 			<</for>>
-		<</if>> /* end onHit block */
+		<</if>>
 	<</if>> /* end indirect block */
+
+	/* check if target died from damage */
 	<<deathcheck>>
+
+	/* if not, apply secondary effects */
 	<<if !target().dead && !_dmgMods.includes("indirect")>>
+		/* check for "shock" effects that can be removed by direct damage */
 		<<if !$action.noShock>>
 			<<for _effect range target().effects.filter(function (eff) { return eff && Number.isInteger(eff.shock)})>>
 				<<set _shock = random(1,100)>>
@@ -188,11 +219,14 @@
 					<<print target().removeEffect(_effect)>>
 				<</if>>
 			<</for>>
-		<</if>> /* end shock block */
+		<</if>>
+
+		/* knock down if off-balance */
 		<<if target().offbalance && $dmg >= 0>>
 			<<print target().addEffect("Knocked Down",{time: -1})>>
-		<</if>> /* end off-balance block */
-	<</if>> /* end post-deathcheck block */
+		<</if>>
+	<</if>>
+	
 <</if>> /* end target dead check block */
 
 <<include "Counter Logic">>

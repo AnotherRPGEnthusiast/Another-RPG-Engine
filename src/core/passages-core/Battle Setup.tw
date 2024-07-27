@@ -1,3 +1,96 @@
+:: Battle Preparation
+<<set $inbattle = true>>
+<<unset $subject, $target>>
+<<set $stScreen = 1>>
+
+/* initialize battle controller variables */
+<<set $B = {actor: null, turn: "player", turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: "selection", embargo: 0, event: false, surrender: false, actionsSeen: [], atrKnown: {}, kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}>>
+
+/* define list of puppet element attributes known to enemy, initialized to false */
+<<for _puppet range $puppets>>
+	<<set $B.atrKnown[_puppet.name] = {}>>
+	<<if setup.ELEMENT_LIST !== undefined>>
+		<<for _elm range setup.ELEMENT_LIST>>
+			<<set $B.atrKnown[_puppet.name][_elm] = false>>
+		<</for>>
+	<</if>>
+<</for>>
+
+<<callEncounter $scenario>>
+
+/* initialize actionsThisTurn for each enemy to an empty array */
+<<for _enemy range enemies()>>
+	<<set $B.actionsThisTurn[_enemy.id] = []>>
+<</for>>
+
+<<refreshPuppets>>
+<<initTurns>>
+
+/* add style */
+<<if typeof($B.style) == 'string'>>
+	<<addclass "html" $B.style>>
+<</if>>
+
+/* define health bars */
+<<set $B.playerBars = []>>
+<<for _i, _p range $puppets>>
+	<<set _id = 'p'+_i>>
+	<<run $B.playerBars.push(_id)>>
+	<<newmeter _id 1>>
+		<<colors setup.PLAYER_BAR_COLOR>>
+		<<animation setup.HEALTH_BAR_TIME linear>>
+		<<sizing 100%>>
+	<</newmeter>>
+<</for>>
+<<set $B.enemyBars = []>>
+<<for _i, _e range $enemies>>
+	<<set _id = 'e'+_i>>
+	<<run $B.enemyBars.push(_id)>>
+	<<newmeter _id 1>>
+		<<colors setup.ENEMY_BAR_COLOR>>
+		<<animation setup.HEALTH_BAR_TIME linear>>
+		<<sizing 100%>>
+	<</newmeter>>
+<</for>>
+
+<<if setup.BATTLE_GRID === true>>
+	<<include "battle grid setup">>
+<</if>>
+
+<<include "custom battle preparation">>
+
+/* forward player to next passage, depending on turn model */
+<<switch setup.TURN_MODEL.toLowerCase()>>
+	<<case "free">>
+		<<if $B.ambush>>
+			<<set $B.turn = "enemy">>
+			<<goto "Enemy Phase">>
+		<<else>>
+			<<goto "Player Phase">>
+		<</if>>
+	<<case "ranked" "timeline" "action">>
+		<<forwarder>>
+<</switch>>
+
+:: initTurns [widget nobr]
+<<widget "initTurns">>
+<<set $actors = allActors()>>
+<<switch setup.TURN_MODEL.toLowerCase()>>
+	<<case "timeline">>
+		<<initTurnsTimeline>>
+		<<set $actors = allActors("timeline")>>
+	<<case "ranked">>
+		<<initTurnsRanked>>
+	<<case "action">>
+		<<initTurnsAction>>
+	<<default>>
+		/* default is free action model: everyone is always active */
+		<<for _actor range $actors>>
+			<<set _actor.active = true>>
+		<</for>>
+<</switch>>
+<</widget>>
+
 :: Widget: backbtn[widget nobr]
 <<widget "backbtn">>
 <span class="btn back right" id="battlebackbtn">[[Back [R]|Player Phase][$B.phase = "selection"; $action = null; $target = null; $subject = null; $removed_effects = [];]]</span>
@@ -464,75 +557,6 @@
 <<refreshPuppets>>
 
 <<unset $B; $subject; $target; $enemies; $enemyGrid; $puppetGrid>>
-<</widget>>
-
-:: Battle Preparation
-<<set $inbattle = true>>
-<<unset $subject, $target>>
-<<set $B = {actor: null, turn: "player", turnCounter: 0, enemyTurns: 0, actionsThisTurn: {}, phase: "selection", embargo: 0, event: false, surrender: false, actionsSeen: [], kills: [], specialdeath: [], actionQueue: [], XPreward: 0, moneyReward: 0, destination: previous()}>>
-<<callEncounter $scenario>>
-<<for _enemy range enemies()>>
-	<<set $B.actionsThisTurn[_enemy.id] = []>>
-<</for>>
-<<refreshPuppets>>
-<<initTurns>>
-<<if typeof($B.style) == 'string'>>
-	<<addclass "html" $B.style>>
-<</if>>
-<<set $B.playerBars = []>>
-<<for _i, _p range $puppets>>
-	<<set _id = 'p'+_i>>
-	<<run $B.playerBars.push(_id)>>
-	<<newmeter _id 1>>
-		<<colors setup.PLAYER_BAR_COLOR>>
-		<<animation setup.HEALTH_BAR_TIME linear>>
-		<<sizing 100%>>
-	<</newmeter>>
-<</for>>
-<<set $B.enemyBars = []>>
-<<for _i, _e range $enemies>>
-	<<set _id = 'e'+_i>>
-	<<run $B.enemyBars.push(_id)>>
-	<<newmeter _id 1>>
-		<<colors setup.ENEMY_BAR_COLOR>>
-		<<animation setup.HEALTH_BAR_TIME linear>>
-		<<sizing 100%>>
-	<</newmeter>>
-<</for>>
-<<if setup.BATTLE_GRID === true>>
-	<<include "battle grid setup">>
-<</if>>
-<<include "custom battle preparation">>
-<<set $stScreen = 1>>
-<<switch setup.TURN_MODEL.toLowerCase()>>
-	<<case "free">>
-		<<if $B.ambush>>
-			<<set $B.turn = "enemy">>
-			<<goto "Enemy Phase">>
-		<<else>>
-			<<goto "Player Phase">>
-		<</if>>
-	<<case "ranked" "timeline" "action">>
-		<<forwarder>>
-<</switch>>
-
-:: initTurns [widget nobr]
-<<widget "initTurns">>
-<<set $actors = allActors()>>
-<<switch setup.TURN_MODEL.toLowerCase()>>
-	<<case "timeline">>
-		<<initTurnsTimeline>>
-		<<set $actors = allActors("timeline")>>
-	<<case "ranked">>
-		<<initTurnsRanked>>
-	<<case "action">>
-		<<initTurnsAction>>
-	<<default>>
-		/* default is free action model: everyone is always active */
-		<<for _actor range $actors>>
-			<<set _actor.active = true>>
-		<</for>>
-<</switch>>
 <</widget>>
 
 :: Widget: forwarder [widget nobr]

@@ -41,7 +41,11 @@ window.Enemy = class Enemy extends Actor {
 	}
 
 	get actions () {
-		return (this._actions || this.data.actions || null);
+		return (this._actions || this.data.actions || []);
+	}
+
+	get logic () {
+		return (this._logic || this.data.logic || null);
 	}
 
 	get priority () {
@@ -255,3 +259,5 @@ window.Enemy = class Enemy extends Actor {
 		return JSON.reviveWrapper('new Enemy($ReviveData$)', data);
 	}
 };
+
+setup.enemyData = {};

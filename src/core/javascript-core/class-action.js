@@ -40,6 +40,15 @@ window.Action = class Action {
 		this._displayname = val;
 	}
 
+	get tags () {
+		//	String or array of strings. If string, will be converted into a 1-element array. Identifiers used for miscellaneous purposes.
+
+		let r = (this._tags || this.actionData.tags || []);
+		if (typeof(r) === "string") r = [r];
+		console.assert(r instanceof Array,`ERROR in action ${this.name}: tags must be array`);
+		return r;
+	}
+
 	get formula () {
 		//	Function. Special damage formula, if divergence from the default is desired. If unset, will default to the normal damage formula.
 
@@ -101,7 +110,7 @@ window.Action = class Action {
 			val = this.actionData.useText;
 		}
 		if (val === undefined) {
-			val = `$subject.name uses "${this.displayname}".`;
+			val = `${subject().name} uses "${this.displayname}".`;
 		}
 		return val;
   }
@@ -188,15 +197,6 @@ window.Action = class Action {
 
     return (this._spellMod || this.actionData.spellMod || "ERROR SPELLMOD UNDEFINED");
   }
-
-	get tags () {
-		//	String or array of strings. If string, will be converted into a 1-element array. Identifiers used for miscellaneous purposes.
-
-		let r = (this._tags || this.actionData.tags || []);
-		if (typeof(r) === "string") r = [r];
-		console.assert(r instanceof Array,`ERROR in action ${this.name}: tags must be array`);
-		return r;
-	}
 
 	get phase () {
 		//	String. Phase that the player will be forwarded to when the action is selected.
@@ -1385,3 +1385,5 @@ window.ItemAction = class ItemAction extends Action {
 		return JSON.reviveWrapper('new ItemAction($ReviveData$)', data);
 	}
 };
+
+setup.actionData = {};

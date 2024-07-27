@@ -759,11 +759,14 @@ How much Energy do you want to put into $action.name? (Minimum $B.mincost)<br />
 			<<else>>
 				<<set _counters = []>>
 				<<run console.log("enemy turn for "+_enemy.name+"; has delayed action?"); console.log(_enemy.delayedAction); console.log(_enemy.actionReady)>>
-				<<if _enemy.actionReady>>
+				<<if typeof(_enemy.forcedAction) == "string">>
+					<<set $action = new Action(_enemy.forcedAction)>>
+					<<set _enemy.forcedAction = null>>
+				<<elseif _enemy.actionReady>>
 					<<set $action = _enemy.delayedAction>>
 					<<set _enemy.delayedAction = null>>
 				<<else>>
-					<<run _enemy.actions()>>
+					<<run _enemy.logic()>>
 				<</if>>
 				<<run $B.actionsThisTurn[_enemy.id].push($action.name)>>
 				<<if !($target instanceof Actor) && $action.targetMethod instanceof Function>>

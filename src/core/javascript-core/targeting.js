@@ -354,6 +354,31 @@ Hitlist.prototype.addFactors = function (mods) {
 	mods = (mods || []);
 	console.assert(mods instanceof Array,`ERROR in addFactors: mods must be array`);
 
+	if (typeof(action().element) == "string" && !mods.includes("element blind")) {
+		let temp = clone(this);
+		// Remove all targets immune to the action's element
+		temp.filter(function (t) {
+			return V().B.atrKnown[t.target.name][action().element] === false
+			|| t.target.getElement(action().element,"percent") > 0; });
+		if (temp.length > 0) {
+			this.filter(function (t) {
+				return V().B.atrKnown[t.target.name][action().element] === false
+				|| t.target.getElement(action().element,"percent") > 0; });
+		}
+		// On hard mode, remove all targets not weak to the action's element
+		if (V().difficulty == "hard" || mods.includes("smart")) {
+			temp.filter(function (t) {
+				return V().B.atrKnown[t.target.name][action().element] === false
+				|| t.target.getElement(action().element,"percent") > 1; });
+			// but don't do this if it would remove all targets
+			if (temp.length > 0) {
+				this.filter(function (t) {
+					return V().B.atrKnown[t.target.name][action().element] === false
+					|| t.target.getElement(action().element,"percent") > 1; });
+			}
+		}
+	}
+
 	var mostDamaging = Math.max(...this.map(function (t) { return t.target.lastDmg }));
 	var highestStat = {};
 	var lowestStat = {};
@@ -425,6 +450,15 @@ Hitlist.prototype.addFactors = function (mods) {
 			// To exclude this clause, pass "ignore vulnerable"; such as for non-damaging moves
 			else if (!mods.includes("ignore vulnerable") && t.target.get(StatName("def")) < t.target.getBase(StatName("def"))) {
 				t.chance += 1;
+			}
+			// Preferentially target characters more weak to attack's element, if it has one.
+			// Also de-weights characters resistant to attack's element.
+			// Characters must have their affinity known (unless attacker is targeting own team).
+			// To exclude this clause, pass "element blind".
+			else if (typeof(action().element) == "string"
+							&& (subject() instanceof Puppet || target() instanceof Enemy || V().B.atrKnown[t.target.name][action().element] === true)
+							&& !mods.includes("element blind")) {
+				t.chance += (t.target.getElement(action().element,"percent")-1);
 			}
 			// Preferentially target more injured characters.
 			// To exclude this clause, pass "ignore vulnerable"; such as for non-damaging moves

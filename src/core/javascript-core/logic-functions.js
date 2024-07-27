@@ -52,6 +52,7 @@ function cureCheck (mods) {
 	mods = (mods || []);
 	mods.push("threat");
 	var party = subject().ownParty.filter(function (a) { return a && !a.dead });
+	if (mods.includes("noself")) party.deleteWith(function (a) {return a.id == subject().id});
 	var count = 0;
 	for (let p of party) {
 		count += p.effectCount("ailment",mods);
@@ -85,4 +86,35 @@ function checkActions (check=function (action) { return true; },targets=[]) {
 		}
 	}
 	return count;
+}
+
+function elementCheck (elm,condition="weak") {
+	//	Logic for checking who among the player party resists or is weak to a specific element.
+	//	Only checks puppets whose affinity is known by the B.atrKnown object.
+	//	Returns array of all Puppets who fulfill the condition.
+
+	//	elm = string. Element to check. Must match element list.
+	//	condition = string, either "weak" or "resist".
+	//		if "weak", finds characters with elemental affinity > 1
+	//		if "resist", finds characters with elemental affinity < 1
+	//		if "immune", finds characters with elemental affinity <= 0
+	//		if any other value, function terminates and returns empty array
+	//		By default, this tests "weak".
+
+	console.assert(typeof(elm) == "string",`ERROR in elementCheck: elm must be string`);
+	console.assert(setup.ELEMENT_LIST.includes(elm),`ERROR in elementCheck: invalid element name`);
+	console.assert(typeof(condition) == "string",`ERROR in elementCheck: condition must be string`);
+
+	var party = V().puppets.filter(function (p) { return !p.dead && V().B.atrKnown[p.name][elm] === true });
+	switch (condition) {
+		case "weak":
+			return party.filter(function (p) { return p.getElement(elm,"percent") > 1});
+		case "resist":
+			return party.filter(function (p) { return p.getElement(elm,"percent") < 1});
+		case "immune":
+			return party.filter(function (p) { return p.getElement(elm,"percent") <= 0});
+		default:
+			console.log("Invalid condition in elementCheck");
+			return [];
+	}
 }

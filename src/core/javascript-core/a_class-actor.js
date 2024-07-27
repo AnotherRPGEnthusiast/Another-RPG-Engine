@@ -157,6 +157,15 @@ window.Actor = class Actor {
 		}
 	}
 
+	get tags () {
+		//	String or array of strings. If string, will be converted into a 1-element array. Identifiers used for miscellaneous purposes.
+
+		let r = (this._tags || this.data.tags || []);
+		if (typeof(r) === "string") r = [r];
+		console.assert(r instanceof Array,`ERROR in actor ${this.name}: tags must be array`);
+		return r;
+	}
+
 	get ownParty () {
 		switch (this.id.charAt(0)) {
 			case 'p':
@@ -702,6 +711,10 @@ window.Actor = class Actor {
 		}
 		if (val instanceof Function) val = val(this);
 		return val+"<br/>";
+	}
+
+	hasAction (name) {
+		return this.actions.map(function (a) { return a.name; }).includes(name);
 	}
 
 	// EQUIPMENT FUNCTIONS

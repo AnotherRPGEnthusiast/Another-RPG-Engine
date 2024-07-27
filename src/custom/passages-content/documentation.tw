@@ -854,7 +854,7 @@ For specific data unique to the character, we make calls to the database. Recall
 You can also define unique method functions here if you need them. Most of them are used for calculating XP requirements.
 
 <h3 id="JS.enemies">Enemy Class</h3>
-Enemies are constructed similarly to puppets, with of course the major change that their {{{actions}}} property functions completely differently, as explained in [[Documentation (Basic)]]. However, their constructor has a few unique statements:
+Enemies are constructed similarly to puppets. However, their constructor has a few unique statements:
 {{{
 if (this.data.cooldown) { this.cd = new Map(Object.entries(this.data.cooldown)); }
 }}}
@@ -2850,7 +2850,7 @@ The enemy is then checked against hold effects. If they have one (or more), thei
 	<</if>>
 	<<set _counters = []>>
 	<<set $action = null>>
-	<<run _enemy.actions()>>
+	<<run _enemy.logic()>>
 	<<run $B.actionsThisTurn[_enemy.id].push($action.name)>>
 	<<if !_targetfail>>
 		<<include "action effects">><br/>
@@ -2861,7 +2861,7 @@ The enemy is then checked against hold effects. If they have one (or more), thei
 }}}
 Only in the default {{{<<else>>}}} clause, if the enemy passes all these checks, does enemy action occur. The {{{actionsThisTurn}}} object can be used to track which actions the enemy has already used on their turn, if you want them to modify their behavior based on previous actions. (Note that we must populate it with the enemy's <i>ID</i>, not the enemy's name, because while names can be duplicated, IDs are unique.)
 
-The details of the {{{actions}}} function can be found in the {{{database-enemies}}} JavaScript file, which is discussed <a class="noExternal" href="#JS.enemies">here</a>. Setting {{{$action}}} to {{{null}}} is necessary to ensure the function works correctly; otherwise the enemy will think they've already selected an action.
+The details of the {{{logic}}} function can be found in the {{{database-enemies}}} JavaScript file, which is discussed <a class="noExternal" href="#JS.enemies">here</a>. Setting {{{$action}}} to {{{null}}} is necessary to ensure the function works correctly; otherwise the enemy will think they've already selected an action.
 {{{
 <<if !_targetfail>>
 }}}

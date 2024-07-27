@@ -65,10 +65,6 @@ window.Puppet = class Puppet extends Actor{
 		return (this.data.portrait || this.name.substring(0,5));
 	}
 
-	hasAction (name) {
-		return this.actions.map(function (a) { return a.name; }).includes(name);
-	}
-
 	validTarget () {
 		//	Returns Boolean. Determination for if character can be selected by the player in Targeting Phase.
 		//	To customize, use Object.defineProperty.
@@ -100,3 +96,5 @@ window.Puppet = class Puppet extends Actor{
 		return JSON.reviveWrapper('new Puppet($ReviveData$)', data);
 	}
 };
+
+setup.puppetData = {};

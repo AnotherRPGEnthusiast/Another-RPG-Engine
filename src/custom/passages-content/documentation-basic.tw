@@ -15,7 +15,7 @@ This introduction will teach you how to add content to the default engine settin
 *<a href="#data.effects">Creating Effects</a>
 *<a href="#data.items">Creating Items</a>
 *<a href="#data.enemies">Creating Enemies</a>
-**<a href="#enemyactions">Enemy Actions</a>
+**<a href="#enemyactions">Enemy Logic</a>
 ***<a href="#enemyactions.finn">Simple Example: Finn</a>
 ***<a href="#enemyactions.bubblegum">Advanced Example: Princess Bubblegum</a>
 ***<a href="#enemyactions.bonnibel">Complex Example: Bonnibel</a>
@@ -465,7 +465,8 @@ Enemies are the opponents your player will face off against in battles. They are
   "cooldown": {
     "Dispel Magick": 0
   },
-  "actions": function () {
+  "actions": ["Dispel Magick","Recovery","Damage Field","Bind Creature"],
+  "logic": function () {
     while (V().action === null) {
       (...)
     } // end loop
@@ -477,6 +478,7 @@ This isn't what a live {{{Enemy}}} object looks like, but it contains all the da
 * {{{cooldown}}} is an object that determines the cooldown for the enemy's actions. You can have multiple property names for different actions.
 * {{{noAttacks}}} is a nonnegative integer that determines how many actions the enemy can take per round. By default, this is 1.
 * {{{priority}}} is a number that determines the order in which enemies will act during the enemy turn. By default, this is equal to their index in the enemy party array. Lower numbers act first.
+* {{{actions}}} is an array of strings listing the enemy's actions. Unlike with Puppets, these aren't converted into {{{Action}}} objects and are purely cosmetic and optional. This could be useful if you want to display the enemy's actions to the player, such as in a bestiary entry, or you could create a custom logic function that references them.
 * {{{mercy}}} is a number; determines the chance of an enemy skipping smart targeting. (See [[Documentation (Advanced)]] for details on targeting logic.)
 * {{{surrender}}} is a function; run when an enemy is spared (if the option is available).
 * {{{surrenderFail}}} is a function; run when the player violates an enemy's surrender by using a damaging action.
@@ -489,12 +491,12 @@ This isn't what a live {{{Enemy}}} object looks like, but it contains all the da
 ** {{{alts}}} is an array of strings listing any alternate forms to display in the bestiary entry. Optional.
 ** {{{desc}}} is a description to be displayed in the enemy's bestiary entry.
 
-<h3 id="enemyactions">Enemy Actions</h3>
-The most complicated attribute for enemies is {{{actions}}}. Unlike player characters, enemies don't have any human mind to pick their actions for them, so it's not enough to just list what actions they can use. We have to provide a logic for how and when they should act as well.
+<h3 id="enemyactions">Enemy Logic</h3>
+The most complicated attribute for enemies is {{{logic}}}. Unlike player characters, enemies don't have any human mind to pick their actions for them, so it's not enough to just list what actions they can use. We have to provide a logic for how and when they should act as well.
 
 Here is an example of the beginning of one enemy's logic function:
 {{{
-"actions": function () {
+"logic": function () {
 	while (V().action === null){
 		var act = random(1,100);
 
@@ -538,7 +540,7 @@ For now, let's go over Finn and Princess Bubblegum as simple and complicated exa
 
 <h4 id="enemyactions.finn">Simple Example: Finn</h4>
 {{{
-this.actions = function () {
+this.logic = function () {
 	while (V().action === null){
 		var act = random(1,2);
 
@@ -569,7 +571,7 @@ You can see here that Finn has very simple behavior: half the time he will use a
   "mass buff": 0,
   "Chi Shield": 0
 },
-"actions": function () {
+"logic": function () {
 	while (V().action === null){
 		var act = random(1,100);
 
@@ -669,7 +671,7 @@ You can see here that Finn has very simple behavior: half the time he will use a
 }}}
 In contrast to Finn, Princess Bubblegum has a highly intelligent and pragmatic personality, so to be true to her character I wanted to give her more sophisticated behavior.
 
-To begin with, you'll notice she has additional attributes above {{{actions}}}. Just like the player's abilities, we need some way to balance enemy abilities. Some abilities are very powerful, and would make the game way too hard if enemies could use them all the time! You could implement an energy system like the player characters use, but I found that too difficult. I used a simpler system: when the enemy uses a powerful attack, their "cooldown" variable for that attack is increased. Cooldown is reduced by 1 at the start of every turn, so enemies must wait that many turns before using a special attack again.
+To begin with, you'll notice she has additional attributes above {{{logic}}}. Just like the player's abilities, we need some way to balance enemy abilities. Some abilities are very powerful, and would make the game way too hard if enemies could use them all the time! You could implement an energy system like the player characters use, but I found that too difficult. I used a simpler system: when the enemy uses a powerful attack, their "cooldown" variable for that attack is increased. Cooldown is reduced by 1 at the start of every turn, so enemies must wait that many turns before using a special attack again.
 
 Cooldown is set with the {{{cooldown}}} property of an enemy entry, and you can evaluate if an action is usable with the function {{{CDcheck(<cooldown key>)}}}, which is common to all {{{Enemy}}} objects.
 {{{
@@ -914,7 +916,7 @@ Princess Bubblegum reappears in the final battle of <i>Cartoon Battle</i>, but t
   	}
   }
 },
-"actions": function () {
+"logic": function () {
 	while (V().action === null){
 		var act = random(1,100);
 		console.log("Bonnibel act = "+act);
@@ -1138,7 +1140,7 @@ actor.inventory = new Map([
 }}}
 To begin with, I gave her an actual inventory with limited item stocks, just like the player's. I avoided doing this for Bubblegum's first fight, instead giving her an infinite stock of items but requiring her to spend two turns to use them, because I feared it would be too complicated. However, I realized that if I wanted to truly mirror the player's own abilities (as is the intended theme of the final fight), I'd have to do it this way. It actually wasn't as difficult to implement as I feared; but we will get into that shortly.
 
-We will revist {{{attackItemLogic}}} later. Let's look at the main {{{actions}}} function first.
+We will revist {{{attackItemLogic}}} later. Let's look at the main {{{logic}}} function first.
 {{{
 var hasItem;
 var stasisCount = 0;
